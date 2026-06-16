@@ -204,7 +204,7 @@ export const Orders: React.FC = () => {
               <tr>
                 <th>Sipariş No</th>
                 <th>Müşteri Adı</th>
-                <th>GTIN</th>
+                <th>İş Emri No</th>
                 <th>Okutulan / Hedef</th>
                 <th>Durum</th>
                 <th>Aksiyon</th>
@@ -262,7 +262,7 @@ export const Orders: React.FC = () => {
               <div><span style={{ color: 'var(--text-muted)' }}>Müşteri Adı:</span> <span style={{ float: 'right', fontWeight: 500 }}>{selectedOrder.customerName}</span></div>
               <div><span style={{ color: 'var(--text-muted)' }}>Stok Kodu:</span> <span style={{ float: 'right' }}>{selectedOrder.stockCode || '-'}</span></div>
               <div><span style={{ color: 'var(--text-muted)' }}>Ürün Adı:</span> <span style={{ float: 'right' }}>{selectedOrder.productName || '-'}</span></div>
-              <div><span style={{ color: 'var(--text-muted)' }}>GTIN:</span> <code style={{ float: 'right' }}>{selectedOrder.gtin}</code></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>İş Emri No:</span> <code style={{ float: 'right' }}>{selectedOrder.gtin}</code></div>
               <div><span style={{ color: 'var(--text-muted)' }}>Koli İçi Adet:</span> <span style={{ float: 'right' }}>{selectedOrder.productPerCarton} adet</span></div>
               <div><span style={{ color: 'var(--text-muted)' }}>Palet İçi Koli:</span> <span style={{ float: 'right' }}>{selectedOrder.cartonPerPallet} koli</span></div>
               <div><span style={{ color: 'var(--text-muted)' }}>Beklenen Adet:</span> <span style={{ float: 'right', fontWeight: 600 }}>{selectedOrder.expectedQuantity}</span></div>
@@ -321,16 +321,16 @@ export const Orders: React.FC = () => {
                 <input type="text" className="form-input" required value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Kozmetik A.Ş." />
               </div>
               <div className="form-group">
-                <label className="form-label">Stok Kodu</label>
-                <input type="text" className="form-input" value={stockCode} onChange={e => setStockCode(e.target.value)} placeholder="SKU-XYZ-99" />
+                <label className="form-label">Stok Kodu *</label>
+                <input type="text" className="form-input" required value={stockCode} onChange={e => setStockCode(e.target.value)} placeholder="SKU-XYZ-99" />
               </div>
               <div className="form-group">
-                <label className="form-label">Ürün Adı</label>
-                <input type="text" className="form-input" value={productName} onChange={e => setProductName(e.target.value)} placeholder="Krem Vücut Losyonu" />
+                <label className="form-label">Stok İsmi *</label>
+                <input type="text" className="form-input" required value={productName} onChange={e => setProductName(e.target.value)} placeholder="Krem Vücut Losyonu" />
               </div>
               <div className="form-group">
-                <label className="form-label">GTIN (14 Hane) *</label>
-                <input type="text" className="form-input" required maxLength={14} minLength={14} value={gtin} onChange={e => setGtin(e.target.value)} placeholder="04630477370359" />
+                <label className="form-label">İş Emri No *</label>
+                <input type="text" className="form-input" required value={gtin} onChange={e => setGtin(e.target.value)} placeholder="WO-2026-001" />
               </div>
               <div className="form-group">
                 <label className="form-label">Beklenen Miktar *</label>
@@ -370,7 +370,7 @@ export const Orders: React.FC = () => {
 
             <form onSubmit={handleImportSubmit}>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                Sipariş GTIN'i ({selectedOrder.gtin}) ile uyumlu Rusya Kozmetik GS1 DataMatrix kodlarını içeren <strong>.txt</strong> veya <strong>.csv</strong> dosyasını yükleyin. Her satırda tek bir barkod bulunmalıdır.
+                Sipariş İş Emri No ({selectedOrder.gtin}) ile uyumlu Rusya Kozmetik GS1 DataMatrix kodlarını içeren <strong>.txt</strong> veya <strong>.csv</strong> dosyasını yükleyin. Her satırda tek bir barkod bulunmalıdır.
               </p>
               
               <div className="form-group" style={{ marginBottom: '20px' }}>

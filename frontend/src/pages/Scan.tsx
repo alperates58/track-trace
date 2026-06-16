@@ -67,7 +67,7 @@ export const Scan: React.FC = () => {
       setScanHistory([]);
       setStatus('ready');
       setIndicatorTitle('OKUTMAYA HAZIR');
-      setIndicatorMsg(`GTIN: ${order?.gtin} için barkod okutma moduna geçildi.`);
+      setIndicatorMsg(`İş Emri No: ${order?.gtin} için barkod okutma moduna geçildi.`);
       focusInput();
     } else {
       setSelectedOrder(null);

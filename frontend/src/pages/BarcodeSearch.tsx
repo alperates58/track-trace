@@ -98,7 +98,7 @@ export const BarcodeSearch: React.FC = () => {
                   <div>Sipariş No: <strong>{result.orderNo || '-'}</strong></div>
                   <div>Müşteri: <strong>{result.customerName || '-'}</strong></div>
                   <div style={{ gridColumn: 'span 2' }}>Ürün Adı: <strong>{result.productName || '-'}</strong></div>
-                  <div>GTIN: <code>{result.gtin || '-'}</code></div>
+                  <div>İş Emri No: <code>{result.gtin || '-'}</code></div>
                   <div>Seri No: <code>{result.serialNo || '-'}</code></div>
                 </div>
               </div>

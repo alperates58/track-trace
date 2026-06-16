@@ -76,7 +76,7 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("GTIN:").Bold().FontSize(8);
+                            c.Item().Text("İş Emri No:").Bold().FontSize(8);
                             c.Item().Text(order.GTIN).FontSize(11);
                         });
                         row.RelativeItem().Column(c =>
@@ -130,7 +130,7 @@ public class LabelGenerator : ILabelGenerator
 ^FO50,195^A0N,20,20^FDSiparis No: {order.OrderNo}^FS
 ^FO400,195^A0N,20,20^FDStok Kodu: {order.StockCode ?? "-"}^FS
 ^FO50,235^A0N,20,20^FDUrun Adi: {order.ProductName ?? "-"}^FS
-^FO50,285^A0N,20,20^FDGTIN: {order.GTIN}^FS
+^FO50,285^A0N,20,20^FDis Emri No: {order.GTIN}^FS
 ^FO400,285^A0N,20,20^FDAdet: {carton.ActualQuantity} / {carton.TargetQuantity}^FS
 ^FO50,335^A0N,20,20^FDKoli No: {carton.CartonNo}^FS
 ^FO400,335^A0N,20,20^FDTarih: {carton.CreatedAt:dd.MM.yyyy HH:mm}^FS
@@ -198,7 +198,7 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("GTIN:").Bold().FontSize(8);
+                            c.Item().Text("İş Emri No:").Bold().FontSize(8);
                             c.Item().Text(order.GTIN).FontSize(11);
                         });
                         row.RelativeItem().Column(c =>
@@ -252,7 +252,7 @@ public class LabelGenerator : ILabelGenerator
 ^FO50,195^A0N,20,20^FDSiparis No: {order.OrderNo}^FS
 ^FO400,195^A0N,20,20^FDStok Kodu: {order.StockCode ?? "-"}^FS
 ^FO50,235^A0N,20,20^FDUrun Adi: {order.ProductName ?? "-"}^FS
-^FO50,285^A0N,20,20^FDGTIN: {order.GTIN}^FS
+^FO50,285^A0N,20,20^FDis Emri No: {order.GTIN}^FS
 ^FO400,285^A0N,20,20^FDKoli Sayisi: {cartonCount} / {order.CartonPerPallet}^FS
 ^FO50,335^A0N,20,20^FDPalet No: {pallet.PalletNo}^FS
 ^FO400,335^A0N,20,20^FDTarih: {pallet.CreatedAt:dd.MM.yyyy HH:mm}^FS

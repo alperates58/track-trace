@@ -35,7 +35,9 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     {
         RuleFor(x => x.Request.OrderNo).NotEmpty().WithMessage("Sipariş numarası boş olamaz.");
         RuleFor(x => x.Request.CustomerName).NotEmpty().WithMessage("Müşteri adı boş olamaz.");
-        RuleFor(x => x.Request.GTIN).NotEmpty().Length(14).WithMessage("GTIN 14 haneli olmalıdır.");
+        RuleFor(x => x.Request.StockCode).NotEmpty().WithMessage("Stok kodu boş olamaz.");
+        RuleFor(x => x.Request.ProductName).NotEmpty().WithMessage("Stok ismi boş olamaz.");
+        RuleFor(x => x.Request.GTIN).NotEmpty().WithMessage("İş emri numarası boş olamaz.");
         RuleFor(x => x.Request.ProductPerCarton).GreaterThan(0).WithMessage("Koli içi ürün sayısı 0'dan büyük olmalıdır.");
         RuleFor(x => x.Request.CartonPerPallet).GreaterThan(0).WithMessage("Palet içi koli sayısı 0'dan büyük olmalıdır.");
         RuleFor(x => x.Request.ExpectedQuantity).GreaterThan(0).WithMessage("Beklenen miktar 0'dan büyük olmalıdır.");
@@ -47,7 +49,9 @@ public class UpdateOrderCommandValidator : AbstractValidator<UpdateOrderCommand>
     public UpdateOrderCommandValidator()
     {
         RuleFor(x => x.Request.CustomerName).NotEmpty().WithMessage("Müşteri adı boş olamaz.");
-        RuleFor(x => x.Request.GTIN).NotEmpty().Length(14).WithMessage("GTIN 14 haneli olmalıdır.");
+        RuleFor(x => x.Request.StockCode).NotEmpty().WithMessage("Stok kodu boş olamaz.");
+        RuleFor(x => x.Request.ProductName).NotEmpty().WithMessage("Stok ismi boş olamaz.");
+        RuleFor(x => x.Request.GTIN).NotEmpty().WithMessage("İş emri numarası boş olamaz.");
         RuleFor(x => x.Request.ProductPerCarton).GreaterThan(0).WithMessage("Koli içi ürün sayısı 0'dan büyük olmalıdır.");
         RuleFor(x => x.Request.CartonPerPallet).GreaterThan(0).WithMessage("Palet içi koli sayısı 0'dan büyük olmalıdır.");
         RuleFor(x => x.Request.ExpectedQuantity).GreaterThan(0).WithMessage("Beklenen miktar 0'dan büyük olmalıdır.");

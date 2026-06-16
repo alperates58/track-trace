@@ -109,13 +109,15 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
                 continue;
             }
 
-            // Optional: GTIN check
+            // Optional: GTIN check (Disabled because GTIN field is now used for Work Order No)
+            /*
             if (!string.IsNullOrEmpty(gtin) && gtin != orderGtin)
             {
                 invalidCount++;
                 errors.Add(new ImportErrorDto(rowNo, raw, $"GTIN uyuşmazlığı. Sipariş GTIN: {orderGtin}, Barkod GTIN: {gtin}"));
                 continue;
             }
+            */
 
             seenRawCodesInFile.Add(raw);
             validCodesToInsert.Add((Guid.NewGuid(), raw, gtin, serial, crypto));
