@@ -14,7 +14,7 @@ public class LabelGenerator : ILabelGenerator
     public LabelGenerator()
     {
         // Set QuestPDF license once
-        QuestPDF.Settings.License = LicenseKind.Community;
+        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public byte[] GenerateCartonPdfLabel(CartonDto carton, OrderDto order)
@@ -37,15 +37,15 @@ public class LabelGenerator : ILabelGenerator
                 {
                     col.Spacing(8);
 
-                    col.Item().AlignCenter().Text("KOLİ ETİKETİ / CARTON LABEL").Bold().Size(14);
+                    col.Item().AlignCenter().Text("KOLİ ETİKETİ / CARTON LABEL").Bold().FontSize(14);
                     col.Item().LineHorizontal(1);
 
                     col.Item().Row(row =>
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Müşteri / Customer:").Bold().Size(8);
-                            c.Item().Text(order.CustomerName).Size(11);
+                            c.Item().Text("Müşteri / Customer:").Bold().FontSize(8);
+                            c.Item().Text(order.CustomerName).FontSize(11);
                         });
                     });
 
@@ -53,12 +53,12 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Sipariş No / Order No:").Bold().Size(8);
+                            c.Item().Text("Sipariş No / Order No:").Bold().FontSize(8);
                             c.Item().Text(order.OrderNo);
                         });
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Stok Kodu / Stock Code:").Bold().Size(8);
+                            c.Item().Text("Stok Kodu / Stock Code:").Bold().FontSize(8);
                             c.Item().Text(order.StockCode ?? "-");
                         });
                     });
@@ -67,7 +67,7 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Ürün Adı / Product Name:").Bold().Size(8);
+                            c.Item().Text("Ürün Adı / Product Name:").Bold().FontSize(8);
                             c.Item().Text(order.ProductName ?? "-");
                         });
                     });
@@ -76,13 +76,13 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("GTIN:").Bold().Size(8);
-                            c.Item().Text(order.GTIN).Size(11);
+                            c.Item().Text("GTIN:").Bold().FontSize(8);
+                            c.Item().Text(order.GTIN).FontSize(11);
                         });
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Adet / Quantity:").Bold().Size(8);
-                            c.Item().Text($"{carton.ActualQuantity} / {carton.TargetQuantity}").Size(12).Bold();
+                            c.Item().Text("Adet / Quantity:").Bold().FontSize(8);
+                            c.Item().Text($"{carton.ActualQuantity} / {carton.TargetQuantity}").FontSize(12).Bold();
                         });
                     });
 
@@ -90,12 +90,12 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Koli No / Carton No:").Bold().Size(8);
+                            c.Item().Text("Koli No / Carton No:").Bold().FontSize(8);
                             c.Item().Text(carton.CartonNo);
                         });
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Tarih / Date:").Bold().Size(8);
+                            c.Item().Text("Tarih / Date:").Bold().FontSize(8);
                             c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm"));
                         });
                     });
@@ -105,9 +105,9 @@ public class LabelGenerator : ILabelGenerator
                     col.Item().AlignCenter().Column(c =>
                     {
                         c.Spacing(4);
-                        c.Item().AlignCenter().Text("SSCC BARCODE").Bold().Size(8);
+                        c.Item().AlignCenter().Text("SSCC BARCODE").Bold().FontSize(8);
                         c.Item().AlignCenter().Width(120).Height(120).Image(qrCodeImageBytes);
-                        c.Item().AlignCenter().Text($"(00){carton.SSCC}").Bold().Size(11);
+                        c.Item().AlignCenter().Text($"(00){carton.SSCC}").Bold().FontSize(11);
                     });
                 });
             });
@@ -159,15 +159,15 @@ public class LabelGenerator : ILabelGenerator
                 {
                     col.Spacing(8);
 
-                    col.Item().AlignCenter().Text("PALET ETİKETİ / PALLET LABEL").Bold().Size(14);
+                    col.Item().AlignCenter().Text("PALET ETİKETİ / PALLET LABEL").Bold().FontSize(14);
                     col.Item().LineHorizontal(1);
 
                     col.Item().Row(row =>
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Müşteri / Customer:").Bold().Size(8);
-                            c.Item().Text(order.CustomerName).Size(11);
+                            c.Item().Text("Müşteri / Customer:").Bold().FontSize(8);
+                            c.Item().Text(order.CustomerName).FontSize(11);
                         });
                     });
 
@@ -175,12 +175,12 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Sipariş No / Order No:").Bold().Size(8);
+                            c.Item().Text("Sipariş No / Order No:").Bold().FontSize(8);
                             c.Item().Text(order.OrderNo);
                         });
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Stok Kodu / Stock Code:").Bold().Size(8);
+                            c.Item().Text("Stok Kodu / Stock Code:").Bold().FontSize(8);
                             c.Item().Text(order.StockCode ?? "-");
                         });
                     });
@@ -189,7 +189,7 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Ürün Adı / Product Name:").Bold().Size(8);
+                            c.Item().Text("Ürün Adı / Product Name:").Bold().FontSize(8);
                             c.Item().Text(order.ProductName ?? "-");
                         });
                     });
@@ -198,13 +198,13 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("GTIN:").Bold().Size(8);
-                            c.Item().Text(order.GTIN).Size(11);
+                            c.Item().Text("GTIN:").Bold().FontSize(8);
+                            c.Item().Text(order.GTIN).FontSize(11);
                         });
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Koli Sayısı / Carton Qty:").Bold().Size(8);
-                            c.Item().Text($"{cartonCount} / {order.CartonPerPallet}").Size(12).Bold();
+                            c.Item().Text("Koli Sayısı / Carton Qty:").Bold().FontSize(8);
+                            c.Item().Text($"{cartonCount} / {order.CartonPerPallet}").FontSize(12).Bold();
                         });
                     });
 
@@ -212,12 +212,12 @@ public class LabelGenerator : ILabelGenerator
                     {
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Palet No / Pallet No:").Bold().Size(8);
+                            c.Item().Text("Palet No / Pallet No:").Bold().FontSize(8);
                             c.Item().Text(pallet.PalletNo);
                         });
                         row.RelativeItem().Column(c =>
                         {
-                            c.Item().Text("Tarih / Date:").Bold().Size(8);
+                            c.Item().Text("Tarih / Date:").Bold().FontSize(8);
                             c.Item().Text(pallet.CreatedAt.ToString("dd.MM.yyyy HH:mm"));
                         });
                     });
@@ -227,9 +227,9 @@ public class LabelGenerator : ILabelGenerator
                     col.Item().AlignCenter().Column(c =>
                     {
                         c.Spacing(4);
-                        c.Item().AlignCenter().Text("SSCC BARCODE").Bold().Size(8);
+                        c.Item().AlignCenter().Text("SSCC BARCODE").Bold().FontSize(8);
                         c.Item().AlignCenter().Width(120).Height(120).Image(qrCodeImageBytes);
-                        c.Item().AlignCenter().Text($"(00){pallet.SSCC}").Bold().Size(11);
+                        c.Item().AlignCenter().Text($"(00){pallet.SSCC}").Bold().FontSize(11);
                     });
                 });
             });
