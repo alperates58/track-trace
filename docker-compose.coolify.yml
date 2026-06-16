@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: track_trace_api
     environment:
-      - ConnectionStrings__DefaultConnection=Host=track_trace_db;Port=5432;Database=track_trace;Username=${DB_USER:-postgres};Password=${DB_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=track_trace;Username=${DB_USER:-postgres};Password=${DB_PASSWORD}
       - Jwt__Secret=${JWT_SECRET}
       - Jwt__ExpiryHours=${JWT_EXPIRY_HOURS:-24}
       - Seed__AdminUsername=${ADMIN_USERNAME:-admin}
