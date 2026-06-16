@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Printer, Eye, Search, AlertCircle, FileText, Barcode } from 'lucide-react';
+import { Printer, Eye, Search, FileText } from 'lucide-react';
 
 interface Carton {
   id: string;
@@ -80,7 +80,7 @@ export const Cartons: React.FC = () => {
   const handlePrintPdf = async (cartonId: string) => {
     try {
       // Fetch as blob and open using authorized API client
-      const blob = await api.get(`/api/cartons/${cartonId}/label.pdf`);
+      const blob = (await api.get(`/api/cartons/${cartonId}/label.pdf`)) as Blob;
       const fileURL = URL.createObjectURL(blob);
       const pdfWindow = window.open();
       if (pdfWindow) {
@@ -202,7 +202,7 @@ export const Cartons: React.FC = () => {
         {/* Carton Detail Sidebar */}
         {selectedCarton && (
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignSelf: 'start' }}>
-            <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem' }}>{selectedCarton.cartonNo} Detayları</h3>
                 <code style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SSCC: {selectedCarton.sscc}</code>

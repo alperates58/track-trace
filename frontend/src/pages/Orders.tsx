@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Upload, Play, CheckCircle2, XCircle, Search, Eye } from 'lucide-react';
+import { Plus, Upload, Search, Eye } from 'lucide-react';
 
 interface Order {
   id: string;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Cpu, HardDrive, Database, Settings, ShieldAlert } from 'lucide-react';
+import { Cpu, Database, Settings, ShieldAlert } from 'lucide-react';
 
 interface SystemInfo {
   appVersion: string;

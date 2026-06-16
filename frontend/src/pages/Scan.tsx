@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
-import { Play, RotateCcw, AlertTriangle, CheckCircle, Volume2, VolumeX, Barcode } from 'lucide-react';
+import { Volume2, VolumeX, Barcode } from 'lucide-react';
 
 interface ActiveOrder {
   id: string;

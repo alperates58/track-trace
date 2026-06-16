@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Printer, Eye, Search, Layers, XCircle, ArrowUpRight, Barcode } from 'lucide-react';
+import { Plus, Printer, Eye, Search } from 'lucide-react';
 
 interface Pallet {
   id: string;
@@ -145,7 +145,7 @@ export const Pallets: React.FC = () => {
 
   const handlePrintPdf = async (palletId: string) => {
     try {
-      const blob = await api.get(`/api/pallets/${palletId}/label.pdf`);
+      const blob = (await api.get(`/api/pallets/${palletId}/label.pdf`)) as Blob;
       const fileURL = URL.createObjectURL(blob);
       const pdfWindow = window.open();
       if (pdfWindow) {
@@ -272,7 +272,7 @@ export const Pallets: React.FC = () => {
         {/* Pallet Detail & Adding carton */}
         {selectedPallet && (
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignSelf: 'start' }}>
-            <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem' }}>{selectedPallet.palletNo} Detayları</h3>
                 <code style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SSCC: {selectedPallet.sscc}</code>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Printer, Eye, Calendar, User } from 'lucide-react';
+import { Calendar, User } from 'lucide-react';
 
 interface PrintJob {
   id: string;

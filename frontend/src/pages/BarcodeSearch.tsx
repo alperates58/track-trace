@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
-import { Search, Info, CheckCircle, Clock, Archive, Layers } from 'lucide-react';
+import { Search, Info, CheckCircle, Clock, Archive, Layers, AlertCircle } from 'lucide-react';
 
 interface SearchResult {
   rawCode: string;
@@ -71,7 +71,7 @@ export const BarcodeSearch: React.FC = () => {
 
       {error && (
         <div className="card" style={{ textAlign: 'center', padding: '32px', color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)' }}>
-          <AlertCircleIcon size={32} style={{ margin: '0 auto 12px' }} />
+          <AlertCircle size={32} style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '1.15rem', marginBottom: '4px' }}>Barkod Bulunamadı</h3>
           <p style={{ fontSize: '0.9rem' }}>Sistemde "{queryCode}" verisine ait herhangi bir eşleşme bulunamadı.</p>
         </div>
@@ -212,9 +212,3 @@ export const BarcodeSearch: React.FC = () => {
   );
 };
 
-// Simple inline Helper Icon
-const AlertCircleIcon: React.FC<any> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={props.size} height={props.size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>
-);
