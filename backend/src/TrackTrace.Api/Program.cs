@@ -23,6 +23,7 @@ using TrackTrace.Application.Features.Orders;
 using TrackTrace.Application.Features.Pallets;
 using TrackTrace.Application.Features.Reports;
 using TrackTrace.Application.Features.Scan;
+using TrackTrace.Application.Features.Users;
 using TrackTrace.Domain.Enums;
 using TrackTrace.Infrastructure;
 using TrackTrace.Infrastructure.Data;
@@ -207,6 +208,52 @@ app.MapPost("/api/auth/login", async (LoginRequest request, IMediator mediator) 
         return Results.BadRequest(new { message = ex.Message });
     }
 }).AllowAnonymous();
+
+// Users Endpoints
+app.MapGet("/api/users", async (IMediator mediator) =>
+{
+    var users = await mediator.Send(new GetUsersQuery());
+    return Results.Ok(users);
+}).RequireAuthorization("AdminOnly");
+
+app.MapPost("/api/users", async (CreateUserRequest request, IMediator mediator) =>
+{
+    try
+    {
+        var id = await mediator.Send(new CreateUserCommand(request));
+        return Results.Created($"/api/users/{id}", new { id });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
+
+app.MapPut("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new UpdateUserCommand(id, request));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
+
+app.MapPost("/api/users/{id:guid}/toggle", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new ToggleUserActiveCommand(id));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
 
 // Dashboard Summary
 app.MapGet("/api/dashboard/summary", async (IMediator mediator) =>

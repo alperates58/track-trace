@@ -9,6 +9,7 @@ import { Pallets } from './pages/Pallets';
 import { BarcodeSearch } from './pages/BarcodeSearch';
 import { Reports } from './pages/Reports';
 import { SystemInfo } from './pages/SystemInfo';
+import { Users } from './pages/Users';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -20,6 +21,7 @@ import {
   Settings, 
   LogOut, 
   User as UserIcon,
+  Users as UsersIcon,
   Package
 } from 'lucide-react';
 
@@ -43,6 +45,8 @@ const AppShell: React.FC = () => {
         return <BarcodeSearch />;
       case 'reports':
         return <Reports />;
+      case 'users':
+        return <Users />;
       case 'system':
         return <SystemInfo />;
       default:
@@ -117,13 +121,22 @@ const AppShell: React.FC = () => {
           </div>
 
           {user?.role === 'Admin' && (
-            <div 
-              className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
-              onClick={() => setActiveTab('system')}
-            >
-              <Settings size={18} />
-              <span>Sistem Bilgisi</span>
-            </div>
+            <>
+              <div 
+                className={`sidebar-link ${activeTab === 'users' ? 'active' : ''}`}
+                onClick={() => setActiveTab('users')}
+              >
+                <UsersIcon size={18} />
+                <span>Kullanıcı Yönetimi</span>
+              </div>
+              <div 
+                className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
+                onClick={() => setActiveTab('system')}
+              >
+                <Settings size={18} />
+                <span>Sistem Bilgisi</span>
+              </div>
+            </>
           )}
         </nav>
 
@@ -151,7 +164,7 @@ const AppShell: React.FC = () => {
       <div className="main-content">
         <header className="header">
           <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
-            {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab}
+            {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             <span>Hattı Durumu: <strong style={{ color: 'var(--success)' }}>Çevrimiçi (Online)</strong></span>
