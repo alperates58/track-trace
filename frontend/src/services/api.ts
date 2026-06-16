@@ -41,7 +41,8 @@ async function request(path: string, options: RequestInit = {}) {
     return null;
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 export const api = {

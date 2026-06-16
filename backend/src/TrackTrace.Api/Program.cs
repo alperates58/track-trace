@@ -234,7 +234,7 @@ app.MapPut("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, IM
     try
     {
         await mediator.Send(new UpdateUserCommand(id, request));
-        return Results.Ok();
+        return Results.NoContent();
     }
     catch (Exception ex)
     {
@@ -247,7 +247,7 @@ app.MapPost("/api/users/{id:guid}/toggle", async (Guid id, IMediator mediator) =
     try
     {
         await mediator.Send(new ToggleUserActiveCommand(id));
-        return Results.Ok();
+        return Results.NoContent();
     }
     catch (Exception ex)
     {
