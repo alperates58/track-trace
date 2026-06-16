@@ -199,9 +199,9 @@ app.MapPost("/api/auth/login", async (LoginRequest request, IMediator mediator) 
         var result = await mediator.Send(new LoginCommand(request.Username, request.Password));
         return Results.Ok(result);
     }
-    catch (UnauthorizedAccessException)
+    catch (UnauthorizedAccessException ex)
     {
-        return Results.Unauthorized();
+        return Results.Json(new { message = ex.Message }, statusCode: 401);
     }
     catch (Exception ex)
     {

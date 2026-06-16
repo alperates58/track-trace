@@ -40,7 +40,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
     public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        const string sql = "SELECT * FROM Users WHERE Username = @Username LIMIT 1";
+        const string sql = "SELECT * FROM Users WHERE LOWER(Username) = LOWER(@Username) LIMIT 1";
         
         var user = await connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Username = request.Username });
         if (user == null)

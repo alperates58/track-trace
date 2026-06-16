@@ -100,7 +100,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
         using var connection = _dbConnectionFactory.CreateConnection();
 
         // Check unique username
-        const string checkSql = "SELECT EXISTS(SELECT 1 FROM Users WHERE Username = @Username)";
+        const string checkSql = "SELECT EXISTS(SELECT 1 FROM Users WHERE LOWER(Username) = LOWER(@Username))";
         var exists = await connection.ExecuteScalarAsync<bool>(checkSql, new { Username = req.Username });
         if (exists)
         {
@@ -152,7 +152,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
         using var connection = _dbConnectionFactory.CreateConnection();
 
         // Check if username unique to others
-        const string checkSql = "SELECT EXISTS(SELECT 1 FROM Users WHERE Username = @Username AND Id != @Id)";
+        const string checkSql = "SELECT EXISTS(SELECT 1 FROM Users WHERE LOWER(Username) = LOWER(@Username) AND Id != @Id)";
         var exists = await connection.ExecuteScalarAsync<bool>(checkSql, new { Username = req.Username, Id = request.Id });
         if (exists)
         {
