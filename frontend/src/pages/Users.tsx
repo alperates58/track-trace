@@ -26,6 +26,7 @@ export const Users: React.FC = () => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('Viewer');
   const [isActive, setIsActive] = useState(true);
 
@@ -50,6 +51,7 @@ export const Users: React.FC = () => {
     setName('');
     setUsername('');
     setPassword('');
+    setConfirmPassword('');
     setRole('Viewer');
     setIsActive(true);
   };
@@ -57,6 +59,11 @@ export const Users: React.FC = () => {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError('Girdiğiniz şifreler birbiriyle uyuşmuyor.');
+      return;
+    }
 
     try {
       await api.post('/api/users', { name, username, password, role });
@@ -82,6 +89,11 @@ export const Users: React.FC = () => {
     e.preventDefault();
     if (!selectedUser) return;
     setError(null);
+
+    if (password && password !== confirmPassword) {
+      setError('Girdiğiniz şifreler birbiriyle uyuşmuyor.');
+      return;
+    }
 
     try {
       await api.put(`/api/users/${selectedUser?.id}`, {
@@ -205,6 +217,10 @@ export const Users: React.FC = () => {
                 <input type="password" className="form-input" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
               </div>
               <div className="form-group">
+                <label className="form-label">Şifre Tekrarı *</label>
+                <input type="password" className="form-input" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+              </div>
+              <div className="form-group">
                 <label className="form-label">Rol *</label>
                 <select className="form-input" value={role} onChange={e => setRole(e.target.value)}>
                   <option value="Viewer">İzleyici (Viewer)</option>
@@ -242,6 +258,10 @@ export const Users: React.FC = () => {
               <div className="form-group">
                 <label className="form-label">Yeni Şifre (Değiştirmek İstemiyorsanız Boş Bırakın)</label>
                 <input type="password" className="form-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Yeni Şifre Tekrarı {password && '*'}</label>
+                <input type="password" className="form-input" required={!!password} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
               </div>
               <div className="form-group">
                 <label className="form-label">Rol *</label>
