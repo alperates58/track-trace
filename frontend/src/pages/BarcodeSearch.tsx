@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
-import { Search, Info, CheckCircle, Clock, Archive, Layers, AlertCircle } from 'lucide-react';
+import { Search, Info, AlertCircle } from 'lucide-react';
 
 interface SearchResult {
   rawCode: string;
@@ -87,7 +87,7 @@ export const BarcodeSearch: React.FC = () => {
             <div className="card" style={{ display: 'flex', gap: '20px' }}>
               <div style={{
                 width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', color: 'var(--primary)',
-                display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 700, flexShrink: 0
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>1</div>
               <div style={{ flex: 1 }}>
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -110,7 +110,7 @@ export const BarcodeSearch: React.FC = () => {
                 width: '40px', height: '40px', borderRadius: '50%',
                 backgroundColor: result.scannedAt ? 'var(--success-bg)' : '#f1f5f9',
                 color: result.scannedAt ? 'var(--success)' : 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 700, flexShrink: 0
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>2</div>
               <div style={{ flex: 1 }}>
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -138,7 +138,7 @@ export const BarcodeSearch: React.FC = () => {
                 width: '40px', height: '40px', borderRadius: '50%',
                 backgroundColor: result.cartonNo ? '#e0f2fe' : '#f1f5f9',
                 color: result.cartonNo ? '#0284c7' : 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 700, flexShrink: 0
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>3</div>
               <div style={{ flex: 1 }}>
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -166,7 +166,7 @@ export const BarcodeSearch: React.FC = () => {
                 width: '40px', height: '40px', borderRadius: '50%',
                 backgroundColor: result.palletNo ? '#faf5ff' : '#f1f5f9',
                 color: result.palletNo ? '#8b5cf6' : 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 700, flexShrink: 0
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>4</div>
               <div style={{ flex: 1 }}>
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Printer, Eye, Search } from 'lucide-react';
+import { Plus, Printer, Eye, Search, Barcode } from 'lucide-react';
 
 interface Pallet {
   id: string;
