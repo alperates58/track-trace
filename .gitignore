@@ -1,0 +1,19 @@
+# User-specified ignore rules
+.env
+.env.*
+!.env.example
+bin/
+obj/
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+coverage/
+.idea/
+.vscode/
+uploads/
+tmp/
+*.user
+*.suo
+*.sln.docstate

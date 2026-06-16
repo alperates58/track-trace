@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: track_trace_db
+    environment:
+      POSTGRES_DB: track_trace
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: <change_me>
+    ports:
+      - "5432:5432"
+    volumes:
+      - track_trace_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: track_trace_api
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=track_trace;Username=postgres;Password=<change_me>
+      - Jwt__Secret=<change_me_min_32_chars>
+      - Jwt__ExpiryHours=24
+      - Seed__AdminUsername=admin
+      - Seed__AdminPassword=<change_me>
+      - Seed__AdminName=System Administrator
+      - MaxUploadMb=100
+      - APP_VERSION=v0.1.0-mvp
+      - BUILD_DATE=2026-06-16
+      - GIT_COMMIT_SHA=dev-sha
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:8080
+    container_name: track_trace_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  track_trace_pgdata:
+    driver: local

@@ -1,0 +1,135 @@
+-- CREATE TABLES
+
+CREATE TABLE IF NOT EXISTS Users (
+    Id UUID PRIMARY KEY,
+    Name TEXT NOT NULL,
+    Username TEXT UNIQUE NOT NULL,
+    PasswordHash TEXT NOT NULL,
+    Role TEXT NOT NULL,
+    IsActive BOOLEAN NOT NULL DEFAULT TRUE,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Orders (
+    Id UUID PRIMARY KEY,
+    OrderNo TEXT UNIQUE NOT NULL,
+    CustomerName TEXT NOT NULL,
+    StockCode TEXT,
+    ProductName TEXT,
+    GTIN TEXT NOT NULL,
+    ProductPerCarton INT NOT NULL,
+    CartonPerPallet INT NOT NULL,
+    ExpectedQuantity INT NOT NULL,
+    Description TEXT,
+    Status TEXT NOT NULL, -- Draft, Active, Completed, Cancelled
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ImportBatches (
+    Id UUID PRIMARY KEY,
+    OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE,
+    FileName TEXT,
+    TotalRows INT NOT NULL DEFAULT 0,
+    ImportedCount INT NOT NULL DEFAULT 0,
+    DuplicateCount INT NOT NULL DEFAULT 0,
+    InvalidCount INT NOT NULL DEFAULT 0,
+    CreatedBy UUID REFERENCES Users(Id) ON DELETE SET NULL,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ImportErrors (
+    Id UUID PRIMARY KEY,
+    ImportBatchId UUID NOT NULL REFERENCES ImportBatches(Id) ON DELETE CASCADE,
+    RowNo INT NOT NULL,
+    RawLine TEXT,
+    ErrorMessage TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Cartons (
+    Id UUID PRIMARY KEY,
+    OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE,
+    CartonNo TEXT NOT NULL,
+    SSCC TEXT UNIQUE NOT NULL,
+    TargetQuantity INT NOT NULL,
+    ActualQuantity INT NOT NULL DEFAULT 0,
+    Status TEXT NOT NULL, -- Open, Closed, Printed, Palletized
+    CreatedBy UUID REFERENCES Users(Id) ON DELETE SET NULL,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ClosedAt TIMESTAMPTZ,
+    PrintedAt TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS Pallets (
+    Id UUID PRIMARY KEY,
+    OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE,
+    PalletNo TEXT NOT NULL,
+    SSCC TEXT UNIQUE NOT NULL,
+    Status TEXT NOT NULL, -- Open, Closed, Printed, Shipped
+    CreatedBy UUID REFERENCES Users(Id) ON DELETE SET NULL,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ClosedAt TIMESTAMPTZ,
+    PrintedAt TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS PalletCartons (
+    Id UUID PRIMARY KEY,
+    PalletId UUID NOT NULL REFERENCES Pallets(Id) ON DELETE CASCADE,
+    CartonId UUID NOT NULL REFERENCES Cartons(Id) ON DELETE CASCADE,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT UQ_PalletCartons_Carton UNIQUE (CartonId)
+);
+
+CREATE TABLE IF NOT EXISTS ProductCodes (
+    Id UUID PRIMARY KEY,
+    OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE,
+    RawCode TEXT NOT NULL,
+    Gtin TEXT,
+    SerialNo TEXT,
+    CryptoTail TEXT,
+    Status TEXT NOT NULL, -- Uploaded, Scanned, Packed, Shipped
+    CartonId UUID REFERENCES Cartons(Id) ON DELETE SET NULL,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ScannedAt TIMESTAMPTZ,
+    ScannedBy UUID REFERENCES Users(Id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS PrintJobs (
+    Id UUID PRIMARY KEY,
+    LabelType TEXT NOT NULL, -- Carton, Pallet
+    EntityId UUID NOT NULL, -- CartonId or PalletId
+    PrintedBy UUID REFERENCES Users(Id) ON DELETE SET NULL,
+    PrintCount INT NOT NULL DEFAULT 1,
+    Format TEXT NOT NULL, -- PDF, ZPL
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS AuditLogs (
+    Id UUID PRIMARY KEY,
+    UserId UUID REFERENCES Users(Id) ON DELETE SET NULL,
+    EntityName TEXT NOT NULL,
+    EntityId UUID,
+    Action TEXT NOT NULL,
+    OldValue JSONB,
+    NewValue JSONB,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    IpAddress TEXT
+);
+
+-- CREATE INDEXES FOR OPTIMAL SEARCH & BULK SCANNING
+
+CREATE UNIQUE INDEX IF NOT EXISTS UQ_ProductCodes_RawCode ON ProductCodes(RawCode);
+CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status ON ProductCodes(OrderId, Status);
+CREATE INDEX IF NOT EXISTS IX_ProductCodes_Gtin ON ProductCodes(Gtin);
+CREATE INDEX IF NOT EXISTS IX_ProductCodes_CartonId ON ProductCodes(CartonId);
+
+CREATE INDEX IF NOT EXISTS IX_Cartons_OrderId_Status ON Cartons(OrderId, Status);
+CREATE INDEX IF NOT EXISTS IX_Cartons_SSCC ON Cartons(SSCC);
+
+CREATE INDEX IF NOT EXISTS IX_Pallets_OrderId_Status ON Pallets(OrderId, Status);
+CREATE INDEX IF NOT EXISTS IX_Pallets_SSCC ON Pallets(SSCC);
+
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_EntityName_EntityId ON AuditLogs(EntityName, EntityId);
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_CreatedAt ON AuditLogs(CreatedAt);
+
+CREATE INDEX IF NOT EXISTS IX_PrintJobs_EntityId ON PrintJobs(EntityId);
