@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, UserPlus, Shield, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { UserPlus, Shield, CheckCircle, XCircle, Edit } from 'lucide-react';
 
 interface User {
   id: string;
@@ -84,7 +84,7 @@ export const Users: React.FC = () => {
     setError(null);
 
     try {
-      await api.put(`/api/users/${selectedUser.id}`, {
+      await api.put(`/api/users/${selectedUser?.id}`, {
         name,
         username,
         password: password || null,
@@ -256,7 +256,7 @@ export const Users: React.FC = () => {
                   type="checkbox"
                   id="isActiveCheckbox"
                   checked={isActive}
-                  disabled={currentUser?.id === selectedUser.id}
+                  disabled={currentUser?.id === selectedUser?.id}
                   onChange={e => setIsActive(e.target.checked)}
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
