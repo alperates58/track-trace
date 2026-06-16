@@ -18,7 +18,7 @@ async function request(path: string, options: RequestInit = {}) {
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && path !== '/api/auth/login') {
     localStorage.removeItem('tt_token');
     localStorage.removeItem('tt_user');
     window.location.reload();
