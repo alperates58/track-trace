@@ -398,7 +398,7 @@ app.MapGet("/api/cartons/{id:guid}/label.pdf", async (Guid id, IMediator mediato
     try
     {
         var (fileContent, _) = await mediator.Send(new PrintCartonLabelCommand(id, "PDF"));
-        return Results.Bytes(fileContent!, "application/pdf", $"carton_label_{id}.pdf", inline: true);
+        return Results.Bytes(fileContent!, "application/pdf", $"carton_label_{id}.pdf");
     }
     catch (Exception ex)
     {
@@ -489,7 +489,7 @@ app.MapGet("/api/pallets/{id:guid}/label.pdf", async (Guid id, IMediator mediato
     try
     {
         var (fileContent, _) = await mediator.Send(new PrintPalletLabelCommand(id, "PDF"));
-        return Results.Bytes(fileContent!, "application/pdf", $"pallet_label_{id}.pdf", inline: true);
+        return Results.Bytes(fileContent!, "application/pdf", $"pallet_label_{id}.pdf");
     }
     catch (Exception ex)
     {
