@@ -67,7 +67,7 @@ export const Pallets: React.FC = () => {
 
   const handleOpenCreateModal = async () => {
     try {
-      const res = await api.get('/api/orders?pageSize=100&status=Active');
+      const res = await api.get('/api/orders?pageNumber=1&pageSize=100&status=Active');
       setActiveOrders(res.items);
       setShowCreateModal(true);
     } catch (err) {
@@ -97,7 +97,7 @@ export const Pallets: React.FC = () => {
 
     try {
       // Fetch cartons inside this pallet
-      const res = await api.get(`/api/cartons?pageSize=100&status=Palletized&orderId=${pallet.orderId}`);
+      const res = await api.get(`/api/cartons?pageNumber=1&pageSize=100&status=Palletized&orderId=${pallet.orderId}`);
       // Filter cartons that might belong to this pallet
       // (Normally we would query the pallet-carton endpoint but in MVP, we can retrieve cartons or filter).
       // Let's call standard cartons filter for palletId if API supports, or query all.

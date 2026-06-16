@@ -264,13 +264,13 @@ app.MapGet("/api/dashboard/summary", async (IMediator mediator) =>
 
 // Orders Endpoints
 app.MapGet("/api/orders", async (
-    [FromQuery] int pageNumber,
-    [FromQuery] int pageSize,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
     [FromQuery] string? search,
     [FromQuery] string? status,
     IMediator mediator) =>
 {
-    var (items, count) = await mediator.Send(new GetOrdersQuery(pageNumber == 0 ? 1 : pageNumber, pageSize == 0 ? 10 : pageSize, search, status));
+    var (items, count) = await mediator.Send(new GetOrdersQuery(pageNumber ?? 1, pageSize ?? 10, search, status));
     return Results.Ok(new { items, totalCount = count });
 }).RequireAuthorization("ViewerOrAbove");
 
@@ -393,14 +393,14 @@ app.MapPost("/api/scan/product", async (ScanRequest request, IMediator mediator)
 
 // Cartons Endpoints
 app.MapGet("/api/cartons", async (
-    [FromQuery] int pageNumber,
-    [FromQuery] int pageSize,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
     [FromQuery] string? search,
     [FromQuery] string? status,
     [FromQuery] Guid? orderId,
     IMediator mediator) =>
 {
-    var (items, count) = await mediator.Send(new GetCartonsQuery(pageNumber == 0 ? 1 : pageNumber, pageSize == 0 ? 10 : pageSize, search, status, orderId));
+    var (items, count) = await mediator.Send(new GetCartonsQuery(pageNumber ?? 1, pageSize ?? 10, search, status, orderId));
     return Results.Ok(new { items, totalCount = count });
 }).RequireAuthorization("ViewerOrAbove");
 
@@ -468,14 +468,14 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
 
 // Pallets Endpoints
 app.MapGet("/api/pallets", async (
-    [FromQuery] int pageNumber,
-    [FromQuery] int pageSize,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
     [FromQuery] string? search,
     [FromQuery] string? status,
     [FromQuery] Guid? orderId,
     IMediator mediator) =>
 {
-    var (items, count) = await mediator.Send(new GetPalletsQuery(pageNumber == 0 ? 1 : pageNumber, pageSize == 0 ? 10 : pageSize, search, status, orderId));
+    var (items, count) = await mediator.Send(new GetPalletsQuery(pageNumber ?? 1, pageSize ?? 10, search, status, orderId));
     return Results.Ok(new { items, totalCount = count });
 }).RequireAuthorization("ViewerOrAbove");
 
@@ -570,11 +570,11 @@ app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator med
 
 // Print Jobs History
 app.MapGet("/api/print-jobs", async (
-    [FromQuery] int pageNumber,
-    [FromQuery] int pageSize,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
     IMediator mediator) =>
 {
-    var (items, count) = await mediator.Send(new GetPrintJobsQuery(pageNumber == 0 ? 1 : pageNumber, pageSize == 0 ? 10 : pageSize));
+    var (items, count) = await mediator.Send(new GetPrintJobsQuery(pageNumber ?? 1, pageSize ?? 10));
     return Results.Ok(new { items, totalCount = count });
 }).RequireAuthorization("ViewerOrAbove");
 
