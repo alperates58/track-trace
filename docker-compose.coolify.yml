@@ -46,6 +46,8 @@ services:
       - "traefik.http.routers.track-trace-api.rule=Host(`track-api.alperates.com.tr`)"
       - "traefik.http.routers.track-trace-api.service=track-trace-api"
       - "traefik.http.routers.track-trace-api.middlewares=crowdsec@file"
+      - "traefik.http.routers.track-trace-api.tls=true"
+      - "traefik.http.routers.track-trace-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.track-trace-api.loadbalancer.server.port=8080"
       # API HTTP Router & Redirect Middleware
       - "traefik.http.routers.track-trace-api-http.entrypoints=http"
@@ -77,6 +79,8 @@ services:
       - "traefik.http.routers.track-trace-frontend.rule=Host(`track.alperates.com.tr`)"
       - "traefik.http.routers.track-trace-frontend.service=track-trace-frontend"
       - "traefik.http.routers.track-trace-frontend.middlewares=crowdsec@file"
+      - "traefik.http.routers.track-trace-frontend.tls=true"
+      - "traefik.http.routers.track-trace-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.track-trace-frontend.loadbalancer.server.port=80"
       # Frontend HTTP Router & Redirect Middleware
       - "traefik.http.routers.track-trace-frontend-http.entrypoints=http"
