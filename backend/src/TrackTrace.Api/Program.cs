@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using Serilog;
 using TrackTrace.Application;
 using TrackTrace.Application.Common;
@@ -38,6 +39,8 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Add services
 builder.Services.AddApplication();
@@ -131,6 +134,32 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("DefaultPolicy");
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Beklenmeyen API hatasi olustu.");
+
+        if (context.Response.HasStarted)
+        {
+            throw;
+        }
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "Sunucuda beklenmeyen bir hata olustu. Lutfen tekrar deneyin."
+        });
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

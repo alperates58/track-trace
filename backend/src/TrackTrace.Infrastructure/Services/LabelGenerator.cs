@@ -15,12 +15,6 @@ namespace TrackTrace.Infrastructure.Services;
 
 public class LabelGenerator : ILabelGenerator
 {
-    public LabelGenerator()
-    {
-        // Set QuestPDF license once
-        QuestPDF.Settings.License = LicenseType.Community;
-    }
-
     public byte[] GenerateCartonPdfLabel(CartonDto carton, OrderDto order)
     {
         // Generate QR code bytes using QRCoder (does not require System.Drawing, fully Linux-safe!)
