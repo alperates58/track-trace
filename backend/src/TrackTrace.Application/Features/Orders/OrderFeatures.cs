@@ -448,9 +448,11 @@ public class OrderHandlers :
             if (productPerCartonCol == -1) productPerCartonCol = 7;
             if (cartonPerPalletCol == -1) cartonPerPalletCol = 8;
 
-            // Load existing Order Nos from database
-            var existingOrderNos = (await connection.QueryAsync<string>("SELECT OrderNo FROM Orders")).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var seenOrderNosInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            // Load existing OrderNo and StockCode combinations from database
+            var existingOrders = (await connection.QueryAsync<dynamic>("SELECT OrderNo, StockCode FROM Orders"))
+                .Select(x => $"{(string)x.orderno}|||{(string)(x.stockcode ?? "")}")
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var seenOrdersInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             for (int i = 1; i < rows.Count; i++) // Skip header
             {
@@ -519,21 +521,23 @@ public class OrderHandlers :
                     }
                 }
 
-                if (existingOrderNos.Contains(orderNo))
+                string orderKey = $"{orderNo.Trim()}|||{stockCode.Trim()}";
+
+                if (existingOrders.Contains(orderKey))
                 {
                     duplicateCount++;
-                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Veritabanında bu sipariş numarası zaten mevcut."));
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, $"Veritabanında bu sipariş numarası ve stok kodu ({stockCode}) kombinasyonu zaten mevcut."));
                     continue;
                 }
 
-                if (seenOrderNosInFile.Contains(orderNo))
+                if (seenOrdersInFile.Contains(orderKey))
                 {
                     duplicateCount++;
-                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Dosya içerisinde mükerrer sipariş numarası."));
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, $"Dosya içerisinde mükerrer sipariş numarası ve stok kodu ({stockCode}) kombinasyonu."));
                     continue;
                 }
 
-                seenOrderNosInFile.Add(orderNo);
+                seenOrdersInFile.Add(orderKey);
 
                 ordersToInsert.Add(new
                 {

@@ -6,6 +6,8 @@ interface ActiveOrder {
   id: string;
   orderNo: string;
   customerName: string;
+  stockCode: string;
+  productName: string;
   gtin: string;
   productPerCarton: number;
   expectedQuantity: number;
@@ -23,6 +25,7 @@ interface ScanHistory {
 export const Scan: React.FC = () => {
   // Orders
   const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
+  const [selectedOrderNo, setSelectedOrderNo] = useState<string>('');
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<ActiveOrder | null>(null);
 
@@ -71,6 +74,14 @@ export const Scan: React.FC = () => {
       focusInput();
     } else {
       setSelectedOrder(null);
+      setCartonNo(null);
+      setCartonSSCC(null);
+      setCurrentQty(0);
+      setTargetQty(0);
+      setScanHistory([]);
+      setStatus('ready');
+      setIndicatorTitle('OKUTMA BEKLENİYOR');
+      setIndicatorMsg('Lütfen bir sipariş seçip barkod okutun.');
     }
   }, [selectedOrderId]);
 
@@ -82,6 +93,15 @@ export const Scan: React.FC = () => {
   }, [selectedOrderId]);
 
   const focusInput = () => {
+    // Do not steal focus if user is actively focusing a select dropdown or other controls
+    const active = document.activeElement;
+    if (active && (
+      active.tagName === 'SELECT' || 
+      active.tagName === 'BUTTON' || 
+      (active.tagName === 'INPUT' && !active.classList.contains('hidden-input'))
+    )) {
+      return;
+    }
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -245,17 +265,43 @@ export const Scan: React.FC = () => {
           </span>
           <select
             className="form-input"
-            style={{ width: '100%', maxWidth: '320px', height: '40px', fontWeight: 600 }}
-            value={selectedOrderId}
-            onChange={(e) => setSelectedOrderId(e.target.value)}
+            style={{ width: '100%', maxWidth: '250px', height: '40px', fontWeight: 600 }}
+            value={selectedOrderNo}
+            onChange={(e) => {
+              setSelectedOrderNo(e.target.value);
+              setSelectedOrderId('');
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <option value="">-- AKTİF SİPARİŞ SEÇİN --</option>
-            {activeOrders.map(o => (
-              <option key={o.id} value={o.id}>
-                {o.orderNo} - {o.customerName} ({o.scannedCount}/{o.expectedQuantity})
-              </option>
-            ))}
+            <option value="">-- SİPARİŞ NO SEÇİN --</option>
+            {Array.from(new Set(activeOrders.map(o => o.orderNo))).map(orderNo => {
+              const customerName = activeOrders.find(o => o.orderNo === orderNo)?.customerName || '';
+              return (
+                <option key={orderNo} value={orderNo}>
+                  {orderNo} - {customerName}
+                </option>
+              );
+            })}
           </select>
+
+          {selectedOrderNo && (
+            <select
+              className="form-input"
+              style={{ width: '100%', maxWidth: '350px', height: '40px', fontWeight: 600 }}
+              value={selectedOrderId}
+              onChange={(e) => setSelectedOrderId(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="">-- ÜRÜN / STOK KODU SEÇİN --</option>
+              {activeOrders
+                .filter(o => o.orderNo === selectedOrderNo)
+                .map(o => (
+                  <option key={o.id} value={o.id}>
+                    {o.stockCode} - {o.productName} ({o.scannedCount}/{o.expectedQuantity})
+                  </option>
+                ))}
+            </select>
+          )}
         </div>
 
         <button

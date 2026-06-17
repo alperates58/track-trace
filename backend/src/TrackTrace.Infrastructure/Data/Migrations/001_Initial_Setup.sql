@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS Users (
 
 CREATE TABLE IF NOT EXISTS Orders (
     Id UUID PRIMARY KEY,
-    OrderNo TEXT UNIQUE NOT NULL,
+    OrderNo TEXT NOT NULL,
     CustomerName TEXT NOT NULL,
     StockCode TEXT,
     ProductName TEXT,

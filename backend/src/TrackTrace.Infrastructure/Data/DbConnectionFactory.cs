@@ -55,6 +55,17 @@ public class DbConnectionFactory : IDbConnectionFactory
             using var cmd = new NpgsqlCommand(GetFallbackMigrationSql(), connection);
             cmd.ExecuteNonQuery();
         }
+
+        // Drop unique constraint on OrderNo to allow multiple line items with the same order number
+        try
+        {
+            using var cmd = new NpgsqlCommand("ALTER TABLE Orders DROP CONSTRAINT IF EXISTS orders_orderno_key;", connection);
+            cmd.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Could not drop orders_orderno_key constraint: " + ex.Message);
+        }
     }
 
     private string GetFallbackMigrationSql()
@@ -64,7 +75,7 @@ public class DbConnectionFactory : IDbConnectionFactory
             Id UUID PRIMARY KEY, Name TEXT NOT NULL, Username TEXT UNIQUE NOT NULL, PasswordHash TEXT NOT NULL, Role TEXT NOT NULL, IsActive BOOLEAN NOT NULL DEFAULT TRUE, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS Orders (
-            Id UUID PRIMARY KEY, OrderNo TEXT UNIQUE NOT NULL, CustomerName TEXT NOT NULL, StockCode TEXT, ProductName TEXT, GTIN TEXT NOT NULL, ProductPerCarton INT NOT NULL, CartonPerPallet INT NOT NULL, ExpectedQuantity INT NOT NULL, Description TEXT, Status TEXT NOT NULL, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+            Id UUID PRIMARY KEY, OrderNo TEXT NOT NULL, CustomerName TEXT NOT NULL, StockCode TEXT, ProductName TEXT, GTIN TEXT NOT NULL, ProductPerCarton INT NOT NULL, CartonPerPallet INT NOT NULL, ExpectedQuantity INT NOT NULL, Description TEXT, Status TEXT NOT NULL, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS ImportBatches (
             Id UUID PRIMARY KEY, OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE, FileName TEXT, TotalRows INT NOT NULL DEFAULT 0, ImportedCount INT NOT NULL DEFAULT 0, DuplicateCount INT NOT NULL DEFAULT 0, InvalidCount INT NOT NULL DEFAULT 0, CreatedBy UUID REFERENCES Users(Id) ON DELETE SET NULL, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
