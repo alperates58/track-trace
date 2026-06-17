@@ -503,14 +503,15 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
                 totalLines++;
 
                 var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
+                var encodingResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncodingOrBypassValidation(line);
                 if (parseResult.Success)
                 {
                     validCodes.Add(parseResult.Normalized);
-                    previewCodes.Add(parseResult.Normalized);
+                    previewCodes.Add(encodingResult.Success ? encodingResult.Normalized : parseResult.Normalized);
                 }
                 else
                 {
-                    previewCodes.Add(line.Trim());
+                    previewCodes.Add(encodingResult.Success ? encodingResult.Normalized : line.Trim());
                     errors.Add(new { rowNo, rawLine = line, errorMessage = parseResult.ErrorMessage ?? "Geçersiz barkod formatı." });
                 }
             }
@@ -558,7 +559,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
             while ((line = await reader.ReadLineAsync()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
+                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncodingOrBypassValidation(line);
                 if (parseResult.Success)
                 {
                     codesToGenerate.Add(parseResult.Normalized);
@@ -598,7 +599,7 @@ app.MapGet("/api/datamatrix/preview", (string text, ILabelGenerator labelGenerat
 {
     try
     {
-        var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(text);
+        var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncodingOrBypassValidation(text);
         string finalCode = parseResult.Success ? parseResult.Normalized : text;
         byte[] imgBytes = labelGenerator.GenerateDataMatrixImage(finalCode);
         return Results.File(imgBytes, "image/png");
