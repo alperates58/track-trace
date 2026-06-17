@@ -177,10 +177,13 @@ export const Pallets: React.FC = () => {
     try {
       const blob = (await api.get(`/api/pallets/${palletId}/label.pdf`)) as Blob;
       const fileURL = URL.createObjectURL(blob);
-      const pdfWindow = window.open();
-      if (pdfWindow) {
-        pdfWindow.location.href = fileURL;
-      }
+      const a = document.createElement('a');
+      a.href = fileURL;
+      a.download = `palet_etiketi_${palletId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(fileURL);
       fetchPallets();
     } catch (err: any) {
       alert('PDF üretilemedi: ' + err.message);

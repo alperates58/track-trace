@@ -65,22 +65,49 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
         {
             using var workbook = new ClosedXML.Excel.XLWorkbook(request.FileStream);
             var worksheet = workbook.Worksheets.FirstOrDefault();
-            if (worksheet != null)
+            if (worksheet != null && worksheet.RangeUsed() != null)
             {
                 var rows = worksheet.RangeUsed().RowsUsed();
                 foreach (var row in rows)
                 {
-                    string? candidate = null;
-                    int cellCount = row.CellCount();
-                    for (int col = 1; col <= Math.Min(cellCount, 5); col++)
+                    // Skip completely empty rows
+                    if (row.CellsUsed().Count() == 0) continue;
+
+                    // Header row check: if any cell in the row contains typical header words, skip the row
+                    bool isHeader = false;
+                    foreach (var cell in row.CellsUsed())
                     {
-                        string cellVal = row.Cell(col).GetValue<string>().Trim();
+                        string cellVal = cell.GetFormattedString().Trim().ToLowerInvariant();
+                        if (cellVal == "barkod" || cellVal == "barcode" || cellVal == "kod" || cellVal == "code" || 
+                            cellVal == "gtin" || cellVal == "serial" || cellVal == "seri" || cellVal == "sscc" || 
+                            cellVal == "value" || cellVal == "değer")
+                        {
+                            isHeader = true;
+                            break;
+                        }
+                    }
+                    if (isHeader) continue;
+
+                    string? candidate = null;
+                    foreach (var cell in row.CellsUsed())
+                    {
+                        string cellVal = "";
+                        if (cell.DataType == ClosedXML.Excel.XLDataType.Number)
+                        {
+                            // Avoid scientific notation formatting for numeric barcodes
+                            cellVal = cell.Value.GetNumber().ToString("F0", System.Globalization.CultureInfo.InvariantCulture).Trim();
+                        }
+                        else
+                        {
+                            cellVal = cell.GetFormattedString().Trim();
+                        }
+
                         if (!string.IsNullOrWhiteSpace(cellVal))
                         {
                             if (cellVal.StartsWith("01") || cellVal.StartsWith("(01)") || cellVal.StartsWith("\\F") || cellVal.StartsWith("\u001d"))
                             {
                                 candidate = cellVal;
-                                break;
+                                break; // High-probability barcode found, stop scanning other cells in this row
                             }
                             if (candidate == null)
                             {

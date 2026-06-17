@@ -467,14 +467,14 @@ public class OrderHandlers :
                 var row = rows[i];
                 int rowNo = row.RowNumber();
 
-                string orderNo = orderNoCol <= colCount ? row.Cell(orderNoCol).GetValue<string>().Trim() : "";
-                string customerName = customerNameCol <= colCount ? row.Cell(customerNameCol).GetValue<string>().Trim() : "";
-                string gtin = gtinCol <= colCount ? row.Cell(gtinCol).GetValue<string>().Trim() : "";
-                string stockCode = stockCodeCol <= colCount ? row.Cell(stockCodeCol).GetValue<string>().Trim() : "";
-                string productName = productNameCol <= colCount ? row.Cell(productNameCol).GetValue<string>().Trim() : "";
-                string qtyStr = qtyCol <= colCount ? row.Cell(qtyCol).GetValue<string>().Trim() : "";
-                string productPerCartonStr = productPerCartonCol <= colCount ? row.Cell(productPerCartonCol).GetValue<string>().Trim() : "";
-                string cartonPerPalletStr = cartonPerPalletCol <= colCount ? row.Cell(cartonPerPalletCol).GetValue<string>().Trim() : "";
+                string orderNo = orderNoCol <= colCount ? GetCellValueAsString(row.Cell(orderNoCol)) : "";
+                string customerName = customerNameCol <= colCount ? GetCellValueAsString(row.Cell(customerNameCol)) : "";
+                string gtin = gtinCol <= colCount ? GetCellValueAsString(row.Cell(gtinCol)) : "";
+                string stockCode = stockCodeCol <= colCount ? GetCellValueAsString(row.Cell(stockCodeCol)) : "";
+                string productName = productNameCol <= colCount ? GetCellValueAsString(row.Cell(productNameCol)) : "";
+                string qtyStr = qtyCol <= colCount ? GetCellValueAsString(row.Cell(qtyCol)) : "";
+                string productPerCartonStr = productPerCartonCol <= colCount ? GetCellValueAsString(row.Cell(productPerCartonCol)) : "";
+                string cartonPerPalletStr = cartonPerPalletCol <= colCount ? GetCellValueAsString(row.Cell(cartonPerPalletCol)) : "";
 
                 if (string.IsNullOrWhiteSpace(orderNo))
                 {
@@ -497,7 +497,7 @@ public class OrderHandlers :
                     continue;
                 }
 
-                if (!int.TryParse(qtyStr, out int expectedQty) || expectedQty <= 0)
+                if (!TryParseExcelInt(qtyStr, out int expectedQty) || expectedQty <= 0)
                 {
                     invalidCount++;
                     errors.Add(new ImportErrorDto(rowNo, orderNo, $"Miktar bilgisi hatalı: {qtyStr}. 0'dan büyük tam sayı olmalıdır."));
@@ -511,7 +511,7 @@ public class OrderHandlers :
                     continue;
                 }
 
-                if (!int.TryParse(productPerCartonStr, out int productPerCarton) || productPerCarton <= 0)
+                if (!TryParseExcelInt(productPerCartonStr, out int productPerCarton) || productPerCarton <= 0)
                 {
                     invalidCount++;
                     errors.Add(new ImportErrorDto(rowNo, orderNo, $"Koli içi adet bilgisi hatalı: {productPerCartonStr}. 0'dan büyük tam sayı olmalıdır."));
@@ -521,7 +521,7 @@ public class OrderHandlers :
                 int cartonPerPallet = 20; // Default if not provided
                 if (!string.IsNullOrWhiteSpace(cartonPerPalletStr))
                 {
-                    if (!int.TryParse(cartonPerPalletStr, out cartonPerPallet) || cartonPerPallet <= 0)
+                    if (!TryParseExcelInt(cartonPerPalletStr, out cartonPerPallet) || cartonPerPallet <= 0)
                     {
                         invalidCount++;
                         errors.Add(new ImportErrorDto(rowNo, orderNo, $"Palet içi koli bilgisi hatalı: {cartonPerPalletStr}. 0'dan büyük tam sayı olmalıdır."));
@@ -598,6 +598,40 @@ public class OrderHandlers :
         }
 
         return new OrderImportResultDto(totalRows, importedCount, duplicateCount, invalidCount, errors);
+    }
+
+    private static string GetCellValueAsString(ClosedXML.Excel.IXLCell cell)
+    {
+        if (cell.DataType == ClosedXML.Excel.XLDataType.Number)
+        {
+            return cell.Value.GetNumber().ToString("F0", System.Globalization.CultureInfo.InvariantCulture).Trim();
+        }
+        return cell.GetFormattedString().Trim();
+    }
+
+    private static bool TryParseExcelInt(string input, out int value)
+    {
+        value = 0;
+        if (string.IsNullOrWhiteSpace(input)) return false;
+
+        if (int.TryParse(input, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out value))
+        {
+            return true;
+        }
+
+        if (double.TryParse(input, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double doubleVal))
+        {
+            value = (int)Math.Round(doubleVal);
+            return true;
+        }
+
+        if (double.TryParse(input.Replace(",", "."), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double doubleValComma))
+        {
+            value = (int)Math.Round(doubleValComma);
+            return true;
+        }
+
+        return false;
     }
 }
 

@@ -85,10 +85,13 @@ export const Cartons: React.FC = () => {
       // Fetch as blob and open using authorized API client
       const blob = (await api.get(`/api/cartons/${cartonId}/label.pdf`)) as Blob;
       const fileURL = URL.createObjectURL(blob);
-      const pdfWindow = window.open();
-      if (pdfWindow) {
-        pdfWindow.location.href = fileURL;
-      }
+      const a = document.createElement('a');
+      a.href = fileURL;
+      a.download = `koli_etiketi_${cartonId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(fileURL);
       fetchCartons(); // refresh to show "Printed" status
     } catch (err: any) {
       alert('PDF oluşturulamadı: ' + err.message);
