@@ -53,6 +53,12 @@ public record OrderImportResultDto(
 
 public record ImportOrdersExcelCommand(System.IO.Stream FileStream, string FileName) : IRequest<OrderImportResultDto>;
 
+public class OrderKeyDto
+{
+    public string OrderNo { get; set; } = "";
+    public string? StockCode { get; set; }
+}
+
 #region Validators
 
 public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
@@ -449,8 +455,9 @@ public class OrderHandlers :
             if (cartonPerPalletCol == -1) cartonPerPalletCol = 8;
 
             // Load existing OrderNo and StockCode combinations from database
-            var existingOrders = (await connection.QueryAsync<dynamic>("SELECT OrderNo, StockCode FROM Orders"))
-                .Select(x => $"{(string)x.orderno}|||{(string)(x.stockcode ?? "")}")
+            var existingOrdersList = await connection.QueryAsync<OrderKeyDto>("SELECT OrderNo, StockCode FROM Orders");
+            var existingOrders = existingOrdersList
+                .Select(x => $"{x.OrderNo.Trim()}|||{(x.StockCode ?? "").Trim()}")
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var seenOrdersInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
