@@ -4,7 +4,6 @@ import {
   Upload, 
   FileText, 
   CheckCircle, 
-  XCircle, 
   AlertCircle, 
   QrCode, 
   Download, 
@@ -541,7 +540,7 @@ export const DataMatrixCreator: React.FC = () => {
               {/* Generate Trigger Action */}
               <button 
                 className="btn btn-primary"
-                disabled={!file || generating || analyzing || (analysis && analysis.validCount === 0)}
+                disabled={!file || generating || analyzing || (analysis?.validCount === 0)}
                 onClick={handleGenerate}
                 style={{
                   display: 'flex',
