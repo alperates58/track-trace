@@ -23,9 +23,7 @@ import {
   User as UserIcon,
   Users as UsersIcon,
   Package,
-  Menu,
-  ChevronLeft,
-  ChevronRight
+  Menu
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
