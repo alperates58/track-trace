@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { 
   Upload, 
   FileText, 
-  CheckCircle2, 
+  CheckCircle, 
   XCircle, 
   AlertCircle, 
   QrCode, 
@@ -108,11 +108,11 @@ export const DataMatrixCreator: React.FC = () => {
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile) {
@@ -274,7 +274,7 @@ export const DataMatrixCreator: React.FC = () => {
           {analysis && (
             <div className="card" style={{ padding: '24px' }}>
               <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CheckCircle2 size={18} color="var(--success)" />
+                <CheckCircle size={18} color="var(--success)" />
                 Analiz Sonuçları
               </h3>
 
