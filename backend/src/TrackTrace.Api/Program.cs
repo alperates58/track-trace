@@ -489,7 +489,6 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
 
         var errors = new List<object>();
         var validCodes = new List<string>();
-        var previewCodes = new List<string>();
         int totalLines = 0;
         int rowNo = 0;
 
@@ -506,11 +505,9 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
                 if (parseResult.Success)
                 {
                     validCodes.Add(parseResult.Normalized);
-                    previewCodes.Add(parseResult.Normalized);
                 }
                 else
                 {
-                    previewCodes.Add(line.Trim());
                     errors.Add(new { rowNo, rawLine = line, errorMessage = parseResult.ErrorMessage ?? "Geçersiz barkod formatı." });
                 }
             }
@@ -521,7 +518,7 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
             totalLines,
             validCount = validCodes.Count,
             invalidCount = errors.Count,
-            previewCodes = previewCodes.Take(5).ToList(),
+            previewCodes = validCodes.Take(5).ToList(),
             errors
         });
     }
@@ -551,7 +548,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
         string? line2 = form["line2"].ToString();
         bool labelBelow = !bool.TryParse(form["labelBelow"], out bool lb) || lb;
 
-        var codesToGenerate = new List<string>();
+        var validCodes = new List<string>();
         using (var reader = new StreamReader(file.OpenReadStream()))
         {
             string? line;
@@ -561,29 +558,25 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
                 var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
                 if (parseResult.Success)
                 {
-                    codesToGenerate.Add(parseResult.Normalized);
-                }
-                else
-                {
-                    codesToGenerate.Add(line.Trim());
+                    validCodes.Add(parseResult.Normalized);
                 }
             }
         }
 
-        if (codesToGenerate.Count == 0)
+        if (validCodes.Count == 0)
         {
-            return Results.BadRequest(new { message = "Dosya içerisinde üretilecek kod bulunamadı." });
+            return Results.BadRequest(new { message = "Dosya içerisinde geçerli kod bulunamadı." });
         }
 
         if (string.Equals(format, "PNG", StringComparison.OrdinalIgnoreCase))
         {
-            byte[] zipBytes = labelGenerator.GenerateDataMatrixZip(codesToGenerate);
+            byte[] zipBytes = labelGenerator.GenerateDataMatrixZip(validCodes);
             return Results.File(zipBytes, "application/zip", "datamatrix_images.zip");
         }
         else // PDF
         {
             byte[] pdfBytes = labelGenerator.GenerateDataMatrixCodesPdf(
-                codesToGenerate, cols, rows, size, addText, line1, line2, labelBelow);
+                validCodes, cols, rows, size, addText, line1, line2, labelBelow);
 
             return Results.File(pdfBytes, "application/pdf", "datamatrix_labels.pdf");
         }

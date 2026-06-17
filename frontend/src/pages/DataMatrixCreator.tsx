@@ -540,7 +540,7 @@ export const DataMatrixCreator: React.FC = () => {
               {/* Generate Trigger Action */}
               <button 
                 className="btn btn-primary"
-                disabled={!file || generating || analyzing || !analysis || analysis.totalLines === 0}
+                disabled={!file || generating || analyzing || (analysis?.validCount === 0)}
                 onClick={handleGenerate}
                 style={{
                   display: 'flex',
@@ -569,7 +569,7 @@ export const DataMatrixCreator: React.FC = () => {
           </div>
 
           {/* Visual Preview Panel */}
-          {analysis && analysis.previewCodes.length > 0 && (
+          {analysis && analysis.validCount > 0 && (
             <div className="card" style={{ padding: '24px', textAlign: 'center' }}>
               <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Info size={18} color="var(--primary)" />
@@ -598,7 +598,7 @@ export const DataMatrixCreator: React.FC = () => {
                   </div>
                 )}
                 <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', width: '100%', wordBreak: 'break-all' }}>
-                  <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px' }}>İlk Üretilecek Kod:</p>
+                  <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px' }}>İlk Geçerli Kod:</p>
                   <code>{analysis.previewCodes[0]}</code>
                 </div>
               </div>
