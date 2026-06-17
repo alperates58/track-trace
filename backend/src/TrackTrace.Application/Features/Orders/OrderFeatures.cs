@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Dapper;
 using FluentValidation;
 using MediatR;
+using Npgsql;
 using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
 using TrackTrace.Domain.Enums;
