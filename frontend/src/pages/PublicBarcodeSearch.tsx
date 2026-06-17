@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Barcode, Info, AlertCircle, Package, Check, Copy, ShieldCheck } from 'lucide-react';
+import { Barcode, AlertCircle, Package, Check, Copy, ShieldCheck } from 'lucide-react';
 
 interface SearchResult {
   rawCode: string;
