@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
-import { Search, Info, AlertCircle } from 'lucide-react';
+import { Search, Info, AlertCircle, Barcode } from 'lucide-react';
 
 interface SearchResult {
   rawCode: string;
@@ -16,6 +16,7 @@ interface SearchResult {
   cartonSSCC: string | null;
   palletNo: string | null;
   palletSSCC: string | null;
+  cartonItems?: string[];
 }
 
 export const BarcodeSearch: React.FC = () => {
@@ -46,7 +47,7 @@ export const BarcodeSearch: React.FC = () => {
     <div>
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>Barkod Sorgulama</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Herhangi bir ürün barkodunun (RawCode) sipariş, koli, palet ve okutma geçmişini izleyin.</p>
+        <p style={{ color: 'var(--text-muted)' }}>Herhangi bir ürün barkodunun (RawCode) veya koli etiketinin (SSCC) agregasyon ve içerik geçmişini sorgulayın.</p>
       </div>
 
       <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
@@ -191,19 +192,39 @@ export const BarcodeSearch: React.FC = () => {
           </div>
 
           {/* Right Column: Code Raw details & copy */}
-          <div className="card" style={{ alignSelf: 'start' }}>
-            <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <Info size={18} color="var(--primary)" /> Ham Barkod Verisi
-            </h3>
-            <div style={{ marginTop: '12px' }}>
-              <textarea readOnly className="form-input" style={{
-                width: '100%', minHeight: '120px', backgroundColor: '#f8fafc', fontFamily: 'monospace',
-                fontSize: '0.85rem', cursor: 'text', resize: 'none'
-              }} value={result.rawCode}></textarea>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignSelf: 'start', width: '100%', maxWidth: '360px' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                <Info size={18} color="var(--primary)" /> Ham Barkod Verisi
+              </h3>
+              <div style={{ marginTop: '12px' }}>
+                <textarea readOnly className="form-input" style={{
+                  width: '100%', minHeight: '120px', backgroundColor: '#f8fafc', fontFamily: 'monospace',
+                  fontSize: '0.85rem', cursor: 'text', resize: 'none'
+                }} value={result.rawCode}></textarea>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px', fontSize: '0.85rem' }}>
+                <div>Durum (Status): <span className={`badge badge-active`} style={{ float: 'right' }}>{result.status}</span></div>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px', fontSize: '0.85rem' }}>
-              <div>Durum (Status): <span className={`badge badge-active`} style={{ float: 'right' }}>{result.status}</span></div>
-            </div>
+
+            {result.cartonItems && result.cartonItems.length > 0 && (
+              <div className="card">
+                <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                  <Barcode size={18} color="var(--success)" /> Koli İçeriği ({result.cartonItems.length} Ürün)
+                </h3>
+                <div style={{ marginTop: '12px', maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {result.cartonItems.map((item, idx) => (
+                    <div key={idx} style={{
+                      padding: '8px 12px', backgroundColor: '#f8fafc', border: '1px solid var(--border-color)',
+                      borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all'
+                    }}>
+                      {idx + 1}. {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

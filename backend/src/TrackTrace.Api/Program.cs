@@ -556,16 +556,14 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
-                if (parseResult.Success)
-                {
-                    validCodes.Add(parseResult.Normalized);
-                }
+                string finalCode = parseResult.Success ? parseResult.Normalized : line;
+                validCodes.Add(finalCode);
             }
         }
 
         if (validCodes.Count == 0)
         {
-            return Results.BadRequest(new { message = "Dosya içerisinde geçerli kod bulunamadı." });
+            return Results.BadRequest(new { message = "Dosya içerisinde kod bulunamadı." });
         }
 
         if (string.Equals(format, "PNG", StringComparison.OrdinalIgnoreCase))

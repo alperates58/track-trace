@@ -75,6 +75,49 @@ public class ReportHandlers :
         );
     }
 
+    private static string ExtractSscc(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return query;
+        
+        int idx = query.IndexOf("[00]");
+        if (idx >= 0 && query.Length >= idx + 4 + 18)
+        {
+            return query.Substring(idx + 4, 18);
+        }
+
+        idx = query.IndexOf("(00)");
+        if (idx >= 0 && query.Length >= idx + 4 + 18)
+        {
+            return query.Substring(idx + 4, 18);
+        }
+
+        if (query.Contains("|"))
+        {
+            var parts = query.Split('|');
+            foreach (var part in parts)
+            {
+                if (part.StartsWith("[00]") && part.Length >= 22)
+                    return part.Substring(4, 18);
+                if (part.StartsWith("(00)") && part.Length >= 22)
+                    return part.Substring(4, 18);
+            }
+        }
+
+        var match20 = System.Text.RegularExpressions.Regex.Match(query, @"\b00(\d{18})\b");
+        if (match20.Success)
+        {
+            return match20.Groups[1].Value;
+        }
+
+        var match = System.Text.RegularExpressions.Regex.Match(query, @"\b\d{18}\b");
+        if (match.Success)
+        {
+            return match.Value;
+        }
+
+        return query;
+    }
+
     public async Task<BarcodeSearchResultDto?> Handle(BarcodeSearchQuery request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
@@ -92,23 +135,62 @@ public class ReportHandlers :
             WHERE pc.RawCode = @RawCode";
 
         var x = await connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { RawCode = request.RawCode });
-        if (x == null) return null;
+        if (x != null)
+        {
+            return new BarcodeSearchResultDto(
+                (string)x.rawcode,
+                (string?)x.gtin,
+                (string?)x.serialno,
+                (string)x.status,
+                (DateTime?)x.scannedat,
+                (string?)x.scannedby,
+                (string?)x.orderno,
+                (string?)x.customername,
+                (string?)x.productname,
+                (string?)x.cartonno,
+                (string?)x.cartonsscc,
+                (string?)x.palletno,
+                (string?)x.palletsscc
+            );
+        }
 
-        return new BarcodeSearchResultDto(
-            (string)x.rawcode,
-            (string?)x.gtin,
-            (string?)x.serialno,
-            (string)x.status,
-            (DateTime?)x.scannedat,
-            (string?)x.scannedby,
-            (string?)x.orderno,
-            (string?)x.customername,
-            (string?)x.productname,
-            (string?)x.cartonno,
-            (string?)x.cartonsscc,
-            (string?)x.palletno,
-            (string?)x.palletsscc
-        );
+        // Try searching for Carton if not found as a product code
+        string cleanSearch = ExtractSscc(request.RawCode);
+        const string cartonSql = @"
+            SELECT c.Id, c.CartonNo, c.SSCC as CartonSSCC, c.Status, c.CreatedAt,
+                   o.OrderNo, o.CustomerName, o.ProductName, o.Gtin,
+                   p.PalletNo, p.SSCC as PalletSSCC
+            FROM Cartons c
+            INNER JOIN Orders o ON c.OrderId = o.Id
+            LEFT JOIN PalletCartons plc ON c.Id = plc.CartonId
+            LEFT JOIN Pallets p ON plc.PalletId = p.Id
+            WHERE c.SSCC = @Search OR c.CartonNo = @Search";
+
+        var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(cartonSql, new { Search = cleanSearch });
+        if (carton != null)
+        {
+            const string itemsSql = "SELECT RawCode FROM ProductCodes WHERE CartonId = @CartonId ORDER BY ScannedAt DESC";
+            var items = await connection.QueryAsync<string>(itemsSql, new { CartonId = (Guid)carton.id });
+
+            return new BarcodeSearchResultDto(
+                RawCode: request.RawCode,
+                Gtin: (string?)carton.gtin,
+                SerialNo: null,
+                Status: (string)carton.status,
+                ScannedAt: (DateTime)carton.createdat,
+                ScannedBy: null,
+                OrderNo: (string?)carton.orderno,
+                CustomerName: (string?)carton.customername,
+                ProductName: (string?)carton.productname,
+                CartonNo: (string?)carton.cartonno,
+                CartonSSCC: (string?)carton.cartonsscc,
+                PalletNo: (string?)carton.palletno,
+                PalletSSCC: (string?)carton.palletsscc,
+                CartonItems: items
+            );
+        }
+
+        return null;
     }
 
     public async Task<SystemInfoDto> Handle(GetSystemInfoQuery request, CancellationToken cancellationToken)

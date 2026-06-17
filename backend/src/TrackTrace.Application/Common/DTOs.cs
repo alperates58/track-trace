@@ -129,7 +129,8 @@ public record BarcodeSearchResultDto(
     string? CartonNo,
     string? CartonSSCC,
     string? PalletNo,
-    string? PalletSSCC
+    string? PalletSSCC,
+    System.Collections.Generic.IEnumerable<string>? CartonItems = null
 );
 
 public record PrintJobDto(
