@@ -9,6 +9,7 @@ using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
 using Barcoder.DataMatrix;
 using Barcoder.Renderer.Image;
+using BarcoderImageFormat = Barcoder.Renderer.Image.ImageFormat;
 
 namespace TrackTrace.Infrastructure.Services;
 
@@ -307,7 +308,7 @@ public class LabelGenerator : ILabelGenerator
 
                         mainCol.Item().Height(780).Column(pageCol =>
                         {
-                            pageCol.Item().Expand().Grid(grid =>
+                            pageCol.Item().Grid(grid =>
                             {
                                 grid.Columns(cols);
                                 grid.Spacing(15);
@@ -358,7 +359,7 @@ public class LabelGenerator : ILabelGenerator
         try
         {
             var barcode = DataMatrixEncoder.Encode(text);
-            var renderer = new ImageRenderer(new ImageRendererOptions { ImageFormat = ImageFormat.Png });
+            var renderer = new ImageRenderer(new ImageRendererOptions { ImageFormat = BarcoderImageFormat.Png });
             using var ms = new MemoryStream();
             renderer.Render(barcode, ms);
             return ms.ToArray();
