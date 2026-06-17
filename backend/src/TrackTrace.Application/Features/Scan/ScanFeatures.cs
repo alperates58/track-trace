@@ -262,7 +262,6 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             return remainder == 0 ? 0 : 10 - remainder;
         }
     }
-}
 
 public record GetCurrentCartonQuery(Guid OrderId) : IRequest<CurrentCartonDto>;
 
