@@ -387,7 +387,7 @@ export const DataMatrixCreator: React.FC = () => {
                       onChange={() => setFormat('PDF')} 
                       style={{ display: 'none' }}
                     />
-                    A4 PDF Tablosu
+                    PDF Tablosu
                   </label>
                   <label style={{
                     flex: 1,
@@ -561,7 +561,7 @@ export const DataMatrixCreator: React.FC = () => {
                 ) : (
                   <>
                     <Download size={18} />
-                    {format === 'PDF' ? 'A4 PDF Şablonu İndir' : 'ZIP formatında PNG\'leri İndir'}
+                    {format === 'PDF' ? 'PDF Şablonu İndir' : 'ZIP formatında PNG\'leri İndir'}
                   </>
                 )}
               </button>

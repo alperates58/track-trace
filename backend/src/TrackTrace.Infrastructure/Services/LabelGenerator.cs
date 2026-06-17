@@ -288,7 +288,7 @@ public class LabelGenerator : ILabelGenerator
         {
             container.Page(page =>
             {
-                page.Size(PageSizes.A4);
+                page.Size(595, 595, Unit.Point);
                 page.Margin(0.4f, Unit.Inch);
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial).Size(9));
@@ -306,7 +306,7 @@ public class LabelGenerator : ILabelGenerator
                         int firstIdx = pageIdx * itemsPerPage + 1;
                         int lastIdx = Math.Min((pageIdx + 1) * itemsPerPage, totalCodes);
 
-                        mainCol.Item().Height(780).Column(pageCol =>
+                        mainCol.Item().Height(530).Column(pageCol =>
                         {
                             pageCol.Item().Grid(grid =>
                             {
