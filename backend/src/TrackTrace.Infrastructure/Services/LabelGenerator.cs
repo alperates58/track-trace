@@ -7,9 +7,10 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
-using Barcoder.DataMatrix;
-using Barcoder.Renderer.Image;
-using BarcoderImageFormat = Barcoder.Renderer.Image.ImageFormat;
+using ZXing;
+using ZXing.Datamatrix;
+using ZXing.SkiaSharp;
+using SkiaSharp;
 
 namespace TrackTrace.Infrastructure.Services;
 
@@ -333,7 +334,7 @@ public class LabelGenerator : ILabelGenerator
                                         if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
                                     }
 
-                                    byte[] imgBytes = GenerateDataMatrixImageBytes(code);
+                                    byte[] imgBytes = GenerateDataMatrixImageBytes(code, size);
                                     c.Item().AlignCenter().Width(barcodeSize).Height(barcodeSize).Image(imgBytes);
 
                                     // If label is below
@@ -366,7 +367,7 @@ public class LabelGenerator : ILabelGenerator
             int index = 1;
             foreach (var code in codes)
             {
-                byte[] imgBytes = GenerateDataMatrixImageBytes(code);
+                 byte[] imgBytes = GenerateDataMatrixImageBytes(code, 400);
                 var entry = archive.CreateEntry($"dm_{index:D6}.png");
                 using var entryStream = entry.Open();
                 entryStream.Write(imgBytes, 0, imgBytes.Length);
@@ -378,18 +379,37 @@ public class LabelGenerator : ILabelGenerator
 
     public byte[] GenerateDataMatrixImage(string text)
     {
-        return GenerateDataMatrixImageBytes(text);
+        return GenerateDataMatrixImageBytes(text, 400);
     }
 
-    private byte[] GenerateDataMatrixImageBytes(string text)
+    private byte[] GenerateDataMatrixImageBytes(string text, int size)
     {
         try
         {
-            var barcode = DataMatrixEncoder.Encode(text);
-            var renderer = new ImageRenderer(new ImageRendererOptions { ImageFormat = BarcoderImageFormat.Png });
-            using var ms = new MemoryStream();
-            renderer.Render(barcode, ms);
-            return ms.ToArray();
+            var options = new DatamatrixEncodingOptions
+            {
+                Width = size,
+                Height = size,
+                Margin = 2,
+                PureBarcode = true,
+                SymbolShape = ZXing.Datamatrix.Encoder.SymbolShapeHint.FORCE_NONE
+            };
+
+            options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
+            options.Hints[EncodeHintType.DISABLE_ECI] = true;
+
+            var writer = new ZXing.SkiaSharp.BarcodeWriter
+            {
+                Format = BarcodeFormat.DATA_MATRIX,
+                Options = options
+            };
+
+            using var bitmap = writer.Write(text);
+            if (bitmap == null) return Array.Empty<byte>();
+
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            return data.ToArray();
         }
         catch
         {
