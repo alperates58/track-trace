@@ -228,8 +228,9 @@ public class PalletHandlers :
             }
 
             // 2. Load Carton by SSCC with row-locking
+            string cleanSscc = Gs1AutoHelper.ExtractSscc(request.CartonSSCC);
             var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "SELECT * FROM Cartons WHERE SSCC = @SSCC FOR UPDATE", new { SSCC = request.CartonSSCC }, transaction);
+                "SELECT * FROM Cartons WHERE SSCC = @SSCC FOR UPDATE", new { SSCC = cleanSscc }, transaction);
             if (carton == null)
             {
                 throw new KeyNotFoundException("Belirtilen SSCC'ye ait koli bulunamadı.");

@@ -291,6 +291,51 @@ namespace TrackTrace.Application.Common
             return !string.IsNullOrEmpty(s) && s.All(char.IsDigit);
         }
 
+        public static string ExtractSscc(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query)) return query;
+            
+            query = query.Trim();
+
+            int idx = query.IndexOf("[00]");
+            if (idx >= 0 && query.Length >= idx + 4 + 18)
+            {
+                return query.Substring(idx + 4, 18);
+            }
+
+            idx = query.IndexOf("(00)");
+            if (idx >= 0 && query.Length >= idx + 4 + 18)
+            {
+                return query.Substring(idx + 4, 18);
+            }
+
+            if (query.Contains("|"))
+            {
+                var parts = query.Split('|');
+                foreach (var part in parts)
+                {
+                    if (part.StartsWith("[00]") && part.Length >= 22)
+                        return part.Substring(4, 18);
+                    if (part.StartsWith("(00)") && part.Length >= 22)
+                        return part.Substring(4, 18);
+                }
+            }
+
+            var match20 = System.Text.RegularExpressions.Regex.Match(query, @"\b00(\d{18})\b");
+            if (match20.Success)
+            {
+                return match20.Groups[1].Value;
+            }
+
+            var match = System.Text.RegularExpressions.Regex.Match(query, @"\b\d{18}\b");
+            if (match.Success)
+            {
+                return match.Value;
+            }
+
+            return query;
+        }
+
         private static ParseResult Fail(string msg)
         {
             return new ParseResult

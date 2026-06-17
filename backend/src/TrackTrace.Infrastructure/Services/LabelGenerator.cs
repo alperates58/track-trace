@@ -11,15 +11,23 @@ using ZXing;
 using ZXing.Datamatrix;
 using ZXing.SkiaSharp;
 using SkiaSharp;
+using Microsoft.Extensions.Configuration;
 
 namespace TrackTrace.Infrastructure.Services;
 
 public class LabelGenerator : ILabelGenerator
 {
+    private readonly string _frontendUrl;
+
+    public LabelGenerator(IConfiguration configuration)
+    {
+        _frontendUrl = configuration["FRONTEND_URL"] ?? "https://track.alperates.com.tr";
+    }
+
     public byte[] GenerateCartonPdfLabel(CartonDto carton, OrderDto order)
     {
-        // Generate QR code bytes using QRCoder (does not require System.Drawing, fully Linux-safe!)
-        byte[] qrCodeImageBytes = GenerateQRCodeBytes($"[00]{carton.SSCC}|[01]{order.GTIN}|[30]{carton.ActualQuantity}");
+        // Generate QR code bytes using QRCoder pointing to frontend URL for customer scans
+        byte[] qrCodeImageBytes = GenerateQRCodeBytes($"{_frontendUrl}/?code={carton.SSCC}");
 
         using var stream = new MemoryStream();
         
@@ -133,15 +141,15 @@ public class LabelGenerator : ILabelGenerator
 ^FO400,285^A0N,20,20^FDAdet: {carton.ActualQuantity} / {carton.TargetQuantity}^FS
 ^FO50,335^A0N,20,20^FDKoli No: {carton.CartonNo}^FS
 ^FO400,335^A0N,20,20^FDTarih: {carton.CreatedAt:dd.MM.yyyy HH:mm}^FS
-^FO50,380^GB712,3,3^FS
-^FO250,420^BQN,2,8^FDQA,(00){carton.SSCC}^FS
-^FO150,680^BY3^FO150,700^BCN,150,Y,N,N^FD(00){carton.SSCC}^FS
-^XZ";
+        ^FO50,380^GB712,3,3^FS
+        ^FO200,420^BQN,2,8^FDQA,{_frontendUrl}/?code={carton.SSCC}^FS
+        ^FO150,680^BY3^FO150,700^BCN,150,Y,N,N^FD(00){carton.SSCC}^FS
+        ^XZ";
     }
 
     public byte[] GeneratePalletPdfLabel(PalletDto pallet, OrderDto order, int cartonCount)
     {
-        byte[] qrCodeImageBytes = GenerateQRCodeBytes($"[00]{pallet.SSCC}|[01]{order.GTIN}|[37]{cartonCount}");
+        byte[] qrCodeImageBytes = GenerateQRCodeBytes($"{_frontendUrl}/?code={pallet.SSCC}");
 
         using var stream = new MemoryStream();
         
@@ -255,10 +263,10 @@ public class LabelGenerator : ILabelGenerator
 ^FO400,285^A0N,20,20^FDKoli Sayisi: {cartonCount} / {order.CartonPerPallet}^FS
 ^FO50,335^A0N,20,20^FDPalet No: {pallet.PalletNo}^FS
 ^FO400,335^A0N,20,20^FDTarih: {pallet.CreatedAt:dd.MM.yyyy HH:mm}^FS
-^FO50,380^GB712,3,3^FS
-^FO250,420^BQN,2,8^FDQA,(00){pallet.SSCC}^FS
-^FO150,680^BY3^FO150,700^BCN,150,Y,N,N^FD(00){pallet.SSCC}^FS
-^XZ";
+        ^FO50,380^GB712,3,3^FS
+        ^FO200,420^BQN,2,8^FDQA,{_frontendUrl}/?code={pallet.SSCC}^FS
+        ^FO150,680^BY3^FO150,700^BCN,150,Y,N,N^FD(00){pallet.SSCC}^FS
+        ^XZ";
     }
 
     private byte[] GenerateQRCodeBytes(string text)

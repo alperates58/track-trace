@@ -841,6 +841,16 @@ app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator med
     return Results.Ok(result);
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapGet("/api/barcodes/public/search", async ([FromQuery] string code, IMediator mediator) =>
+{
+    var result = await mediator.Send(new BarcodeSearchQuery(code));
+    if (result == null)
+    {
+        return Results.NotFound(new { message = "Barkod bulunamadı." });
+    }
+    return Results.Ok(result);
+});
+
 // Print Jobs History
 app.MapGet("/api/print-jobs", async (
     [FromQuery] int? pageNumber,

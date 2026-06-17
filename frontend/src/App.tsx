@@ -7,6 +7,7 @@ import { Scan } from './pages/Scan';
 import { Cartons } from './pages/Cartons';
 import { Pallets } from './pages/Pallets';
 import { BarcodeSearch } from './pages/BarcodeSearch';
+import { PublicBarcodeSearch } from './pages/PublicBarcodeSearch';
 import { Reports } from './pages/Reports';
 import { DataMatrixCreator } from './pages/DataMatrixCreator';
 import { SystemInfo } from './pages/SystemInfo';
@@ -231,6 +232,15 @@ const AppShell: React.FC = () => {
 
 const AuthGate: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  
+  // Bypass authentication if code parameter is present in the URL (for public customer QR scan)
+  const params = new URLSearchParams(window.location.search);
+  const publicCode = params.get('code') || params.get('sscc');
+  
+  if (publicCode) {
+    return <PublicBarcodeSearch code={publicCode} />;
+  }
+
   return isAuthenticated ? <AppShell /> : <Login />;
 };
 
