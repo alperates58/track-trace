@@ -358,8 +358,9 @@ public class LabelGenerator : ILabelGenerator
         try
         {
             var barcode = DataMatrixEncoder.Encode(text);
+            var renderer = new ImageRenderer(new ImageRendererOptions { ImageFormat = ImageFormat.Png });
             using var ms = new MemoryStream();
-            ImageRenderer.Render(barcode, ms, ImageFormat.Png);
+            renderer.Render(barcode, ms);
             return ms.ToArray();
         }
         catch
