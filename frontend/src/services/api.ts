@@ -27,7 +27,7 @@ async function request(path: string, options: RequestInit = {}) {
 
   // Handle PDF/binary downloads
   const contentType = response.headers.get('Content-Type');
-  if (contentType && contentType.includes('application/pdf')) {
+  if (contentType && (contentType.includes('application/pdf') || contentType.includes('application/zip') || contentType.includes('application/octet-stream'))) {
     return response.blob();
   }
 

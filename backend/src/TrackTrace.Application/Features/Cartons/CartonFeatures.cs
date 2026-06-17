@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 using Dapper;
 using FluentValidation;
 using MediatR;
+using Npgsql;
 using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
 using TrackTrace.Domain.Enums;
 
 namespace TrackTrace.Application.Features.Cartons;
 
-public record GetCartonsQuery(int PageNumber = 1, int PageSize = 10, string? Search = null, string? Status = null, Guid? OrderId = null) 
+public record GetCartonsQuery(int PageNumber = 1, int PageSize = 10, string? Search = null, string? Status = null, Guid? OrderId = null, Guid? PalletId = null) 
     : IRequest<(IEnumerable<CartonDto> Items, int TotalCount)>;
 
 public record GetCartonByIdQuery(Guid Id) : IRequest<CartonDto>;
@@ -21,11 +22,20 @@ public record GetCartonItemsQuery(Guid Id) : IRequest<IEnumerable<BarcodeSearchR
 
 public record PrintCartonLabelCommand(Guid Id, string Format) : IRequest<(byte[]? FileContent, string? ZplText)>;
 
+public record DecomposeCartonCommand(Guid Id) : IRequest<Unit>;
+
+public record RemoveProductFromCartonCommand(Guid CartonId, string RawCode) : IRequest<Unit>;
+
+public record AddProductToCartonCommand(Guid CartonId, string RawCode) : IRequest<Unit>;
+
 public class CartonHandlers :
     IRequestHandler<GetCartonsQuery, (IEnumerable<CartonDto> Items, int TotalCount)>,
     IRequestHandler<GetCartonByIdQuery, CartonDto>,
     IRequestHandler<GetCartonItemsQuery, IEnumerable<BarcodeSearchResultDto>>,
-    IRequestHandler<PrintCartonLabelCommand, (byte[]? FileContent, string? ZplText)>
+    IRequestHandler<PrintCartonLabelCommand, (byte[]? FileContent, string? ZplText)>,
+    IRequestHandler<DecomposeCartonCommand, Unit>,
+    IRequestHandler<RemoveProductFromCartonCommand, Unit>,
+    IRequestHandler<AddProductToCartonCommand, Unit>
 {
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly ICurrentUserService _currentUserService;
@@ -77,6 +87,11 @@ public class CartonHandlers :
         if (request.OrderId.HasValue)
         {
             builder.Where("c.OrderId = @OrderId", new { OrderId = request.OrderId.Value });
+        }
+
+        if (request.PalletId.HasValue)
+        {
+            builder.Where("c.Id IN (SELECT CartonId FROM PalletCartons WHERE PalletId = @PalletId)", new { PalletId = request.PalletId.Value });
         }
 
         var items = await connection.QueryAsync<dynamic>(selector.RawSql, selector.Parameters);
@@ -232,5 +247,203 @@ public class CartonHandlers :
         await _auditLogService.LogAsync("Cartons", request.Id, "PrintLabel", null, new { Format = request.Format });
 
         return (pdfData, zplData);
+    }
+
+    public async Task<Unit> Handle(DecomposeCartonCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+         {
+            // 1. Get carton info for audit log
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.Id }, transaction);
+            if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+
+            string cartonNo = carton.cartonno;
+            string sscc = carton.sscc;
+
+            // 2. Revert products back to 'Uploaded'
+            const string updateProductsSql = @"
+                UPDATE ProductCodes 
+                SET CartonId = NULL, Status = @Status, ScannedAt = NULL, ScannedBy = NULL 
+                WHERE CartonId = @CartonId";
+
+            await connection.ExecuteAsync(updateProductsSql, new
+            {
+                CartonId = request.Id,
+                Status = ProductCodeStatus.Uploaded.ToString()
+            }, transaction);
+
+            // 3. Delete carton (cascade will delete PalletCartons)
+            await connection.ExecuteAsync("DELETE FROM Cartons WHERE Id = @Id", new { Id = request.Id }, transaction);
+
+            transaction.Commit();
+
+            await _auditLogService.LogAsync("Cartons", request.Id, "Decompose", null, new { CartonNo = cartonNo, SSCC = sscc });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<Unit> Handle(RemoveProductFromCartonCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // 1. Get Product Code
+            var parsed = Gs1AutoHelper.NormalizeForEncoding(request.RawCode);
+            string searchCode = parsed.Success ? parsed.Normalized : request.RawCode;
+
+            var pc = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM ProductCodes WHERE RawCode = @RawCode AND CartonId = @CartonId FOR UPDATE",
+                new { RawCode = searchCode, CartonId = request.CartonId }, transaction);
+            
+            if (pc == null)
+            {
+                throw new KeyNotFoundException("Ürün bu kolide bulunamadı.");
+            }
+
+            // 2. Get Carton
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.CartonId }, transaction);
+            if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+
+            string cartonNo = carton.cartonno;
+            string sscc = carton.sscc;
+            int actualQty = carton.actualquantity;
+
+            // 3. Update product status back to Uploaded
+            await connection.ExecuteAsync(@"
+                UPDATE ProductCodes 
+                SET CartonId = NULL, Status = @Status, ScannedAt = NULL, ScannedBy = NULL 
+                WHERE Id = @Id",
+                new { Id = (Guid)pc.id, Status = ProductCodeStatus.Uploaded.ToString() }, transaction);
+
+            // 4. Update carton
+            actualQty = Math.Max(0, actualQty - 1);
+            await connection.ExecuteAsync(@"
+                UPDATE Cartons 
+                SET ActualQuantity = @ActualQuantity, Status = @Status, ClosedAt = NULL 
+                WHERE Id = @Id",
+                new { Id = request.CartonId, ActualQuantity = actualQty, Status = CartonStatus.Open.ToString() }, transaction);
+
+            // 5. Remove carton from Pallet (since it is no longer closed/complete)
+            await connection.ExecuteAsync("DELETE FROM PalletCartons WHERE CartonId = @CartonId", new { CartonId = request.CartonId }, transaction);
+
+            transaction.Commit();
+
+            await _auditLogService.LogAsync("Cartons", request.CartonId, "RemoveProduct", null, new { RawCode = searchCode, CartonNo = cartonNo, NewQuantity = actualQty });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<Unit> Handle(AddProductToCartonCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // 1. Get Carton
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.CartonId }, transaction);
+            if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+            
+            if (carton.status != CartonStatus.Open.ToString())
+            {
+                throw new InvalidOperationException("Yalnızca açık kolilere ürün eklenebilir.");
+            }
+
+            string cartonNo = carton.cartonno;
+            string sscc = carton.sscc;
+            int actualQty = carton.actualquantity;
+            int targetQty = carton.targetquantity;
+            Guid orderId = carton.orderid;
+
+            // 2. Get Product Code
+            var parsed = Gs1AutoHelper.NormalizeForEncoding(request.RawCode);
+            string searchCode = parsed.Success ? parsed.Normalized : request.RawCode;
+
+            var pc = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM ProductCodes WHERE RawCode = @RawCode FOR UPDATE",
+                new { RawCode = searchCode }, transaction);
+            
+            if (pc == null)
+            {
+                throw new KeyNotFoundException("Sistemde kayıtlı olmayan ürün barkodu.");
+            }
+
+            if (pc.orderid != orderId)
+            {
+                throw new InvalidOperationException("Bu barkod bu koli siparişine ait değil.");
+            }
+
+            if (pc.status != ProductCodeStatus.Uploaded.ToString())
+            {
+                throw new InvalidOperationException("Bu ürün barkodu daha önce okutulmuş.");
+            }
+
+            // 3. Update Product Code
+            await connection.ExecuteAsync(@"
+                UPDATE ProductCodes 
+                SET CartonId = @CartonId, Status = @Status, ScannedAt = @ScannedAt, ScannedBy = @ScannedBy 
+                WHERE Id = @Id",
+                new
+                {
+                    Id = (Guid)pc.id,
+                    CartonId = request.CartonId,
+                    Status = ProductCodeStatus.Scanned.ToString(),
+                    ScannedAt = DateTime.UtcNow,
+                    ScannedBy = _currentUserService.UserId
+                }, transaction);
+
+            // 4. Update Carton
+            actualQty++;
+            string cartonStatus = CartonStatus.Open.ToString();
+            DateTime? closedAt = null;
+            if (actualQty >= targetQty)
+            {
+                cartonStatus = CartonStatus.Closed.ToString();
+                closedAt = DateTime.UtcNow;
+            }
+
+            await connection.ExecuteAsync(@"
+                UPDATE Cartons 
+                SET ActualQuantity = @ActualQuantity, Status = @Status, ClosedAt = @ClosedAt 
+                WHERE Id = @Id",
+                new
+                {
+                    Id = request.CartonId,
+                    ActualQuantity = actualQty,
+                    Status = cartonStatus,
+                    ClosedAt = closedAt
+                }, transaction);
+
+            transaction.Commit();
+
+            await _auditLogService.LogAsync("Cartons", request.CartonId, "AddProduct", null, new { RawCode = searchCode, CartonNo = cartonNo, NewQuantity = actualQty, Closed = closedAt != null });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 }

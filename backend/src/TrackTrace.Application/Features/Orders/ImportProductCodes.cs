@@ -59,8 +59,80 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
         var currentUserId = _currentUserService.UserId;
         
         var lines = new List<string>();
-        using (var reader = new StreamReader(request.FileStream, Encoding.UTF8))
+        string extension = Path.GetExtension(request.FileName).ToLowerInvariant();
+
+        if (extension == ".xlsx")
         {
+            using var workbook = new ClosedXML.Excel.XLWorkbook(request.FileStream);
+            var worksheet = workbook.Worksheets.FirstOrDefault();
+            if (worksheet != null)
+            {
+                var rows = worksheet.RangeUsed().RowsUsed();
+                foreach (var row in rows)
+                {
+                    string? candidate = null;
+                    int cellCount = row.CellCount();
+                    for (int col = 1; col <= Math.Min(cellCount, 5); col++)
+                    {
+                        string cellVal = row.Cell(col).GetValue<string>().Trim();
+                        if (!string.IsNullOrWhiteSpace(cellVal))
+                        {
+                            if (cellVal.StartsWith("01") || cellVal.StartsWith("(01)") || cellVal.StartsWith("\\F") || cellVal.StartsWith("\u001d"))
+                            {
+                                candidate = cellVal;
+                                break;
+                            }
+                            if (candidate == null)
+                            {
+                                candidate = cellVal;
+                            }
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(candidate))
+                    {
+                        lines.Add(candidate);
+                    }
+                }
+            }
+        }
+        else if (extension == ".csv")
+        {
+            using var reader = new StreamReader(request.FileStream, Encoding.UTF8);
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                string raw = line.Trim();
+                if (raw.Contains(",") || raw.Contains(";"))
+                {
+                    var parts = raw.Split(new[] { ',', ';' });
+                    string? candidate = null;
+                    foreach (var part in parts)
+                    {
+                        string p = part.Trim();
+                        if (p.StartsWith("01") || p.StartsWith("(01)") || p.StartsWith("\\F") || p.StartsWith("\u001d"))
+                        {
+                            candidate = p;
+                            break;
+                        }
+                        if (candidate == null && !string.IsNullOrWhiteSpace(p))
+                        {
+                            candidate = p;
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(candidate))
+                        lines.Add(candidate);
+                }
+                else
+                {
+                    lines.Add(raw);
+                }
+            }
+        }
+        else
+        {
+            using var reader = new StreamReader(request.FileStream, Encoding.UTF8);
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
@@ -93,34 +165,23 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
                 continue;
             }
 
-            if (seenRawCodesInFile.Contains(raw))
+            var parsed = Gs1AutoHelper.NormalizeForEncoding(raw);
+            if (!parsed.Success)
+            {
+                invalidCount++;
+                errors.Add(new ImportErrorDto(rowNo, raw, parsed.ErrorMessage ?? "Barkod formatı çözümlenemedi."));
+                continue;
+            }
+
+            if (seenRawCodesInFile.Contains(parsed.Normalized))
             {
                 duplicateCount++;
                 errors.Add(new ImportErrorDto(rowNo, raw, "Dosya içinde mükerrer kod."));
                 continue;
             }
 
-            // Parse GS1 DataMatrix
-            var (gtin, serial, crypto, success, parseError) = ParseGs1DataMatrix(raw);
-            if (!success)
-            {
-                invalidCount++;
-                errors.Add(new ImportErrorDto(rowNo, raw, parseError ?? "Barkod formatı çözümlenemedi."));
-                continue;
-            }
-
-            // Optional: GTIN check (Disabled because GTIN field is now used for Work Order No)
-            /*
-            if (!string.IsNullOrEmpty(gtin) && gtin != orderGtin)
-            {
-                invalidCount++;
-                errors.Add(new ImportErrorDto(rowNo, raw, $"GTIN uyuşmazlığı. Sipariş GTIN: {orderGtin}, Barkod GTIN: {gtin}"));
-                continue;
-            }
-            */
-
-            seenRawCodesInFile.Add(raw);
-            validCodesToInsert.Add((Guid.NewGuid(), raw, gtin, serial, crypto));
+            seenRawCodesInFile.Add(parsed.Normalized);
+            validCodesToInsert.Add((Guid.NewGuid(), parsed.Normalized, parsed.Gtin, parsed.SerialNo, parsed.CryptoTail));
         }
 
         // 3. Batch check duplicates against DB
@@ -250,79 +311,5 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
         return new ImportResultDto(batchId, totalRows, importedCount, duplicateCount, invalidCount, errors.Take(100).ToList());
     }
 
-    private (string? Gtin, string? SerialNo, string? CryptoTail, bool Success, string? Error) ParseGs1DataMatrix(string raw)
-    {
-        // Sample: 0104630477370359215-zOwm GS 93NdhB
-        // GS is Group Separator ASCII 29. Often represented as <GS>, \u001d, or spaces.
-        // Clean parentheses like (01)04630477370359(21)5-zOwm
-        string clean = raw.Replace("(", "").Replace(")", "");
-        
-        string? gtin = null;
-        string? serial = null;
-        string? crypto = null;
 
-        // Try AI 01 first (GTIN is 14 digits)
-        if (clean.StartsWith("01") && clean.Length >= 16)
-        {
-            gtin = clean.Substring(2, 14);
-            string remainder = clean.Substring(16);
-
-            // Look for AI 21
-            if (remainder.StartsWith("21"))
-            {
-                remainder = remainder.Substring(2);
-                
-                // Serial ends at GS separator or space or end of string.
-                // Russian Kozmetik: Serial is usually 13 characters. Let's find first separator.
-                int separatorIdx = remainder.IndexOfAny(new[] { ' ', '\u001d', '\u001d' });
-                if (separatorIdx != -1)
-                {
-                    serial = remainder.Substring(0, separatorIdx);
-                    crypto = remainder.Substring(separatorIdx).TrimStart(' ', '\u001d');
-                }
-                else
-                {
-                    // No separator, if length is greater than 13, serial might be 13 and rest is crypto
-                    if (remainder.Length > 13)
-                    {
-                        serial = remainder.Substring(0, 13);
-                        crypto = remainder.Substring(13);
-                    }
-                    else
-                    {
-                        serial = remainder;
-                    }
-                }
-            }
-            else
-            {
-                serial = remainder;
-            }
-        }
-        else
-        {
-            // Standard parse failed, search using regex
-            var gtinMatch = Regex.Match(raw, @"01(\d{14})");
-            var serialMatch = Regex.Match(raw, @"21([A-Za-z0-9\-\_]{13})");
-
-            if (gtinMatch.Success)
-            {
-                gtin = gtinMatch.Groups[1].Value;
-            }
-            if (serialMatch.Success)
-            {
-                serial = serialMatch.Groups[1].Value;
-            }
-
-            crypto = raw; // default fallback
-        }
-
-        // Check if GTIN is numeric
-        if (!string.IsNullOrEmpty(gtin) && !gtin.All(char.IsDigit))
-        {
-            return (null, null, null, false, "GTIN sayısal değerlerden oluşmalıdır.");
-        }
-
-        return (gtin, serial, crypto, true, null);
-    }
 }

@@ -237,15 +237,15 @@ export const Scan: React.FC = () => {
     <div className="scan-layout" onClick={focusInput}>
       
       {/* Top configuration and sound settings */}
-      <div className="scan-top-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="scan-top-bar" style={{ flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', width: '100%', maxWidth: 'none' }}>
           <span style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Barcode size={24} color="var(--primary)" />
             Ürün Okutma Terminali
           </span>
           <select
             className="form-input"
-            style={{ width: '320px', height: '40px', fontWeight: 600 }}
+            style={{ width: '100%', maxWidth: '320px', height: '40px', fontWeight: 600 }}
             value={selectedOrderId}
             onChange={(e) => setSelectedOrderId(e.target.value)}
           >

@@ -52,9 +52,13 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
         using var transaction = connection.BeginTransaction();
         try
         {
+            // Normalize the scanned barcode first to ensure match with normalized DB codes
+            var parsed = Gs1AutoHelper.NormalizeForEncoding(req.RawCode);
+            string searchCode = parsed.Success ? parsed.Normalized : req.RawCode;
+
             // 1. SELECT PRODUCT CODE WITH ROW LOCKING FOR UPDATE (Prevents double scan race conditions)
             const string pcSql = "SELECT * FROM ProductCodes WHERE RawCode = @RawCode FOR UPDATE";
-            var pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = req.RawCode }, transaction);
+            var pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = searchCode }, transaction);
             
             if (pc == null)
             {

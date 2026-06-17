@@ -1,11 +1,14 @@
 using System;
 using System.IO;
+using System.Linq;
 using QRCoder;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
+using Barcoder.DataMatrix;
+using Barcoder.Renderer.Image;
 
 namespace TrackTrace.Infrastructure.Services;
 
@@ -268,5 +271,100 @@ public class LabelGenerator : ILabelGenerator
         using var qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
         using var qrCode = new PngByteQRCode(qrCodeData);
         return qrCode.GetGraphic(20);
+    }
+
+    public byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow)
+    {
+        var codesList = codes.ToList();
+        int totalCodes = codesList.Count;
+        int itemsPerPage = cols * rows;
+        if (itemsPerPage <= 0) itemsPerPage = 1;
+        int totalPages = (int)Math.Ceiling(totalCodes / (double)itemsPerPage);
+
+        using var stream = new MemoryStream();
+
+        Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(0.4f, Unit.Inch);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial).Size(9));
+
+                page.Content().Column(mainCol =>
+                {
+                    for (int pageIdx = 0; pageIdx < totalPages; pageIdx++)
+                    {
+                        if (pageIdx > 0)
+                        {
+                            mainCol.Item().PageBreak();
+                        }
+
+                        var pageCodes = codesList.Skip(pageIdx * itemsPerPage).Take(itemsPerPage).ToList();
+                        int firstIdx = pageIdx * itemsPerPage + 1;
+                        int lastIdx = Math.Min((pageIdx + 1) * itemsPerPage, totalCodes);
+
+                        mainCol.Item().Height(780).Column(pageCol =>
+                        {
+                            pageCol.Item().Expand().Grid(grid =>
+                            {
+                                grid.Columns(cols);
+                                grid.Spacing(15);
+
+                                foreach (var code in pageCodes)
+                                {
+                                    grid.Item().AlignCenter().Column(c =>
+                                    {
+                                        c.Spacing(3);
+
+                                        // If label is above
+                                        if (!labelBelow && addText)
+                                        {
+                                            if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
+                                            if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
+                                        }
+
+                                        // Draw DataMatrix barcode image
+                                        byte[] imgBytes = GenerateDataMatrixImageBytes(code);
+                                        c.Item().AlignCenter().Width(size).Height(size).Image(imgBytes);
+
+                                        // If label is below
+                                        if (labelBelow && addText)
+                                        {
+                                            if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
+                                            if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
+                                        }
+                                    });
+                                }
+                            });
+
+                            // Page range footer
+                            string footerText = (firstIdx == lastIdx)
+                                ? $"{firstIdx} / {totalCodes}"
+                                : $"{firstIdx}-{lastIdx} / {totalCodes}";
+                            pageCol.Item().AlignBottom().AlignCenter().Text(footerText).FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
+                        });
+                    }
+                });
+            });
+        }).GeneratePdf(stream);
+
+        return stream.ToArray();
+    }
+
+    private byte[] GenerateDataMatrixImageBytes(string text)
+    {
+        try
+        {
+            var barcode = DataMatrixEncoder.Encode(text);
+            using var ms = new MemoryStream();
+            ImageRenderer.Render(barcode, ms, ImageFormat.Png);
+            return ms.ToArray();
+        }
+        catch
+        {
+            return Array.Empty<byte>();
+        }
     }
 }

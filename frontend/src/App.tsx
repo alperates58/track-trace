@@ -22,12 +22,17 @@ import {
   LogOut, 
   User as UserIcon,
   Users as UsersIcon,
-  Package
+  Package,
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const renderActivePage = () => {
     switch (activeTab) {
@@ -54,69 +59,86 @@ const AppShell: React.FC = () => {
     }
   };
 
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    setIsMobileOpen(false);
+  };
+
   return (
     <div className="app-container">
+      {/* Mobile Drawer Backdrop */}
+      {isMobileOpen && (
+        <div className="sidebar-backdrop" onClick={() => setIsMobileOpen(false)} />
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">
-          <Package size={24} color="var(--primary)" />
+          <Package size={24} color="var(--primary)" style={{ flexShrink: 0 }} />
           <span>Track & Trace</span>
         </div>
         
         <nav className="sidebar-nav">
           <div 
             className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleTabClick('dashboard')}
+            title="Dashboard"
           >
-            <LayoutDashboard size={18} />
+            <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
             <span>Dashboard</span>
           </div>
 
           <div 
             className={`sidebar-link ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
+            onClick={() => handleTabClick('orders')}
+            title="Sipariş Yönetimi"
           >
-            <FileText size={18} />
+            <FileText size={18} style={{ flexShrink: 0 }} />
             <span>Sipariş Yönetimi</span>
           </div>
 
           <div 
             className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
-            onClick={() => setActiveTab('scan')}
+            onClick={() => handleTabClick('scan')}
+            title="Ürün Okutma (Scan)"
           >
-            <Barcode size={18} />
+            <Barcode size={18} style={{ flexShrink: 0 }} />
             <span>Ürün Okutma (Scan)</span>
           </div>
 
           <div 
             className={`sidebar-link ${activeTab === 'cartons' ? 'active' : ''}`}
-            onClick={() => setActiveTab('cartons')}
+            onClick={() => handleTabClick('cartons')}
+            title="Koli Yönetimi"
           >
-            <Inbox size={18} />
+            <Inbox size={18} style={{ flexShrink: 0 }} />
             <span>Koli Yönetimi</span>
           </div>
 
           <div 
             className={`sidebar-link ${activeTab === 'pallets' ? 'active' : ''}`}
-            onClick={() => setActiveTab('pallets')}
+            onClick={() => handleTabClick('pallets')}
+            title="Palet Yönetimi"
           >
-            <Layers size={18} />
+            <Layers size={18} style={{ flexShrink: 0 }} />
             <span>Palet Yönetimi</span>
           </div>
 
           <div 
             className={`sidebar-link ${activeTab === 'search' ? 'active' : ''}`}
-            onClick={() => setActiveTab('search')}
+            onClick={() => handleTabClick('search')}
+            title="Barkod Sorgulama"
           >
-            <Search size={18} />
+            <Search size={18} style={{ flexShrink: 0 }} />
             <span>Barkod Sorgulama</span>
           </div>
 
           <div 
             className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reports')}
+            onClick={() => handleTabClick('reports')}
+            title="Baskı Geçmişi"
           >
-            <Printer size={18} />
+            <Printer size={18} style={{ flexShrink: 0 }} />
             <span>Baskı Geçmişi</span>
           </div>
 
@@ -124,26 +146,28 @@ const AppShell: React.FC = () => {
             <>
               <div 
                 className={`sidebar-link ${activeTab === 'users' ? 'active' : ''}`}
-                onClick={() => setActiveTab('users')}
+                onClick={() => handleTabClick('users')}
+                title="Kullanıcı Yönetimi"
               >
-                <UsersIcon size={18} />
+                <UsersIcon size={18} style={{ flexShrink: 0 }} />
                 <span>Kullanıcı Yönetimi</span>
               </div>
               <div 
                 className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
-                onClick={() => setActiveTab('system')}
+                onClick={() => handleTabClick('system')}
+                title="Sistem Bilgisi"
               >
-                <Settings size={18} />
+                <Settings size={18} style={{ flexShrink: 0 }} />
                 <span>Sistem Bilgisi</span>
               </div>
             </>
           )}
         </nav>
-
+ 
         {/* Sidebar User Footer */}
         <div className="sidebar-footer">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--text-white)' }}>
-            <UserIcon size={16} />
+            <UserIcon size={16} style={{ flexShrink: 0 }} />
             <span style={{ fontWeight: 600 }}>{user?.name}</span>
           </div>
           <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)' }}>
@@ -154,7 +178,7 @@ const AppShell: React.FC = () => {
             onClick={logout}
             style={{ padding: '8px 0', marginTop: '12px', borderTop: '1px solid #1e293b', color: '#ef4444', display: 'flex', gap: '8px' }}
           >
-            <LogOut size={16} />
+            <LogOut size={16} className="logout-icon-only" style={{ flexShrink: 0 }} />
             <span>Çıkış Yap</span>
           </div>
         </div>
@@ -163,11 +187,26 @@ const AppShell: React.FC = () => {
       {/* Main Page Layout */}
       <div className="main-content">
         <header className="header">
-          <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
-            {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+              onClick={() => {
+                if (window.innerWidth <= 768) {
+                  setIsMobileOpen(!isMobileOpen);
+                } else {
+                  setIsCollapsed(!isCollapsed);
+                }
+              }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', borderRadius: '4px', hover: { backgroundColor: '#f1f5f9' } }}
+              title={isCollapsed ? "Menüyü Genişlet" : "Menüyü Daralt"}
+            >
+              <Menu size={20} />
+            </button>
+            <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
+              {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab}
+            </h2>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            <span>Hattı Durumu: <strong style={{ color: 'var(--success)' }}>Çevrimiçi (Online)</strong></span>
+            <span className="online-indicator">Hattı Durumu: <strong style={{ color: 'var(--success)' }}>Çevrimiçi (Online)</strong></span>
           </div>
         </header>
 

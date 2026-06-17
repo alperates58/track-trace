@@ -78,7 +78,7 @@ export const BarcodeSearch: React.FC = () => {
       )}
 
       {result && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+        <div className="search-split-grid">
           
           {/* Left Column: Lifecycle Step Cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -94,7 +94,7 @@ export const BarcodeSearch: React.FC = () => {
                   Sipariş İlişkisi
                   <span className="badge badge-active" style={{ fontSize: '0.7rem' }}>Kayıtlı</span>
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
+                <div className="two-column-grid" style={{ gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
                   <div>Sipariş No: <strong>{result.orderNo || '-'}</strong></div>
                   <div>Müşteri: <strong>{result.customerName || '-'}</strong></div>
                   <div style={{ gridColumn: 'span 2' }}>Ürün Adı: <strong>{result.productName || '-'}</strong></div>
@@ -122,7 +122,7 @@ export const BarcodeSearch: React.FC = () => {
                   )}
                 </h4>
                 {result.scannedAt ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
+                  <div className="two-column-grid" style={{ gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
                     <div>Okutma Tarihi: <strong>{new Date(result.scannedAt).toLocaleString('tr-TR')}</strong></div>
                     <div>Operatör: <strong>{result.scannedBy || 'Bilinmiyor'}</strong></div>
                   </div>
@@ -150,7 +150,7 @@ export const BarcodeSearch: React.FC = () => {
                   )}
                 </h4>
                 {result.cartonNo ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
+                  <div className="two-column-grid" style={{ gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
                     <div>Koli Numarası: <strong>{result.cartonNo}</strong></div>
                     <div>Koli SSCC: <code>{result.cartonSSCC}</code></div>
                   </div>
@@ -178,7 +178,7 @@ export const BarcodeSearch: React.FC = () => {
                   )}
                 </h4>
                 {result.palletNo ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
+                  <div className="two-column-grid" style={{ gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
                     <div>Palet Numarası: <strong>{result.palletNo}</strong></div>
                     <div>Palet SSCC: <code>{result.palletSSCC}</code></div>
                   </div>

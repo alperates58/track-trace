@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -26,6 +27,31 @@ public record ActivateOrderCommand(Guid Id) : IRequest<Unit>;
 public record CompleteOrderCommand(Guid Id) : IRequest<Unit>;
 
 public record CancelOrderCommand(Guid Id) : IRequest<Unit>;
+
+public record DeleteOrderCommand(Guid Id) : IRequest<Unit>;
+
+public record PrintOrderCodesResult(byte[] FileContents, string ContentType, string FileName);
+
+public record PrintOrderCodesPdfQuery(
+    Guid OrderId,
+    int Cols,
+    int Rows,
+    int Size,
+    bool AddText,
+    string? Line1,
+    string? Line2,
+    bool LabelBelow,
+    int SplitSize) : IRequest<PrintOrderCodesResult>;
+
+public record OrderImportResultDto(
+    int TotalRows,
+    int ImportedCount,
+    int DuplicateCount,
+    int InvalidCount,
+    System.Collections.Generic.List<ImportErrorDto> Errors
+);
+
+public record ImportOrdersExcelCommand(System.IO.Stream FileStream, string FileName) : IRequest<OrderImportResultDto>;
 
 #region Validators
 
@@ -69,15 +95,20 @@ public class OrderHandlers :
     IRequestHandler<UpdateOrderCommand, Unit>,
     IRequestHandler<ActivateOrderCommand, Unit>,
     IRequestHandler<CompleteOrderCommand, Unit>,
-    IRequestHandler<CancelOrderCommand, Unit>
+    IRequestHandler<CancelOrderCommand, Unit>,
+    IRequestHandler<DeleteOrderCommand, Unit>,
+    IRequestHandler<PrintOrderCodesPdfQuery, PrintOrderCodesResult>,
+    IRequestHandler<ImportOrdersExcelCommand, OrderImportResultDto>
 {
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly IAuditLogService _auditLogService;
+    private readonly ILabelGenerator _labelGenerator;
 
-    public OrderHandlers(IDbConnectionFactory dbConnectionFactory, IAuditLogService auditLogService)
+    public OrderHandlers(IDbConnectionFactory dbConnectionFactory, IAuditLogService auditLogService, ILabelGenerator labelGenerator)
     {
         _dbConnectionFactory = dbConnectionFactory;
         _auditLogService = auditLogService;
+        _labelGenerator = labelGenerator;
     }
 
     public async Task<(IEnumerable<OrderDto> Items, int TotalCount)> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
@@ -280,6 +311,281 @@ public class OrderHandlers :
         await connection.ExecuteAsync(sql, new { Id = request.Id, Status = OrderStatus.Cancelled.ToString(), UpdatedAt = DateTime.UtcNow });
         await _auditLogService.LogAsync("Orders", request.Id, "Cancel");
         return Unit.Value;
+    }
+
+    public async Task<Unit> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var existing = await connection.QueryFirstOrDefaultAsync<dynamic>("SELECT Status FROM Orders WHERE Id = @Id", new { Id = request.Id });
+        if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+
+        if (existing.status != OrderStatus.Draft.ToString())
+        {
+            throw new InvalidOperationException("Yalnızca taslak durumundaki siparişler silinebilir.");
+        }
+
+        const string sql = "DELETE FROM Orders WHERE Id = @Id";
+        await connection.ExecuteAsync(sql, new { Id = request.Id });
+        await _auditLogService.LogAsync("Orders", request.Id, "Delete", existing, null);
+        return Unit.Value;
+    }
+
+    public async Task<PrintOrderCodesResult> Handle(PrintOrderCodesPdfQuery request, CancellationToken cancellationToken)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT OrderNo FROM Orders WHERE Id = @Id", new { Id = request.OrderId });
+        if (order == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+        string orderNo = order.orderno;
+
+        var codes = (await connection.QueryAsync<string>(
+            "SELECT RawCode FROM ProductCodes WHERE OrderId = @OrderId ORDER BY CreatedAt ASC",
+            new { OrderId = request.OrderId })).ToList();
+
+        if (codes.Count == 0)
+        {
+            throw new InvalidOperationException("Siparişe ait yüklenmiş barkod bulunamadı.");
+        }
+
+        if (request.SplitSize > 0 && codes.Count > request.SplitSize)
+        {
+            using var zipMs = new MemoryStream();
+            using (var archive = new System.IO.Compression.ZipArchive(zipMs, System.IO.Compression.ZipArchiveMode.Create, true))
+            {
+                int partNo = 1;
+                for (int i = 0; i < codes.Count; i += request.SplitSize)
+                {
+                    var chunk = codes.Skip(i).Take(request.SplitSize).ToList();
+                    byte[] pdfBytes = _labelGenerator.GenerateDataMatrixCodesPdf(
+                        chunk, request.Cols, request.Rows, request.Size, request.AddText, request.Line1, request.Line2, request.LabelBelow);
+
+                    var entry = archive.CreateEntry($"dm_labels_{orderNo}_part{partNo}.pdf");
+                    using var entryStream = entry.Open();
+                    await entryStream.WriteAsync(pdfBytes, 0, pdfBytes.Length, cancellationToken);
+                    partNo++;
+                }
+            }
+
+            return new PrintOrderCodesResult(zipMs.ToArray(), "application/zip", $"dm_labels_{orderNo}.zip");
+        }
+        else
+        {
+            byte[] pdfBytes = _labelGenerator.GenerateDataMatrixCodesPdf(
+                codes, request.Cols, request.Rows, request.Size, request.AddText, request.Line1, request.Line2, request.LabelBelow);
+
+            return new PrintOrderCodesResult(pdfBytes, "application/pdf", $"dm_labels_{orderNo}.pdf");
+        }
+    }
+
+    public async Task<OrderImportResultDto> Handle(ImportOrdersExcelCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+
+        var ordersToInsert = new List<dynamic>();
+        var errors = new List<ImportErrorDto>();
+        int totalRows = 0;
+        int importedCount = 0;
+        int duplicateCount = 0;
+        int invalidCount = 0;
+
+        try
+        {
+            using var workbook = new ClosedXML.Excel.XLWorkbook(request.FileStream);
+            var worksheet = workbook.Worksheets.FirstOrDefault();
+            if (worksheet == null)
+            {
+                throw new InvalidOperationException("Çalışma sayfası bulunamadı.");
+            }
+
+            var rows = worksheet.RangeUsed().RowsUsed().ToList();
+            if (rows.Count <= 1)
+            {
+                throw new InvalidOperationException("Excel dosyası boş veya sadece başlık satırı içeriyor.");
+            }
+
+            // Identify column headers
+            var headerRow = rows.First();
+            int colCount = headerRow.CellCount();
+            
+            int orderNoCol = -1;
+            int customerNameCol = -1;
+            int gtinCol = -1;
+            int stockCodeCol = -1;
+            int productNameCol = -1;
+            int productPerCartonCol = -1;
+            int cartonPerPalletCol = -1;
+            int qtyCol = -1;
+
+            for (int col = 1; col <= colCount; col++)
+            {
+                string header = headerRow.Cell(col).GetValue<string>().Trim().ToLowerInvariant();
+                if (header.Contains("sipariş no") || header.Contains("siparis no") || header.Contains("order no"))
+                    orderNoCol = col;
+                else if (header.Contains("firma") || header.Contains("müşteri") || header.Contains("musteri") || header.Contains("customer"))
+                    customerNameCol = col;
+                else if (header.Contains("iş emri") || header.Contains("is emri") || header.Contains("işemri") || header.Contains("isemri") || header.Contains("gtin") || header.Contains("work order"))
+                    gtinCol = col;
+                else if (header.Contains("stok kodu") || header.Contains("stokkodu") || header.Contains("stock code") || header.Contains("sku"))
+                    stockCodeCol = col;
+                else if (header.Contains("stok ismi") || header.Contains("stok adı") || header.Contains("stok adi") || header.Contains("product name") || header.Contains("ürün adı") || header.Contains("urun adi"))
+                    productNameCol = col;
+                else if (header.Contains("koli içi") || header.Contains("koli ici") || header.Contains("koli içi adet") || header.Contains("koli ici adet") || header.Contains("product per carton") || header.Contains("per carton"))
+                    productPerCartonCol = col;
+                else if (header.Contains("palet içi") || header.Contains("palet ici") || header.Contains("palet içi koli") || header.Contains("palet ici koli") || header.Contains("carton per pallet") || header.Contains("per pallet"))
+                    cartonPerPalletCol = col;
+                else if (header.Contains("miktar") || header.Contains("adet") || header.Contains("expected quantity") || header.Contains("quantity") || header.Contains("qty"))
+                    qtyCol = col;
+            }
+
+            // Fallback to position-based indexing if headers not detected
+            if (orderNoCol == -1) orderNoCol = 1;
+            if (customerNameCol == -1) customerNameCol = 2;
+            if (gtinCol == -1) gtinCol = 3;
+            if (stockCodeCol == -1) stockCodeCol = 4;
+            if (productNameCol == -1) productNameCol = 5;
+            if (qtyCol == -1) qtyCol = 6;
+            if (productPerCartonCol == -1) productPerCartonCol = 7;
+            if (cartonPerPalletCol == -1) cartonPerPalletCol = 8;
+
+            // Load existing Order Nos from database
+            var existingOrderNos = (await connection.QueryAsync<string>("SELECT OrderNo FROM Orders")).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var seenOrderNosInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 1; i < rows.Count; i++) // Skip header
+            {
+                var row = rows[i];
+                int rowNo = row.RowNumber();
+
+                string orderNo = orderNoCol <= colCount ? row.Cell(orderNoCol).GetValue<string>().Trim() : "";
+                string customerName = customerNameCol <= colCount ? row.Cell(customerNameCol).GetValue<string>().Trim() : "";
+                string gtin = gtinCol <= colCount ? row.Cell(gtinCol).GetValue<string>().Trim() : "";
+                string stockCode = stockCodeCol <= colCount ? row.Cell(stockCodeCol).GetValue<string>().Trim() : "";
+                string productName = productNameCol <= colCount ? row.Cell(productNameCol).GetValue<string>().Trim() : "";
+                string qtyStr = qtyCol <= colCount ? row.Cell(qtyCol).GetValue<string>().Trim() : "";
+                string productPerCartonStr = productPerCartonCol <= colCount ? row.Cell(productPerCartonCol).GetValue<string>().Trim() : "";
+                string cartonPerPalletStr = cartonPerPalletCol <= colCount ? row.Cell(cartonPerPalletCol).GetValue<string>().Trim() : "";
+
+                if (string.IsNullOrWhiteSpace(orderNo))
+                {
+                    // If the whole row is empty, just skip it silently
+                    if (string.IsNullOrWhiteSpace(customerName) && string.IsNullOrWhiteSpace(gtin) && string.IsNullOrWhiteSpace(qtyStr))
+                    {
+                        continue;
+                    }
+                    invalidCount++;
+                    errors.Add(new ImportErrorDto(rowNo, "", "Sipariş numarası boş olamaz."));
+                    continue;
+                }
+
+                totalRows++;
+
+                if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(gtin) || string.IsNullOrWhiteSpace(qtyStr))
+                {
+                    invalidCount++;
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Eksik bilgi (Firma, İş Emri veya Miktar boş olamaz)."));
+                    continue;
+                }
+
+                if (!int.TryParse(qtyStr, out int expectedQty) || expectedQty <= 0)
+                {
+                    invalidCount++;
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, $"Miktar bilgisi hatalı: {qtyStr}. 0'dan büyük tam sayı olmalıdır."));
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(productPerCartonStr))
+                {
+                    invalidCount++;
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Koli içi adet bilgisi boş olamaz."));
+                    continue;
+                }
+
+                if (!int.TryParse(productPerCartonStr, out int productPerCarton) || productPerCarton <= 0)
+                {
+                    invalidCount++;
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, $"Koli içi adet bilgisi hatalı: {productPerCartonStr}. 0'dan büyük tam sayı olmalıdır."));
+                    continue;
+                }
+
+                int cartonPerPallet = 20; // Default if not provided
+                if (!string.IsNullOrWhiteSpace(cartonPerPalletStr))
+                {
+                    if (!int.TryParse(cartonPerPalletStr, out cartonPerPallet) || cartonPerPallet <= 0)
+                    {
+                        invalidCount++;
+                        errors.Add(new ImportErrorDto(rowNo, orderNo, $"Palet içi koli bilgisi hatalı: {cartonPerPalletStr}. 0'dan büyük tam sayı olmalıdır."));
+                        continue;
+                    }
+                }
+
+                if (existingOrderNos.Contains(orderNo))
+                {
+                    duplicateCount++;
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Veritabanında bu sipariş numarası zaten mevcut."));
+                    continue;
+                }
+
+                if (seenOrderNosInFile.Contains(orderNo))
+                {
+                    duplicateCount++;
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Dosya içerisinde mükerrer sipariş numarası."));
+                    continue;
+                }
+
+                seenOrderNosInFile.Add(orderNo);
+
+                ordersToInsert.Add(new
+                {
+                    Id = Guid.NewGuid(),
+                    OrderNo = orderNo,
+                    CustomerName = customerName,
+                    StockCode = string.IsNullOrWhiteSpace(stockCode) ? (string?)null : stockCode,
+                    ProductName = string.IsNullOrWhiteSpace(productName) ? (string?)null : productName,
+                    GTIN = gtin,
+                    ProductPerCarton = productPerCarton,
+                    CartonPerPallet = cartonPerPallet,
+                    ExpectedQuantity = expectedQty,
+                    Description = "Excel ile toplu aktarıldı.",
+                    Status = OrderStatus.Draft.ToString(),
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Bulk Insert
+            if (ordersToInsert.Count > 0)
+            {
+                using var transaction = connection.BeginTransaction();
+                try
+                {
+                    const string sql = @"
+                        INSERT INTO Orders (Id, OrderNo, CustomerName, StockCode, ProductName, GTIN, ProductPerCarton, CartonPerPallet, ExpectedQuantity, Description, Status, CreatedAt, UpdatedAt)
+                        VALUES (@Id, @OrderNo, @CustomerName, @StockCode, @ProductName, @GTIN, @ProductPerCarton, @CartonPerPallet, @ExpectedQuantity, @Description, @Status, @CreatedAt, @UpdatedAt)";
+
+                    await connection.ExecuteAsync(sql, ordersToInsert, transaction);
+                    transaction.Commit();
+                    importedCount = ordersToInsert.Count;
+
+                    // Log Audit for each order
+                    foreach (var order in ordersToInsert)
+                    {
+                        await _auditLogService.LogAsync("Orders", order.Id, "BulkImport", null, order);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    throw new InvalidOperationException("Siparişler kaydedilirken veritabanı hatası oluştu: " + ex.Message, ex);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Excel dosyası okunurken hata oluştu: " + ex.Message, ex);
+        }
+
+        return new OrderImportResultDto(totalRows, importedCount, duplicateCount, invalidCount, errors);
     }
 }
 

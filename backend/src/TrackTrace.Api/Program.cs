@@ -356,6 +356,54 @@ app.MapPost("/api/orders/{id:guid}/cancel", async (Guid id, IMediator mediator) 
     }
 }).RequireAuthorization("OperatorOrAdmin");
 
+app.MapDelete("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new DeleteOrderCommand(id));
+        return Results.NoContent();
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/orders/{id:guid}/print-codes", async (
+    Guid id,
+    [FromBody] PrintCodesRequest request,
+    IMediator mediator) =>
+{
+    try
+    {
+        var query = new PrintOrderCodesPdfQuery(
+            id,
+            request.Cols,
+            request.Rows,
+            request.Size,
+            request.AddText,
+            request.Line1,
+            request.Line2,
+            request.LabelBelow,
+            request.SplitSize);
+
+        var result = await mediator.Send(query);
+        return Results.File(result.FileContents, result.ContentType, result.FileName);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound(new { message = "Sipariş bulunamadı." });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
 // Upload/Import Endpoints
 app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file, IMediator mediator) =>
 {
@@ -373,6 +421,25 @@ app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file
     catch (KeyNotFoundException)
     {
         return Results.NotFound(new { message = "Sipariş bulunamadı." });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+
+app.MapPost("/api/orders/import-excel", async (IFormFile file, IMediator mediator) =>
+{
+    if (file == null || file.Length == 0)
+    {
+        return Results.BadRequest(new { message = "Lütfen geçerli bir dosya yükleyin." });
+    }
+
+    try
+    {
+        using var stream = file.OpenReadStream();
+        var result = await mediator.Send(new ImportOrdersExcelCommand(stream, file.FileName));
+        return Results.Ok(result);
     }
     catch (Exception ex)
     {
@@ -398,9 +465,10 @@ app.MapGet("/api/cartons", async (
     [FromQuery] string? search,
     [FromQuery] string? status,
     [FromQuery] Guid? orderId,
+    [FromQuery] Guid? palletId,
     IMediator mediator) =>
 {
-    var (items, count) = await mediator.Send(new GetCartonsQuery(pageNumber ?? 1, pageSize ?? 10, search, status, orderId));
+    var (items, count) = await mediator.Send(new GetCartonsQuery(pageNumber ?? 1, pageSize ?? 10, search, status, orderId, palletId));
     return Results.Ok(new { items, totalCount = count });
 }).RequireAuthorization("ViewerOrAbove");
 
@@ -466,6 +534,45 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     }
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapPost("/api/cartons/{id:guid}/decompose", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new DecomposeCartonCommand(id));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/cartons/{id:guid}/remove-product", async (Guid id, [FromQuery] string rawCode, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new RemoveProductFromCartonCommand(id, rawCode));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/cartons/{id:guid}/add-product", async (Guid id, [FromQuery] string rawCode, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new AddProductToCartonCommand(id, rawCode));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
 // Pallets Endpoints
 app.MapGet("/api/pallets", async (
     [FromQuery] int? pageNumber,
@@ -510,6 +617,19 @@ app.MapPost("/api/pallets/{id:guid}/add-carton", async (Guid id, [FromQuery] str
     try
     {
         await mediator.Send(new AddCartonToPalletCommand(id, cartonSscc));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/pallets/{id:guid}/transfer-carton", async (Guid id, [FromQuery] Guid cartonId, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new TransferCartonPalletCommand(cartonId, id));
         return Results.Ok();
     }
     catch (Exception ex)
@@ -614,3 +734,13 @@ app.MapGet("/api/system/health", async (IDbConnectionFactory dbFactory) =>
 }).RequireAuthorization("AdminOnly");
 
 app.Run();
+
+public record PrintCodesRequest(
+    int Cols,
+    int Rows,
+    int Size,
+    bool AddText,
+    string? Line1,
+    string? Line2,
+    bool LabelBelow,
+    int SplitSize);

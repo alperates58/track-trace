@@ -43,6 +43,12 @@ export const Pallets: React.FC = () => {
   const [cartonsLoading, setCartonsLoading] = useState(false);
   const [zplOutput, setZplOutput] = useState<string | null>(null);
 
+  // Carton Transfer states
+  const [openPallets, setOpenPallets] = useState<Pallet[]>([]);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [cartonToTransfer, setCartonToTransfer] = useState<any>(null);
+  const [destinationPalletId, setDestinationPalletId] = useState('');
+
   const fetchPallets = () => {
     setLoading(true);
     const query = `?pageNumber=${page}&pageSize=10&search=${encodeURIComponent(search)}&status=${statusFilter}`;
@@ -97,15 +103,8 @@ export const Pallets: React.FC = () => {
 
     try {
       // Fetch cartons inside this pallet
-      const res = await api.get(`/api/cartons?pageNumber=1&pageSize=100&status=Palletized&orderId=${pallet.orderId}`);
-      // Filter cartons that might belong to this pallet
-      // (Normally we would query the pallet-carton endpoint but in MVP, we can retrieve cartons or filter).
-      // Let's call standard cartons filter for palletId if API supports, or query all.
-      // Wait, let's query the cartons list and filter cartons that are palletized.
-      // Actually, for simplicity we can load cartons inside this pallet.
-      // Let's check how cartons inside this pallet is resolved in backend CartonHandlers or if we can fetch all.
-      // We can fetch cartons by filtering orderId.
-      setPalletCartons(res.items.slice(0, pallet.cartonCount));
+      const res = await api.get(`/api/cartons?pageNumber=1&pageSize=100&palletId=${pallet.id}`);
+      setPalletCartons(res.items);
     } catch (err) {
       console.error(err);
     } finally {
@@ -140,6 +139,37 @@ export const Pallets: React.FC = () => {
       }
     } catch (err: any) {
       alert('İşlem başarısız: ' + err.message);
+    }
+  };
+
+  const handleOpenTransferModal = async (carton: any) => {
+    try {
+      const res = await api.get(`/api/pallets?pageSize=100&status=Open&orderId=${selectedPallet?.orderId}`);
+      const filtered = res.items.filter((p: Pallet) => p.id !== selectedPallet?.id);
+      setOpenPallets(filtered);
+      setCartonToTransfer(carton);
+      setDestinationPalletId('');
+      setShowTransferModal(true);
+    } catch (err: any) {
+      alert("Paletler yüklenemedi: " + err.message);
+    }
+  };
+
+  const handleTransferCarton = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cartonToTransfer || !destinationPalletId) return;
+    try {
+      await api.post(`/api/pallets/${destinationPalletId}/transfer-carton?cartonId=${cartonToTransfer.id}`);
+      setShowTransferModal(false);
+      setCartonToTransfer(null);
+      setDestinationPalletId('');
+      fetchPallets();
+      if (selectedPallet) {
+        const updated = await api.get(`/api/pallets/${selectedPallet.id}`);
+        handlePalletClick(updated);
+      }
+    } catch (err: any) {
+      alert("Koli taşınamadı: " + err.message);
     }
   };
 
@@ -212,7 +242,7 @@ export const Pallets: React.FC = () => {
         <button type="submit" className="btn btn-secondary">Ara</button>
       </form>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedPallet ? '3fr 2fr' : '1fr', gap: '24px' }}>
+      <div className={selectedPallet ? "pallet-split-grid" : ""} style={{ display: selectedPallet ? undefined : 'block' }}>
         
         {/* Pallets List */}
         <div className="table-container">
@@ -360,7 +390,18 @@ export const Pallets: React.FC = () => {
                         <strong>{c.cartonNo}</strong>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SSCC: {c.sscc}</div>
                       </div>
-                      <span style={{ fontWeight: 600 }}>{c.actualQuantity} adet</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontWeight: 600 }}>{c.actualQuantity} adet</span>
+                        {user?.role !== 'Viewer' && (
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                            onClick={() => handleOpenTransferModal(c)}
+                          >
+                            Taşı
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -393,6 +434,42 @@ export const Pallets: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary" disabled={!selectedOrderId}>Palet Oluştur</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- TRANSFER CARTON MODAL --- */}
+      {showTransferModal && cartonToTransfer && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '450px' }}>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              Koli Taşı: {cartonToTransfer.cartonNo}
+            </h3>
+            <form onSubmit={handleTransferCarton}>
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label">Hedef Palet Seçin (Açık Paletler) *</label>
+                <select
+                  className="form-input"
+                  required
+                  value={destinationPalletId}
+                  onChange={(e) => setDestinationPalletId(e.target.value)}
+                >
+                  <option value="">-- HEDEF PALET SEÇİN --</option>
+                  {openPallets.map(p => (
+                    <option key={p.id} value={p.id}>{p.palletNo} - SSCC: {p.sscc} ({p.cartonCount} koli)</option>
+                  ))}
+                </select>
+                {openPallets.length === 0 && (
+                  <p style={{ color: 'var(--danger-text)', fontSize: '0.8rem', marginTop: '8px' }}>
+                    Bu siparişe ait başka açık palet bulunmamaktadır. Lütfen önce yeni bir palet açın.
+                  </p>
+                )}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowTransferModal(false); setCartonToTransfer(null); }}>İptal</button>
+                <button type="submit" className="btn btn-primary" disabled={!destinationPalletId}>Koli Taşı</button>
               </div>
             </form>
           </div>

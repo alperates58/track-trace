@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Printer, Eye, Search, FileText, Barcode } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Printer, Eye, Search, FileText, Barcode, Trash2, Plus } from 'lucide-react';
 
 interface Carton {
   id: string;
@@ -26,6 +27,7 @@ interface ProductCode {
 }
 
 export const Cartons: React.FC = () => {
+  const { user } = useAuth();
   const [cartons, setCartons] = useState<Carton[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -38,6 +40,7 @@ export const Cartons: React.FC = () => {
   const [cartonItems, setCartonItems] = useState<ProductCode[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [zplOutput, setZplOutput] = useState<string | null>(null);
+  const [newProductBarcode, setNewProductBarcode] = useState('');
 
   const fetchCartons = () => {
     setLoading(true);
@@ -102,6 +105,51 @@ export const Cartons: React.FC = () => {
     }
   };
 
+  const handleDecompose = async (cartonId: string) => {
+    if (!confirm("Bu koliyi bozmak istediğinize emin misiniz? Kolideki tüm ürünler 'Okutuldu' (scanned) durumundan çıkıp 'Yüklendi' (uploaded) durumuna geri dönecek ve koli tamamen silinecektir.")) return;
+    try {
+      await api.post(`/api/cartons/${cartonId}/decompose`);
+      setSelectedCarton(null);
+      fetchCartons();
+    } catch (err: any) {
+      alert("Koli bozulamadı: " + err.message);
+    }
+  };
+
+  const handleRemoveProduct = async (cartonId: string, rawCode: string) => {
+    if (!confirm("Bu ürünü koliden çıkarmak istediğinize emin misiniz? Ürün koli dışına çıkarılacak ve koli tekrar 'Açık' durumuna getirilecektir.")) return;
+    try {
+      await api.post(`/api/cartons/${cartonId}/remove-product?rawCode=${encodeURIComponent(rawCode)}`);
+      // Reload details
+      const updatedCarton = await api.get(`/api/cartons/${cartonId}`);
+      setSelectedCarton(updatedCarton);
+      // Reload items
+      const items = await api.get(`/api/cartons/${cartonId}/items`);
+      setCartonItems(items);
+      fetchCartons();
+    } catch (err: any) {
+      alert("Ürün çıkarılamadı: " + err.message);
+    }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCarton || !newProductBarcode.trim()) return;
+    try {
+      await api.post(`/api/cartons/${selectedCarton.id}/add-product?rawCode=${encodeURIComponent(newProductBarcode.trim())}`);
+      setNewProductBarcode('');
+      // Reload details
+      const updatedCarton = await api.get(`/api/cartons/${selectedCarton.id}`);
+      setSelectedCarton(updatedCarton);
+      // Reload items
+      const items = await api.get(`/api/cartons/${selectedCarton.id}/items`);
+      setCartonItems(items);
+      fetchCartons();
+    } catch (err: any) {
+      alert("Ürün eklenemedi: " + err.message);
+    }
+  };
+
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
@@ -140,7 +188,7 @@ export const Cartons: React.FC = () => {
         <button type="submit" className="btn btn-secondary">Ara</button>
       </form>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedCarton ? '3fr 2fr' : '1fr', gap: '24px' }}>
+      <div className={selectedCarton ? "carton-split-grid" : ""} style={{ display: selectedCarton ? undefined : 'block' }}>
         
         {/* Cartons Table */}
         <div className="table-container">
@@ -219,6 +267,16 @@ export const Cartons: React.FC = () => {
               </button>
             </div>
 
+            {user?.role !== 'Viewer' && (
+              <button 
+                className="btn btn-danger" 
+                style={{ width: '100%', padding: '10px' }} 
+                onClick={() => handleDecompose(selectedCarton.id)}
+              >
+                Koliyi Boz (İptal Et)
+              </button>
+            )}
+
             {/* ZPL Raw Output Panel */}
             {zplOutput && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -235,6 +293,27 @@ export const Cartons: React.FC = () => {
                   {zplOutput}
                 </pre>
               </div>
+            )}
+
+            {/* Scan Product directly to Carton */}
+            {selectedCarton.status === 'Open' && user?.role !== 'Viewer' && (
+              <form onSubmit={handleAddProduct} className="card" style={{ padding: '14px', backgroundColor: 'var(--primary-light)', border: '1px solid #bfdbfe', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary)' }}>Koliye Ürün Ekle (Barkod Okutun)</span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    style={{ flex: 1, height: '36px', fontSize: '0.85rem' }} 
+                    required 
+                    placeholder="Ürün barkodunu okutun veya yazın..." 
+                    value={newProductBarcode} 
+                    onChange={e => setNewProductBarcode(e.target.value)} 
+                  />
+                  <button type="submit" className="btn btn-primary" style={{ height: '36px', padding: '0 12px' }}>
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </form>
             )}
 
             {/* Carton Item List */}
@@ -255,7 +334,18 @@ export const Cartons: React.FC = () => {
                       fontSize: '0.8rem',
                       border: '1px solid var(--border-color)'
                     }}>
-                      <div style={{ fontWeight: 600, wordBreak: 'break-all' }}>{item.rawCode}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                        <div style={{ fontWeight: 600, wordBreak: 'break-all', maxWidth: '85%' }}>{item.rawCode}</div>
+                        {user?.role !== 'Viewer' && (
+                          <button 
+                            onClick={() => handleRemoveProduct(selectedCarton.id, item.rawCode)}
+                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                            title="Hatalı Ürünü Çıkar"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.75rem' }}>
                         <span>S/N: {item.serialNo}</span>
                         <span>Okuyan: {item.scannedBy}</span>

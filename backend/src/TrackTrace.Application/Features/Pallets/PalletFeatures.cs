@@ -27,13 +27,16 @@ public record ClosePalletCommand(Guid Id) : IRequest<Unit>;
 
 public record PrintPalletLabelCommand(Guid Id, string Format) : IRequest<(byte[]? FileContent, string? ZplText)>;
 
+public record TransferCartonPalletCommand(Guid CartonId, Guid TargetPalletId) : IRequest<Unit>;
+
 public class PalletHandlers :
     IRequestHandler<GetPalletsQuery, (IEnumerable<PalletDto> Items, int TotalCount)>,
     IRequestHandler<GetPalletByIdQuery, PalletDto>,
     IRequestHandler<CreatePalletCommand, Guid>,
     IRequestHandler<AddCartonToPalletCommand, Unit>,
     IRequestHandler<ClosePalletCommand, Unit>,
-    IRequestHandler<PrintPalletLabelCommand, (byte[]? FileContent, string? ZplText)>
+    IRequestHandler<PrintPalletLabelCommand, (byte[]? FileContent, string? ZplText)>,
+    IRequestHandler<TransferCartonPalletCommand, Unit>
 {
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly ICurrentUserService _currentUserService;
@@ -405,5 +408,93 @@ public class PalletHandlers :
 
         int remainder = sum % 10;
         return remainder == 0 ? 0 : 10 - remainder;
+    }
+
+    public async Task<Unit> Handle(TransferCartonPalletCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // 1. Get Target Pallet with row-locking
+            var targetPallet = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Pallets WHERE Id = @Id FOR UPDATE", new { Id = request.TargetPalletId }, transaction);
+            if (targetPallet == null) throw new KeyNotFoundException("Hedef palet bulunamadı.");
+            if (targetPallet.status != PalletStatus.Open.ToString())
+            {
+                throw new InvalidOperationException("Yalnızca açık olan paletlere koli taşınabilir.");
+            }
+
+            Guid orderId = targetPallet.orderid;
+
+            // Get Order CartonPerPallet
+            var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT CartonPerPallet FROM Orders WHERE Id = @OrderId", new { OrderId = orderId }, transaction);
+            int cartonPerPallet = order.cartonperpallet;
+
+            // Count current cartons in target pallet
+            int currentCartonCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM PalletCartons WHERE PalletId = @PalletId", new { PalletId = request.TargetPalletId }, transaction);
+
+            if (currentCartonCount >= cartonPerPallet)
+            {
+                throw new InvalidOperationException("Hedef palet kapasitesi dolu.");
+            }
+
+            // 2. Get Carton with row-locking
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.CartonId }, transaction);
+            if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+
+            if (carton.orderid != orderId)
+            {
+                throw new InvalidOperationException("Koli ile hedef palet siparişleri eşleşmiyor.");
+            }
+
+            string cartonStatus = carton.status;
+            if (cartonStatus != CartonStatus.Closed.ToString() && cartonStatus != CartonStatus.Printed.ToString() && cartonStatus != CartonStatus.Palletized.ToString())
+            {
+                throw new InvalidOperationException("Yalnızca kapalı, yazdırılmış veya paletlenmiş koliler taşınabilir.");
+            }
+
+            // 3. Delete existing PalletCartons mapping (removes from source pallet if any)
+            await connection.ExecuteAsync(
+                "DELETE FROM PalletCartons WHERE CartonId = @CartonId",
+                new { CartonId = request.CartonId }, transaction);
+
+            // 4. Add to target PalletCartons
+            var palletCartonId = Guid.NewGuid();
+            await connection.ExecuteAsync(
+                "INSERT INTO PalletCartons (Id, PalletId, CartonId, CreatedAt) VALUES (@Id, @PalletId, @CartonId, @CreatedAt)",
+                new { Id = palletCartonId, PalletId = request.TargetPalletId, CartonId = request.CartonId, CreatedAt = DateTime.UtcNow }, transaction);
+
+            // 5. Update Carton Status to Palletized
+            await connection.ExecuteAsync(
+                "UPDATE Cartons SET Status = @Status WHERE Id = @Id",
+                new { Id = request.CartonId, Status = CartonStatus.Palletized.ToString() }, transaction);
+
+            currentCartonCount++;
+
+            // 6. Auto-close target Pallet if Capacity is Full
+            if (currentCartonCount >= cartonPerPallet)
+            {
+                await connection.ExecuteAsync(
+                    "UPDATE Pallets SET Status = @Status, ClosedAt = @ClosedAt WHERE Id = @Id",
+                    new { Id = request.TargetPalletId, Status = PalletStatus.Closed.ToString(), ClosedAt = DateTime.UtcNow }, transaction);
+                
+                await _auditLogService.LogAsync("Pallets", request.TargetPalletId, "Close", null, new { Reason = "CapacityReachedByTransfer" });
+            }
+
+            transaction.Commit();
+            await _auditLogService.LogAsync("Pallets", request.TargetPalletId, "TransferCarton", null, new { CartonId = request.CartonId, CartonNo = carton.cartonno });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 }
