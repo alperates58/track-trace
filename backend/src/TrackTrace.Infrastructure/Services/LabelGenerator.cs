@@ -354,6 +354,29 @@ public class LabelGenerator : ILabelGenerator
         return stream.ToArray();
     }
 
+    public byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes)
+    {
+        using var ms = new MemoryStream();
+        using (var archive = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, true))
+        {
+            int index = 1;
+            foreach (var code in codes)
+            {
+                byte[] imgBytes = GenerateDataMatrixImageBytes(code);
+                var entry = archive.CreateEntry($"dm_{index:D6}.png");
+                using var entryStream = entry.Open();
+                entryStream.Write(imgBytes, 0, imgBytes.Length);
+                index++;
+            }
+        }
+        return ms.ToArray();
+    }
+
+    public byte[] GenerateDataMatrixImage(string text)
+    {
+        return GenerateDataMatrixImageBytes(text);
+    }
+
     private byte[] GenerateDataMatrixImageBytes(string text)
     {
         try

@@ -447,6 +447,132 @@ app.MapPost("/api/orders/import-excel", async (IFormFile file, IMediator mediato
     }
 }).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
 
+app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
+{
+    try
+    {
+        var form = await request.ReadFormAsync();
+        var file = form.Files.GetFile("file");
+        if (file == null || file.Length == 0)
+        {
+            return Results.BadRequest(new { message = "Lütfen geçerli bir dosya yükleyin." });
+        }
+
+        var errors = new List<object>();
+        var validCodes = new List<string>();
+        int totalLines = 0;
+        int rowNo = 0;
+
+        using (var reader = new StreamReader(file.OpenReadStream()))
+        {
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                rowNo++;
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                totalLines++;
+
+                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
+                if (parseResult.Success)
+                {
+                    validCodes.Add(parseResult.Normalized);
+                }
+                else
+                {
+                    errors.Add(new { rowNo, rawLine = line, errorMessage = parseResult.ErrorMessage ?? "Geçersiz barkod formatı." });
+                }
+            }
+        }
+
+        return Results.Ok(new
+        {
+            totalLines,
+            validCount = validCodes.Count,
+            invalidCount = errors.Count,
+            previewCodes = validCodes.Take(5).ToList(),
+            errors
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+
+app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenerator labelGenerator) =>
+{
+    try
+    {
+        var form = await request.ReadFormAsync();
+        var file = form.Files.GetFile("file");
+        if (file == null || file.Length == 0)
+        {
+            return Results.BadRequest(new { message = "Lütfen geçerli bir dosya yükleyin." });
+        }
+
+        string format = form["format"].ToString() ?? "PDF";
+        int cols = int.TryParse(form["cols"], out int c) ? c : 4;
+        int rows = int.TryParse(form["rows"], out int r) ? r : 6;
+        int size = int.TryParse(form["size"], out int s) ? s : 100;
+        bool addText = bool.TryParse(form["addText"], out bool at) && at;
+        string? line1 = form["line1"].ToString();
+        string? line2 = form["line2"].ToString();
+        bool labelBelow = !bool.TryParse(form["labelBelow"], out bool lb) || lb;
+
+        var validCodes = new List<string>();
+        using (var reader = new StreamReader(file.OpenReadStream()))
+        {
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
+                if (parseResult.Success)
+                {
+                    validCodes.Add(parseResult.Normalized);
+                }
+            }
+        }
+
+        if (validCodes.Count == 0)
+        {
+            return Results.BadRequest(new { message = "Dosya içerisinde geçerli kod bulunamadı." });
+        }
+
+        if (string.Equals(format, "PNG", StringComparison.OrdinalIgnoreCase))
+        {
+            byte[] zipBytes = labelGenerator.GenerateDataMatrixZip(validCodes);
+            return Results.File(zipBytes, "application/zip", "datamatrix_images.zip");
+        }
+        else // PDF
+        {
+            byte[] pdfBytes = labelGenerator.GenerateDataMatrixCodesPdf(
+                validCodes, cols, rows, size, addText, line1, line2, labelBelow);
+
+            return Results.File(pdfBytes, "application/pdf", "datamatrix_labels.pdf");
+        }
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+
+app.MapGet("/api/datamatrix/preview", (string text, ILabelGenerator labelGenerator) =>
+{
+    try
+    {
+        var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(text);
+        string finalCode = parseResult.Success ? parseResult.Normalized : text;
+        byte[] imgBytes = labelGenerator.GenerateDataMatrixImage(finalCode);
+        return Results.File(imgBytes, "image/png");
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
 // Scan Endpoints
 app.MapPost("/api/scan/product", async (ScanRequest request, IMediator mediator) =>
 {

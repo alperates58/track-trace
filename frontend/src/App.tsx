@@ -8,6 +8,7 @@ import { Cartons } from './pages/Cartons';
 import { Pallets } from './pages/Pallets';
 import { BarcodeSearch } from './pages/BarcodeSearch';
 import { Reports } from './pages/Reports';
+import { DataMatrixCreator } from './pages/DataMatrixCreator';
 import { SystemInfo } from './pages/SystemInfo';
 import { Users } from './pages/Users';
 import { 
@@ -23,7 +24,8 @@ import {
   User as UserIcon,
   Users as UsersIcon,
   Package,
-  Menu
+  Menu,
+  QrCode
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -48,6 +50,8 @@ const AppShell: React.FC = () => {
         return <BarcodeSearch />;
       case 'reports':
         return <Reports />;
+      case 'dm-creator':
+        return <DataMatrixCreator />;
       case 'users':
         return <Users />;
       case 'system':
@@ -140,6 +144,15 @@ const AppShell: React.FC = () => {
             <span>Baskı Geçmişi</span>
           </div>
 
+          <div 
+            className={`sidebar-link ${activeTab === 'dm-creator' ? 'active' : ''}`}
+            onClick={() => handleTabClick('dm-creator')}
+            title="DataMatrix Üretici"
+          >
+            <QrCode size={18} style={{ flexShrink: 0 }} />
+            <span>DataMatrix Üretici</span>
+          </div>
+
           {user?.role === 'Admin' && (
             <>
               <div 
@@ -200,7 +213,7 @@ const AppShell: React.FC = () => {
               <Menu size={20} />
             </button>
             <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
-              {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab}
+              {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab}
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
