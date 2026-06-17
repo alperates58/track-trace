@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Printer, Eye, Search, Barcode } from 'lucide-react';
+import { Plus, Printer, Eye, Search, Barcode, Trash2 } from 'lucide-react';
 
 interface Pallet {
   id: string;
@@ -139,6 +139,19 @@ export const Pallets: React.FC = () => {
       }
     } catch (err: any) {
       alert('İşlem başarısız: ' + err.message);
+    }
+  };
+
+  const handleDeletePallet = async (palletId: string) => {
+    if (!confirm('Paleti silmek (bozmak) istediğinize emin misiniz? Palet silindiğinde içindeki koliler serbest kalacaktır.')) return;
+    try {
+      await api.delete(`/api/pallets/${palletId}`);
+      if (selectedPallet?.id === palletId) {
+        setSelectedPallet(null);
+      }
+      fetchPallets();
+    } catch (err: any) {
+      alert('Palet silinemedi: ' + err.message);
     }
   };
 
@@ -285,6 +298,11 @@ export const Pallets: React.FC = () => {
                         <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => handlePrintPdf(p.id)}>
                           <Printer size={14} /> PDF
                         </button>
+                        {user?.role !== 'Viewer' && p.status !== 'Shipped' && (
+                          <button className="btn btn-secondary" style={{ padding: '6px 10px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }} onClick={() => handleDeletePallet(p.id)} title="Paleti Sil">
+                            <Trash2 size={14} /> Sil
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -364,6 +382,13 @@ export const Pallets: React.FC = () => {
             {selectedPallet.status === 'Open' && user?.role !== 'Viewer' && (
               <button className="btn btn-danger" style={{ width: '100%', height: '42px' }} onClick={() => handleClosePallet(selectedPallet.id)}>
                 Paleti Kapat (Closed)
+              </button>
+            )}
+
+            {/* Delete Pallet Action */}
+            {selectedPallet.status !== 'Shipped' && user?.role !== 'Viewer' && (
+              <button className="btn btn-secondary" style={{ width: '100%', height: '42px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => handleDeletePallet(selectedPallet.id)}>
+                <Trash2 size={16} /> Paleti Sil (Boz)
               </button>
             )}
 

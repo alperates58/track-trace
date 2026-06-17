@@ -611,6 +611,12 @@ app.MapPost("/api/scan/product", async (ScanRequest request, IMediator mediator)
     return Results.Ok(response);
 }).RequireAuthorization("OperatorOrAdmin");
 
+app.MapGet("/api/scan/current-carton", async ([FromQuery] Guid orderId, IMediator mediator) =>
+{
+    var response = await mediator.Send(new GetCurrentCartonQuery(orderId));
+    return Results.Ok(response);
+}).RequireAuthorization("OperatorOrAdmin");
+
 // Cartons Endpoints
 app.MapGet("/api/cartons", async (
     [FromQuery] int? pageNumber,
@@ -797,6 +803,23 @@ app.MapPost("/api/pallets/{id:guid}/close", async (Guid id, IMediator mediator) 
     {
         await mediator.Send(new ClosePalletCommand(id));
         return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapDelete("/api/pallets/{id:guid}", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new DeletePalletCommand(id));
+        return Results.NoContent();
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
     }
     catch (Exception ex)
     {

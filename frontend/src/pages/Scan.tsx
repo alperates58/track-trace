@@ -43,6 +43,8 @@ export const Scan: React.FC = () => {
   const [cartonSSCC, setCartonSSCC] = useState<string | null>(null);
   const [currentQty, setCurrentQty] = useState(0);
   const [targetQty, setTargetQty] = useState(0);
+  const [completedCartons, setCompletedCartons] = useState(0);
+  const [totalScanned, setTotalScanned] = useState(0);
 
   // History logs
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
@@ -62,11 +64,27 @@ export const Scan: React.FC = () => {
     if (selectedOrderId) {
       const order = activeOrders.find(o => o.id === selectedOrderId) || null;
       setSelectedOrder(order);
-      // Reset scanning panel stats
-      setCartonNo(null);
-      setCartonSSCC(null);
-      setCurrentQty(0);
-      setTargetQty(order?.productPerCarton || 0);
+      
+      // Fetch current progress from backend
+      api.get(`/api/scan/current-carton?orderId=${selectedOrderId}`)
+        .then(res => {
+          setCartonNo(res.cartonNo);
+          setCartonSSCC(res.sscc);
+          setCurrentQty(res.cartonCurrentQty);
+          setTargetQty(res.cartonTargetQty);
+          setCompletedCartons(res.completedCartonsCount);
+          setTotalScanned(res.totalScannedCount);
+        })
+        .catch(err => {
+          console.error(err);
+          setCartonNo(null);
+          setCartonSSCC(null);
+          setCurrentQty(0);
+          setTargetQty(order?.productPerCarton || 0);
+          setCompletedCartons(0);
+          setTotalScanned(0);
+        });
+
       setScanHistory([]);
       setStatus('ready');
       setIndicatorTitle('OKUTMAYA HAZIR');
@@ -78,6 +96,8 @@ export const Scan: React.FC = () => {
       setCartonSSCC(null);
       setCurrentQty(0);
       setTargetQty(0);
+      setCompletedCartons(0);
+      setTotalScanned(0);
       setScanHistory([]);
       setStatus('ready');
       setIndicatorTitle('OKUTMA BEKLENİYOR');
@@ -196,10 +216,12 @@ export const Scan: React.FC = () => {
         setCartonSSCC(res.sscc);
         setCurrentQty(res.cartonCurrentQty);
         setTargetQty(res.cartonTargetQty);
+        setTotalScanned(prev => prev + 1);
 
         if (res.status === 'CartonClosed') {
           setIndicatorTitle('KOLİ KAPATILDI');
           setIndicatorMsg(`Koli tamamlandı! Yeni koliye geçiliyor. SSCC: ${res.sscc}`);
+          setCompletedCartons(prev => prev + 1);
         } else {
           setIndicatorTitle('OKUTMA BAŞARILI');
           setIndicatorMsg(`Barkod: ${res.serialNo || code}`);
@@ -344,27 +366,52 @@ export const Scan: React.FC = () => {
 
           {/* Carton Progress card */}
           {selectedOrder && (
-            <div className="card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.15rem' }}>Aktif Koli İlerleme Durumu</h3>
-                  {cartonNo ? (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                      Koli No: <strong>{cartonNo}</strong> | SSCC: <code>{cartonSSCC}</code>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+              {/* Overall Order Progress */}
+              <div className="card" style={{ padding: '20px', backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', color: '#6b21a8', margin: 0 }}>Genel Sipariş İlerleme Durumu</h3>
+                    <span style={{ fontSize: '0.85rem', color: '#701a75', fontWeight: 500, marginTop: '4px', display: 'inline-block' }}>
+                      Tamamlanan Koli Sayısı: <strong style={{ fontSize: '0.95rem', color: 'var(--primary)' }}>{completedCartons} koli</strong>
                     </span>
-                  ) : (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Okutma başlatılınca otomatik koli açılacaktır.</span>
-                  )}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6b21a8' }}>{totalScanned}</span>
+                    <span style={{ color: '#701a75', fontWeight: 500 }}> / {selectedOrder.expectedQuantity} adet</span>
+                  </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{currentQty}</span>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}> / {targetQty} adet</span>
+                <div className="progress-container" style={{ backgroundColor: '#f3e8ff', marginTop: '12px' }}>
+                  <div className="progress-bar" style={{ width: `${selectedOrder.expectedQuantity > 0 ? (totalScanned / selectedOrder.expectedQuantity) * 100 : 0}%`, backgroundColor: '#8b5cf6' }}></div>
+                  <span className="progress-text" style={{ color: '#581c87' }}>
+                    {Math.round(selectedOrder.expectedQuantity > 0 ? (totalScanned / selectedOrder.expectedQuantity) * 100 : 0)}% Sipariş Tamamlandı
+                  </span>
                 </div>
               </div>
 
-              <div className="progress-container">
-                <div className="progress-bar" style={{ width: `${progressPercent}%` }}></div>
-                <span className="progress-text">{Math.round(progressPercent)}% Doluluk</span>
+              {/* Active Carton Progress */}
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Aktif Koli İlerleme Durumu</h3>
+                    {cartonNo ? (
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', display: 'inline-block' }}>
+                        Koli No: <strong>{cartonNo}</strong> | SSCC: <code>{cartonSSCC}</code>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', display: 'inline-block' }}>Okutma başlatılınca otomatik koli açılacaktır.</span>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>{currentQty}</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}> / {targetQty} adet</span>
+                  </div>
+                </div>
+
+                <div className="progress-container" style={{ marginTop: '12px' }}>
+                  <div className="progress-bar" style={{ width: `${progressPercent}%` }}></div>
+                  <span className="progress-text">{Math.round(progressPercent)}% Doluluk</span>
+                </div>
               </div>
             </div>
           )}

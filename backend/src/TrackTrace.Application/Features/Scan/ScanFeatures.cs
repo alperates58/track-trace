@@ -245,20 +245,94 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
         return baseCode + checkDigit;
     }
 
-    private int CalculateLuhnCheckDigit(string baseCode)
-    {
-        // Alternating multiplier 3 and 1 from right to left
-        int sum = 0;
-        bool multiplyBy3 = true;
-
-        for (int i = baseCode.Length - 1; i >= 0; i--)
+        private static int CalculateLuhnCheckDigit(string baseCode)
         {
-            int digit = baseCode[i] - '0';
-            sum += digit * (multiplyBy3 ? 3 : 1);
-            multiplyBy3 = !multiplyBy3;
+            // Alternating multiplier 3 and 1 from right to left
+            int sum = 0;
+            bool multiplyBy3 = true;
+
+            for (int i = baseCode.Length - 1; i >= 0; i--)
+            {
+                int digit = baseCode[i] - '0';
+                sum += digit * (multiplyBy3 ? 3 : 1);
+                multiplyBy3 = !multiplyBy3;
+            }
+
+            int remainder = sum % 10;
+            return remainder == 0 ? 0 : 10 - remainder;
+        }
+    }
+}
+
+public record GetCurrentCartonQuery(Guid OrderId) : IRequest<CurrentCartonDto>;
+
+public record CurrentCartonDto(
+    bool HasOpenCarton,
+    string? CartonNo,
+    string? Sscc,
+    int CartonCurrentQty,
+    int CartonTargetQty,
+    int CompletedCartonsCount,
+    int TotalScannedCount,
+    int ExpectedQuantity
+);
+
+public class GetCurrentCartonQueryHandler : IRequestHandler<GetCurrentCartonQuery, CurrentCartonDto>
+{
+    private readonly IDbConnectionFactory _dbConnectionFactory;
+
+    public GetCurrentCartonQueryHandler(IDbConnectionFactory dbConnectionFactory)
+    {
+        _dbConnectionFactory = dbConnectionFactory;
+    }
+
+    public async Task<CurrentCartonDto> Handle(GetCurrentCartonQuery request, CancellationToken cancellationToken)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+
+        // 1. Get order details (product per carton, expected quantity)
+        const string orderSql = "SELECT ProductPerCarton, ExpectedQuantity FROM Orders WHERE Id = @OrderId";
+        var order = await connection.QueryFirstOrDefaultAsync<dynamic>(orderSql, new { OrderId = request.OrderId });
+        if (order == null)
+        {
+            return new CurrentCartonDto(false, null, null, 0, 0, 0, 0, 0);
         }
 
-        int remainder = sum % 10;
-        return remainder == 0 ? 0 : 10 - remainder;
+        int productPerCarton = order.productpercarton;
+        int expectedQuantity = order.expectedquantity;
+
+        // 2. Get active open carton details
+        const string openCartonSql = @"
+            SELECT CartonNo, SSCC, ActualQuantity, TargetQuantity 
+            FROM Cartons 
+            WHERE OrderId = @OrderId AND Status = 'Open' 
+            ORDER BY CreatedAt DESC 
+            LIMIT 1";
+        var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = request.OrderId });
+
+        bool hasOpenCarton = carton != null;
+        string? cartonNo = carton?.cartonno;
+        string? sscc = carton?.sscc;
+        int cartonCurrentQty = carton != null ? (int)carton.actualquantity : 0;
+        int cartonTargetQty = carton != null ? (int)carton.targetquantity : productPerCarton;
+
+        // 3. Get completed cartons count
+        const string completedCountSql = "SELECT COUNT(*) FROM Cartons WHERE OrderId = @OrderId AND Status != 'Open'";
+        int completedCartonsCount = await connection.ExecuteScalarAsync<int>(completedCountSql, new { OrderId = request.OrderId });
+
+        // 4. Get total scanned count
+        const string totalScannedSql = "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @OrderId AND Status = 'Scanned'";
+        int totalScannedCount = await connection.ExecuteScalarAsync<int>(totalScannedSql, new { OrderId = request.OrderId });
+
+        return new CurrentCartonDto(
+            HasOpenCarton: hasOpenCarton,
+            CartonNo: cartonNo,
+            Sscc: sscc,
+            CartonCurrentQty: cartonCurrentQty,
+            CartonTargetQty: cartonTargetQty,
+            CompletedCartonsCount: completedCartonsCount,
+            TotalScannedCount: totalScannedCount,
+            ExpectedQuantity: expectedQuantity
+        );
     }
 }

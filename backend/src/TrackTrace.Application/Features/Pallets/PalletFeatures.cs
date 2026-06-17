@@ -499,3 +499,63 @@ public class PalletHandlers :
         }
     }
 }
+
+public record DeletePalletCommand(Guid Id) : IRequest<Unit>;
+
+public class DeletePalletCommandHandler : IRequestHandler<DeletePalletCommand, Unit>
+{
+    private readonly IDbConnectionFactory _dbConnectionFactory;
+    private readonly IAuditLogService _auditLogService;
+
+    public DeletePalletCommandHandler(
+        IDbConnectionFactory dbConnectionFactory,
+        IAuditLogService auditLogService)
+    {
+        _dbConnectionFactory = dbConnectionFactory;
+        _auditLogService = auditLogService;
+    }
+
+    public async Task<Unit> Handle(DeletePalletCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open)
+        {
+            connection.Open();
+        }
+
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // 1. Check if pallet exists
+            const string selectSql = "SELECT * FROM Pallets WHERE Id = @Id FOR UPDATE";
+            var pallet = await connection.QueryFirstOrDefaultAsync<dynamic>(selectSql, new { Id = request.Id }, transaction);
+            if (pallet == null)
+            {
+                throw new KeyNotFoundException("Belirtilen palet bulunamadı.");
+            }
+
+            string palletNo = pallet.palletno;
+            string sscc = pallet.sscc;
+
+            // 2. Update all associated cartons back to Printed or Closed
+            const string updateCartonsSql = @"
+                UPDATE Cartons 
+                SET Status = CASE WHEN PrintedAt IS NOT NULL THEN 'Printed' ELSE 'Closed' END 
+                WHERE Id IN (SELECT CartonId FROM PalletCartons WHERE PalletId = @PalletId)";
+            await connection.ExecuteAsync(updateCartonsSql, new { PalletId = request.Id }, transaction);
+
+            // 3. Delete the Pallet (cascade will delete PalletCartons)
+            const string deletePalletSql = "DELETE FROM Pallets WHERE Id = @Id";
+            await connection.ExecuteAsync(deletePalletSql, new { Id = request.Id }, transaction);
+
+            transaction.Commit();
+            await _auditLogService.LogAsync("Pallets", request.Id, "Delete", null, new { PalletNo = palletNo, SSCC = sscc });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+}
