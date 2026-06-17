@@ -196,7 +196,7 @@ const AppShell: React.FC = () => {
                   setIsCollapsed(!isCollapsed);
                 }
               }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', borderRadius: '4px', hover: { backgroundColor: '#f1f5f9' } }}
+              className="header-toggle-btn"
               title={isCollapsed ? "Menüyü Genişlet" : "Menüyü Daralt"}
             >
               <Menu size={20} />

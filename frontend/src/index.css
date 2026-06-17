@@ -153,6 +153,22 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-sm);
 }
 
+.header-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.header-toggle-btn:hover {
+  background-color: #f1f5f9;
+}
+
 .page-wrapper {
   flex: 1;
   padding: 32px;
