@@ -271,10 +271,25 @@ public class LabelGenerator : ILabelGenerator
     public byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow)
     {
         var codesList = codes.ToList();
+        cols = Math.Max(1, cols);
+        rows = Math.Max(1, rows);
+
         int totalCodes = codesList.Count;
         int itemsPerPage = cols * rows;
-        if (itemsPerPage <= 0) itemsPerPage = 1;
         int totalPages = (int)Math.Ceiling(totalCodes / (double)itemsPerPage);
+        const float pageSize = 595f;
+        const float pageMargin = 10f;
+        const float footerHeight = 18f;
+        const float gridSpacing = 6f;
+        const float labelLineHeight = 10f;
+        float contentSize = pageSize - (pageMargin * 2);
+        float gridHeight = contentSize - footerHeight;
+        float cellWidth = (contentSize - (gridSpacing * (cols - 1))) / cols;
+        float cellHeight = (gridHeight - (gridSpacing * (rows - 1))) / rows;
+        float labelHeight = addText
+            ? ((!string.IsNullOrWhiteSpace(line1) ? labelLineHeight : 0f) + (!string.IsNullOrWhiteSpace(line2) ? labelLineHeight : 0f) + 4f)
+            : 0f;
+        float barcodeSize = Math.Max(20f, Math.Min(cellWidth, cellHeight - labelHeight));
 
         using var stream = new MemoryStream();
 
@@ -282,8 +297,8 @@ public class LabelGenerator : ILabelGenerator
         {
             container.Page(page =>
             {
-                page.Size(595, 595, Unit.Point);
-                page.Margin(0.4f, Unit.Inch);
+                page.Size(pageSize, pageSize, Unit.Point);
+                page.Margin(pageMargin, Unit.Point);
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(9));
 
@@ -300,46 +315,41 @@ public class LabelGenerator : ILabelGenerator
                         int firstIdx = pageIdx * itemsPerPage + 1;
                         int lastIdx = Math.Min((pageIdx + 1) * itemsPerPage, totalCodes);
 
-                        mainCol.Item().Height(530).Column(pageCol =>
+                        mainCol.Item().Height(gridHeight).Grid(grid =>
                         {
-                            pageCol.Item().Grid(grid =>
+                            grid.Columns(cols);
+                            grid.Spacing(gridSpacing);
+
+                            foreach (var code in pageCodes)
                             {
-                                grid.Columns(cols);
-                                grid.Spacing(15);
-
-                                foreach (var code in pageCodes)
+                                grid.Item().Height(cellHeight).AlignCenter().AlignMiddle().Column(c =>
                                 {
-                                    grid.Item().AlignCenter().Column(c =>
+                                    c.Spacing(3);
+
+                                    // If label is above
+                                    if (!labelBelow && addText)
                                     {
-                                        c.Spacing(3);
+                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
+                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
+                                    }
 
-                                        // If label is above
-                                        if (!labelBelow && addText)
-                                        {
-                                            if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
-                                            if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
-                                        }
+                                    byte[] imgBytes = GenerateDataMatrixImageBytes(code);
+                                    c.Item().AlignCenter().Width(barcodeSize).Height(barcodeSize).Image(imgBytes);
 
-                                        // Draw DataMatrix barcode image
-                                        byte[] imgBytes = GenerateDataMatrixImageBytes(code);
-                                        c.Item().AlignCenter().Width(size).Height(size).Image(imgBytes);
-
-                                        // If label is below
-                                        if (labelBelow && addText)
-                                        {
-                                            if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
-                                            if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
-                                        }
-                                    });
-                                }
-                            });
-
-                            // Page range footer
-                            string footerText = (firstIdx == lastIdx)
-                                ? $"{firstIdx} / {totalCodes}"
-                                : $"{firstIdx}-{lastIdx} / {totalCodes}";
-                            pageCol.Item().AlignBottom().AlignCenter().Text(footerText).FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
+                                    // If label is below
+                                    if (labelBelow && addText)
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
+                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
+                                    }
+                                });
+                            }
                         });
+
+                        string footerText = (firstIdx == lastIdx)
+                            ? $"{firstIdx} / {totalCodes}"
+                            : $"{firstIdx}-{lastIdx} / {totalCodes}";
+                        mainCol.Item().Height(footerHeight).AlignCenter().AlignMiddle().Text(footerText).FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
                     }
                 });
             });
