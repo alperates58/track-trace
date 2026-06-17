@@ -29,7 +29,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(4, 6, Unit.Inch); // Standard 4x6 inch label size
                 page.Margin(0.2f, Unit.Inch);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial).Size(10));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
 
                 page.Content().Border(1).BorderColor(Colors.Black).Padding(10).Column(col =>
                 {
@@ -151,7 +151,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(4, 6, Unit.Inch);
                 page.Margin(0.2f, Unit.Inch);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial).Size(10));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
 
                 page.Content().Border(1).BorderColor(Colors.Black).Padding(10).Column(col =>
                 {
@@ -285,7 +285,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(595, 595, Unit.Point);
                 page.Margin(0.4f, Unit.Inch);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily(Fonts.Arial).Size(9));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(9));
 
                 page.Content().Column(mainCol =>
                 {

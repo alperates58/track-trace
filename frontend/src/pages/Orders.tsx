@@ -441,6 +441,11 @@ export const Orders: React.FC = () => {
                     </button>
                   </>
                 )}
+                {selectedOrder.status === 'Cancelled' && (
+                  <button className="btn btn-danger" style={{ width: '100%' }} onClick={() => handleDeleteOrder(selectedOrder.id)}>
+                    Sil
+                  </button>
+                )}
                 {selectedOrder.status !== 'Cancelled' && (
                   <button className="btn btn-secondary" style={{ width: '100%', marginTop: '8px' }} onClick={() => { setPrintLine1(selectedOrder.productName || ''); setPrintLine2(selectedOrder.gtin); setShowPrintModal(true); }}>
                     <Printer size={16} /> Kod Sayfası PDF Üret
