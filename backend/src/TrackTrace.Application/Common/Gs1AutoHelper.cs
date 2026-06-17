@@ -29,52 +29,19 @@ namespace TrackTrace.Application.Common
     {
         public const char GS = (char)0x1D;
 
-        public static ParseResult NormalizeForEncodingOrBypassValidation(string rawLine)
-        {
-            var strictResult = NormalizeForEncoding(rawLine);
-            if (strictResult.Success)
-                return strictResult;
-
-            string s = PrepareRawForParsing(rawLine);
-            if (string.IsNullOrWhiteSpace(s))
-                return strictResult;
-
-            bool startsWithGs = s.Length > 0 && s[0] == GS;
-            if (startsWithGs)
-                s = s.Substring(1);
-
-            if (LooksLikeParenthesizedAi(s))
-                s = ConvertParenthesizedAiToRaw(s);
-
-            bool looksLikeGs1 = s.StartsWith("01") && s.Length >= 16;
-            if (!looksLikeGs1)
-                return strictResult;
-
-            string gtin = SafeSubstring(s, 2, 14);
-            if (!IsAllDigits(gtin) || gtin.Length != 14)
-                return strictResult;
-
-            return new ParseResult
-            {
-                Success = true,
-                IsGs1 = true,
-                CodeType = ParsedCodeType.Gs1Unknown,
-                Original = rawLine,
-                Normalized = GS + s,
-                Gtin = gtin,
-                CryptoTail = s.Length > 16 ? s.Substring(16) : string.Empty
-            };
-        }
-
         public static ParseResult NormalizeForEncoding(string rawLine)
         {
             if (rawLine == null)
                 return Fail("Satır null geldi.");
 
-            string s = PrepareRawForParsing(rawLine);
+            string s = rawLine;
+            s = RemoveLeadingBomAndInvisible(s);
+            s = s.TrimEnd('\r', '\n');
 
             if (string.IsNullOrWhiteSpace(s))
                 return Fail("Satır boş.");
+
+            s = InterpretEscapeSequences(s);
 
             bool startsWithGs = s.Length > 0 && s[0] == GS;
             if (startsWithGs)
@@ -331,18 +298,6 @@ namespace TrackTrace.Application.Common
                 Success = false,
                 ErrorMessage = msg
             };
-        }
-
-        private static string PrepareRawForParsing(string rawLine)
-        {
-            if (rawLine == null)
-                return string.Empty;
-
-            string s = rawLine;
-            s = RemoveLeadingBomAndInvisible(s);
-            s = s.TrimEnd('\r', '\n');
-            s = InterpretEscapeSequences(s);
-            return s;
         }
     }
 }

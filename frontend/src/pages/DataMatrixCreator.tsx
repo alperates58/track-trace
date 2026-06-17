@@ -604,7 +604,7 @@ export const DataMatrixCreator: React.FC = () => {
               </div>
               
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '12px' }}>
-                Yukarıdaki görsel, yüklediğiniz listedeki ilk üretilecek barkodun sunucuda çizdirilmiş birebir görüntüsüdür.
+                Yukarıdaki görsel, yüklediğiniz listedeki ilk geçerli barkodun GS1 standartlarına göre çözümlenmiş ve sunucuda çizdirilmiş birebir görüntüsüdür.
               </p>
             </div>
           )}
