@@ -319,7 +319,7 @@ export const Scan: React.FC = () => {
     setIsTestingConnection(true);
     setTestMessage(null);
     try {
-      const testZpl = `^XA\r\n^FO50,50^A0N,44,44^FDTEST PRINT\r\n^FS\r\n^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS\r\n^FO50,150^A0N,24,24^FDTarih: ${new Date().toLocaleString('tr-TR')}^FS\r\n^FO50,200^GB700,3,3^FS\r\n^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS\r\n^XZ`;
+      const testZpl = `^XA^CI28^PW800^LL640^FO50,50^A0N,44,44^FDTEST PRINT^FS^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS^FO50,150^A0N,24,24^FDTarih: ${new Date().toLocaleString('tr-TR')}^FS^FO50,200^GB700,3,3^FS^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS^XZ\n`;
       await printViaZebraBrowserPrint(testZpl);
       setTestMessage({ text: 'Bağlantı başarılı, test sayfası yazıcıya gönderildi!', type: 'success' });
     } catch (err: any) {
