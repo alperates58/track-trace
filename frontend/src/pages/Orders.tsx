@@ -601,7 +601,7 @@ export const Orders: React.FC = () => {
                   Sipariş Detayı 
                   {getStatusBadge(selectedOrder.status)}
                 </h3>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>{selectedOrder.orderNo} / {selectedOrder.customerName}</p>
+                <p style={{ color: '#475569', fontSize: '0.95rem', margin: 0, fontWeight: 600 }}>{selectedOrder.orderNo} / {selectedOrder.customerName} — <span style={{ color: '#0f172a' }}>{selectedOrder.productName || '-'}</span></p>
               </div>
               <button className="btn" style={{ padding: '8px', borderRadius: '50%', backgroundColor: '#e2e8f0', color: '#475569', border: 'none' }} onClick={() => setSelectedOrder(null)}>
                 <X size={20} />
