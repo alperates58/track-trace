@@ -65,13 +65,6 @@ export const Scan: React.FC = () => {
   const [printMode, setPrintMode] = useState<'pdf' | 'network'>(() => {
     return (localStorage.getItem('tt_print_mode') as 'pdf' | 'network') || 'pdf';
   });
-  const [printerIp, setPrinterIp] = useState<string>(() => {
-    return localStorage.getItem('tt_printer_ip') || '';
-  });
-  const [printerPort, setPrinterPort] = useState<number>(() => {
-    const val = localStorage.getItem('tt_printer_port');
-    return val ? parseInt(val, 10) : 9100;
-  });
   const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
     const val = localStorage.getItem('tt_auto_print');
     return val !== 'false';
@@ -277,16 +270,54 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const handleTestPrint = async (ip: string, port: number) => {
-    if (!ip) {
-      setTestMessage({ text: 'IP adresi girilmelidir.', type: 'error' });
-      return;
+  const printViaZebraBrowserPrint = async (zplText: string) => {
+    try {
+      const defaultRes = await fetch("https://localhost:9101/default?type=printer", {
+        method: "GET"
+      });
+      if (!defaultRes.ok) {
+        throw new Error("Varsayılan yazıcı bilgisi alınamadı.");
+      }
+      let printerName = await defaultRes.text();
+      printerName = printerName.replace(/"/g, "").trim();
+      if (!printerName) {
+        throw new Error("Varsayılan yazıcı bulunamadı. Lütfen Zebra Browser Print uygulamasından yazıcınızı varsayılan olarak seçin.");
+      }
+
+      const writePayload = {
+        device: {
+          name: printerName
+        },
+        data: zplText
+      };
+
+      const writeRes = await fetch("https://localhost:9101/write", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain"
+        },
+        body: JSON.stringify(writePayload)
+      });
+
+      if (!writeRes.ok) {
+        throw new Error("Yazıcıya gönderim hatası (HTTP " + writeRes.status + ").");
+      }
+    } catch (err: any) {
+      console.error("Zebra Browser Print error:", err);
+      if (err.message && (err.message.includes("Failed to fetch") || err.name === "TypeError")) {
+        throw new Error("Zebra Browser Print uygulamasına bağlanılamadı. Uygulamanın çalıştığından ve tarayıcınızın https://localhost:9101 adresindeki yerel SSL sertifikasına güvendiğinden emin olun.");
+      }
+      throw err;
     }
+  };
+
+  const handleTestPrint = async () => {
     setIsTestingConnection(true);
     setTestMessage(null);
     try {
-      const res = await api.post('/api/print/test-network', { ipAddress: ip, port: port });
-      setTestMessage({ text: res?.message || 'Bağlantı başarılı, test sayfası gönderildi!', type: 'success' });
+      const testZpl = `^XA\r\n^FO50,50^A0N,44,44^FDTEST PRINT\r\n^FS\r\n^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS\r\n^FO50,150^A0N,24,24^FDTarih: ${new Date().toLocaleString('tr-TR')}^FS\r\n^FO50,200^GB700,3,3^FS\r\n^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS\r\n^XZ`;
+      await printViaZebraBrowserPrint(testZpl);
+      setTestMessage({ text: 'Bağlantı başarılı, test sayfası yazıcıya gönderildi!', type: 'success' });
     } catch (err: any) {
       setTestMessage({ text: err.message || 'Yazıcıya bağlanılamadı.', type: 'error' });
     } finally {
@@ -296,14 +327,15 @@ export const Scan: React.FC = () => {
 
   const handleNetworkPrint = async () => {
     if (!lastClosedCartonId) return;
-    if (!printerIp) {
-      alert("Lütfen önce yazıcı ayarlarından IP adresini girin.");
-      return;
-    }
     setIsReprinting(true);
     try {
-      await api.post(`/api/cartons/${lastClosedCartonId}/print-network`, { ipAddress: printerIp, port: printerPort });
-      alert("Koli etiketi yazıcıya gönderildi.");
+      const labelRes = await api.get(`/api/cartons/${lastClosedCartonId}/label.zpl`);
+      if (labelRes && labelRes.zpl) {
+        await printViaZebraBrowserPrint(labelRes.zpl);
+        alert("Koli etiketi başarıyla yazdırıldı.");
+      } else {
+        throw new Error("ZPL barkod verisi alınamadı.");
+      }
     } catch (err: any) {
       alert("Yazdırma hatası: " + err.message);
     } finally {
@@ -311,15 +343,11 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const handleSaveSettings = (mode: 'pdf' | 'network', ip: string, port: number, auto: boolean) => {
+  const handleSaveSettings = (mode: 'pdf' | 'network', auto: boolean) => {
     localStorage.setItem('tt_print_mode', mode);
-    localStorage.setItem('tt_printer_ip', ip);
-    localStorage.setItem('tt_printer_port', port.toString());
     localStorage.setItem('tt_auto_print', auto.toString());
     
     setPrintMode(mode);
-    setPrinterIp(ip);
-    setPrinterPort(port);
     setAutoPrintEnabled(auto);
     setIsSettingsModalOpen(false);
   };
@@ -360,14 +388,16 @@ export const Scan: React.FC = () => {
           // Auto-print carton label if enabled and mode is network
           const currentMode = localStorage.getItem('tt_print_mode') || 'pdf';
           const currentAuto = localStorage.getItem('tt_auto_print') !== 'false';
-          const currentIp = localStorage.getItem('tt_printer_ip') || '';
-          const currentPortVal = localStorage.getItem('tt_printer_port');
-          const currentPort = currentPortVal ? parseInt(currentPortVal, 10) : 9100;
 
-          if (currentMode === 'network' && currentAuto && currentIp && res.cartonId) {
-            api.post(`/api/cartons/${res.cartonId}/print-network`, { ipAddress: currentIp, port: currentPort })
-              .then(() => {
-                console.log("Koli barkodu otomatik olarak network yazıcısına gönderildi.");
+          if (currentMode === 'network' && currentAuto && res.cartonId) {
+            api.get(`/api/cartons/${res.cartonId}/label.zpl`)
+              .then(async (labelData) => {
+                if (labelData && labelData.zpl) {
+                  await printViaZebraBrowserPrint(labelData.zpl);
+                  console.log("Koli barkodu otomatik olarak yerel yazıcıya gönderildi.");
+                } else {
+                  throw new Error("ZPL barkod verisi alınamadı.");
+                }
               })
               .catch((printErr: any) => {
                 console.error("Otomatik yazdırma başarısız:", printErr);
@@ -977,38 +1007,41 @@ export const Scan: React.FC = () => {
                   onChange={(e) => setPrintMode(e.target.value as 'pdf' | 'network')}
                 >
                   <option value="pdf">Masaüstü PDF İndirme (Manuel)</option>
-                  <option value="network">Doğrudan Termal Yazıcı (ZPL - TCP/IP)</option>
+                  <option value="network">Zebra Browser Print (Doğrudan Yerel Yazıcı)</option>
                 </select>
               </div>
 
               {printMode === 'network' && (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                        Yazıcı IP Adresi
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Örn: 192.168.1.100"
-                        className="form-input"
-                        style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '0.9rem' }}
-                        value={printerIp}
-                        onChange={(e) => setPrinterIp(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                        Port
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="9100"
-                        className="form-input"
-                        style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '0.9rem' }}
-                        value={printerPort}
-                        onChange={(e) => setPrinterPort(parseInt(e.target.value, 10) || 9100)}
-                      />
+                  <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                      Bilgisayarınızda kurulu olan <strong>Zebra Browser Print</strong> uygulaması aracılığıyla, varsayılan yazıcınıza doğrudan çıktı gönderilir.
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("https://localhost:9101/default?type=printer");
+                            let name = await res.text();
+                            name = name.replace(/"/g, "").trim();
+                            alert("Varsayılan Yazıcı: " + (name || "Bulunamadı"));
+                          } catch (e: any) {
+                            alert("Zebra Browser Print bağlantı hatası! Lütfen uygulamanın çalıştığından emin olun ve https://localhost:9101 adresindeki SSL sertifikasına güven izni verin.");
+                          }
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Bağlı Yazıcıyı Sorgula
+                      </button>
                     </div>
                   </div>
 
@@ -1029,7 +1062,7 @@ export const Scan: React.FC = () => {
                     <button
                       type="button"
                       disabled={isTestingConnection}
-                      onClick={() => handleTestPrint(printerIp, printerPort)}
+                      onClick={handleTestPrint}
                       style={{
                         width: '100%',
                         height: '38px',
@@ -1079,7 +1112,7 @@ export const Scan: React.FC = () => {
               <button
                 className="btn btn-primary"
                 style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600, backgroundColor: '#3b82f6' }}
-                onClick={() => handleSaveSettings(printMode, printerIp, printerPort, autoPrintEnabled)}
+                onClick={() => handleSaveSettings(printMode, autoPrintEnabled)}
               >
                 Ayarları Kaydet
               </button>
