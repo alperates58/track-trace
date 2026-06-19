@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Upload, Search, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, Upload, Search, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2, Eye } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -35,7 +35,14 @@ export const Orders: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   
   // Drawer / Detail Tabs
-  const [activeTab, setActiveTab] = useState<'summary' | 'codes'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'cartons' | 'codes'>('summary');
+
+  // Order Cartons State
+  const [cartons, setCartons] = useState<any[]>([]);
+  const [cartonsLoading, setCartonsLoading] = useState(false);
+  const [selectedCartonForItems, setSelectedCartonForItems] = useState<any | null>(null);
+  const [cartonItems, setCartonItems] = useState<any[]>([]);
+  const [cartonItemsLoading, setCartonItemsLoading] = useState(false);
 
   // Product Codes (Server-Side Paginated)
   const [codes, setCodes] = useState<any[]>([]);
@@ -125,6 +132,64 @@ export const Orders: React.FC = () => {
       .finally(() => setCodesLoading(false));
   };
 
+  const fetchOrderCartons = (orderId: string) => {
+    setCartonsLoading(true);
+    api.get(`/api/cartons?orderId=${orderId}&pageSize=1000`)
+      .then(res => {
+        setCartons(res.items || []);
+      })
+      .catch(console.error)
+      .finally(() => setCartonsLoading(false));
+  };
+
+  const loadCartonItems = (carton: any) => {
+    setSelectedCartonForItems(carton);
+    setCartonItemsLoading(true);
+    api.get(`/api/cartons/${carton.id}/items`)
+      .then(res => {
+        setCartonItems(res || []);
+      })
+      .catch(console.error)
+      .finally(() => setCartonItemsLoading(false));
+  };
+
+  const getCartonStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Open': return <span className="badge" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>Açık</span>;
+      case 'Closed': return <span className="badge" style={{ backgroundColor: '#f3e8ff', color: '#6b21a8' }}>Kapalı</span>;
+      case 'Printed': return <span className="badge" style={{ backgroundColor: '#e0f2fe', color: '#0369a1' }}>Yazdırıldı</span>;
+      case 'Palletized': return <span className="badge" style={{ backgroundColor: '#dcfce3', color: '#15803d' }}>Paletlendi</span>;
+      default: return <span className="badge">{status}</span>;
+    }
+  };
+
+  const downloadCartonPdf = async (cartonId: string, cartonNo: string) => {
+    try {
+      const response = await api.get(`/api/cartons/${cartonId}/label.pdf`);
+      const url = window.URL.createObjectURL(response);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${cartonNo}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('PDF indirme hatası:', err);
+      alert('PDF indirilirken hata oluştu.');
+    }
+  };
+
+  const productionByDate = React.useMemo(() => {
+    const groups: { [key: string]: number } = {};
+    cartons.forEach(c => {
+      if (!c.createdAt) return;
+      const dateStr = new Date(c.createdAt).toLocaleDateString('tr-TR');
+      groups[dateStr] = (groups[dateStr] || 0) + c.actualQuantity;
+    });
+    return Object.entries(groups).map(([date, count]) => ({ date, count })).sort((a, b) => b.date.localeCompare(a.date));
+  }, [cartons]);
+
   useEffect(() => {
     if (selectedOrder && activeTab === 'codes') {
       fetchProductCodes();
@@ -137,6 +202,9 @@ export const Orders: React.FC = () => {
       setCodesPage(1);
       setCodesSearch('');
       setCodesStatusFilter('');
+      fetchOrderCartons(selectedOrder.id);
+      setSelectedCartonForItems(null);
+      setCartonItems([]);
     }
   }, [selectedOrder?.id]);
 
@@ -444,7 +512,7 @@ export const Orders: React.FC = () => {
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Müşteri</th>
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>İş Emri No</th>
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Stok Kodu</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Ürün Adı</th>
+                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Stok İsmi / Ürün Adı</th>
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700, textAlign: 'center' }}>Koli İçi / Palet</th>
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Okutulan / Hedef</th>
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Durum</th>
@@ -465,7 +533,7 @@ export const Orders: React.FC = () => {
                       <td style={{ padding: '16px', color: '#334155' }}>{o.customerName}</td>
                       <td style={{ padding: '16px' }}><code style={{ fontSize: '0.85rem', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', color: '#475569' }}>{o.gtin}</code></td>
                       <td style={{ padding: '16px' }}><span style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem', fontFamily: 'monospace', color: '#0f172a' }}>{o.stockCode || '-'}</span></td>
-                      <td style={{ padding: '16px', color: '#334155', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={o.productName}>{o.productName || '-'}</td>
+                      <td style={{ padding: '16px', color: '#334155', maxWidth: '280px', wordBreak: 'break-word', fontSize: '0.9rem' }} title={o.productName}>{o.productName || '-'}</td>
                       <td style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>{o.productPerCarton} / {o.cartonPerPallet}</td>
                       <td style={{ padding: '16px', minWidth: '150px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
@@ -501,33 +569,32 @@ export const Orders: React.FC = () => {
         </div>
       </div>
 
-      {/* OVERLAY FOR DRAWER */}
+      {/* ORDER DETAIL MODAL */}
       {selectedOrder && (
-        <div 
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.4)', zIndex: 90, backdropFilter: 'blur(2px)' }} 
-          onClick={() => setSelectedOrder(null)}
-        />
-      )}
-
-      {/* RIGHT DRAWER PANEL */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        right: selectedOrder ? 0 : '-850px',
-        width: '100%',
-        maxWidth: '850px',
-        height: '100vh',
-        backgroundColor: '#fff',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
-        transition: 'right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        zIndex: 100,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* Drawer Header */}
-        {selectedOrder && (
-          <>
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px'
+        }} onClick={() => setSelectedOrder(null)}>
+          <div style={{
+            width: '100%',
+            maxWidth: '1200px',
+            height: '85vh',
+            backgroundColor: '#fff',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            animation: 'fadeIn 0.2s ease-out'
+          }} onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
             <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#f8fafc' }}>
               <div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -551,90 +618,180 @@ export const Orders: React.FC = () => {
                 Özet
               </button>
               <button 
+                style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'cartons' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'cartons' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+                onClick={() => setActiveTab('cartons')}
+              >
+                <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                Koliler ({cartons.length})
+              </button>
+              <button 
                 style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'codes' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'codes' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
                 onClick={() => setActiveTab('codes')}
               >
                 <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
-                Kodlar
+                Kodlar ({codesTotal})
               </button>
             </div>
 
-            {/* Drawer Content Area */}
+            {/* Modal Content Area */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: '#f1f5f9' }}>
               
               {activeTab === 'summary' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   
-                  {/* Summary Grid Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Sipariş No</div>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedOrder.orderNo}</div>
-                    </div>
-                    <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Müşteri</div>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedOrder.customerName}</div>
-                    </div>
-                    <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>İş Emri No</div>
-                      <div><code style={{ backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{selectedOrder.gtin}</code></div>
-                    </div>
-                    <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Stok Kodu</div>
-                      <div style={{ fontWeight: 600, color: '#334155' }}>{selectedOrder.stockCode || '-'}</div>
-                    </div>
-                    <div className="card" style={{ gridColumn: 'span 2', padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Ürün Adı</div>
-                      <div style={{ fontWeight: 500, color: '#0f172a' }}>{selectedOrder.productName || '-'}</div>
-                    </div>
-                  </div>
-
-                  <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>Üretim Hedefleri</h4>
+                  {/* Left Column: Info and Metrics */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Beklenen Adet</div>
-                        <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0f172a' }}>{selectedOrder.expectedQuantity}</div>
+                      <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Sipariş No</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedOrder.orderNo}</div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Okutulan Adet</div>
-                        <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0284c7' }}>{selectedOrder.scannedCount}</div>
+                      <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Müşteri</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedOrder.customerName}</div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Kalan Adet</div>
-                        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#b91c1c' }}>{Math.max(0, selectedOrder.expectedQuantity - selectedOrder.scannedCount)}</div>
+                      <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>İş Emri No</div>
+                        <div><code style={{ backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{selectedOrder.gtin}</code></div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Tamamlanma Yüzdesi</div>
-                        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>
-                          {selectedOrder.expectedQuantity > 0 ? Math.round((selectedOrder.scannedCount / selectedOrder.expectedQuantity) * 100) : 0}%
+                      <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Stok Kodu</div>
+                        <div style={{ fontWeight: 600, color: '#334155' }}>{selectedOrder.stockCode || '-'}</div>
+                      </div>
+                      <div className="card" style={{ gridColumn: 'span 2', padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Stok İsmi / Ürün Adı</div>
+                        <div style={{ fontWeight: 500, color: '#0f172a', wordBreak: 'break-word' }}>{selectedOrder.productName || '-'}</div>
+                      </div>
+                    </div>
+
+                    <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>Üretim Hedefleri</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Beklenen Adet</div>
+                          <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0f172a' }}>{selectedOrder.expectedQuantity}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Okutulan Adet</div>
+                          <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0284c7' }}>{selectedOrder.scannedCount}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Kalan Adet</div>
+                          <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#b91c1c' }}>{Math.max(0, selectedOrder.expectedQuantity - selectedOrder.scannedCount)}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Tamamlanma Yüzdesi</div>
+                          <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>
+                            {selectedOrder.expectedQuantity > 0 ? Math.round((selectedOrder.scannedCount / selectedOrder.expectedQuantity) * 100) : 0}%
+                          </div>
+                        </div>
+                        <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '4px' }}>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Koli İçi Adet</div>
+                          <div style={{ fontWeight: 600 }}>{selectedOrder.productPerCarton}</div>
+                        </div>
+                        <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '4px' }}>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Palet İçi Koli</div>
+                          <div style={{ fontWeight: 600 }}>{selectedOrder.cartonPerPallet}</div>
                         </div>
                       </div>
-                      <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '4px' }}>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Koli İçi Adet</div>
-                        <div style={{ fontWeight: 600 }}>{selectedOrder.productPerCarton}</div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Production History & Description */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Production History Card */}
+                    <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>Günlük Üretim Raporu</h4>
+                      <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {productionByDate.length === 0 ? (
+                          <div style={{ color: '#64748b', fontSize: '0.9rem', textAlign: 'center', padding: '40px' }}>Henüz üretim kaydı bulunmuyor.</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {productionByDate.map((p, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                                <span style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>{p.date}</span>
+                                <span style={{ fontWeight: 800, color: '#1e3a8a', fontSize: '0.95rem' }}>{p.count} adet okutuldu</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '4px' }}>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Palet İçi Koli</div>
-                        <div style={{ fontWeight: 600 }}>{selectedOrder.cartonPerPallet}</div>
+                    </div>
+
+                    <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>Açıklama</div>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#334155', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                        {selectedOrder.description || 'Açıklama bulunmuyor.'}
+                      </p>
+                    </div>
+
+                    <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Oluşturma Tarihi</div>
+                        <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>Açıklama</div>
-                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#334155', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                      {selectedOrder.description || 'Açıklama bulunmuyor.'}
-                    </p>
-                  </div>
+                </div>
+              )}
 
-                  <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Oluşturma Tarihi</div>
-                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}</div>
+              {activeTab === 'cartons' && (
+                <div style={{ minHeight: '400px' }}>
+                  {cartonsLoading ? (
+                    <div style={{ textAlign: 'center', padding: '50px' }}><Loader2 className="spinner" size={32} style={{ margin: '0 auto' }} /></div>
+                  ) : cartons.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Bu siparişe ait henüz koli oluşturulmadı.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                      {cartons.map((c: any) => (
+                        <div key={c.id} className="card" style={{
+                          backgroundColor: '#fff',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          padding: '16px',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          minHeight: '180px'
+                        }}>
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{c.cartonNo}</span>
+                              {getCartonStatusBadge(c.status)}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontFamily: 'monospace', marginBottom: '12px', wordBreak: 'break-all' }}>
+                              SSCC: {c.sscc}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px', fontWeight: 600 }}>
+                              <span style={{ color: '#64748b' }}>Doluluk</span>
+                              <span style={{ color: '#0f172a' }}>{c.actualQuantity} / {c.targetQuantity}</span>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
+                              <div style={{
+                                height: '100%',
+                                width: `${Math.min(100, Math.round((c.actualQuantity / c.targetQuantity) * 100))}%`,
+                                backgroundColor: c.status === 'Closed' || c.status === 'Printed' || c.status === 'Palletized' ? '#10b981' : '#3b82f6',
+                                transition: 'width 0.3s'
+                              }}></div>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '12px' }}>
+                              Tarih: {new Date(c.createdAt).toLocaleString('tr-TR')}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                            <button className="btn" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => loadCartonItems(c)}>
+                              <Eye size={14} /> İçerik
+                            </button>
+                            <button className="btn btn-secondary" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => downloadCartonPdf(c.id, c.cartonNo)}>
+                              <Printer size={14} /> PDF
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-
+                  )}
                 </div>
               )}
 
@@ -712,56 +869,122 @@ export const Orders: React.FC = () => {
 
             </div>
 
-            {/* Drawer Footer Actions */}
+            {/* Modal Footer Actions */}
             {user?.role !== 'Viewer' && activeTab === 'summary' && (
-              <div style={{ padding: '20px 24px', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ padding: '20px 24px', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 {selectedOrder.status === 'Draft' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <button className="btn btn-primary" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <Play size={16} style={{ marginRight: '6px' }}/> Aktifleştir
-                    </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
-                    </button>
-                    <button className="btn" style={{ gridColumn: 'span 2', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }} onClick={() => openEditModal(selectedOrder)}>
-                      Düzenle
-                    </button>
-                    <button className="btn btn-danger" style={{ gridColumn: 'span 2' }} onClick={() => handleDeleteOrder(selectedOrder.id)}>
+                  <>
+                    <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
                       Siparişi Sil
                     </button>
-                  </div>
+                    <button className="btn" style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }} onClick={() => openEditModal(selectedOrder)}>
+                      Düzenle
+                    </button>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
+                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
+                    </button>
+                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
+                      <Play size={16} style={{ marginRight: '6px' }}/> Aktifleştir
+                    </button>
+                  </>
                 )}
 
                 {selectedOrder.status === 'Active' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <button className="btn btn-primary" style={{ backgroundColor: '#10b981', display: 'flex', justifyContent: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
-                      <CheckCircle2 size={16} style={{ marginRight: '6px' }}/> Tamamla
-                    </button>
-                    <button className="btn btn-danger" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
+                  <>
+                    <button className="btn btn-danger" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
                       <XCircle size={16} style={{ marginRight: '6px' }}/> İptal Et
                     </button>
-                    <button className="btn btn-primary" style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => { setPrintLine1(selectedOrder.productName || ''); setPrintLine2(selectedOrder.gtin); setShowPrintModal(true); }}>
+                      <Printer size={16} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
+                    </button>
+                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
                       <Barcode size={16} style={{ marginRight: '6px' }}/> Scan Ekranına Git
                     </button>
-                  </div>
+                    <button className="btn btn-primary" style={{ backgroundColor: '#10b981', display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
+                      <CheckCircle2 size={16} style={{ marginRight: '6px' }}/> Tamamla
+                    </button>
+                  </>
                 )}
 
                 {selectedOrder.status === 'Cancelled' && (
-                  <button className="btn btn-danger" style={{ width: '100%' }} onClick={() => handleDeleteOrder(selectedOrder.id)}>
+                  <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
                     Siparişi Sil
-                  </button>
-                )}
-
-                {selectedOrder.status !== 'Cancelled' && (
-                  <button className="btn btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => { setPrintLine1(selectedOrder.productName || ''); setPrintLine2(selectedOrder.gtin); setShowPrintModal(true); }}>
-                    <Printer size={16} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
                   </button>
                 )}
               </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+
+          {/* Carton Items Sub-Modal */}
+          {selectedCartonForItems && (
+            <div style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(15,23,42,0.6)',
+              backdropFilter: 'blur(2px)',
+              zIndex: 200,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px'
+            }} onClick={() => setSelectedCartonForItems(null)}>
+              <div className="card" style={{
+                width: '100%',
+                maxWidth: '650px',
+                maxHeight: '75vh',
+                borderRadius: '12px',
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                padding: '24px',
+                backgroundColor: '#fff',
+                display: 'flex',
+                flexDirection: 'column'
+              }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                    Koli İçeriği ({selectedCartonForItems.cartonNo})
+                  </h3>
+                  <button className="btn" style={{ padding: '6px', borderRadius: '50%', backgroundColor: '#f1f5f9', color: '#475569', border: 'none' }} onClick={() => setSelectedCartonForItems(null)}>
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px' }}>
+                  {cartonItemsLoading ? (
+                    <div style={{ textAlign: 'center', padding: '30px' }}><Loader2 className="spinner" size={24} style={{ margin: '0 auto' }} /></div>
+                  ) : cartonItems.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>Bu kolide henüz okutulmuş ürün bulunmuyor.</div>
+                  ) : (
+                    <table className="data-table" style={{ margin: 0 }}>
+                      <thead style={{ backgroundColor: '#f8fafc' }}>
+                        <tr>
+                          <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Barkod / Datamatrix</th>
+                          <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Seri No</th>
+                          <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Okunma Tarihi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cartonItems.map((item: any, idx: number) => (
+                          <tr key={idx}>
+                            <td style={{ padding: '8px 12px', fontSize: '0.85rem', fontFamily: 'monospace' }}>{item.rawCode}</td>
+                            <td style={{ padding: '8px 12px', fontSize: '0.85rem' }}>{item.serialNo || '-'}</td>
+                            <td style={{ padding: '8px 12px', fontSize: '0.85rem', color: '#64748b' }}>
+                              {item.scannedAt ? new Date(item.scannedAt).toLocaleString('tr-TR') : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+                  <button className="btn btn-secondary" onClick={() => setSelectedCartonForItems(null)}>Kapat</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* --- CREATE ORDER MODAL --- */}
       {showCreateModal && (
