@@ -278,16 +278,20 @@ export const Scan: React.FC = () => {
       if (!defaultRes.ok) {
         throw new Error("Varsayılan yazıcı bilgisi alınamadı.");
       }
-      let printerName = await defaultRes.text();
-      printerName = printerName.replace(/"/g, "").trim();
-      if (!printerName) {
+      const rawText = await defaultRes.text();
+      let deviceObj;
+      try {
+        deviceObj = JSON.parse(rawText);
+      } catch (parseErr) {
+        throw new Error("Yazıcı bilgisi çözümlenemedi (JSON Hatası).");
+      }
+
+      if (!deviceObj) {
         throw new Error("Varsayılan yazıcı bulunamadı. Lütfen Zebra Browser Print uygulamasından yazıcınızı varsayılan olarak seçin.");
       }
 
       const writePayload = {
-        device: {
-          name: printerName
-        },
+        device: deviceObj,
         data: zplText
       };
 
@@ -1023,9 +1027,10 @@ export const Scan: React.FC = () => {
                         onClick={async () => {
                           try {
                             const res = await fetch("https://localhost:9101/default?type=printer");
-                            let name = await res.text();
-                            name = name.replace(/"/g, "").trim();
-                            alert("Varsayılan Yazıcı: " + (name || "Bulunamadı"));
+                            const rawText = await res.text();
+                            const deviceObj = JSON.parse(rawText);
+                            const displayName = deviceObj.name || deviceObj.uid || "Bilinmeyen Yazıcı";
+                            alert(`Varsayılan Yazıcı: ${displayName} (${deviceObj.connection})`);
                           } catch (e: any) {
                             alert("Zebra Browser Print bağlantı hatası! Lütfen uygulamanın çalıştığından emin olun ve https://localhost:9101 adresindeki SSL sertifikasına güven izni verin.");
                           }
