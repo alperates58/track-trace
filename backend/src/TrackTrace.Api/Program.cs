@@ -316,6 +316,78 @@ app.MapGet("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
     }
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapGet("/api/orders/{id:guid}/product-codes", async (
+    Guid id,
+    [FromQuery] int? page,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    [FromQuery] string? status,
+    IDbConnectionFactory dbFactory) =>
+{
+    int limit = pageSize ?? 50;
+    int offset = ((page ?? 1) - 1) * limit;
+
+    using var connection = dbFactory.CreateConnection();
+    if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+
+    string countSql = "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @OrderId";
+    string querySql = @"SELECT Id, RawCode, SerialNo, Status, CartonId, ScannedAt, ScannedBy 
+                        FROM ProductCodes 
+                        WHERE OrderId = @OrderId";
+    
+    var parameters = new DynamicParameters();
+    parameters.Add("OrderId", id);
+
+    if (!string.IsNullOrWhiteSpace(status))
+    {
+        countSql += " AND Status = @Status";
+        querySql += " AND Status = @Status";
+        
+        int statusInt = status.ToLowerInvariant() switch
+        {
+            "uploaded" => 0,
+            "scanned" => 1,
+            "packed" => 2,
+            "shipped" => 3,
+            _ => 0
+        };
+        parameters.Add("Status", statusInt);
+    }
+
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+        countSql += " AND (RawCode ILIKE @Search OR SerialNo ILIKE @Search)";
+        querySql += " AND (RawCode ILIKE @Search OR SerialNo ILIKE @Search)";
+        parameters.Add("Search", $"%{search}%");
+    }
+
+    querySql += " ORDER BY CreatedAt DESC LIMIT @Limit OFFSET @Offset";
+    parameters.Add("Limit", limit);
+    parameters.Add("Offset", offset);
+
+    var total = await connection.ExecuteScalarAsync<int>(countSql, parameters);
+    var items = await connection.QueryAsync<TrackTrace.Domain.Entities.ProductCode>(querySql, parameters);
+
+    var mappedItems = items.Select(x => new 
+    {
+        id = x.Id,
+        rawCode = x.RawCode,
+        serialNo = x.SerialNo,
+        status = x.Status.ToString(),
+        cartonId = x.CartonId,
+        scannedAt = x.ScannedAt,
+        scannedBy = x.ScannedBy
+    });
+
+    return Results.Ok(new
+    {
+        items = mappedItems,
+        total = total,
+        page = page ?? 1,
+        pageSize = limit
+    });
+}).RequireAuthorization("ViewerOrAbove");
+
 app.MapPost("/api/orders", async (CreateOrderRequest request, IMediator mediator) =>
 {
     try

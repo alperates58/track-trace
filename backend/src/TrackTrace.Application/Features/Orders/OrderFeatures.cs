@@ -431,7 +431,7 @@ public class OrderHandlers :
                     orderNoCol = col;
                 else if (header.Contains("firma") || header.Contains("müşteri") || header.Contains("musteri") || header.Contains("customer"))
                     customerNameCol = col;
-                else if (header.Contains("iş emri") || header.Contains("is emri") || header.Contains("işemri") || header.Contains("isemri") || header.Contains("gtin") || header.Contains("work order"))
+                else if (header.Contains("iş emri") || header.Contains("is emri") || header.Contains("işemri") || header.Contains("isemri") || header.Contains("work order"))
                     gtinCol = col;
                 else if (header.Contains("stok kodu") || header.Contains("stokkodu") || header.Contains("stock code") || header.Contains("sku"))
                     stockCodeCol = col;
@@ -479,7 +479,7 @@ public class OrderHandlers :
                 if (string.IsNullOrWhiteSpace(orderNo))
                 {
                     // If the whole row is empty, just skip it silently
-                    if (string.IsNullOrWhiteSpace(customerName) && string.IsNullOrWhiteSpace(gtin) && string.IsNullOrWhiteSpace(qtyStr))
+                    if (string.IsNullOrWhiteSpace(customerName) && string.IsNullOrWhiteSpace(qtyStr))
                     {
                         continue;
                     }
@@ -490,11 +490,16 @@ public class OrderHandlers :
 
                 totalRows++;
 
-                if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(gtin) || string.IsNullOrWhiteSpace(qtyStr))
+                if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(qtyStr))
                 {
                     invalidCount++;
-                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Eksik bilgi (Firma, İş Emri veya Miktar boş olamaz)."));
+                    errors.Add(new ImportErrorDto(rowNo, orderNo, "Eksik bilgi (Firma veya Miktar boş olamaz)."));
                     continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(gtin))
+                {
+                    gtin = $"WO-{orderNo}";
                 }
 
                 if (!TryParseExcelInt(qtyStr, out int expectedQty) || expectedQty <= 0)

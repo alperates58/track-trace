@@ -116,7 +116,24 @@ Bu dokümanda, "Track & Trace Aggregation / Koli-Palet Yönetim Sistemi" projesi
 
 ---
 
-## 8. Hata Durumunda İzlenecek Adımlar & Loglar
+## 8. Sipariş Yönetimi (Premium UI) ve Kod Sayfalama Testi
+* **Amaç:** Yenilenen Sipariş Yönetimi ekranının, DataGrid tablo yapısının, sağ açılır (Drawer) panelin ve Dapper tabanlı kod sayfalamasının çalıştığını teyit etmek.
+* **Adımlar:**
+  1. Sol menüden **Sipariş Yönetimi** sayfasına gidin.
+  2. Sayfanın en üstünde "Toplam Sipariş, Aktif Sipariş (Bu Sayfa), Tamamlanan (Bu Sayfa), Ortalama Tamamlanma" özet kartlarının doğru verileri gösterdiğini kontrol edin.
+  3. Siparişler tablosunda (DataGrid) "İş Emri No" sütununun göründüğünden ve GTIN ibaresinin kaldırıldığından emin olun.
+  4. Tablodaki herhangi bir sipariş satırına veya en sağdaki **Detay** butonuna tıklayın.
+     * *Beklenen Sonuç:* Ekranın sağından pürüzsüz bir animasyonla **Sipariş Detayı (Drawer)** paneli açılmalıdır. Arka plan hafifçe karararak (Overlay) dikkati panele çekmelidir.
+  5. Paneldeki **Özet** sekmesinde siparişe ait ilerleme çubuğu, hedefler, koli içi ve açıklama bilgilerinin göründüğünü teyit edin.
+  6. Paneldeki **Kodlar** sekmesine tıklayın.
+     * *Beklenen Sonuç:* Eğer siparişe ait barkodlar varsa, bunlar 50'şerli (Server-side) sayfalama ile listelenmelidir.
+  7. Kodlar sekmesindeki **Arama** çubuğuna mevcut bir kodun (veya Seri No'nun) son birkaç hanesini girip **Ara** butonuna basın.
+     * *Beklenen Sonuç:* Dapper endpoint `/api/orders/{id}/product-codes` aranarak sadece eşleşen sonuçları getirmeli ve arama oldukça hızlı sonuçlanmalıdır.
+  8. Sağ üstteki çarpı (`X`) veya arka plan (Overlay) boşluğuna tıklayarak Drawer panelini kapatın.
+
+---
+
+## 9. Hata Durumunda İzlenecek Adımlar & Loglar
 Eğer yukardaki adımlardan herhangi birinde hata alınırsa veya indirme işlemleri gerçekleşmezse:
 1. **Tarayıcı Konsolu (Console):** `F12 -> Console` sekmesine basarak kırmızı renkli hata loglarını kontrol edin (CORS hataları, TypeError vb.).
 2. **Network Sekmesi:** `F12 -> Network` sekmesinden başarısız olan (kırmızı yanan) HTTP isteklerini inceleyin. İstek detayındaki `Response` sekmesi hatanın backend'deki gerçek sebebini gösterir.
