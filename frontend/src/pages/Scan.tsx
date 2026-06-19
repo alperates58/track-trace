@@ -622,7 +622,14 @@ export const Scan: React.FC = () => {
 
               {/* Active Carton Progress Card */}
               <div className="card" style={{ padding: '18px', borderLeft: '4px solid #3b82f6', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                <h4 style={{ fontSize: '0.9rem', color: '#1d4ed8', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Aktif Koli Durumu</h4>
+                <h4 style={{ fontSize: '0.9rem', color: '#1d4ed8', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center' }}>
+                  Aktif Koli Durumu
+                  {currentQty > 0 && (
+                    <span style={{ marginLeft: '8px', fontSize: '0.7rem', backgroundColor: '#fff7ed', color: '#c2410c', border: '1px solid #ffd8a8', padding: '2px 6px', borderRadius: '4px', textTransform: 'none', fontWeight: 600 }}>
+                      Yarım Kalan Koli
+                    </span>
+                  )}
+                </h4>
                 {cartonNo ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '12px' }}>
