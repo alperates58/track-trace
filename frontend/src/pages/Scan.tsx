@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Volume2, VolumeX, Barcode } from 'lucide-react';
+import { Volume2, VolumeX, Barcode, Printer } from 'lucide-react';
 
 interface ActiveOrder {
   id: string;
@@ -60,6 +60,26 @@ export const Scan: React.FC = () => {
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
+
+  // Printer settings
+  const [printMode, setPrintMode] = useState<'pdf' | 'network'>(() => {
+    return (localStorage.getItem('tt_print_mode') as 'pdf' | 'network') || 'pdf';
+  });
+  const [printerIp, setPrinterIp] = useState<string>(() => {
+    return localStorage.getItem('tt_printer_ip') || '';
+  });
+  const [printerPort, setPrinterPort] = useState<number>(() => {
+    const val = localStorage.getItem('tt_printer_port');
+    return val ? parseInt(val, 10) : 9100;
+  });
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
+    const val = localStorage.getItem('tt_auto_print');
+    return val !== 'false';
+  });
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [isReprinting, setIsReprinting] = useState(false);
 
   // Check API health status
   useEffect(() => {
@@ -257,6 +277,53 @@ export const Scan: React.FC = () => {
     }
   };
 
+  const handleTestPrint = async (ip: string, port: number) => {
+    if (!ip) {
+      setTestMessage({ text: 'IP adresi girilmelidir.', type: 'error' });
+      return;
+    }
+    setIsTestingConnection(true);
+    setTestMessage(null);
+    try {
+      const res = await api.post('/api/print/test-network', { ipAddress: ip, port: port });
+      setTestMessage({ text: res?.message || 'Bağlantı başarılı, test sayfası gönderildi!', type: 'success' });
+    } catch (err: any) {
+      setTestMessage({ text: err.message || 'Yazıcıya bağlanılamadı.', type: 'error' });
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
+
+  const handleNetworkPrint = async () => {
+    if (!lastClosedCartonId) return;
+    if (!printerIp) {
+      alert("Lütfen önce yazıcı ayarlarından IP adresini girin.");
+      return;
+    }
+    setIsReprinting(true);
+    try {
+      await api.post(`/api/cartons/${lastClosedCartonId}/print-network`, { ipAddress: printerIp, port: printerPort });
+      alert("Koli etiketi yazıcıya gönderildi.");
+    } catch (err: any) {
+      alert("Yazdırma hatası: " + err.message);
+    } finally {
+      setIsReprinting(false);
+    }
+  };
+
+  const handleSaveSettings = (mode: 'pdf' | 'network', ip: string, port: number, auto: boolean) => {
+    localStorage.setItem('tt_print_mode', mode);
+    localStorage.setItem('tt_printer_ip', ip);
+    localStorage.setItem('tt_printer_port', port.toString());
+    localStorage.setItem('tt_auto_print', auto.toString());
+    
+    setPrintMode(mode);
+    setPrinterIp(ip);
+    setPrinterPort(port);
+    setAutoPrintEnabled(auto);
+    setIsSettingsModalOpen(false);
+  };
+
   const handleScanSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = barcodeInput.trim();
@@ -289,6 +356,25 @@ export const Scan: React.FC = () => {
           setLastClosedCartonId(res.cartonId || null);
           setLastClosedCartonNo(res.cartonNo || null);
           setLastClosedCartonSSCC(res.sscc || null);
+
+          // Auto-print carton label if enabled and mode is network
+          const currentMode = localStorage.getItem('tt_print_mode') || 'pdf';
+          const currentAuto = localStorage.getItem('tt_auto_print') !== 'false';
+          const currentIp = localStorage.getItem('tt_printer_ip') || '';
+          const currentPortVal = localStorage.getItem('tt_printer_port');
+          const currentPort = currentPortVal ? parseInt(currentPortVal, 10) : 9100;
+
+          if (currentMode === 'network' && currentAuto && currentIp && res.cartonId) {
+            api.post(`/api/cartons/${res.cartonId}/print-network`, { ipAddress: currentIp, port: currentPort })
+              .then(() => {
+                console.log("Koli barkodu otomatik olarak network yazıcısına gönderildi.");
+              })
+              .catch((printErr: any) => {
+                console.error("Otomatik yazdırma başarısız:", printErr);
+                playSound('warning');
+                alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
+              });
+          }
         } else {
           setStatus('success');
         }
@@ -530,6 +616,27 @@ export const Scan: React.FC = () => {
             {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             {soundEnabled ? 'Ses Açık' : 'Ses Kapalı'}
           </button>
+
+          {/* Printer Settings Button */}
+          <button
+            className="btn"
+            style={{ 
+              height: '42px', 
+              padding: '0 16px', 
+              borderRadius: '8px', 
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              color: '#1d4ed8',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600
+            }}
+            onClick={(e) => { e.stopPropagation(); setIsSettingsModalOpen(true); }}
+          >
+            <Printer size={18} />
+            Yazıcı Ayarları
+          </button>
         </div>
       </div>
 
@@ -672,10 +779,20 @@ export const Scan: React.FC = () => {
                 </div>
                 
                 {lastClosedCartonId && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                    {printMode === 'network' ? (
+                      <button 
+                        className="btn btn-primary" 
+                        disabled={isReprinting}
+                        style={{ flex: '1 1 100%', padding: '6px 8px', fontSize: '0.75rem', backgroundColor: '#3b82f6', fontWeight: 700, borderRadius: '6px' }}
+                        onClick={handleNetworkPrint}
+                      >
+                        {isReprinting ? 'Yazdırılıyor...' : 'Doğrudan Yazdır'}
+                      </button>
+                    ) : null}
                     <button 
-                      className="btn btn-primary" 
-                      style={{ flex: 1, padding: '6px 8px', fontSize: '0.75rem', backgroundColor: '#10b981', fontWeight: 600, borderRadius: '6px' }}
+                      className="btn btn-secondary" 
+                      style={{ flex: 1, padding: '6px 8px', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px' }}
                       onClick={handleDownloadPDF}
                     >
                       PDF İndir
@@ -795,6 +912,181 @@ export const Scan: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Yazıcı Ayarları Modalı */}
+      {isSettingsModalOpen && (
+        <div 
+          onClick={() => setIsSettingsModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              width: '90%',
+              maxWidth: '500px',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Printer size={20} style={{ color: '#3b82f6' }} />
+                Yazıcı Ayarları
+              </h3>
+              <button 
+                onClick={() => setIsSettingsModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  lineHeight: 1
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Yazdırma Yöntemi
+                </label>
+                <select
+                  className="form-input"
+                  style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600 }}
+                  value={printMode}
+                  onChange={(e) => setPrintMode(e.target.value as 'pdf' | 'network')}
+                >
+                  <option value="pdf">Masaüstü PDF İndirme (Manuel)</option>
+                  <option value="network">Doğrudan Termal Yazıcı (ZPL - TCP/IP)</option>
+                </select>
+              </div>
+
+              {printMode === 'network' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                        Yazıcı IP Adresi
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Örn: 192.168.1.100"
+                        className="form-input"
+                        style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '0.9rem' }}
+                        value={printerIp}
+                        onChange={(e) => setPrinterIp(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                        Port
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="9100"
+                        className="form-input"
+                        style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '0.9rem' }}
+                        value={printerPort}
+                        onChange={(e) => setPrinterPort(parseInt(e.target.value, 10) || 9100)}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <input
+                      type="checkbox"
+                      id="autoPrintCheckbox"
+                      checked={autoPrintEnabled}
+                      onChange={(e) => setAutoPrintEnabled(e.target.checked)}
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
+                      Koli Tamamlanınca Otomatik Barkod Bas
+                    </label>
+                  </div>
+
+                  <div>
+                    <button
+                      type="button"
+                      disabled={isTestingConnection}
+                      onClick={() => handleTestPrint(printerIp, printerPort)}
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        backgroundColor: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        color: '#334155',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      {isTestingConnection ? 'Bağlantı Test Ediliyor...' : 'Test Et (ZPL Barkodu Bas)'}
+                    </button>
+                    {testMessage && (
+                      <div style={{
+                        marginTop: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        color: testMessage.type === 'success' ? '#16a34a' : '#dc2626',
+                        backgroundColor: testMessage.type === 'success' ? '#f0fdf4' : '#fef2f2',
+                        border: `1px solid ${testMessage.type === 'success' ? '#bcf0da' : '#fde8e8'}`,
+                        padding: '8px 12px',
+                        borderRadius: '6px'
+                      }}>
+                        {testMessage.text}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', justifyContent: 'flex-end' }}>
+              <button
+                className="btn btn-secondary"
+                style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600 }}
+                onClick={() => setIsSettingsModalOpen(false)}
+              >
+                Vazgeç
+              </button>
+              <button
+                className="btn btn-primary"
+                style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600, backgroundColor: '#3b82f6' }}
+                onClick={() => handleSaveSettings(printMode, printerIp, printerPort, autoPrintEnabled)}
+              >
+                Ayarları Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

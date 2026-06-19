@@ -765,6 +765,92 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     }
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapPost("/api/print/test-network", async ([FromBody] PrintTestRequest request) =>
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(request.IpAddress))
+        {
+            return Results.BadRequest(new { message = "IP adresi boş olamaz." });
+        }
+        if (request.Port <= 0 || request.Port > 65535)
+        {
+            return Results.BadRequest(new { message = "Geçersiz port numarası." });
+        }
+
+        var zplText = $"^XA\r\n^FO50,50^A0N,44,44^FDTEST PRINT^FS\r\n^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS\r\n^FO50,150^A0N,24,24^FDTarih: {DateTime.Now:dd.MM.yyyy HH:mm:ss}^FS\r\n^FO50,200^GB700,3,3^FS\r\n^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS\r\n^XZ";
+
+        using (var client = new System.Net.Sockets.TcpClient())
+        {
+            var connectTask = client.ConnectAsync(request.IpAddress, request.Port);
+            if (await Task.WhenAny(connectTask, Task.Delay(4000)) == connectTask)
+            {
+                await connectTask; // Wait for it to complete/throw
+                using (var stream = client.GetStream())
+                {
+                    byte[] zplBytes = Encoding.UTF8.GetBytes(zplText);
+                    await stream.WriteAsync(zplBytes, 0, zplBytes.Length);
+                    await stream.FlushAsync();
+                }
+                return Results.Ok(new { message = "Test sayfası yazıcıya gönderildi." });
+            }
+            else
+            {
+                return Results.BadRequest(new { message = "Yazıcıya bağlanırken zaman aşımı oluştu. Lütfen IP adresi ve portu kontrol edin." });
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = $"Yazdırma hatası: {ex.Message}" });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/cartons/{id:guid}/print-network", async (Guid id, [FromBody] PrintNetworkRequest request, IMediator mediator) =>
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(request.IpAddress))
+        {
+            return Results.BadRequest(new { message = "IP adresi boş olamaz." });
+        }
+        if (request.Port <= 0 || request.Port > 65535)
+        {
+            return Results.BadRequest(new { message = "Geçersiz port numarası." });
+        }
+
+        var (_, zplText) = await mediator.Send(new PrintCartonLabelCommand(id, "ZPL"));
+        if (string.IsNullOrWhiteSpace(zplText))
+        {
+            return Results.BadRequest(new { message = "Koli ZPL etiketi oluşturulamadı." });
+        }
+
+        using (var client = new System.Net.Sockets.TcpClient())
+        {
+            var connectTask = client.ConnectAsync(request.IpAddress, request.Port);
+            if (await Task.WhenAny(connectTask, Task.Delay(4000)) == connectTask)
+            {
+                await connectTask; // Wait for it to complete/throw
+                using (var stream = client.GetStream())
+                {
+                    byte[] zplBytes = Encoding.UTF8.GetBytes(zplText);
+                    await stream.WriteAsync(zplBytes, 0, zplBytes.Length);
+                    await stream.FlushAsync();
+                }
+                return Results.Ok(new { message = "Koli etiketi yazıcıya gönderildi." });
+            }
+            else
+            {
+                return Results.BadRequest(new { message = "Yazıcıya bağlanırken zaman aşımı oluştu. Lütfen IP adresi ve portu kontrol edin." });
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = $"Yazdırma hatası: {ex.Message}" });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
 app.MapPost("/api/cartons/{id:guid}/decompose", async (Guid id, IMediator mediator) =>
 {
     try
@@ -1002,3 +1088,6 @@ public record PrintCodesRequest(
     string? Line2,
     bool LabelBelow,
     int SplitSize);
+
+public record PrintTestRequest(string IpAddress, int Port);
+public record PrintNetworkRequest(string IpAddress, int Port);
