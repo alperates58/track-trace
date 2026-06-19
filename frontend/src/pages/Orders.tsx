@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Upload, Search, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Order {
   id: string;
@@ -22,7 +21,6 @@ interface Order {
 
 export const Orders: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   
   // Lists & Paging
   const [orders, setOrders] = useState<Order[]>([]);
@@ -732,7 +730,7 @@ export const Orders: React.FC = () => {
                     <button className="btn btn-danger" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
                       <XCircle size={16} style={{ marginRight: '6px' }}/> İptal Et
                     </button>
-                    <button className="btn btn-primary" style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'center', backgroundColor: '#0ea5e9' }} onClick={() => navigate(`/scan?orderId=${selectedOrder.id}`)}>
+                    <button className="btn btn-primary" style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
                       <Barcode size={16} style={{ marginRight: '6px' }}/> Scan Ekranına Git
                     </button>
                   </div>
