@@ -343,15 +343,15 @@ app.MapGet("/api/orders/{id:guid}/product-codes", async (
         countSql += " AND Status = @Status";
         querySql += " AND Status = @Status";
         
-        int statusInt = status.ToLowerInvariant() switch
+        string statusStr = status.ToLowerInvariant() switch
         {
-            "uploaded" => 0,
-            "scanned" => 1,
-            "packed" => 2,
-            "shipped" => 3,
-            _ => 0
+            "uploaded" => "Uploaded",
+            "scanned" => "Scanned",
+            "packed" => "Packed",
+            "shipped" => "Shipped",
+            _ => status
         };
-        parameters.Add("Status", statusInt);
+        parameters.Add("Status", statusStr);
     }
 
     if (!string.IsNullOrWhiteSpace(search))

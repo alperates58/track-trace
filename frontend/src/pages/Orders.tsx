@@ -328,6 +328,16 @@ export const Orders: React.FC = () => {
     }
   };
 
+  const getProductCodeStatusLabel = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'uploaded': return 'Yüklendi';
+      case 'scanned': return 'Okutuldu';
+      case 'packed': return 'Kolilendi';
+      case 'shipped': return 'Sevk Edildi';
+      default: return status;
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Draft': return <span className="badge" style={{ backgroundColor: '#e2e8f0', color: '#475569' }}>Taslak</span>;
@@ -503,9 +513,9 @@ export const Orders: React.FC = () => {
       <div style={{
         position: 'fixed',
         top: 0,
-        right: selectedOrder ? 0 : '-650px',
+        right: selectedOrder ? 0 : '-850px',
         width: '100%',
-        maxWidth: '650px',
+        maxWidth: '850px',
         height: '100vh',
         backgroundColor: '#fff',
         boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
@@ -647,10 +657,10 @@ export const Orders: React.FC = () => {
                       onChange={e => setCodesStatusFilter(e.target.value)}
                     >
                       <option value="">Tüm Durumlar</option>
-                      <option value="uploaded">Uploaded</option>
-                      <option value="scanned">Scanned</option>
-                      <option value="packed">Packed</option>
-                      <option value="shipped">Shipped</option>
+                      <option value="uploaded">Yüklendi</option>
+                      <option value="scanned">Okutuldu</option>
+                      <option value="packed">Kolilendi</option>
+                      <option value="shipped">Sevk Edildi</option>
                     </select>
                     <button type="submit" className="btn btn-secondary">Ara</button>
                   </form>
@@ -676,7 +686,7 @@ export const Orders: React.FC = () => {
                               <td style={{ padding: '12px', fontSize: '0.85rem', fontFamily: 'monospace' }}>{c.rawCode}</td>
                               <td style={{ padding: '12px', fontSize: '0.85rem' }}>{c.serialNo || '-'}</td>
                               <td style={{ padding: '12px' }}>
-                                <span className="badge" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '0.75rem' }}>{c.status}</span>
+                                <span className="badge" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '0.75rem' }}>{getProductCodeStatusLabel(c.status)}</span>
                               </td>
                               <td style={{ padding: '12px', fontSize: '0.85rem', color: '#64748b' }}>
                                 {c.scannedAt ? new Date(c.scannedAt).toLocaleString('tr-TR') : '-'}
