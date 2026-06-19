@@ -210,7 +210,8 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
                 sscc,
                 actualQty,
                 productPerCarton,
-                responseStatus
+                responseStatus,
+                cartonId
             );
         }
         catch (Exception ex)

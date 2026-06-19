@@ -57,17 +57,31 @@ Bu dokümanda, "Track & Trace Aggregation / Koli-Palet Yönetim Sistemi" projesi
 ---
 
 ## 4. Barkod Okutma ve Koli Kapatma (Scan) Testi
-* **Amaç:** Operatörün barkod okutma akışını, sesli/görsel uyarıları ve otomatik koli kapanmasını test etmek.
+* **Amaç:** Operatörün yenilenen Ürün Okutma Terminali ekranı akışını, odaklanma davranışlarını, sesli/görsel uyarıları, etiket indirme ve koli kapatma süreçlerini test etmek.
 * **Adımlar:**
-  1. Sipariş Yönetimi sayfasından siparişinizi **Aktifleştir** (Activate) butonuyla aktif üretime alın.
-  2. Sol menüden **Ürün Okutma (Scan)** sayfasına gidin.
-  3. Aktif siparişi listeden seçin.
-  4. Sayfada herhangi bir yere odaklanıp barkod okuyucuyla (veya elle girerek) geçerli bir ürün DataMatrix barkodu okutun.
-     * *Beklenen Sonuç:* Başarılı bip sesi gelmeli, ekran yeşil flaş yapmalı, okutulan ürün koli listesinde görünmelidir.
-  5. Aynı barkodu tekrar okutun.
-     * *Beklenen Sonuç:* Hata/Buzzer sesi gelmeli, ekran kırmızı flaş yapmalı ve "Bu barkod zaten okutulmuş!" uyarısı çıkmalıdır.
-  6. Koli içi adet sınırına (Örn: 20) ulaşana kadar okutmaya devam edin.
-     * *Beklenen Sonuç:* 20. barkod okutulduğunda sistem koli hedefine ulaşmalı, otomatik olarak koliyi kapatıp yeni bir **SSCC** kodu üretmeli ve sıradaki koliye geçiş yapmalıdır.
+  1. Sol menüden veya Sipariş detayından yönlendirmeyle **Ürün Okutma (Scan)** sayfasına gidin.
+  2. Sağ üstte API Bağlantı durumunun "Çevrimiçi" (yeşil) olduğunu ve giriş yapan "Operatör" adını doğrulayın.
+  3. Üst panelden ilk dropdown yardımıyla aktif bir **Sipariş No** seçin.
+     * *Beklenen Sonuç:* Siparişe ait müşteri adı sipariş no yanında görünmeli ve ikinci dropdown (Ürün/Stok/İş Emri) aktif hale gelmelidir.
+  4. İkinci dropdown'dan okutulacak ürünü seçin (Format: Stok Kodu - Ürün Adı - İş Emri No - Okutulan/Hedef).
+     * *Beklenen Sonuç:* Ürün seçildiği an, gizli okuma input'u otomatik olarak odak (focus) almalı ve üst paneldeki odak göstergesi **"Odak Aktif"** (yeşil) durumuna geçmelidir.
+  5. Tarayıcıda başka bir yere tıklayarak odağı kaybettirin.
+     * *Beklenen Sonuç:* Gösterge yanıp sönen turuncu/kırmızı renkle **"Odak Kayboldu / Tıkla veya F8 ile odakla"** uyarısı vermelidir. Klavye üzerinden **`F8`** tuşuna basın ve odağın anında geri geldiğini (`Odak Aktif` olduğunu) doğrulayın.
+  6. Geçerli bir ürün DataMatrix barkodu okutun veya elle yazıp Enter'a basın.
+     * *Beklenen Sonuç:* Tiz bir başarı sesi gelmeli, ekran yeşil renkte yanıp sönmeli ("BAŞARILI OKUMA" yazmalı) ve okutulan barkod ile Seri No bilgisi sağdaki "Okutma Geçmişi" listesine eklenmelidir.
+  7. Aynı barkodu tekrar okutun (Mükerrer Okutma Testi).
+     * *Beklenen Sonuç:* Kalın bir buzzer hata sesi gelmeli, ekran kırmızı renkte yanıp sönmeli ("HATALI OKUMA" yazmalı) ve "Bu ürün barkodu daha önce okutulmuş!" uyarısı çıkmalıdır.
+  8. Farklı bir siparişin veya sisteme kayıtlı olmayan rastgele bir kodun okumasını yapın.
+     * *Beklenen Sonuç:* Hata sesiyle birlikte ekranda "Sistemde kayıtlı olmayan ürün barkodu!" veya "Barkod bu siparişe ait değil!" hatası görünmelidir.
+  9. Genel Sipariş İlerlemesi ve Aktif Koli İlerlemesi kartlarındaki adetlerin, progress barların ve yüzdelerin her başarılı okumada anlık olarak güncellendiğini doğrulayın.
+  10. Koli içi adet hedefine (Örn: 20) ulaşana kadar okutmaya devam edin.
+      * *Beklenen Sonuç:* Hedef sayıya (20/20) ulaşıldığında ekran mor/kehribar renge bürünerek **"KOLİ TAMAMLANDI"** uyarısı vermeli, aktif koli kapatılmalı ve son kapatılan koli bilgileri son koli kartında görünmelidir.
+  11. Son Kapatılan Koli kartında beliren **PDF İndir** butonuna tıklayın.
+      * *Beklenen Sonuç:* Pop-up engelleyicilerine takılmadan `carton_label_[KoliNo].pdf` dosyası doğrudan bilgisayara inmelidir.
+  12. **ZPL Kopyala** butonuna tıklayın.
+      * *Beklenen Sonuç:* Koliye ait ZPL şablonu işletim sistemi panosuna başarıyla kopyalanmalı ve kullanıcıya uyarı gösterilmelidir.
+  13. Tarayıcı penceresini daraltarak mobil/tablet görünümünde sol terminal kartı ile sağ geçmiş listesinin alt alta düzgünce hizalandığını (responsive grid) doğrulayın.
+  14. Sayfayı yenileyip (Refresh) tekrar sipariş ve ürün seçimi yapılabildiğini, odaklama ve okuma akışının kaldığı yerden devam ettiğini doğrulayın.
 
 ---
 

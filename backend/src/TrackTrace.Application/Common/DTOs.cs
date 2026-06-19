@@ -70,7 +70,8 @@ public record ScanResponse(
     string? SSCC,
     int CartonCurrentQty,
     int CartonTargetQty,
-    string Status // "Success", "CartonClosed", "Warning", "Error"
+    string Status, // "Success", "CartonClosed", "Warning", "Error"
+    Guid? CartonId = null
 );
 
 public record CartonDto(
