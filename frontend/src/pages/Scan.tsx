@@ -633,10 +633,10 @@ export const Scan: React.FC = () => {
                       No: <strong>{cartonNo}</strong> | SSCC: <code>{cartonSSCC}</code>
                     </div>
                     <div style={{ width: '100%', height: '8px', backgroundColor: '#dbeafe', borderRadius: '4px', overflow: 'hidden', marginTop: '12px' }}>
-                      <div style={{ height: '100%', width: `${targetQty ? Math.min(100, (currentQty / targetQty) * 100) : 0}%`, backgroundColor: '#3b82f6', transition: 'width 0.3s ease' }}></div>
+                      <div style={{ height: '100%', width: `${Math.min(100, progressPercent)}%`, backgroundColor: '#3b82f6', transition: 'width 0.3s ease' }}></div>
                     </div>
                     <div style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 700, color: '#1d4ed8', marginTop: '6px' }}>
-                      {targetQty ? Math.round(Math.min(100, (currentQty / targetQty) * 100)) : 0}% Doluluk
+                      {Math.round(Math.min(100, progressPercent))}% Doluluk
                     </div>
                   </>
                 ) : (
