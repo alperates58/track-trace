@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ILabelGenerator, LabelGenerator>();
+        services.AddScoped<IReportPdfGenerator, ReportPdfGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHttpContextAccessor();
         return services;

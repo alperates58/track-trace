@@ -68,6 +68,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             string pcStatusStr = pc.status;
             if (pcStatusStr != ProductCodeStatus.Uploaded.ToString())
             {
+                await _auditLogService.LogAsync("ProductCodes", (Guid)pc.id, "DoubleScanAttempt", null, new { RawCode = req.RawCode });
                 return new ScanResponse(false, "Bu ürün barkodu daha önce okutulmuş!", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Warning");
             }
 

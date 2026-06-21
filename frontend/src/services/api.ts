@@ -31,6 +31,9 @@ async function request(path: string, options: RequestInit = {}) {
     contentType.includes('application/pdf') || 
     contentType.includes('application/zip') || 
     contentType.includes('application/octet-stream') ||
+    contentType.includes('spreadsheet') ||
+    contentType.includes('sheet') ||
+    contentType.includes('excel') ||
     contentType.startsWith('image/')
   )) {
     return response.blob();

@@ -317,6 +317,147 @@ app.MapGet("/api/dashboard/summary", async (IMediator mediator) =>
     return Results.Ok(summary);
 }).RequireAuthorization("ViewerOrAbove");
 
+// Reporting Endpoints
+app.MapGet("/api/reports/orders", async (
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? orderNo,
+    [FromQuery] string? stockCode,
+    [FromQuery] DateTime? startDate,
+    [FromQuery] DateTime? endDate,
+    [FromQuery] string? status,
+    [FromQuery] bool? onlyMissing,
+    [FromQuery] bool? onlyUsed,
+    [FromQuery] bool? onlyCartoned,
+    [FromQuery] bool? onlyPalletized,
+    IMediator mediator) =>
+{
+    var (items, totalCount) = await mediator.Send(new GetOrderReportsQuery(
+        pageNumber ?? 1,
+        pageSize ?? 10,
+        orderNo,
+        stockCode,
+        startDate,
+        endDate,
+        status,
+        onlyMissing,
+        onlyUsed,
+        onlyCartoned,
+        onlyPalletized
+    ));
+    return Results.Ok(new { items, totalCount });
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/{orderNo}", async (string orderNo, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(new GetOrderDetailReportQuery(orderNo));
+        return Results.Ok(result);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/items/{orderId:guid}", async (Guid orderId, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(new GetStockCodeDetailQuery(orderId));
+        return Results.Ok(result);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/items/{orderId:guid}/scanned-codes", async (
+    Guid orderId,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    [FromQuery] string? cartonNo,
+    [FromQuery] string? palletNo,
+    IMediator mediator) =>
+{
+    var (items, totalCount) = await mediator.Send(new GetStockCodeUsedCodesQuery(
+        orderId, pageNumber ?? 1, pageSize ?? 10, search, cartonNo, palletNo));
+    return Results.Ok(new { items, totalCount });
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/items/{orderId:guid}/missing-codes", async (
+    Guid orderId,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    IMediator mediator) =>
+{
+    var (items, totalCount) = await mediator.Send(new GetStockCodeMissingCodesQuery(
+        orderId, pageNumber ?? 1, pageSize ?? 10, search));
+    return Results.Ok(new { items, totalCount });
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/items/{orderId:guid}/cartons", async (
+    Guid orderId,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    IMediator mediator) =>
+{
+    var (items, totalCount) = await mediator.Send(new GetStockCodeCartonsQuery(
+        orderId, pageNumber ?? 1, pageSize ?? 10, search));
+    return Results.Ok(new { items, totalCount });
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/items/{orderId:guid}/pallets", async (
+    Guid orderId,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    IMediator mediator) =>
+{
+    var (items, totalCount) = await mediator.Send(new GetStockCodePalletsQuery(
+        orderId, pageNumber ?? 1, pageSize ?? 10, search));
+    return Results.Ok(new { items, totalCount });
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, IMediator mediator) =>
+{
+    try
+    {
+        var bytes = await mediator.Send(new GetOrderReportExcelQuery(orderNo));
+        return Results.File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{orderNo}_TrackTrace_Raporu.xlsx");
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/{orderNo}/pdf", async (string orderNo, IMediator mediator) =>
+{
+    try
+    {
+        var bytes = await mediator.Send(new GetOrderReportPdfQuery(orderNo));
+        return Results.File(bytes, "application/pdf", $"{orderNo}_TrackTrace_Raporu.pdf");
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
 // Orders Endpoints
 app.MapGet("/api/orders", async (
     [FromQuery] int? pageNumber,

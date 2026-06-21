@@ -11,6 +11,7 @@ import { TraceabilityCenter } from './pages/TraceabilityCenter';
 import { DataMatrixCreator } from './pages/DataMatrixCreator';
 import { SystemInfo } from './pages/SystemInfo';
 import { Users } from './pages/Users';
+import { Reports } from './pages/Reports';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -24,7 +25,8 @@ import {
   Users as UsersIcon,
   Package,
   Menu,
-  QrCode
+  QrCode,
+  BarChart3
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -49,6 +51,8 @@ const AppShell: React.FC = () => {
         return <TraceabilityCenter />;
       case 'dm-creator':
         return <DataMatrixCreator />;
+      case 'reports':
+        return <Reports />;
       case 'users':
         return <Users />;
       case 'system':
@@ -141,6 +145,15 @@ const AppShell: React.FC = () => {
             <span>DataMatrix Üretici</span>
           </div>
 
+          <div 
+            className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
+            onClick={() => handleTabClick('reports')}
+            title="Raporlama"
+          >
+            <BarChart3 size={18} style={{ flexShrink: 0 }} />
+            <span>Raporlama</span>
+          </div>
+
           {user?.role === 'Admin' && (
             <>
               <div 
@@ -201,7 +214,7 @@ const AppShell: React.FC = () => {
               <Menu size={20} />
             </button>
             <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
-              {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab}
+              {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab}
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>

@@ -38,3 +38,14 @@ public interface ILabelGenerator
     byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes);
     byte[] GenerateDataMatrixImage(string text);
 }
+
+public interface IReportPdfGenerator
+{
+    byte[] GenerateOrderReportPdf(
+        string orderNo,
+        object summary,
+        System.Collections.Generic.IEnumerable<object> stockCodes,
+        System.Collections.Generic.IEnumerable<object> cartons,
+        System.Collections.Generic.IEnumerable<object> pallets,
+        System.Collections.Generic.IEnumerable<object> missingSummary);
+}
