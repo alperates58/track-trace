@@ -424,12 +424,15 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}/pallets", async (
     return Results.Ok(new { items, totalCount });
 }).RequireAuthorization("ViewerOrAbove");
 
-app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, IMediator mediator) =>
+app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string? stockCode, IMediator mediator) =>
 {
     try
     {
-        var bytes = await mediator.Send(new GetOrderReportExcelQuery(orderNo));
-        return Results.File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{orderNo}_TrackTrace_Raporu.xlsx");
+        var bytes = await mediator.Send(new GetOrderReportExcelQuery(orderNo, stockCode));
+        var fileName = string.IsNullOrEmpty(stockCode) 
+            ? $"{orderNo}_TrackTrace_Raporu.xlsx" 
+            : $"{orderNo}_{stockCode}_TrackTrace_Raporu.xlsx";
+        return Results.File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
     catch (KeyNotFoundException)
     {

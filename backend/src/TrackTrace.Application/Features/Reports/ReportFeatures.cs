@@ -69,7 +69,7 @@ public record GetStockCodePalletsQuery(
     string? Search = null
 ) : IRequest<(IEnumerable<object> Items, int TotalCount)>;
 
-public record GetOrderReportExcelQuery(string OrderNo) : IRequest<byte[]>;
+public record GetOrderReportExcelQuery(string OrderNo, string? StockCode = null) : IRequest<byte[]>;
 
 public record GetOrderReportPdfQuery(string OrderNo) : IRequest<byte[]>;
 
@@ -721,15 +721,15 @@ public class ReportHandlers :
         // 1. Get Summary
         const string summarySql = @"
             SELECT 
-                o.OrderNo,
-                MAX(o.CustomerName) as CustomerName,
-                COUNT(DISTINCT o.StockCode) as TotalStockCodes,
-                SUM(o.ExpectedQuantity) as ExpectedQuantity,
-                COALESCE(SUM(pc.UsedCount), 0) as UsedQuantity,
-                COALESCE(SUM(pc.UploadedCount), 0) as MissingQuantity,
-                COALESCE(SUM(c.CartonCount), 0) as TotalCartons,
-                COALESCE(SUM(p.PalletCount), 0) as TotalPallets,
-                COALESCE(MAX(pc.LastScannedAt), MAX(o.UpdatedAt)) as LastProcessedAt
+                o.OrderNo AS ""OrderNo"",
+                MAX(o.CustomerName) as ""CustomerName"",
+                COUNT(DISTINCT o.StockCode) as ""TotalStockCodes"",
+                SUM(o.ExpectedQuantity) as ""ExpectedQuantity"",
+                COALESCE(SUM(pc.UsedCount), 0) as ""UsedQuantity"",
+                COALESCE(SUM(pc.UploadedCount), 0) as ""MissingQuantity"",
+                COALESCE(SUM(c.CartonCount), 0) as ""TotalCartons"",
+                COALESCE(SUM(p.PalletCount), 0) as ""TotalPallets"",
+                COALESCE(MAX(pc.LastScannedAt), MAX(o.UpdatedAt)) as ""LastProcessedAt""
             FROM Orders o
             LEFT JOIN (
                 SELECT 
@@ -758,15 +758,15 @@ public class ReportHandlers :
         // 2. Get Stock Codes under this OrderNo
         const string stockCodesSql = @"
             SELECT 
-                o.Id as OrderId,
-                o.StockCode,
-                o.ProductName,
-                o.GTIN,
-                o.ExpectedQuantity,
-                COALESCE(pc.UsedCount, 0) as UsedQuantity,
-                COALESCE(pc.UploadedCount, 0) as MissingQuantity,
-                COALESCE(c.CartonCount, 0) as CartonCount,
-                COALESCE(p.PalletCount, 0) as PalletCount
+                o.Id as ""OrderId"",
+                o.StockCode as ""StockCode"",
+                o.ProductName as ""ProductName"",
+                o.GTIN as ""GTIN"",
+                o.ExpectedQuantity as ""ExpectedQuantity"",
+                COALESCE(pc.UsedCount, 0) as ""UsedQuantity"",
+                COALESCE(pc.UploadedCount, 0) as ""MissingQuantity"",
+                COALESCE(c.CartonCount, 0) as ""CartonCount"",
+                COALESCE(p.PalletCount, 0) as ""PalletCount""
             FROM Orders o
             LEFT JOIN (
                 SELECT 
@@ -785,6 +785,10 @@ public class ReportHandlers :
             WHERE o.OrderNo = @OrderNo";
 
         var stockCodes = (await connection.QueryAsync<dynamic>(stockCodesSql, new { OrderNo = request.OrderNo })).ToList();
+        if (!string.IsNullOrEmpty(request.StockCode))
+        {
+            stockCodes = stockCodes.Where(x => (string)x.StockCode == request.StockCode).ToList();
+        }
 
         using var workbook = new ClosedXML.Excel.XLWorkbook();
         
@@ -798,17 +802,39 @@ public class ReportHandlers :
         wsSummary.Cell("A1").Style.Font.FontColor = ClosedXML.Excel.XLColor.DarkBlue;
         
         wsSummary.Cell("A3").Value = "Sipariş No:";
-        wsSummary.Cell("B3").Value = summary.OrderNo;
+        wsSummary.Cell("B3").Value = (string)summary.OrderNo;
         wsSummary.Cell("B3").Style.Font.Bold = true;
         
         wsSummary.Cell("A4").Value = "Müşteri / Cari:";
-        wsSummary.Cell("B4").Value = summary.CustomerName;
+        wsSummary.Cell("B4").Value = (string)summary.CustomerName;
         
         wsSummary.Cell("A5").Value = "Rapor Tarihi:";
         wsSummary.Cell("B5").Value = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
         
+        int expectedQuantity = Convert.ToInt32(summary.ExpectedQuantity);
+        int usedQuantity = Convert.ToInt32(summary.UsedQuantity);
+        int missingQuantity = Convert.ToInt32(summary.MissingQuantity);
+        int totalCartons = Convert.ToInt32(summary.TotalCartons);
+        int totalPallets = Convert.ToInt32(summary.TotalPallets);
+        int totalStockCodes = Convert.ToInt32(summary.TotalStockCodes);
+
+        if (!string.IsNullOrEmpty(request.StockCode) && stockCodes.Any())
+        {
+            var sc = stockCodes.First();
+            expectedQuantity = Convert.ToInt32(sc.ExpectedQuantity);
+            usedQuantity = Convert.ToInt32(sc.UsedQuantity);
+            missingQuantity = Convert.ToInt32(sc.MissingQuantity);
+            totalCartons = Convert.ToInt32(sc.CartonCount);
+            totalPallets = Convert.ToInt32(sc.PalletCount);
+            totalStockCodes = 1;
+            
+            wsSummary.Cell("A2").Value = $"FİLTRELENEN STOK: {request.StockCode} - {(string)sc.ProductName}";
+            wsSummary.Cell("A2").Style.Font.Italic = true;
+            wsSummary.Cell("A2").Style.Font.FontSize = 11;
+        }
+
         wsSummary.Cell("A6").Value = "Toplam Stok Kodu:";
-        wsSummary.Cell("B6").Value = summary.TotalStockCodes;
+        wsSummary.Cell("B6").Value = totalStockCodes;
         
         // KPI Headers and Values
         int kpiStartRow = 8;
@@ -818,8 +844,8 @@ public class ReportHandlers :
         wsSummary.Range(kpiStartRow, 1, kpiStartRow, 2).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
 
         string[] metrics = { "Beklenen QR", "Kullanılan QR", "Eksik QR", "Toplam Koli", "Toplam Palet", "Tamamlanma Oranı" };
-        double compRate = summary.ExpectedQuantity > 0 ? (double)summary.UsedQuantity / summary.ExpectedQuantity : 0;
-        object[] values = { summary.ExpectedQuantity, summary.UsedQuantity, summary.MissingQuantity, summary.TotalCartons, summary.TotalPallets, compRate };
+        double compRate = expectedQuantity > 0 ? (double)usedQuantity / expectedQuantity : 0;
+        object[] values = { expectedQuantity, usedQuantity, missingQuantity, totalCartons, totalPallets, compRate };
 
         for (int i = 0; i < metrics.Length; i++)
         {
@@ -842,14 +868,14 @@ public class ReportHandlers :
         // --- Each Stock Code Sheet ---
         foreach (var sc in stockCodes)
         {
-            string sheetName = string.IsNullOrWhiteSpace(sc.StockCode) ? "Bilinmeyen" : sc.StockCode;
+            string sheetName = string.IsNullOrWhiteSpace((string)sc.StockCode) ? "Bilinmeyen" : (string)sc.StockCode;
             if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
             var wsSc = workbook.Worksheets.Add(sheetName);
 
             Guid orderId = sc.OrderId;
 
             // Title
-            wsSc.Cell("A1").Value = $"STOK RAPORU - {sc.StockCode}";
+            wsSc.Cell("A1").Value = $"STOK RAPORU - {(string)sc.StockCode}";
             wsSc.Cell("A1").Style.Font.Bold = true;
             wsSc.Cell("A1").Style.Font.FontSize = 14;
             wsSc.Cell("A1").Style.Font.FontColor = ClosedXML.Excel.XLColor.DarkBlue;
@@ -860,19 +886,19 @@ public class ReportHandlers :
             wsSc.Cell("A3").Style.Font.FontSize = 11;
             
             wsSc.Cell("A4").Value = "Stok Kodu:";
-            wsSc.Cell("B4").Value = sc.StockCode;
+            wsSc.Cell("B4").Value = (string)sc.StockCode;
             wsSc.Cell("A5").Value = "Ürün Adı:";
-            wsSc.Cell("B5").Value = sc.ProductName;
+            wsSc.Cell("B5").Value = (string)sc.ProductName;
             wsSc.Cell("A6").Value = "Beklenen QR:";
-            wsSc.Cell("B6").Value = sc.ExpectedQuantity;
+            wsSc.Cell("B6").Value = Convert.ToInt32(sc.ExpectedQuantity);
             wsSc.Cell("A7").Value = "Kullanılan QR:";
-            wsSc.Cell("B7").Value = sc.UsedQuantity;
+            wsSc.Cell("B7").Value = Convert.ToInt32(sc.UsedQuantity);
             wsSc.Cell("A8").Value = "Eksik QR:";
-            wsSc.Cell("B8").Value = sc.MissingQuantity;
+            wsSc.Cell("B8").Value = Convert.ToInt32(sc.MissingQuantity);
             wsSc.Cell("A9").Value = "Koli Sayısı:";
-            wsSc.Cell("B9").Value = sc.CartonCount;
+            wsSc.Cell("B9").Value = Convert.ToInt32(sc.CartonCount);
             wsSc.Cell("A10").Value = "Palet Sayısı:";
-            wsSc.Cell("B10").Value = sc.PalletCount;
+            wsSc.Cell("B10").Value = Convert.ToInt32(sc.PalletCount);
 
             // B) Kullanılan QR Kodlar
             int rowIdx = 12;
@@ -913,14 +939,14 @@ public class ReportHandlers :
             foreach (var code in usedCodes)
             {
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = code.RawCode;
-                wsSc.Cell(rowIdx, 2).Value = code.Gtin;
-                wsSc.Cell(rowIdx, 3).Value = code.SerialNo;
-                wsSc.Cell(rowIdx, 4).Value = code.CartonNo ?? "-";
-                wsSc.Cell(rowIdx, 5).Value = code.PalletNo ?? "-";
-                wsSc.Cell(rowIdx, 6).Value = code.ScannedByName ?? "-";
-                wsSc.Cell(rowIdx, 7).Value = code.ScannedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-";
-                wsSc.Cell(rowIdx, 8).Value = code.Status;
+                wsSc.Cell(rowIdx, 1).Value = (string)code.RawCode;
+                wsSc.Cell(rowIdx, 2).Value = (string)code.Gtin;
+                wsSc.Cell(rowIdx, 3).Value = (string)code.SerialNo;
+                wsSc.Cell(rowIdx, 4).Value = (string)code.CartonNo ?? "-";
+                wsSc.Cell(rowIdx, 5).Value = (string)code.PalletNo ?? "-";
+                wsSc.Cell(rowIdx, 6).Value = (string)code.ScannedByName ?? "-";
+                wsSc.Cell(rowIdx, 7).Value = code.ScannedAt != null ? ((DateTime)code.ScannedAt).ToString("dd.MM.yyyy HH:mm") : "-";
+                wsSc.Cell(rowIdx, 8).Value = (string)code.Status;
             }
 
             // C) Eksik / Kullanılmayan QR Kodlar
@@ -947,10 +973,10 @@ public class ReportHandlers :
             foreach (var code in missingCodes)
             {
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = code.RawCode;
-                wsSc.Cell(rowIdx, 2).Value = code.Gtin;
-                wsSc.Cell(rowIdx, 3).Value = code.SerialNo;
-                wsSc.Cell(rowIdx, 4).Value = code.Status;
+                wsSc.Cell(rowIdx, 1).Value = (string)code.RawCode;
+                wsSc.Cell(rowIdx, 2).Value = (string)code.Gtin;
+                wsSc.Cell(rowIdx, 3).Value = (string)code.SerialNo;
+                wsSc.Cell(rowIdx, 4).Value = (string)code.Status;
                 wsSc.Cell(rowIdx, 5).Value = "Kullanılmadı (Beklemede)";
             }
 
@@ -988,12 +1014,12 @@ public class ReportHandlers :
             foreach (var dist in cartonDist)
             {
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = dist.CartonNo;
-                wsSc.Cell(rowIdx, 2).Value = dist.SSCC;
-                wsSc.Cell(rowIdx, 3).Value = dist.RawCode;
-                wsSc.Cell(rowIdx, 4).Value = dist.SerialNo;
-                wsSc.Cell(rowIdx, 5).Value = dist.PalletNo ?? "-";
-                wsSc.Cell(rowIdx, 6).Value = dist.ScannedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-";
+                wsSc.Cell(rowIdx, 1).Value = (string)dist.CartonNo;
+                wsSc.Cell(rowIdx, 2).Value = (string)dist.SSCC;
+                wsSc.Cell(rowIdx, 3).Value = (string)dist.RawCode;
+                wsSc.Cell(rowIdx, 4).Value = (string)dist.SerialNo;
+                wsSc.Cell(rowIdx, 5).Value = (string)dist.PalletNo ?? "-";
+                wsSc.Cell(rowIdx, 6).Value = dist.ScannedAt != null ? ((DateTime)dist.ScannedAt).ToString("dd.MM.yyyy HH:mm") : "-";
             }
 
             // E) Palet Bazlı Dağılım
@@ -1025,9 +1051,9 @@ public class ReportHandlers :
             foreach (var dist in palletDist)
             {
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = dist.PalletNo;
-                wsSc.Cell(rowIdx, 2).Value = dist.CartonNo;
-                wsSc.Cell(rowIdx, 3).Value = dist.SSCC;
+                wsSc.Cell(rowIdx, 1).Value = (string)dist.PalletNo;
+                wsSc.Cell(rowIdx, 2).Value = (string)dist.CartonNo;
+                wsSc.Cell(rowIdx, 3).Value = (string)dist.SSCC;
                 wsSc.Cell(rowIdx, 4).Value = Convert.ToInt32(dist.QrCount);
             }
 

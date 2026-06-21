@@ -65,4 +65,18 @@ Sistem WMS değildir; operatörün en hızlı şekilde okutma yapması için tas
 4. Barkod dosyası seçilerek siparişe import edilir. Import sonuçlarında toplam yüklenen, mükerrer veya formata uymayan hatalı satırlar listelenir.
 5. Sipariş `Activate` edilerek aktif üretim hattına alınır.
 6. Operatör `/scan` ekranına girdiğinde siparişi seçip okutmaya başlar. Her barkod okutulduğunda sistem koli oluşturur ve doluluk miktarını günceller. Koli limitine ulaşıldığında koli kapanır ve sesli/görsel bildirimler tetiklenir.
-7. Koli veya palet detaylarından PDF indirme butonuyla 4x6 inçlik etiket dosyası indirilebilir veya ZPL kodu kopyalanabilir.
+
+---
+
+## Son Geliştirmeler (21.06.2026)
+
+### 1. Sipariş Bazlı Premium Raporlama Modülü
+* Sol menüye **Raporlama** modülü eklendi.
+* **Ana Raporlama Ekranı**: Sipariş bazında özet istatistikler, beklenen/kullanılan/eksik QR sayıları, koli/palet sayıları ve tamamlanma ilerleme çubukları sunar. Filtreleme seçenekleri ve dışa aktarım (Excel/PDF) butonlarını barındırır.
+* **Sipariş Detay Ekranı**: Siparişe ait tüm ürün ve stok kodu listelerini, her stok kodunun GTIN, beklenen/kullanılan/kalan QR kod adetlerini ve koli/palet detaylarını özetler.
+* **Stok Detayı Ekranı**: Seçilen bir stok koduna ait lazy-loaded/sayfalanmış Used QR Kodlar, Eksik/Bekleyen QR Kodlar, Koli Dağılımları ve Palet Dağılımları listelerini sekmeli (tab) yapıyla sunar.
+
+### 2. Excel (XLSX) ve PDF İhracat İyileştirmeleri
+* **Hata Giderimi (ClosedXML Dynamic Binding Exception)**: Dapper dynamic nesnelerinin ClosedXML hücre atamaları esnasında runtime tip çözümleme hatası vermesi (`Cannot convert null to 'int'` ve implicit operator belirsizliği) düzeltildi. Veritabanı sorgularındaki kolon takma adları (aliases) çift tırnak içerisine alınarak PascalCase standardı korundu ve hücre atamalarında dinamik tipler `Convert.ToInt32(...)`, `(string)` gibi explicit ve güvenli dönüşüm metotları ile beslendi.
+* **Stok Bazlı Excel İhracatı**: Excel export altyapısı genişletildi. Kullanıcı artık tüm siparişin raporunu alabildiği gibi, Stok Detayı ekranı üzerinden **sadece o stok koduna ait** filtrelenmiş verileri barındıran `{OrderNo}_{StockCode}_TrackTrace_Raporu.xlsx` isimli özelleştirilmiş raporu indirebilir.
+* **UI Buton Eklemesi**: Stok Detayı ekranının sağ üst köşesine **Sipariş Exceli**, **Bu Stok Exceli** ve **Sipariş PDF'i** butonları eklenerek kullanım kolaylığı üst düzeye çıkarıldı.

@@ -209,14 +209,17 @@ export const Reports: React.FC = () => {
   // -------------------------------------------------------------
   // Export Handlers
   // -------------------------------------------------------------
-  const handleExportExcel = (orderNo: string, e: React.MouseEvent) => {
+  const handleExportExcel = (orderNo: string, e: React.MouseEvent, stockCode?: string) => {
     e.stopPropagation();
-    api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/excel`)
+    const queryParam = stockCode ? `?stockCode=${encodeURIComponent(stockCode)}` : '';
+    api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/excel${queryParam}`)
       .then(blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${orderNo}_TrackTrace_Raporu.xlsx`;
+        a.download = stockCode 
+          ? `${orderNo}_${stockCode}_TrackTrace_Raporu.xlsx`
+          : `${orderNo}_TrackTrace_Raporu.xlsx`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -629,12 +632,24 @@ export const Reports: React.FC = () => {
       {viewMode === 'stock' && stockDetail && (
         <div>
           {/* Top bar with back button */}
-          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={() => setViewMode('order')} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <ArrowLeft size={16} /> Siparişe Dön
             </button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)' }}>Stok Detayı: <strong style={{ color: 'var(--primary)' }}>{stockDetail.stockcode}</strong></h2>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', margin: 0 }}>Stok Detayı: <strong style={{ color: 'var(--primary)' }}>{stockDetail.stockcode}</strong></h2>
             <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>({stockDetail.productname})</span>
+            
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
+                <FileSpreadsheet size={16} /> Sipariş Exceli
+              </button>
+              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e, stockDetail.stockcode)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#059669' }}>
+                <FileSpreadsheet size={16} /> Bu Stok Exceli
+              </button>
+              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
+                <FileDown size={16} /> Sipariş PDF'i
+              </button>
+            </div>
           </div>
 
           {/* Summary KPI Cards */}
