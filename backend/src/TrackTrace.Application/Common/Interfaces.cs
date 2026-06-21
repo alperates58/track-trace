@@ -47,5 +47,8 @@ public interface IReportPdfGenerator
         System.Collections.Generic.IEnumerable<object> stockCodes,
         System.Collections.Generic.IEnumerable<object> cartons,
         System.Collections.Generic.IEnumerable<object> pallets,
-        System.Collections.Generic.IEnumerable<object> missingSummary);
+        System.Collections.Generic.IEnumerable<object> missingSummary,
+        int maxPalletRows,
+        int maxMissingSummaryRows,
+        System.Threading.CancellationToken cancellationToken);
 }

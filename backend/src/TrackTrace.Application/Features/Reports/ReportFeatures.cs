@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
+using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -69,9 +71,29 @@ public record GetStockCodePalletsQuery(
     string? Search = null
 ) : IRequest<(IEnumerable<object> Items, int TotalCount)>;
 
-public record GetOrderReportExcelQuery(string OrderNo, string? StockCode = null) : IRequest<byte[]>;
+public record GetOrderReportExcelQuery(string OrderNo, string? StockCode = null, bool SafeOnly = false) : IRequest<ReportExportFileResult>;
 
 public record GetOrderReportPdfQuery(string OrderNo) : IRequest<byte[]>;
+
+public record GetOrderExportAdviceQuery(string OrderNo, string? StockCode = null) : IRequest<OrderExportAdviceDto>;
+
+public record ReportExportFileResult(byte[] Bytes, string ContentType, string FileName, string Kind);
+
+public class StockExportSizeDto
+{
+    public Guid OrderId { get; set; }
+    public string StockCode { get; set; } = "";
+    public string? ProductName { get; set; }
+    public int QrCount { get; set; }
+}
+
+public record OrderExportAdviceDto(
+    string Strategy,
+    string Message,
+    int TotalQrCount,
+    IReadOnlyList<StockExportSizeDto> Stocks,
+    IReadOnlyList<StockExportSizeDto> SafeStocks,
+    IReadOnlyList<StockExportSizeDto> RiskyStocks);
 
 public class ReportHandlers :
     IRequestHandler<GetDashboardSummaryQuery, DashboardSummaryDto>,
@@ -87,9 +109,15 @@ public class ReportHandlers :
     IRequestHandler<GetStockCodeMissingCodesQuery, (IEnumerable<object> Items, int TotalCount)>,
     IRequestHandler<GetStockCodeCartonsQuery, (IEnumerable<object> Items, int TotalCount)>,
     IRequestHandler<GetStockCodePalletsQuery, (IEnumerable<object> Items, int TotalCount)>,
-    IRequestHandler<GetOrderReportExcelQuery, byte[]>,
-    IRequestHandler<GetOrderReportPdfQuery, byte[]>
+    IRequestHandler<GetOrderReportExcelQuery, ReportExportFileResult>,
+    IRequestHandler<GetOrderReportPdfQuery, byte[]>,
+    IRequestHandler<GetOrderExportAdviceQuery, OrderExportAdviceDto>
 {
+    private const int LargeReportInfoThreshold = 50_000;
+    private const int ExcelRiskThreshold = 100_000;
+    private const int PdfPalletLimit = 200;
+    private const int PdfMissingSummaryLimit = 200;
+
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly IReportPdfGenerator _reportPdfGenerator;
 
@@ -433,7 +461,8 @@ public class ReportHandlers :
             WHERE o.OrderNo = @OrderNo
             GROUP BY o.OrderNo";
 
-        var summary = await connection.QueryFirstOrDefaultAsync<dynamic>(summarySql, new { OrderNo = request.OrderNo });
+        var summary = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            new CommandDefinition(summarySql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
         if (summary == null)
         {
             throw new KeyNotFoundException("Sipariş bulunamadı.");
@@ -468,7 +497,8 @@ public class ReportHandlers :
             WHERE o.OrderNo = @OrderNo
             ORDER BY o.StockCode ASC";
 
-        var stockCodes = await connection.QueryAsync<dynamic>(stockCodesSql, new { OrderNo = request.OrderNo });
+        var stockCodes = await connection.QueryAsync<dynamic>(
+            new CommandDefinition(stockCodesSql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
 
         return new { Summary = summary, StockCodes = stockCodes };
     }
@@ -714,8 +744,152 @@ public class ReportHandlers :
         return (resultList, total);
     }
 
-    public async Task<byte[]> Handle(GetOrderReportExcelQuery request, CancellationToken cancellationToken)
+    public async Task<OrderExportAdviceDto> Handle(GetOrderExportAdviceQuery request, CancellationToken cancellationToken)
     {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        return await BuildOrderExportAdviceAsync(connection, request.OrderNo, request.StockCode, cancellationToken);
+    }
+
+    private static async Task<OrderExportAdviceDto> BuildOrderExportAdviceAsync(
+        IDbConnection connection,
+        string orderNo,
+        string? stockCode,
+        CancellationToken cancellationToken)
+    {
+        const string sql = @"
+            SELECT 
+                o.Id AS ""OrderId"",
+                COALESCE(NULLIF(o.StockCode, ''), 'Bilinmeyen') AS ""StockCode"",
+                MAX(o.ProductName) AS ""ProductName"",
+                COUNT(pc.Id)::int AS ""QrCount""
+            FROM Orders o
+            LEFT JOIN ProductCodes pc ON pc.OrderId = o.Id
+            WHERE o.OrderNo = @OrderNo
+              AND (@StockCode IS NULL OR o.StockCode = @StockCode)
+            GROUP BY o.Id, o.StockCode
+            ORDER BY ""QrCount"" DESC, ""StockCode"" ASC";
+
+        var stocks = (await connection.QueryAsync<StockExportSizeDto>(
+            new CommandDefinition(sql, new { OrderNo = orderNo, StockCode = stockCode }, cancellationToken: cancellationToken))).ToList();
+
+        if (stocks.Count == 0)
+        {
+            throw new KeyNotFoundException("Siparis bulunamadi.");
+        }
+
+        var safeStocks = stocks.Where(x => x.QrCount <= ExcelRiskThreshold).ToList();
+        var riskyStocks = stocks.Where(x => x.QrCount > ExcelRiskThreshold).ToList();
+        int totalQrCount = stocks.Sum(x => x.QrCount);
+
+        if (!string.IsNullOrWhiteSpace(stockCode))
+        {
+            var stock = stocks[0];
+            if (stock.QrCount <= LargeReportInfoThreshold)
+            {
+                return new OrderExportAdviceDto("normal-excel", "Normal Excel raporu olusturulacak.", totalQrCount, stocks, safeStocks, riskyStocks);
+            }
+            if (stock.QrCount <= ExcelRiskThreshold)
+            {
+                return new OrderExportAdviceDto("large-excel-warning", "Bu rapor buyuk olabilir. Olusturma suresi biraz uzun surebilir.", totalQrCount, stocks, safeStocks, riskyStocks);
+            }
+
+            return new OrderExportAdviceDto("risky-stock", "Bu stok kodu Excel icin riskli buyuklukte. CSV ZIP export Faz 3.3 kapsaminda onerilir.", totalQrCount, stocks, safeStocks, riskyStocks);
+        }
+
+        if (totalQrCount <= LargeReportInfoThreshold)
+        {
+            return new OrderExportAdviceDto("normal-excel", "Normal Excel raporu olusturulacak.", totalQrCount, stocks, safeStocks, riskyStocks);
+        }
+        if (totalQrCount <= ExcelRiskThreshold)
+        {
+            return new OrderExportAdviceDto("large-excel-warning", "Bu rapor buyuk olabilir. Olusturma suresi biraz uzun surebilir.", totalQrCount, stocks, safeStocks, riskyStocks);
+        }
+        if (riskyStocks.Count == 0)
+        {
+            return new OrderExportAdviceDto("split-excel-zip", "Siparis 100.000+ QR iceriyor ancak stok kodlari ayri ayri Excel icin guvenli. Stok bazli Excel ZIP olusturulacak.", totalQrCount, stocks, safeStocks, riskyStocks);
+        }
+
+        return new OrderExportAdviceDto("mixed", "Bazi stoklar Excel icin guvenli, bazilari riskli. Guvenli stoklar icin Excel ZIP alabilir, buyuk stoklar icin CSV ZIP planini kullanabilirsiniz.", totalQrCount, stocks, safeStocks, riskyStocks);
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        return new string(value.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+    }
+
+    public async Task<ReportExportFileResult> Handle(GetOrderReportExcelQuery request, CancellationToken cancellationToken)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var advice = await BuildOrderExportAdviceAsync(connection, request.OrderNo, request.StockCode, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(request.StockCode))
+        {
+            var stock = advice.Stocks.FirstOrDefault();
+            if (stock == null)
+            {
+                throw new KeyNotFoundException("Stok kodu bulunamadi.");
+            }
+
+            if (stock.QrCount > ExcelRiskThreshold)
+            {
+                throw new InvalidOperationException($"Bu stok kodu {stock.QrCount:N0} QR iceriyor. Excel export risklidir; CSV ZIP export Faz 3.3 kapsaminda onerilir.");
+            }
+
+            var stockBytes = await GenerateOrderReportExcelBytesAsync(request.OrderNo, request.StockCode, cancellationToken);
+            return new ReportExportFileResult(
+                stockBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"{request.OrderNo}_{request.StockCode}_TrackTrace_Raporu.xlsx",
+                "excel");
+        }
+
+        if (advice.TotalQrCount <= ExcelRiskThreshold)
+        {
+            var bytes = await GenerateOrderReportExcelBytesAsync(request.OrderNo, null, cancellationToken);
+            return new ReportExportFileResult(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"{request.OrderNo}_TrackTrace_Raporu.xlsx",
+                advice.TotalQrCount > LargeReportInfoThreshold ? "large-excel" : "excel");
+        }
+
+        if (advice.RiskyStocks.Count > 0 && !request.SafeOnly)
+        {
+            var riskyText = string.Join(", ", advice.RiskyStocks.Select(x => $"{x.StockCode} ({x.QrCount:N0})"));
+            throw new InvalidOperationException($"Sipariste Excel icin riskli stok kodu var: {riskyText}. Guvenli stoklar icin Excel ZIP alabilir veya tum siparisi CSV ZIP olarak Faz 3.3'te uretebilirsiniz.");
+        }
+
+        var stocksToExport = request.SafeOnly ? advice.SafeStocks : advice.Stocks;
+        if (stocksToExport.Count == 0)
+        {
+            throw new InvalidOperationException("Excel olarak guvenli sekilde uretilebilecek stok kodu bulunamadi.");
+        }
+
+        using var zipStream = new MemoryStream();
+        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+        {
+            foreach (var stock in stocksToExport)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var stockBytes = await GenerateOrderReportExcelBytesAsync(request.OrderNo, stock.StockCode, cancellationToken);
+                var entry = archive.CreateEntry($"{request.OrderNo}_{SanitizeFileName(stock.StockCode)}_TrackTrace_Raporu.xlsx", CompressionLevel.Fastest);
+                using var entryStream = entry.Open();
+                await entryStream.WriteAsync(stockBytes, 0, stockBytes.Length, cancellationToken);
+            }
+        }
+
+        return new ReportExportFileResult(
+            zipStream.ToArray(),
+            "application/zip",
+            request.SafeOnly ? $"{request.OrderNo}_Guvenli_Stoklar_Excel_Raporlari.zip" : $"{request.OrderNo}_Stok_Bazli_Excel_Raporlari.zip",
+            request.SafeOnly ? "safe-excel-zip" : "split-excel-zip");
+    }
+
+    private async Task<byte[]> GenerateOrderReportExcelBytesAsync(string orderNo, string? stockCode, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var request = new GetOrderReportExcelQuery(orderNo, stockCode);
         using var connection = _dbConnectionFactory.CreateConnection();
         
         // 1. Get Summary
@@ -749,7 +923,8 @@ public class ReportHandlers :
             WHERE o.OrderNo = @OrderNo
             GROUP BY o.OrderNo";
 
-        var summary = await connection.QueryFirstOrDefaultAsync<dynamic>(summarySql, new { OrderNo = request.OrderNo });
+        var summary = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            new CommandDefinition(summarySql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
         if (summary == null)
         {
             throw new KeyNotFoundException("Sipariş bulunamadı.");
@@ -784,7 +959,8 @@ public class ReportHandlers :
             ) p ON o.Id = p.OrderId
             WHERE o.OrderNo = @OrderNo";
 
-        var stockCodes = (await connection.QueryAsync<dynamic>(stockCodesSql, new { OrderNo = request.OrderNo })).ToList();
+        var stockCodes = (await connection.QueryAsync<dynamic>(
+            new CommandDefinition(stockCodesSql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken))).ToList();
         if (!string.IsNullOrEmpty(request.StockCode))
         {
             stockCodes = stockCodes.Where(x => (string)x.StockCode == request.StockCode).ToList();
@@ -868,6 +1044,7 @@ public class ReportHandlers :
         // --- Each Stock Code Sheet ---
         foreach (var sc in stockCodes)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             string sheetName = string.IsNullOrWhiteSpace((string)sc.StockCode) ? "Bilinmeyen" : (string)sc.StockCode;
             if (sheetName.Length > 31) sheetName = sheetName.Substring(0, 31);
             var wsSc = workbook.Worksheets.Add(sheetName);
@@ -934,10 +1111,12 @@ public class ReportHandlers :
                 LEFT JOIN Users u ON pc.ScannedBy = u.Id
                 WHERE pc.OrderId = @OrderId AND pc.Status != 'Uploaded'
                 ORDER BY pc.ScannedAt DESC";
-            var usedCodes = await connection.QueryAsync<dynamic>(usedCodesSql, new { OrderId = orderId });
+            var usedCodes = await connection.QueryAsync<dynamic>(
+                new CommandDefinition(usedCodesSql, new { OrderId = orderId }, cancellationToken: cancellationToken));
 
             foreach (var code in usedCodes)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
                 wsSc.Cell(rowIdx, 1).Value = (string)code.RawCode;
                 wsSc.Cell(rowIdx, 2).Value = (string)code.Gtin;
@@ -972,10 +1151,12 @@ public class ReportHandlers :
                 FROM ProductCodes 
                 WHERE OrderId = @OrderId AND Status = 'Uploaded'
                 ORDER BY RawCode ASC";
-            var missingCodes = await connection.QueryAsync<dynamic>(missingCodesSql, new { OrderId = orderId });
+            var missingCodes = await connection.QueryAsync<dynamic>(
+                new CommandDefinition(missingCodesSql, new { OrderId = orderId }, cancellationToken: cancellationToken));
 
             foreach (var code in missingCodes)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
                 wsSc.Cell(rowIdx, 1).Value = (string)code.RawCode;
                 wsSc.Cell(rowIdx, 2).Value = (string)code.Gtin;
@@ -1013,10 +1194,12 @@ public class ReportHandlers :
                 LEFT JOIN Pallets p ON plc.PalletId = p.Id
                 WHERE pc.OrderId = @OrderId AND pc.Status != 'Uploaded'
                 ORDER BY c.CartonNo ASC, pc.ScannedAt ASC";
-            var cartonDist = await connection.QueryAsync<dynamic>(cartonDistSql, new { OrderId = orderId });
+            var cartonDist = await connection.QueryAsync<dynamic>(
+                new CommandDefinition(cartonDistSql, new { OrderId = orderId }, cancellationToken: cancellationToken));
 
             foreach (var dist in cartonDist)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
                 wsSc.Cell(rowIdx, 1).Value = (string)dist.CartonNo;
                 wsSc.Cell(rowIdx, 2).Value = (string)dist.SSCC;
@@ -1050,10 +1233,12 @@ public class ReportHandlers :
                 INNER JOIN Cartons c ON pc.CartonId = c.Id
                 WHERE p.OrderId = @OrderId
                 ORDER BY p.PalletNo ASC, c.CartonNo ASC";
-            var palletDist = await connection.QueryAsync<dynamic>(palletDistSql, new { OrderId = orderId });
+            var palletDist = await connection.QueryAsync<dynamic>(
+                new CommandDefinition(palletDistSql, new { OrderId = orderId }, cancellationToken: cancellationToken));
 
             foreach (var dist in palletDist)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
                 wsSc.Cell(rowIdx, 1).Value = (string)dist.PalletNo;
                 wsSc.Cell(rowIdx, 2).Value = (string)dist.CartonNo;
@@ -1065,6 +1250,7 @@ public class ReportHandlers :
         }
 
         using var memoryStream = new MemoryStream();
+        cancellationToken.ThrowIfCancellationRequested();
         workbook.SaveAs(memoryStream);
         return memoryStream.ToArray();
     }
@@ -1138,7 +1324,8 @@ public class ReportHandlers :
             ) p ON o.Id = p.OrderId
             WHERE o.OrderNo = @OrderNo";
 
-        var stockCodes = await connection.QueryAsync<dynamic>(stockCodesSql, new { OrderNo = request.OrderNo });
+        var stockCodes = await connection.QueryAsync<dynamic>(
+            new CommandDefinition(stockCodesSql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
 
         // 3. Get Cartons under this OrderNo
         const string cartonsSql = @"
@@ -1156,7 +1343,8 @@ public class ReportHandlers :
             WHERE c.OrderId IN (SELECT Id FROM Orders WHERE OrderNo = @OrderNo)
             ORDER BY c.CreatedAt DESC";
 
-        var cartons = await connection.QueryAsync<dynamic>(cartonsSql, new { OrderNo = request.OrderNo });
+        var cartons = await connection.QueryAsync<dynamic>(
+            new CommandDefinition(cartonsSql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
 
         // 4. Get Pallets under this OrderNo
         const string palletsSql = @"
@@ -1170,7 +1358,8 @@ public class ReportHandlers :
             WHERE p.OrderId IN (SELECT Id FROM Orders WHERE OrderNo = @OrderNo)
             ORDER BY p.CreatedAt DESC";
 
-        var pallets = await connection.QueryAsync<dynamic>(palletsSql, new { OrderNo = request.OrderNo });
+        var pallets = await connection.QueryAsync<dynamic>(
+            new CommandDefinition(palletsSql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
 
         // 5. Get Missing Summary (Grouped by stock code)
         const string missingSummarySql = @"
@@ -1183,9 +1372,19 @@ public class ReportHandlers :
             WHERE o.OrderNo = @OrderNo AND pc.Status = 'Uploaded'
             GROUP BY o.StockCode, o.ProductName";
 
-        var missingSummary = await connection.QueryAsync<dynamic>(missingSummarySql, new { OrderNo = request.OrderNo });
+        var missingSummary = await connection.QueryAsync<dynamic>(
+            new CommandDefinition(missingSummarySql, new { OrderNo = request.OrderNo }, cancellationToken: cancellationToken));
 
-        return _reportPdfGenerator.GenerateOrderReportPdf(request.OrderNo, summary, stockCodes, cartons, pallets, missingSummary);
+        return _reportPdfGenerator.GenerateOrderReportPdf(
+            request.OrderNo,
+            summary,
+            stockCodes,
+            cartons,
+            pallets,
+            missingSummary,
+            PdfPalletLimit,
+            PdfMissingSummaryLimit,
+            cancellationToken);
     }
     #endregion
 }

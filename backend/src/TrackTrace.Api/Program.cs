@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using MediatR;
@@ -424,15 +425,12 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}/pallets", async (
     return Results.Ok(new { items, totalCount });
 }).RequireAuthorization("ViewerOrAbove");
 
-app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string? stockCode, IMediator mediator) =>
+app.MapGet("/api/reports/orders/{orderNo}/export-advice", async (string orderNo, string? stockCode, IMediator mediator, CancellationToken cancellationToken) =>
 {
     try
     {
-        var bytes = await mediator.Send(new GetOrderReportExcelQuery(orderNo, stockCode));
-        var fileName = string.IsNullOrEmpty(stockCode) 
-            ? $"{orderNo}_TrackTrace_Raporu.xlsx" 
-            : $"{orderNo}_{stockCode}_TrackTrace_Raporu.xlsx";
-        return Results.File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        var advice = await mediator.Send(new GetOrderExportAdviceQuery(orderNo, stockCode), cancellationToken);
+        return Results.Ok(advice);
     }
     catch (KeyNotFoundException)
     {
@@ -444,11 +442,28 @@ app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string?
     }
 }).RequireAuthorization("ViewerOrAbove");
 
-app.MapGet("/api/reports/orders/{orderNo}/pdf", async (string orderNo, IMediator mediator) =>
+app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string? stockCode, bool? safeOnly, IMediator mediator, CancellationToken cancellationToken) =>
 {
     try
     {
-        var bytes = await mediator.Send(new GetOrderReportPdfQuery(orderNo));
+        var result = await mediator.Send(new GetOrderReportExcelQuery(orderNo, stockCode, safeOnly == true), cancellationToken);
+        return Results.File(result.Bytes, result.ContentType, result.FileName);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/orders/{orderNo}/pdf", async (string orderNo, IMediator mediator, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var bytes = await mediator.Send(new GetOrderReportPdfQuery(orderNo), cancellationToken);
         return Results.File(bytes, "application/pdf", $"{orderNo}_TrackTrace_Raporu.pdf");
     }
     catch (KeyNotFoundException)

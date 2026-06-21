@@ -29,6 +29,8 @@ export const Reports: React.FC = () => {
   // Loading & Error States
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   // --- VIEW 1: MAIN ORDER REPORTS STATES ---
   const [orders, setOrders] = useState<any[]>([]);
@@ -209,39 +211,89 @@ export const Reports: React.FC = () => {
   // -------------------------------------------------------------
   // Export Handlers
   // -------------------------------------------------------------
-  const handleExportExcel = (orderNo: string, e: React.MouseEvent, stockCode?: string) => {
-    e.stopPropagation();
-    const queryParam = stockCode ? `?stockCode=${encodeURIComponent(stockCode)}` : '';
-    api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/excel${queryParam}`)
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = stockCode 
-          ? `${orderNo}_${stockCode}_TrackTrace_Raporu.xlsx`
-          : `${orderNo}_TrackTrace_Raporu.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(err => alert('Excel raporu üretilirken hata oluştu: ' + err.message));
+  const downloadBlob = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
   };
 
-  const handleExportPdf = (orderNo: string, e: React.MouseEvent) => {
+  const handleExportExcel = async (orderNo: string, e: React.MouseEvent, stockCode?: string) => {
     e.stopPropagation();
-    api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/pdf`)
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${orderNo}_TrackTrace_Raporu.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(err => alert('PDF raporu üretilirken hata oluştu: ' + err.message));
+    const exportKey = `excel-${orderNo}-${stockCode || 'all'}`;
+    if (exportingKey) return;
+
+    setExportingKey(exportKey);
+    setExportMessage('Rapor hazırlanıyor...');
+
+    try {
+      const stockQuery = stockCode ? `?stockCode=${encodeURIComponent(stockCode)}` : '';
+      const advice = await api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/export-advice${stockQuery}`);
+
+      let safeOnly = false;
+      let expectedFileName = stockCode
+        ? `${orderNo}_${stockCode}_TrackTrace_Raporu.xlsx`
+        : `${orderNo}_TrackTrace_Raporu.xlsx`;
+
+      if (advice.strategy === 'large-excel-warning') {
+        setExportMessage(advice.message || 'Bu rapor büyük olabilir. Oluşturma süresi biraz uzun sürebilir.');
+      } else if (advice.strategy === 'split-excel-zip') {
+        setExportMessage(advice.message || 'Stok bazlı Excel ZIP hazırlanıyor...');
+        expectedFileName = `${orderNo}_Stok_Bazli_Excel_Raporlari.zip`;
+      } else if (advice.strategy === 'mixed') {
+        const safeCount = advice.safeStocks?.length || 0;
+        const riskyText = (advice.riskyStocks || [])
+          .map((s: any) => `${s.stockCode} (${Number(s.qrCount || 0).toLocaleString()} QR)`)
+          .join(', ');
+        const proceed = window.confirm(
+          `Bazı stoklar Excel için riskli: ${riskyText}.\n\n` +
+          `${safeCount} güvenli stok için Excel ZIP üretmek ister misiniz?\n\n` +
+          `Büyük stoklar için CSV ZIP Faz 3.3 kapsamında önerilir.`
+        );
+        if (!proceed) return;
+        safeOnly = true;
+        expectedFileName = `${orderNo}_Guvenli_Stoklar_Excel_Raporlari.zip`;
+        setExportMessage('Güvenli stoklar için Excel ZIP hazırlanıyor...');
+      } else if (advice.strategy === 'risky-stock') {
+        alert(advice.message || 'Bu stok kodu Excel için riskli büyüklükte. CSV ZIP export sonraki fazda önerilir.');
+        return;
+      }
+
+      const params = new URLSearchParams();
+      if (stockCode) params.set('stockCode', stockCode);
+      if (safeOnly) params.set('safeOnly', 'true');
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const blob = await api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/excel${query}`);
+      downloadBlob(blob, expectedFileName);
+    } catch (err: any) {
+      alert('Excel raporu üretilirken hata oluştu: ' + err.message);
+    } finally {
+      setExportingKey(null);
+      setExportMessage(null);
+    }
+  };
+
+  const handleExportPdf = async (orderNo: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const exportKey = `pdf-${orderNo}`;
+    if (exportingKey) return;
+
+    setExportingKey(exportKey);
+    setExportMessage('Rapor hazırlanıyor...');
+
+    try {
+      const blob = await api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/pdf`);
+      downloadBlob(blob, `${orderNo}_TrackTrace_Raporu.pdf`);
+    } catch (err: any) {
+      alert('PDF raporu üretilirken hata oluştu: ' + err.message);
+    } finally {
+      setExportingKey(null);
+      setExportMessage(null);
+    }
   };
 
   const clearFilters = () => {
@@ -279,6 +331,11 @@ export const Reports: React.FC = () => {
 
   return (
     <div style={{ padding: '4px' }}>
+      {exportMessage && (
+        <div style={{ marginBottom: '12px', padding: '10px 12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--primary-light)', color: 'var(--text-main)', borderRadius: '6px', fontWeight: 600 }}>
+          {exportMessage}
+        </div>
+      )}
       
       {/* -------------------------------------------------------------
           VIEW 1: MAIN REPORTING SCREEN (Grouped by OrderNo)
@@ -457,7 +514,7 @@ export const Reports: React.FC = () => {
                           <button 
                             className="btn btn-secondary" 
                             style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#16a34a' }}
-                            onClick={(e) => handleExportExcel(o.orderno, e)}
+                            onClick={(e) => handleExportExcel(o.orderno, e)} disabled={!!exportingKey}
                             title="Excel İndir"
                           >
                             <FileSpreadsheet size={12} /> Excel
@@ -465,7 +522,7 @@ export const Reports: React.FC = () => {
                           <button 
                             className="btn btn-secondary" 
                             style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}
-                            onClick={(e) => handleExportPdf(o.orderno, e)}
+                            onClick={(e) => handleExportPdf(o.orderno, e)} disabled={!!exportingKey}
                             title="PDF İndir"
                           >
                             <FileDown size={12} /> PDF
@@ -504,10 +561,10 @@ export const Reports: React.FC = () => {
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)' }}>Sipariş Detay Raporu: <strong style={{ color: 'var(--primary)' }}>{selectedOrderNo}</strong></h2>
             
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
+              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
                 <FileSpreadsheet size={16} /> Excel Raporu Al
               </button>
-              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
+              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
                 <FileDown size={16} /> PDF Raporu Al
               </button>
             </div>
@@ -640,13 +697,13 @@ export const Reports: React.FC = () => {
             <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>({stockDetail.productname})</span>
             
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
+              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
                 <FileSpreadsheet size={16} /> Sipariş Exceli
               </button>
-              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e, stockDetail.stockcode)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#059669' }}>
+              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e, stockDetail.stockcode)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#059669' }}>
                 <FileSpreadsheet size={16} /> Bu Stok Exceli
               </button>
-              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
+              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
                 <FileDown size={16} /> Sipariş PDF'i
               </button>
             </div>

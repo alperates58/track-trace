@@ -17,13 +17,20 @@ public class ReportPdfGenerator : IReportPdfGenerator
         IEnumerable<object> stockCodesObj,
         IEnumerable<object> cartonsObj,
         IEnumerable<object> palletsObj,
-        IEnumerable<object> missingSummaryObj)
+        IEnumerable<object> missingSummaryObj,
+        int maxPalletRows,
+        int maxMissingSummaryRows,
+        System.Threading.CancellationToken cancellationToken)
     {
         dynamic summary = summaryObj;
         var stockCodes = stockCodesObj.Select(x => (dynamic)x).ToList();
         var cartons = cartonsObj.Select(x => (dynamic)x).ToList();
-        var pallets = palletsObj.Select(x => (dynamic)x).ToList();
-        var missingSummary = missingSummaryObj.Select(x => (dynamic)x).ToList();
+        var allPallets = palletsObj.Select(x => (dynamic)x).ToList();
+        var allMissingSummary = missingSummaryObj.Select(x => (dynamic)x).ToList();
+        var pallets = allPallets.Take(maxPalletRows).ToList();
+        var missingSummary = allMissingSummary.Take(maxMissingSummaryRows).ToList();
+        bool palletsLimited = allPallets.Count > pallets.Count;
+        bool missingSummaryLimited = allMissingSummary.Count > missingSummary.Count;
 
         // Cast summary counts to static types
         int expectedQty = Convert.ToInt32(summary.ExpectedQuantity);
@@ -237,7 +244,7 @@ public class ReportPdfGenerator : IReportPdfGenerator
                         col.Item().Column(pCol =>
                         {
                             pCol.Spacing(4);
-                            pCol.Item().Text($"Palet Bazlı Dağılım Özet (Toplam: {pallets.Count} palet)").Bold().FontSize(10).FontColor(Colors.Blue.Darken3);
+                            pCol.Item().Text($"Palet Bazlı Dağılım Özet (Toplam: {allPallets.Count} palet)").Bold().FontSize(10).FontColor(Colors.Blue.Darken3);
                             pCol.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -260,6 +267,7 @@ public class ReportPdfGenerator : IReportPdfGenerator
 
                                 foreach (var p in pallets)
                                 {
+                                    cancellationToken.ThrowIfCancellationRequested();
                                     string pPalletNo = (string)(p.PalletNo ?? "-");
                                     string pSSCC = (string)(p.SSCC ?? "-");
                                     int pCartonCount = Convert.ToInt32(p.CartonCount);
@@ -273,6 +281,10 @@ public class ReportPdfGenerator : IReportPdfGenerator
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(pCreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(8);
                                 }
                             });
+                            if (palletsLimited)
+                            {
+                                pCol.Item().Text($"* PDF içinde yalnızca ilk {maxPalletRows} palet listelenmiştir. Detaylar Excel raporunda görüntülenebilir.").FontSize(8).Italic().FontColor(Colors.Grey.Darken1);
+                            }
                         });
                     }
 
@@ -301,6 +313,7 @@ public class ReportPdfGenerator : IReportPdfGenerator
 
                                 foreach (var ms in missingSummary)
                                 {
+                                    cancellationToken.ThrowIfCancellationRequested();
                                     string msStockCode = (string)(ms.StockCode ?? "-");
                                     string msProductName = (string)(ms.ProductName ?? "-");
                                     int msMissingCount = Convert.ToInt32(ms.MissingCount);
@@ -310,6 +323,10 @@ public class ReportPdfGenerator : IReportPdfGenerator
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(msMissingCount.ToString()).FontSize(8).Bold().FontColor(Colors.Red.Darken2);
                                 }
                             });
+                            if (missingSummaryLimited)
+                            {
+                                mCol.Item().Text($"* PDF içinde yalnızca ilk {maxMissingSummaryRows} eksik kod özeti listelenmiştir. Detaylar Excel raporunda görüntülenebilir.").FontSize(8).Italic().FontColor(Colors.Grey.Darken1);
+                            }
                         });
                     }
                 });
