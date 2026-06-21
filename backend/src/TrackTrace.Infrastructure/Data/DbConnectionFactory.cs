@@ -104,8 +104,12 @@ public class DbConnectionFactory : IDbConnectionFactory
         CREATE UNIQUE INDEX IF NOT EXISTS UQ_ProductCodes_RawCode ON ProductCodes(RawCode);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status ON ProductCodes(OrderId, Status);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_CartonId ON ProductCodes(CartonId);
-        CREATE INDEX IF NOT EXISTS IX_Cartons_SSCC ON Cartons(SSCC);
-        CREATE INDEX IF NOT EXISTS IX_Pallets_SSCC ON Pallets(SSCC);
+        CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status_ScannedAt ON ProductCodes(OrderId, Status, ScannedAt DESC);
+        CREATE INDEX IF NOT EXISTS IX_Orders_OrderNo ON Orders(OrderNo);
+        CREATE INDEX IF NOT EXISTS IX_PalletCartons_PalletId ON PalletCartons(PalletId);
+        CREATE INDEX IF NOT EXISTS IX_ImportErrors_ImportBatchId ON ImportErrors(ImportBatchId);
+        DROP INDEX IF EXISTS IX_Cartons_SSCC;
+        DROP INDEX IF EXISTS IX_Pallets_SSCC;
         ";
     }
 }

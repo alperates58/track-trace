@@ -122,14 +122,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS UQ_ProductCodes_RawCode ON ProductCodes(RawCod
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status ON ProductCodes(OrderId, Status);
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_Gtin ON ProductCodes(Gtin);
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_CartonId ON ProductCodes(CartonId);
+CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status_ScannedAt ON ProductCodes(OrderId, Status, ScannedAt DESC);
+
+CREATE INDEX IF NOT EXISTS IX_Orders_OrderNo ON Orders(OrderNo);
 
 CREATE INDEX IF NOT EXISTS IX_Cartons_OrderId_Status ON Cartons(OrderId, Status);
-CREATE INDEX IF NOT EXISTS IX_Cartons_SSCC ON Cartons(SSCC);
+DROP INDEX IF EXISTS IX_Cartons_SSCC;
 
 CREATE INDEX IF NOT EXISTS IX_Pallets_OrderId_Status ON Pallets(OrderId, Status);
-CREATE INDEX IF NOT EXISTS IX_Pallets_SSCC ON Pallets(SSCC);
+DROP INDEX IF EXISTS IX_Pallets_SSCC;
 
 CREATE INDEX IF NOT EXISTS IX_AuditLogs_EntityName_EntityId ON AuditLogs(EntityName, EntityId);
 CREATE INDEX IF NOT EXISTS IX_AuditLogs_CreatedAt ON AuditLogs(CreatedAt);
 
 CREATE INDEX IF NOT EXISTS IX_PrintJobs_EntityId ON PrintJobs(EntityId);
+
+CREATE INDEX IF NOT EXISTS IX_PalletCartons_PalletId ON PalletCartons(PalletId);
+CREATE INDEX IF NOT EXISTS IX_ImportErrors_ImportBatchId ON ImportErrors(ImportBatchId);
