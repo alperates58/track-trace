@@ -585,6 +585,8 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
             return Results.BadRequest(new { message = "Lütfen geçerli bir dosya yükleyin." });
         }
 
+        string profile = form["profile"].ToString() ?? "Auto";
+
         var errors = new List<object>();
         var validCodes = new List<string>();
         int totalLines = 0;
@@ -599,14 +601,20 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 totalLines++;
 
-                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
+                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line, profile);
                 if (parseResult.Success)
                 {
                     validCodes.Add(parseResult.Normalized);
                 }
                 else
                 {
-                    errors.Add(new { rowNo, rawLine = line, errorMessage = parseResult.ErrorMessage ?? "Geçersiz barkod formatı." });
+                    errors.Add(new { 
+                        rowNo, 
+                        rawLine = line, 
+                        errorMessage = parseResult.ErrorMessage ?? "Geçersiz barkod formatı.",
+                        errorType = parseResult.ErrorType ?? "Geçersiz Barkod",
+                        suggestedFix = parseResult.SuggestedFix ?? ""
+                    });
                 }
             }
         }
@@ -638,6 +646,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
         }
 
         string format = form["format"].ToString() ?? "PDF";
+        string profile = form["profile"].ToString() ?? "Auto";
         int cols = int.TryParse(form["cols"], out int c) ? c : 4;
         int rows = int.TryParse(form["rows"], out int r) ? r : 6;
         int size = int.TryParse(form["size"], out int s) ? s : 100;
@@ -653,7 +662,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
             while ((line = await reader.ReadLineAsync()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line);
+                var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(line, profile);
                 string finalCode = parseResult.Success ? parseResult.Normalized : line;
                 validCodes.Add(finalCode);
             }
@@ -683,11 +692,11 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
     }
 }).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
 
-app.MapGet("/api/datamatrix/preview", (string text, ILabelGenerator labelGenerator) =>
+app.MapGet("/api/datamatrix/preview", (string text, string? profile, ILabelGenerator labelGenerator) =>
 {
     try
     {
-        var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(text);
+        var parseResult = TrackTrace.Application.Common.Gs1AutoHelper.NormalizeForEncoding(text, profile ?? "Auto");
         string finalCode = parseResult.Success ? parseResult.Normalized : text;
         byte[] imgBytes = labelGenerator.GenerateDataMatrixImage(finalCode);
         return Results.File(imgBytes, "image/png");

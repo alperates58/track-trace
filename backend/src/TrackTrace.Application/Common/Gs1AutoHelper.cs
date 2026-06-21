@@ -12,6 +12,16 @@ namespace TrackTrace.Application.Common
         Gs1Short_01_21_93
     }
 
+    public enum ValidationProfile
+    {
+        Auto,
+        Gs1,
+        ZnakCosmetics,
+        ZnakShort,
+        ZnakLightIndustry,
+        None
+    }
+
     public sealed class ParseResult
     {
         public bool Success { get; set; }
@@ -23,35 +33,38 @@ namespace TrackTrace.Application.Common
         public string? Gtin { get; set; }
         public string? SerialNo { get; set; }
         public string? CryptoTail { get; set; }
+        public string? ErrorType { get; set; }
+        public string? SuggestedFix { get; set; }
+        public string? WarningMessage { get; set; }
     }
 
     public static class Gs1AutoHelper
     {
         public const char GS = (char)0x1D;
 
-        public static ParseResult NormalizeForEncoding(string rawLine)
+        public static ParseResult NormalizeForEncoding(string rawLine, string profileStr = "Auto")
         {
             if (rawLine == null)
-                return Fail("Satır null geldi.");
+                return Fail("Satır null geldi.", "Boş Satır", "Yüklenen satır içeriği boş olmamalıdır.");
 
             string s = rawLine;
             s = RemoveLeadingBomAndInvisible(s);
             s = s.TrimEnd('\r', '\n');
+            s = s.Trim(); // Trim whitespace at beginning/end only
 
-            if (string.IsNullOrWhiteSpace(s))
-                return Fail("Satır boş.");
+            if (string.IsNullOrEmpty(s))
+                return Fail("Satır boş.", "Boş Kod", "Kod boş veya satır boş olmamalıdır.");
 
-            s = InterpretEscapeSequences(s);
+            // Parse profileStr
+            ValidationProfile profile = ValidationProfile.Auto;
+            if (!string.IsNullOrEmpty(profileStr) && Enum.TryParse<ValidationProfile>(profileStr, true, out var parsedProfile))
+            {
+                profile = parsedProfile;
+            }
 
-            bool startsWithGs = s.Length > 0 && s[0] == GS;
-            if (startsWithGs)
-                s = s.Substring(1);
+            string interpreted = InterpretEscapeSequences(s);
 
-            if (LooksLikeParenthesizedAi(s))
-                s = ConvertParenthesizedAiToRaw(s);
-
-            bool has01 = s.StartsWith("01");
-            if (!has01)
+            if (profile == ValidationProfile.None)
             {
                 return new ParseResult
                 {
@@ -59,91 +72,217 @@ namespace TrackTrace.Application.Common
                     IsGs1 = false,
                     CodeType = ParsedCodeType.NormalDataMatrix,
                     Original = rawLine,
-                    Normalized = s,
-                    CryptoTail = s
+                    Normalized = interpreted,
+                    CryptoTail = interpreted
                 };
             }
 
-            if (s.Length < 16)
-                return Fail("GS1 gibi görünüyor ama 01 alanı tamamlanmamış.");
+            // Check if there are literal text representations of GS separator
+            if (interpreted.Contains("<GS>") || interpreted.Contains("\\GS") || 
+                (interpreted.Contains("GS") && (interpreted.Contains(" 91") || interpreted.Contains(" 92") || interpreted.Contains(" 93") || 
+                                                interpreted.Contains("<GS>91") || interpreted.Contains("<GS>92") || interpreted.Contains("<GS>93") || 
+                                                interpreted.Contains("\\GS91") || interpreted.Contains("\\GS92") || interpreted.Contains("\\GS93"))))
+            {
+                return Fail("GS grup ayırıcı eksik veya yanlış yerde. Kodda literal olarak 'GS', '<GS>', '\\GS' veya boşluk kullanılmış olabilir.", 
+                            "GS Ayırıcı Eksik", 
+                            "Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.");
+            }
 
-            string ai01 = SafeSubstring(s, 0, 2);
-            string gtin = SafeSubstring(s, 2, 14);
+            // Let's check for spaces around AIs
+            if (interpreted.Contains(" 91") || interpreted.Contains(" 92") || interpreted.Contains(" 93") || interpreted.Contains(" 21"))
+            {
+                return Fail("GS grup ayırıcı eksik veya yanlış yerde. Kodda boşluk kullanılmış olabilir.",
+                            "GS Ayırıcı Eksik",
+                            "Kodda boşluk yerine gerçek GS karakteri kullanılmalıdır.");
+            }
+
+            bool startsWithGs = interpreted.Length > 0 && interpreted[0] == GS;
+            string stripped = startsWithGs ? interpreted.Substring(1) : interpreted;
+
+            if (LooksLikeParenthesizedAi(stripped))
+                stripped = ConvertParenthesizedAiToRaw(stripped);
+
+            bool isGs1Candidate = stripped.StartsWith("01");
+
+            if (profile == ValidationProfile.Auto && !isGs1Candidate)
+            {
+                return new ParseResult
+                {
+                    Success = true,
+                    IsGs1 = false,
+                    CodeType = ParsedCodeType.NormalDataMatrix,
+                    Original = rawLine,
+                    Normalized = interpreted,
+                    CryptoTail = interpreted
+                };
+            }
+
+            if (!isGs1Candidate)
+            {
+                return Fail("01 AI bulunamadı.", "01 AI Eksik", "Kodun başlangıcında 01 uygulama tanımlayıcısı (GTIN) bulunmalıdır.");
+            }
+
+            // At this point, it is treated as GS1. It must start with 01.
+            if (stripped.Length < 16)
+            {
+                return Fail("GTIN 14 hane değil.", "GTIN Hatalı", "01 alanından sonra 14 haneli ürün kodu (GTIN) girilmelidir.");
+            }
+
+            string ai01 = stripped.Substring(0, 2);
+            string gtin = stripped.Substring(2, 14);
 
             if (ai01 != "01")
-                return Fail("GS1 veri 01 ile başlamalı.");
-
-            if (!IsAllDigits(gtin) || gtin.Length != 14)
-                return Fail("01 alanından sonra 14 haneli GTIN gelmeli.");
-
-            string rest = s.Substring(16);
-
-            if (string.IsNullOrEmpty(rest))
-                return Fail("01 alanı var ama devamında en az 21 alanı bekleniyor.");
-
-            if (!rest.StartsWith("21"))
-                return Fail("01 alanından sonra 21 alanı bekleniyor.");
-
-            string serial;
-            string after21;
-            ExtractVariableAiBody(rest, "21", new[] { "91", "92", "93" }, out serial, out after21);
-
-            if (string.IsNullOrWhiteSpace(serial))
-                return Fail("21 seri alanı boş.");
-
-            if (after21.StartsWith("91"))
             {
-                string v91;
-                string after91;
-                ExtractVariableAiBody(after21, "91", new[] { "92", "93" }, out v91, out after91);
+                return Fail("01 AI bulunamadı.", "01 AI Eksik", "Kodun başlangıcında 01 uygulama tanımlayıcısı (GTIN) bulunmalıdır.");
+            }
 
-                if (string.IsNullOrWhiteSpace(v91))
-                    return Fail("91 alanı boş.");
+            if (gtin.Length != 14)
+            {
+                return Fail("GTIN 14 hane değil.", "GTIN Hatalı", "GTIN alanı tam olarak 14 karakterden oluşmalıdır.");
+            }
 
-                // SADECE uzun yapı geçerli: 91 + 92
-                if (after91.StartsWith("92"))
+            if (!IsAllDigits(gtin))
+            {
+                return Fail("GTIN sadece rakamlardan oluşmalı.", "GTIN Sayısal Değil", "GTIN alanında harf veya özel karakter bulunmamalı, sadece rakamlar kullanılmalıdır.");
+            }
+
+            if (stripped.Length < 18 || stripped.Substring(16, 2) != "21")
+            {
+                return Fail("21 AI bulunamadı.", "21 AI Eksik", "GTIN alanından sonra 21 seri numarası uygulama tanımlayıcısı gelmelidir.");
+            }
+
+            string rest = stripped.Substring(18);
+            if (string.IsNullOrEmpty(rest))
+            {
+                return Fail("Seri numarası boş.", "Seri Numarası Eksik", "21 alanından sonra boş olmayan bir seri numarası eklenmelidir.");
+            }
+
+            // Check if there are both 92 and 93
+            if (rest.Contains("92") && rest.Contains("93"))
+            {
+                return Fail("Hem 92 hem 93 alanı var; şablon belirsiz.", "Şablon Belirsiz", "Kripto alanlarından sadece birini kullanın (ya 91+92 ya da sadece 93).");
+            }
+
+            // Split rest by GS separator (ASCII 29)
+            int gsPos = rest.IndexOf(GS);
+            if (gsPos < 0)
+            {
+                // No GS separator
+                // Under Gs1 profile or Auto profile (if no crypto fields are present), it's standard GS1
+                bool hasCryptoIndicator = rest.Contains("91") || rest.Contains("92") || rest.Contains("93");
+                if (profile == ValidationProfile.Gs1 || (profile == ValidationProfile.Auto && !hasCryptoIndicator))
                 {
-                    string v92;
-                    string after92;
-                    ExtractVariableAiBody(after91, "92", Array.Empty<string>(), out v92, out after92);
+                    if (rest.Length > 20)
+                    {
+                        return Fail("Seri numarası 20 karakterden uzun olamaz.", "Seri Numarası Çok Uzun", "Seri numarasını kısaltın veya doğru yerde GS ayırıcı kullandığınızdan emin olun.");
+                    }
 
-                    if (string.IsNullOrWhiteSpace(v92))
-                        return Fail("92 alanı boş.");
-
-                    if (!string.IsNullOrEmpty(after92))
-                        return Fail("92 alanından sonra beklenmeyen veri var.");
-
-                    string normalized = "01" + gtin + "21" + serial + GS + "91" + v91 + GS + "92" + v92;
+                    string? warning = null;
+                    if (profile == ValidationProfile.Auto)
+                    {
+                        warning = "Doğrulama/kripto alanları eksik olabilir.";
+                    }
 
                     return new ParseResult
                     {
                         Success = true,
                         IsGs1 = true,
-                        CodeType = ParsedCodeType.Gs1Long_01_21_91_92,
+                        CodeType = ParsedCodeType.NormalDataMatrix,
                         Original = rawLine,
-                        Normalized = GS + normalized,
+                        Normalized = GS + "01" + gtin + "21" + rest,
                         Gtin = gtin,
-                        SerialNo = serial,
-                        CryptoTail = "91" + v91 + GS + "92" + v92
+                        SerialNo = rest,
+                        WarningMessage = warning
                     };
                 }
 
-                return Fail("Geçersiz GS1 yapı: 21'den sonra 91 geldi ancak 92 yok. Kısa yapıda 93 kullanılmalı, uzun yapıda ise 91'den sonra 92 gelmelidir.");
+                // If Znak profile or Auto profile with crypto indicator, GS separator is missing!
+                return Fail("21 seri numarasından sonra 91/92/93 alanlarına geçişte GS grup ayırıcı bulunamadı.",
+                            "GS Ayırıcı Eksik",
+                            "Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.");
             }
 
-            if (after21.StartsWith("93"))
+            // GS separator is present!
+            string serial = rest.Substring(0, gsPos);
+            string remainder = rest.Substring(gsPos + 1);
+
+            if (string.IsNullOrEmpty(serial))
             {
-                string v93;
-                string after93;
-                ExtractVariableAiBody(after21, "93", Array.Empty<string>(), out v93, out after93);
+                return Fail("Seri numarası boş.", "Seri Numarası Eksik", "21 alanından sonra boş olmayan bir seri numarası eklenmelidir.");
+            }
 
-                if (string.IsNullOrWhiteSpace(v93))
-                    return Fail("93 alanı boş.");
+            // Validate serial length
+            if (profile == ValidationProfile.ZnakCosmetics || profile == ValidationProfile.ZnakShort)
+            {
+                if (serial.Length != 6)
+                {
+                    return Fail("Seri numarası beklenen uzunlukta değil (Kozmetik için 6 karakter olmalıdır).",
+                                "Seri Numarası Uzunluğu Hatalı",
+                                "Seri numarasını 6 karakter olacak şekilde düzenleyin.");
+                }
+            }
+            else if (profile == ValidationProfile.ZnakLightIndustry)
+            {
+                if (serial.Length != 13)
+                {
+                    return Fail("Seri numarası beklenen uzunlukta değil (Hafif Sanayi için 13 karakter olmalıdır).",
+                                "Seri Numarası Uzunluğu Hatalı",
+                                "Seri numarasını 13 karakter olacak şekilde düzenleyin.");
+                }
+            }
+            else if (profile == ValidationProfile.Auto)
+            {
+                if (remainder.StartsWith("93"))
+                {
+                    if (serial.Length != 6)
+                    {
+                        return Fail("Seri numarası beklenen uzunlukta değil (Kozmetik Kısa şablonu için 6 karakter olmalıdır).",
+                                    "Seri Numarası Uzunluğu Hatalı",
+                                    "Seri numarasını 6 karakter olacak şekilde düzenleyin.");
+                    }
+                }
+                else if (remainder.StartsWith("91"))
+                {
+                    if (serial.Length != 6 && serial.Length != 13)
+                    {
+                        return Fail("Seri numarası beklenen uzunlukta değil (Kozmetik için 6, Hafif Sanayi için 13 karakter olmalıdır).",
+                                    "Seri Numarası Uzunluğu Hatalı",
+                                    "Seri numarasını 6 veya 13 karakter olacak şekilde düzenleyin.");
+                    }
+                }
+            }
 
-                if (!string.IsNullOrEmpty(after93))
-                    return Fail("93 alanından sonra beklenmeyen veri var.");
+            // Validate fields after serial
+            if (remainder.StartsWith("93"))
+            {
+                if (profile == ValidationProfile.ZnakCosmetics || profile == ValidationProfile.ZnakLightIndustry)
+                {
+                    return Fail("Kod yapısı seçilen şablonla eşleşmiyor (Kısa şablon 93 alanı tespit edildi).",
+                                "Şablon Eşleşmedi",
+                                "Doğrulama profilini 'Kısa Şablon' veya 'Otomatik Algıla' olarak değiştirin.");
+                }
 
-                string normalized = "01" + gtin + "21" + serial + GS + "93" + v93;
+                string crypto = remainder.Substring(2);
+                if (crypto.Contains(GS.ToString()))
+                {
+                    return Fail("93 alanından sonra beklenmeyen veri veya GS ayırıcı var.",
+                                "Kripto Kod Geçersiz",
+                                "93 kripto alanından sonra herhangi bir veri bulunmamalıdır.");
+                }
+
+                if (string.IsNullOrEmpty(crypto))
+                {
+                    return Fail("93 alanı var ancak kripto kod boş.",
+                                "Kripto Kod Eksik",
+                                "93 alanından sonra 4 karakterli kripto kodu ekleyin.");
+                }
+
+                if (crypto.Length != 4)
+                {
+                    return Fail("Kripto kod beklenen uzunlukta değil (Kısa şablon için 4 karakter olmalıdır).",
+                                "Kripto Kod Uzunluğu Hatalı",
+                                "Kripto kod uzunluğunu kontrol edin, tam olarak 4 karakter olmalıdır.");
+                }
 
                 return new ParseResult
                 {
@@ -151,14 +290,100 @@ namespace TrackTrace.Application.Common
                     IsGs1 = true,
                     CodeType = ParsedCodeType.Gs1Short_01_21_93,
                     Original = rawLine,
-                    Normalized = GS + normalized,
+                    Normalized = GS + "01" + gtin + "21" + serial + GS + "93" + crypto,
                     Gtin = gtin,
                     SerialNo = serial,
-                    CryptoTail = "93" + v93
+                    CryptoTail = "93" + crypto
                 };
             }
+            else if (remainder.StartsWith("91"))
+            {
+                if (profile == ValidationProfile.ZnakShort)
+                {
+                    return Fail("Kod yapısı seçilen şablonla eşleşmiyor (Standart 91 alanı tespit edildi).",
+                                "Şablon Eşleşmedi",
+                                "Doğrulama profilini 'Kozmetik / Ev Kimyasalları' veya 'Otomatik Algıla' olarak değiştirin.");
+                }
 
-            return Fail("Geçersiz GS1 yapı: 21 alanından sonra 93 (kısa) veya 91+92 (uzun) bekleniyor.");
+                string restAfter91 = remainder.Substring(2);
+                int gs2Pos = restAfter91.IndexOf(GS);
+                if (gs2Pos < 0)
+                {
+                    if (restAfter91.Contains("92"))
+                    {
+                        return Fail("91 doğrulama anahtarından sonra 92 alanına geçişte GS grup ayırıcı olmadığından format hatalı.",
+                                    "GS Ayırıcı Eksik",
+                                    "91 doğrulama anahtarı ile 92 kripto alanı arasına gerçek GS karakteri yerleştirilmelidir.");
+                    }
+                    else
+                    {
+                        return Fail("91 alanı var ama 92 alanı yok.",
+                                    "92 AI Eksik",
+                                    "Kodun sonuna 92 uygulama tanımlayıcısı ve kripto kod eklenmelidir.");
+                    }
+                }
+
+                string v91 = restAfter91.Substring(0, gs2Pos);
+                string after91 = restAfter91.Substring(gs2Pos + 1);
+
+                if (string.IsNullOrEmpty(v91))
+                {
+                    return Fail("91 alanı var ancak doğrulama anahtarı boş.",
+                                "Doğrulama Anahtarı Eksik",
+                                "91 alanından sonra 4 karakterli doğrulama anahtarını ekleyin.");
+                }
+
+                if (v91.Length != 4)
+                {
+                    return Fail("91 doğrulama anahtarı beklenen uzunlukta değil (4 karakter olmalıdır).",
+                                "Doğrulama Anahtarı Uzunluğu Hatalı",
+                                "Doğrulama anahtarı uzunluğunu kontrol edin, tam olarak 4 karakter olmalıdır.");
+                }
+
+                if (!after91.StartsWith("92"))
+                {
+                    return Fail("91 alanından sonra 92 alanı bekleniyor.",
+                                "92 AI Eksik",
+                                "Doğrulama anahtarından sonra 92 uygulama tanımlayıcısı ile devam edin.");
+                }
+
+                string crypto = after91.Substring(2);
+                if (string.IsNullOrEmpty(crypto))
+                {
+                    return Fail("92 alanı var ancak kripto kod boş.",
+                                "Kripto Kod Eksik",
+                                "92 alanından sonra 44 karakterli kripto kodu ekleyin.");
+                }
+
+                if (crypto.Length != 44)
+                {
+                    return Fail("Kripto kod beklenen uzunlukta değil (Standart şablon için 44 karakter olmalıdır).",
+                                "Kripto Kod Uzunluğu Hatalı",
+                                "Kripto kod uzunluğunu kontrol edin, tam olarak 44 karakter olmalıdır.");
+                }
+
+                return new ParseResult
+                {
+                    Success = true,
+                    IsGs1 = true,
+                    CodeType = ParsedCodeType.Gs1Long_01_21_91_92,
+                    Original = rawLine,
+                    Normalized = GS + "01" + gtin + "21" + serial + GS + "91" + v91 + GS + "92" + crypto,
+                    Gtin = gtin,
+                    SerialNo = serial,
+                    CryptoTail = "91" + v91 + GS + "92" + crypto
+                };
+            }
+            else if (remainder.StartsWith("92"))
+            {
+                return Fail("92 alanı bulundu ancak 91 doğrulama anahtarı eksik.",
+                            "91 AI Eksik",
+                            "Standart şablonda 91 ve 92 alanları birlikte bulunmalıdır.");
+            }
+
+            return Fail("Kod yapısı PDF’teki desteklenen şablonlarla eşleşmiyor.",
+                        "Şablon Uyuşmazlığı",
+                        "Kripto alanları için 91+92 veya 93 uygulama tanımlayıcılarını kullanın.");
         }
 
         private static void ExtractVariableAiBody(string source, string ai, string[] nextPossibleAis, out string body, out string remainder)
@@ -336,12 +561,14 @@ namespace TrackTrace.Application.Common
             return query;
         }
 
-        private static ParseResult Fail(string msg)
+        private static ParseResult Fail(string msg, string errorType = "Geçersiz Barkod", string suggestedFix = "")
         {
             return new ParseResult
             {
                 Success = false,
-                ErrorMessage = msg
+                ErrorMessage = msg,
+                ErrorType = errorType,
+                SuggestedFix = suggestedFix
             };
         }
     }
