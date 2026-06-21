@@ -1,0 +1,64 @@
+name: track-trace-local
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: track_trace_local_db
+    environment:
+      POSTGRES_DB: track_trace
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-local_postgres_password}
+    volumes:
+      - track_trace_local_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d track_trace"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: track_trace_local_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=track_trace;Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-local_postgres_password}
+      Jwt__Secret: ${JWT_SECRET:-local_jwt_secret_minimum_32_chars_12345}
+      Jwt__ExpiryHours: ${JWT_EXPIRY_HOURS:-24}
+      Seed__AdminUsername: ${ADMIN_USERNAME:-admin}
+      Seed__AdminPassword: ${ADMIN_PASSWORD:-admin123}
+      Seed__AdminName: ${ADMIN_NAME:-System Administrator}
+      MaxUploadMb: ${MAX_UPLOAD_MB:-100}
+      APP_VERSION: ${APP_VERSION:-v0.1.0-mvp-local}
+      BUILD_DATE: ${BUILD_DATE:-2026-06-21}
+      GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-local}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      Cors__AllowedOrigins__0: ${FRONTEND_URL:-http://localhost:3000}
+    ports:
+      - "${API_PORT:-18080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:18080}
+    container_name: track_trace_local_frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  track_trace_local_pgdata:
+    name: track_trace_local_pgdata

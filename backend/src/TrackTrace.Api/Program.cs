@@ -51,11 +51,22 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultPolicy", policy =>
     {
-        policy.WithOrigins(
-                "https://track.alperates.com.tr", 
-                "http://localhost:5173", 
-                "http://localhost:3000", 
-                "http://localhost")
+        var defaultOrigins = builder.Environment.IsDevelopment()
+            ? new[]
+            {
+                "https://track.alperates.com.tr",
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost"
+            }
+            : new[] { "https://track.alperates.com.tr" };
+
+        var allowedOrigins = defaultOrigins
+            .Concat(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+            .Distinct()
+            .ToArray();
+
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -134,6 +145,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("DefaultPolicy");
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "no-referrer");
+    context.Response.Headers.TryAdd("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.TryAdd("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+
+    await next();
+});
 
 app.Use(async (context, next) =>
 {

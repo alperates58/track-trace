@@ -1,0 +1,13 @@
+.git
+.github
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/build
+coverage
+*.log
+.env
+.env.*
+!.env.example
+!.env.docker.local.example
