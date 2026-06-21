@@ -110,6 +110,23 @@ public class DbConnectionFactory : IDbConnectionFactory
         CREATE INDEX IF NOT EXISTS IX_ImportErrors_ImportBatchId ON ImportErrors(ImportBatchId);
         DROP INDEX IF EXISTS IX_Cartons_SSCC;
         DROP INDEX IF EXISTS IX_Pallets_SSCC;
+
+        CREATE SEQUENCE IF NOT EXISTS carton_no_seq START WITH 1;
+        CREATE SEQUENCE IF NOT EXISTS pallet_no_seq START WITH 1;
+        CREATE SEQUENCE IF NOT EXISTS sscc_seq START WITH 1;
+
+        SELECT setval('carton_no_seq', COALESCE((SELECT MAX(right(CartonNo, 4)::integer) FROM Cartons WHERE CartonNo ~ '-[0-9]{4}$'), 0) + 1, false);
+        SELECT setval('pallet_no_seq', COALESCE((SELECT MAX(right(PalletNo, 4)::integer) FROM Pallets WHERE PalletNo ~ '-[0-9]{4}$'), 0) + 1, false);
+        SELECT setval('sscc_seq', COALESCE((
+            SELECT MAX(val) FROM (
+                SELECT substring(SSCC from 11 for 7)::integer AS val FROM Cartons WHERE SSCC ~ '^[0-9]{18}$'
+                UNION ALL
+                SELECT substring(SSCC from 11 for 7)::integer AS val FROM Pallets WHERE SSCC ~ '^[0-9]{18}$'
+            ) t
+        ), 0) + 1, false);
+
+        CREATE UNIQUE INDEX IF NOT EXISTS UQ_Cartons_CartonNo ON Cartons(CartonNo);
+        CREATE UNIQUE INDEX IF NOT EXISTS UQ_Pallets_PalletNo ON Pallets(PalletNo);
         ";
     }
 }

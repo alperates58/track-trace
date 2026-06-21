@@ -116,7 +116,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
                 
                 // Generate CartonNo sequence
                 int cartonSequence = await connection.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(*) FROM Cartons WHERE OrderId = @OrderId", new { OrderId = req.OrderId }, transaction) + 1;
+                    "SELECT nextval('carton_no_seq')", null, transaction);
                 cartonNo = $"K-{orderNo}-{cartonSequence:D4}";
 
                 // Generate SSCC-18 (Serial Shipping Container Code)
@@ -233,10 +233,8 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
         const string companyPrefix = "463047737"; // 9 digits
 
         // Get a unique sequence number for the serial reference.
-        // We can just use the total number of cartons + pallets in the DB to ensure uniqueness.
         int totalUnits = await connection.ExecuteScalarAsync<int>(
-            "SELECT (SELECT COALESCE(COUNT(*), 0) FROM Cartons) + (SELECT COALESCE(COUNT(*), 0) FROM Pallets)", 
-            null, transaction) + 1;
+            "SELECT nextval('sscc_seq')", null, transaction);
 
         string serialRef = totalUnits.ToString().PadLeft(7, '0');
         string baseCode = extensionDigit + companyPrefix + serialRef; // 17 digits

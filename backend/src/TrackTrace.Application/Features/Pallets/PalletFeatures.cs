@@ -162,7 +162,7 @@ public class PalletHandlers :
 
             // Generate PalletNo sequence
             int sequence = await connection.ExecuteScalarAsync<int>(
-                "SELECT COUNT(*) FROM Pallets WHERE OrderId = @OrderId", new { OrderId = request.OrderId }, transaction) + 1;
+                "SELECT nextval('pallet_no_seq')", null, transaction);
             string palletNo = $"P-{orderNo}-{sequence:D4}";
 
             // Generate SSCC-18 for Pallet
@@ -385,8 +385,7 @@ public class PalletHandlers :
         const string companyPrefix = "463047737"; // 9 digits
 
         int totalUnits = await connection.ExecuteScalarAsync<int>(
-            "SELECT (SELECT COALESCE(COUNT(*), 0) FROM Cartons) + (SELECT COALESCE(COUNT(*), 0) FROM Pallets)", 
-            null, transaction) + 1;
+            "SELECT nextval('sscc_seq')", null, transaction);
 
         string serialRef = totalUnits.ToString().PadLeft(7, '0');
         string baseCode = extensionDigit + companyPrefix + serialRef;
