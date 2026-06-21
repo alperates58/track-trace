@@ -6,9 +6,8 @@ import { Orders } from './pages/Orders';
 import { Scan } from './pages/Scan';
 import { Cartons } from './pages/Cartons';
 import { Pallets } from './pages/Pallets';
-import { BarcodeSearch } from './pages/BarcodeSearch';
 import { PublicBarcodeSearch } from './pages/PublicBarcodeSearch';
-import { Reports } from './pages/Reports';
+import { TraceabilityCenter } from './pages/TraceabilityCenter';
 import { DataMatrixCreator } from './pages/DataMatrixCreator';
 import { SystemInfo } from './pages/SystemInfo';
 import { Users } from './pages/Users';
@@ -19,7 +18,6 @@ import {
   Inbox, 
   Layers, 
   Search, 
-  Printer, 
   Settings, 
   LogOut, 
   User as UserIcon,
@@ -47,10 +45,8 @@ const AppShell: React.FC = () => {
         return <Cartons />;
       case 'pallets':
         return <Pallets />;
-      case 'search':
-        return <BarcodeSearch />;
-      case 'reports':
-        return <Reports />;
+      case 'traceability':
+        return <TraceabilityCenter />;
       case 'dm-creator':
         return <DataMatrixCreator />;
       case 'users':
@@ -128,21 +124,12 @@ const AppShell: React.FC = () => {
           </div>
 
           <div 
-            className={`sidebar-link ${activeTab === 'search' ? 'active' : ''}`}
-            onClick={() => handleTabClick('search')}
-            title="Barkod Sorgulama"
+            className={`sidebar-link ${activeTab === 'traceability' ? 'active' : ''}`}
+            onClick={() => handleTabClick('traceability')}
+            title="İzlenebilirlik Merkezi"
           >
             <Search size={18} style={{ flexShrink: 0 }} />
-            <span>Barkod Sorgulama</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => handleTabClick('reports')}
-            title="Baskı Geçmişi"
-          >
-            <Printer size={18} style={{ flexShrink: 0 }} />
-            <span>Baskı Geçmişi</span>
+            <span>İzlenebilirlik Merkezi</span>
           </div>
 
           <div 
@@ -214,7 +201,7 @@ const AppShell: React.FC = () => {
               <Menu size={20} />
             </button>
             <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
-              {activeTab === 'search' ? 'Barkod Sorgulama' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab}
+              {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab}
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
