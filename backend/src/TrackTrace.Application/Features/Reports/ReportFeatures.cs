@@ -919,14 +919,14 @@ public class ReportHandlers :
 
             const string usedCodesSql = @"
                 SELECT 
-                    pc.RawCode,
-                    pc.Gtin,
-                    pc.SerialNo,
-                    c.CartonNo,
-                    p.PalletNo,
-                    u.Name as ScannedByName,
-                    pc.ScannedAt,
-                    pc.Status
+                    pc.RawCode AS ""RawCode"",
+                    pc.Gtin AS ""Gtin"",
+                    pc.SerialNo AS ""SerialNo"",
+                    c.CartonNo AS ""CartonNo"",
+                    p.PalletNo AS ""PalletNo"",
+                    u.Name AS ""ScannedByName"",
+                    pc.ScannedAt AS ""ScannedAt"",
+                    pc.Status AS ""Status""
                 FROM ProductCodes pc
                 LEFT JOIN Cartons c ON pc.CartonId = c.Id
                 LEFT JOIN PalletCartons plc ON c.Id = plc.CartonId
@@ -964,7 +964,11 @@ public class ReportHandlers :
             wsSc.Range(rowIdx, 1, rowIdx, 5).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
 
             const string missingCodesSql = @"
-                SELECT RawCode, Gtin, SerialNo, Status 
+                SELECT 
+                    RawCode AS ""RawCode"", 
+                    Gtin AS ""Gtin"", 
+                    SerialNo AS ""SerialNo"", 
+                    Status AS ""Status"" 
                 FROM ProductCodes 
                 WHERE OrderId = @OrderId AND Status = 'Uploaded'
                 ORDER BY RawCode ASC";
@@ -997,12 +1001,12 @@ public class ReportHandlers :
 
             const string cartonDistSql = @"
                 SELECT 
-                    c.CartonNo,
-                    c.SSCC,
-                    pc.RawCode,
-                    pc.SerialNo,
-                    p.PalletNo,
-                    pc.ScannedAt
+                    c.CartonNo AS ""CartonNo"",
+                    c.SSCC AS ""SSCC"",
+                    pc.RawCode AS ""RawCode"",
+                    pc.SerialNo AS ""SerialNo"",
+                    p.PalletNo AS ""PalletNo"",
+                    pc.ScannedAt AS ""ScannedAt""
                 FROM ProductCodes pc
                 INNER JOIN Cartons c ON pc.CartonId = c.Id
                 LEFT JOIN PalletCartons plc ON c.Id = plc.CartonId
@@ -1037,10 +1041,10 @@ public class ReportHandlers :
 
             const string palletDistSql = @"
                 SELECT 
-                    p.PalletNo,
-                    c.CartonNo,
-                    c.SSCC,
-                    c.ActualQuantity as QrCount
+                    p.PalletNo AS ""PalletNo"",
+                    c.CartonNo AS ""CartonNo"",
+                    c.SSCC AS ""SSCC"",
+                    c.ActualQuantity AS ""QrCount""
                 FROM Pallets p
                 INNER JOIN PalletCartons pc ON p.Id = pc.PalletId
                 INNER JOIN Cartons c ON pc.CartonId = c.Id
@@ -1072,15 +1076,15 @@ public class ReportHandlers :
         // 1. Get Summary
         const string summarySql = @"
             SELECT 
-                o.OrderNo,
-                MAX(o.CustomerName) as CustomerName,
-                COUNT(DISTINCT o.StockCode) as TotalStockCodes,
-                SUM(o.ExpectedQuantity) as ExpectedQuantity,
-                COALESCE(SUM(pc.UsedCount), 0) as UsedQuantity,
-                COALESCE(SUM(pc.UploadedCount), 0) as MissingQuantity,
-                COALESCE(SUM(c.CartonCount), 0) as TotalCartons,
-                COALESCE(SUM(p.PalletCount), 0) as TotalPallets,
-                COALESCE(MAX(pc.LastScannedAt), MAX(o.UpdatedAt)) as LastProcessedAt
+                o.OrderNo AS ""OrderNo"",
+                MAX(o.CustomerName) AS ""CustomerName"",
+                COUNT(DISTINCT o.StockCode) AS ""TotalStockCodes"",
+                SUM(o.ExpectedQuantity) AS ""ExpectedQuantity"",
+                COALESCE(SUM(pc.UsedCount), 0) AS ""UsedQuantity"",
+                COALESCE(SUM(pc.UploadedCount), 0) AS ""MissingQuantity"",
+                COALESCE(SUM(c.CartonCount), 0) AS ""TotalCartons"",
+                COALESCE(SUM(p.PalletCount), 0) AS ""TotalPallets"",
+                COALESCE(MAX(pc.LastScannedAt), MAX(o.UpdatedAt)) AS ""LastProcessedAt""
             FROM Orders o
             LEFT JOIN (
                 SELECT 
@@ -1109,14 +1113,14 @@ public class ReportHandlers :
         // 2. Get Stock Codes under this OrderNo
         const string stockCodesSql = @"
             SELECT 
-                o.Id as OrderId,
-                o.StockCode,
-                o.ProductName,
-                o.ExpectedQuantity,
-                COALESCE(pc.UsedCount, 0) as UsedQuantity,
-                COALESCE(pc.UploadedCount, 0) as MissingQuantity,
-                COALESCE(c.CartonCount, 0) as CartonCount,
-                COALESCE(p.PalletCount, 0) as PalletCount
+                o.Id AS ""OrderId"",
+                o.StockCode AS ""StockCode"",
+                o.ProductName AS ""ProductName"",
+                o.ExpectedQuantity AS ""ExpectedQuantity"",
+                COALESCE(pc.UsedCount, 0) AS ""UsedQuantity"",
+                COALESCE(pc.UploadedCount, 0) AS ""MissingQuantity"",
+                COALESCE(c.CartonCount, 0) AS ""CartonCount"",
+                COALESCE(p.PalletCount, 0) AS ""PalletCount""
             FROM Orders o
             LEFT JOIN (
                 SELECT 
@@ -1139,13 +1143,13 @@ public class ReportHandlers :
         // 3. Get Cartons under this OrderNo
         const string cartonsSql = @"
             SELECT 
-                c.CartonNo,
-                c.SSCC,
-                c.TargetQuantity,
-                c.ActualQuantity,
-                c.Status,
-                c.CreatedAt,
-                p.PalletNo
+                c.CartonNo AS ""CartonNo"",
+                c.SSCC AS ""SSCC"",
+                c.TargetQuantity AS ""TargetQuantity"",
+                c.ActualQuantity AS ""ActualQuantity"",
+                c.Status AS ""Status"",
+                c.CreatedAt AS ""CreatedAt"",
+                p.PalletNo AS ""PalletNo""
             FROM Cartons c
             LEFT JOIN PalletCartons plc ON c.Id = plc.CartonId
             LEFT JOIN Pallets p ON plc.PalletId = p.Id
@@ -1157,11 +1161,11 @@ public class ReportHandlers :
         // 4. Get Pallets under this OrderNo
         const string palletsSql = @"
             SELECT 
-                p.PalletNo,
-                p.SSCC,
-                p.Status,
-                p.CreatedAt,
-                (SELECT COUNT(*) FROM PalletCartons WHERE PalletId = p.Id) as CartonCount
+                p.PalletNo AS ""PalletNo"",
+                p.SSCC AS ""SSCC"",
+                p.Status AS ""Status"",
+                p.CreatedAt AS ""CreatedAt"",
+                (SELECT COUNT(*) FROM PalletCartons WHERE PalletId = p.Id) AS ""CartonCount""
             FROM Pallets p
             WHERE p.OrderId IN (SELECT Id FROM Orders WHERE OrderNo = @OrderNo)
             ORDER BY p.CreatedAt DESC";
@@ -1171,9 +1175,9 @@ public class ReportHandlers :
         // 5. Get Missing Summary (Grouped by stock code)
         const string missingSummarySql = @"
             SELECT 
-                o.StockCode,
-                o.ProductName,
-                COUNT(*) as MissingCount
+                o.StockCode AS ""StockCode"",
+                o.ProductName AS ""ProductName"",
+                COUNT(*) AS ""MissingCount""
             FROM ProductCodes pc
             INNER JOIN Orders o ON pc.OrderId = o.Id
             WHERE o.OrderNo = @OrderNo AND pc.Status = 'Uploaded'
