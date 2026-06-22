@@ -9,7 +9,6 @@ using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
 using ZXing;
 using ZXing.Datamatrix;
-using ZXing.Datamatrix.Encoder;
 using ZXing.SkiaSharp;
 using SkiaSharp;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +17,7 @@ namespace TrackTrace.Infrastructure.Services;
 
 public class LabelGenerator : ILabelGenerator
 {
+    private const char DataMatrixFnc1 = (char)232;
     private readonly string _frontendUrl;
 
     public LabelGenerator(IConfiguration configuration)
@@ -420,7 +420,7 @@ public class LabelGenerator : ILabelGenerator
             bool isGs1 = content.Length > 0 && content[0] == Gs1AutoHelper.GS;
             if (isGs1)
             {
-                content = HighLevelEncoder.FNC1 + content.Substring(1).Replace(Gs1AutoHelper.GS, HighLevelEncoder.FNC1);
+                content = DataMatrixFnc1 + content.Substring(1).Replace(Gs1AutoHelper.GS, DataMatrixFnc1);
             }
 
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
