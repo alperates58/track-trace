@@ -960,7 +960,7 @@ export const Orders: React.FC = () => {
                     </div>
                     {user?.role !== 'Viewer' && (
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Cancelled') && (
+                        {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Cancelled' || selectedOrder.status === 'Active') && (
                           <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowImportModal(true)}>
                             <Upload size={16} /> Yeni Kod Yükle
                           </button>

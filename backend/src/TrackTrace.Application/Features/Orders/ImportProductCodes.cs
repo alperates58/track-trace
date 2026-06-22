@@ -48,9 +48,11 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
         {
             throw new KeyNotFoundException("Sipariş bulunamadı.");
         }
-        if (order.status != OrderStatus.Draft.ToString() && order.status != OrderStatus.Cancelled.ToString())
+        if (order.status != OrderStatus.Draft.ToString() && 
+            order.status != OrderStatus.Cancelled.ToString() && 
+            order.status != OrderStatus.Active.ToString())
         {
-            throw new InvalidOperationException("Yalnızca taslak veya iptal durumundaki siparişlere kod yüklenebilir.");
+            throw new InvalidOperationException("Yalnızca taslak, aktif veya iptal durumundaki siparişlere kod yüklenebilir.");
         }
 
         string orderGtin = order.gtin;
