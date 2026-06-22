@@ -165,6 +165,10 @@ namespace TrackTrace.Application.Common
 
             // Split rest by GS separator (ASCII 29)
             int gsPos = rest.IndexOf(GS);
+            string serial;
+            string remainder;
+            string? warningMessage = null;
+
             if (gsPos < 0)
             {
                 // No GS separator
@@ -197,14 +201,39 @@ namespace TrackTrace.Application.Common
                 }
 
                 // If Znak profile or Auto profile with crypto indicator, GS separator is missing!
-                return Fail("21 seri numarasından sonra 91/92/93 alanlarına geçişte GS grup ayırıcı bulunamadı.",
-                            "GS Ayırıcı Eksik",
-                            "Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.");
-            }
+                // Try to split automatically if crypto indicator is present
+                int splitPos = -1;
+                string[] possibleAis = { "91", "92", "93" };
+                foreach (var ai in possibleAis)
+                {
+                    int idx = rest.IndexOf(ai);
+                    if (idx >= 0)
+                    {
+                        if (splitPos == -1 || idx < splitPos)
+                        {
+                            splitPos = idx;
+                        }
+                    }
+                }
 
-            // GS separator is present!
-            string serial = rest.Substring(0, gsPos);
-            string remainder = rest.Substring(gsPos + 1);
+                if (splitPos > 0)
+                {
+                    serial = rest.Substring(0, splitPos);
+                    remainder = rest.Substring(splitPos);
+                    warningMessage = "GS grup ayırıcı eksik. Kod otomatik düzeltildi (GS ayırıcı eklendi).";
+                }
+                else
+                {
+                    return Fail("21 seri numarasından sonra 91/92/93 alanlarına geçişte GS grup ayırıcı bulunamadı.",
+                                "GS Ayırıcı Eksik",
+                                "Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.");
+                }
+            }
+            else
+            {
+                serial = rest.Substring(0, gsPos);
+                remainder = rest.Substring(gsPos + 1);
+            }
 
             if (string.IsNullOrEmpty(serial))
             {
@@ -293,7 +322,8 @@ namespace TrackTrace.Application.Common
                     Normalized = GS + "01" + gtin + "21" + serial + GS + "93" + crypto,
                     Gtin = gtin,
                     SerialNo = serial,
-                    CryptoTail = "93" + crypto
+                    CryptoTail = "93" + crypto,
+                    WarningMessage = warningMessage
                 };
             }
             else if (remainder.StartsWith("91"))
@@ -371,7 +401,8 @@ namespace TrackTrace.Application.Common
                     Normalized = GS + "01" + gtin + "21" + serial + GS + "91" + v91 + GS + "92" + crypto,
                     Gtin = gtin,
                     SerialNo = serial,
-                    CryptoTail = "91" + v91 + GS + "92" + crypto
+                    CryptoTail = "91" + v91 + GS + "92" + crypto,
+                    WarningMessage = warningMessage
                 };
             }
             else if (remainder.StartsWith("92"))

@@ -750,6 +750,8 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
         var validCodes = new List<string>();
         int totalLines = 0;
         int rowNo = 0;
+        int invalidCount = 0;
+        int warningCount = 0;
 
         using (var reader = new StreamReader(file.OpenReadStream()))
         {
@@ -764,9 +766,22 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
                 if (parseResult.Success)
                 {
                     validCodes.Add(parseResult.Normalized);
+                    if (!string.IsNullOrEmpty(parseResult.WarningMessage))
+                    {
+                        warningCount++;
+                        errors.Add(new { 
+                            rowNo, 
+                            rawLine = line, 
+                            errorMessage = parseResult.WarningMessage,
+                            errorType = parseResult.ErrorType ?? "GS Ayırıcı Eksik",
+                            suggestedFix = parseResult.SuggestedFix ?? "Otomatik düzeltildi (GS ayırıcı eklendi).",
+                            isWarning = true
+                        });
+                    }
                 }
                 else
                 {
+                    invalidCount++;
                     errors.Add(new { 
                         rowNo, 
                         rawLine = line, 
@@ -782,7 +797,8 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
         {
             totalLines,
             validCount = validCodes.Count,
-            invalidCount = errors.Count,
+            invalidCount,
+            warningCount,
             previewCodes = validCodes.Take(5).ToList(),
             errors
         });

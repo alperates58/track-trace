@@ -6,6 +6,7 @@ import {
   Upload, 
   FileText, 
   AlertCircle, 
+  AlertTriangle,
   QrCode, 
   Download, 
   RefreshCw,
@@ -25,6 +26,7 @@ interface ValidationError {
   errorMessage: string;
   errorType: string;
   suggestedFix: string;
+  isWarning?: boolean;
 }
 
 interface AnalysisResult {
@@ -346,6 +348,10 @@ export const DataMatrixCreator: React.FC = () => {
       return { success: false, normalized: '', errorMessage: 'Hem 92 hem 93 alanı var; şablon belirsiz.', errorType: 'Şablon Belirsiz', suggestedFix: 'Kripto alanlarından sadece birini kullanın (ya 91+92 ya da sadece 93).' };
     }
 
+    let serial = '';
+    let remainder = '';
+    let warningMessage: string | undefined = undefined;
+
     const gsPos = rest.indexOf(GS);
     if (gsPos < 0) {
       const hasCrypto = rest.includes('91') || rest.includes('92') || rest.includes('93');
@@ -359,17 +365,36 @@ export const DataMatrixCreator: React.FC = () => {
           warningMessage: selectedProfile === 'Auto' ? 'Doğrulama/kripto alanları eksik olabilir.' : undefined
         };
       }
-      return { 
-        success: false, 
-        normalized: '', 
-        errorMessage: '21 seri numarasından sonra 91/92/93 alanlarına geçişte GS grup ayırıcı bulunamadı.', 
-        errorType: 'GS Ayırıcı Eksik', 
-        suggestedFix: 'Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.' 
-      };
-    }
 
-    const serial = rest.substring(0, gsPos);
-    const remainder = rest.substring(gsPos + 1);
+      // Try to split automatically if crypto indicator is present
+      let splitPos = -1;
+      const possibleAis = ['91', '92', '93'];
+      for (const ai of possibleAis) {
+        const idx = rest.indexOf(ai);
+        if (idx >= 0) {
+          if (splitPos === -1 || idx < splitPos) {
+            splitPos = idx;
+          }
+        }
+      }
+
+      if (splitPos > 0) {
+        serial = rest.substring(0, splitPos);
+        remainder = rest.substring(splitPos);
+        warningMessage = 'GS grup ayırıcı eksik. Kod otomatik düzeltildi (GS ayırıcı eklendi).';
+      } else {
+        return { 
+          success: false, 
+          normalized: '', 
+          errorMessage: '21 seri numarasından sonra 91/92/93 alanlarına geçişte GS grup ayırıcı bulunamadı.', 
+          errorType: 'GS Ayırıcı Eksik', 
+          suggestedFix: 'Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.' 
+        };
+      }
+    } else {
+      serial = rest.substring(0, gsPos);
+      remainder = rest.substring(gsPos + 1);
+    }
 
     if (!serial) {
       return { success: false, normalized: '', errorMessage: 'Seri numarası boş.', errorType: 'Seri Numarası Eksik', suggestedFix: '21 alanından sonra boş olmayan bir seri numarası eklenmelidir.' };
@@ -413,7 +438,8 @@ export const DataMatrixCreator: React.FC = () => {
 
       return {
         success: true,
-        normalized: GS + '01' + gtin + '21' + serial + GS + '93' + crypto
+        normalized: GS + '01' + gtin + '21' + serial + GS + '93' + crypto,
+        warningMessage: warningMessage
       };
     } else if (remainder.startsWith('91')) {
       if (selectedProfile === 'ZnakShort') {
@@ -450,7 +476,8 @@ export const DataMatrixCreator: React.FC = () => {
 
       return {
         success: true,
-        normalized: GS + '01' + gtin + '21' + serial + GS + '91' + v91 + GS + '92' + crypto
+        normalized: GS + '01' + gtin + '21' + serial + GS + '91' + v91 + GS + '92' + crypto,
+        warningMessage: warningMessage
       };
     } else if (remainder.startsWith('92')) {
       return { success: false, normalized: '', errorMessage: '92 alanı bulundu ancak 91 doğrulama anahtarı eksik.', errorType: '91 AI Eksik', suggestedFix: 'Standart şablonda 91 and 92 alanları birlikte bulunmalıdır.' };
@@ -506,6 +533,14 @@ export const DataMatrixCreator: React.FC = () => {
           validCodes.push(valResult.normalized);
           if (valResult.warningMessage) {
             warningCount++;
+            errors.push({
+              rowNo,
+              rawLine: line,
+              errorMessage: valResult.warningMessage,
+              errorType: valResult.errorType || 'GS Ayırıcı Eksik',
+              suggestedFix: valResult.suggestedFix || 'Otomatik düzeltildi (GS ayırıcı eklendi).',
+              isWarning: true
+            });
           }
         } else {
           errors.push({
@@ -1496,13 +1531,20 @@ export const DataMatrixCreator: React.FC = () => {
         </div>
       )}
 
-      {/* Error Report Panel */}
-      {analysis && analysis.invalidCount > 0 && (
+      {/* Error / Warning Report Panel */}
+      {analysis && (analysis.invalidCount > 0 || analysis.warningCount > 0) && (
         <div className="card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--danger-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertCircle size={18} />
-              GS1 Doğrulama Raporu ({analysis.invalidCount} hata tespit edildi)
+            <h3 style={{ 
+              fontSize: '1.1rem', 
+              margin: 0, 
+              color: analysis.invalidCount > 0 ? 'var(--danger-text)' : 'var(--warning-text)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px' 
+            }}>
+              {analysis.invalidCount > 0 ? <AlertCircle size={18} /> : <AlertTriangle size={18} color="var(--warning)" />}
+              GS1 Doğrulama Raporu ({analysis.invalidCount > 0 ? `${analysis.invalidCount} hata` : ''} {analysis.invalidCount > 0 && analysis.warningCount > 0 ? 've' : ''} {analysis.warningCount > 0 ? `${analysis.warningCount} uyarı` : ''} tespit edildi)
             </h3>
             
             <button 
@@ -1511,7 +1553,7 @@ export const DataMatrixCreator: React.FC = () => {
               style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '0.8rem' }}
             >
               <FileSpreadsheet size={16} />
-              Hatalı Satırları CSV Olarak İndir
+              Hatalı / Uyarılı Satırları CSV Olarak İndir
             </button>
           </div>
 
@@ -1526,21 +1568,24 @@ export const DataMatrixCreator: React.FC = () => {
                 <tr style={{ backgroundColor: 'var(--bg-primary)', position: 'sticky', top: 0, zIndex: 1 }}>
                   <th style={{ width: '80px', padding: '10px' }}>Satır No</th>
                   <th style={{ width: '250px', padding: '10px' }}>Kod Önizleme</th>
-                  <th style={{ width: '150px', padding: '10px' }}>Hata Tipi</th>
-                  <th style={{ padding: '10px' }}>Hata Açıklaması</th>
+                  <th style={{ width: '150px', padding: '10px' }}>Hata/Uyarı Tipi</th>
+                  <th style={{ padding: '10px' }}>Açıklama</th>
                   <th style={{ width: '220px', padding: '10px' }}>Önerilen Düzeltme</th>
                 </tr>
               </thead>
               <tbody>
-                {analysis.errors.map((err, idx) => (
-                  <tr key={idx} style={{ backgroundColor: 'var(--danger-bg)' }}>
-                    <td style={{ fontWeight: 'bold', color: 'var(--danger-text)', padding: '10px' }}>{err.rowNo}</td>
-                    <td style={{ fontFamily: 'monospace', wordBreak: 'break-all', padding: '10px' }}>{err.rawLine}</td>
-                    <td style={{ color: 'var(--danger-text)', fontWeight: 600, padding: '10px' }}>{err.errorType}</td>
-                    <td style={{ color: 'var(--danger-text)', padding: '10px' }}>{err.errorMessage}</td>
-                    <td style={{ color: 'var(--text-main)', fontSize: '0.8rem', padding: '10px', backgroundColor: 'rgba(255,255,255,0.4)' }}>{err.suggestedFix}</td>
-                  </tr>
-                ))}
+                {analysis.errors.map((err, idx) => {
+                  const isWarn = err.isWarning;
+                  return (
+                    <tr key={idx} style={{ backgroundColor: isWarn ? 'var(--warning-bg)' : 'var(--danger-bg)' }}>
+                      <td style={{ fontWeight: 'bold', color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', padding: '10px' }}>{err.rowNo}</td>
+                      <td style={{ fontFamily: 'monospace', wordBreak: 'break-all', padding: '10px', color: isWarn ? 'var(--warning-text)' : 'var(--text-main)' }}>{err.rawLine}</td>
+                      <td style={{ color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', fontWeight: 600, padding: '10px' }}>{err.errorType}</td>
+                      <td style={{ color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', padding: '10px' }}>{err.errorMessage}</td>
+                      <td style={{ color: 'var(--text-main)', fontSize: '0.8rem', padding: '10px', backgroundColor: 'rgba(255,255,255,0.4)' }}>{err.suggestedFix}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
