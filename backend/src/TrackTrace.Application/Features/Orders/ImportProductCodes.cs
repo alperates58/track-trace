@@ -15,7 +15,7 @@ using TrackTrace.Domain.Enums;
 
 namespace TrackTrace.Application.Features.Orders;
 
-public record ImportProductCodesCommand(Guid OrderId, string FileName, Stream FileStream) : IRequest<ImportResultDto>;
+public record ImportProductCodesCommand(Guid OrderId, string FileName, Stream FileStream, string Profile = "Auto") : IRequest<ImportResultDto>;
 
 public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCodesCommand, ImportResultDto>
 {
@@ -192,7 +192,7 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
                 continue;
             }
 
-            var parsed = Gs1AutoHelper.NormalizeForEncoding(raw);
+            var parsed = Gs1AutoHelper.NormalizeForEncoding(raw, request.Profile);
             if (!parsed.Success)
             {
                 invalidCount++;

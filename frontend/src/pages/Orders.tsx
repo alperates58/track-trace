@@ -112,6 +112,7 @@ export const Orders: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importProfile, setImportProfile] = useState<string>('Auto');
 
   // Excel Order Import State
   const [showExcelImportModal, setShowExcelImportModal] = useState(false);
@@ -438,7 +439,7 @@ export const Orders: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const result = await api.post(`/api/orders/${selectedOrder.id}/import-codes`, formData);
+      const result = await api.post(`/api/orders/${selectedOrder.id}/import-codes?profile=${importProfile}`, formData);
       setImportResult(result);
       fetchOrders();
       const updated = await api.get(`/api/orders/${selectedOrder.id}`);
@@ -1338,6 +1339,23 @@ export const Orders: React.FC = () => {
               <div className="form-group" style={{ marginBottom: '20px' }}>
                 <input type="file" accept=".txt,.csv,.xlsx" className="form-input" required onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </div>
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Doğrulama Profili:</label>
+                <select 
+                  className="form-input" 
+                  value={importProfile} 
+                  onChange={(e) => setImportProfile(e.target.value)} 
+                  disabled={importing}
+                  style={{ width: '100%' }}
+                >
+                  <option value="Auto">Otomatik Algıla (Auto)</option>
+                  <option value="Gs1">Standart GS1</option>
+                  <option value="ZnakCosmetics">Rusya Chestny ZNAK - Kozmetik</option>
+                  <option value="ZnakShort">Rusya Chestny ZNAK - Kısa Şablon</option>
+                  <option value="ZnakLightIndustry">Rusya Chestny ZNAK - Hafif Sanayi</option>
+                  <option value="None">Sadece DataMatrix yükle (Doğrulama yok)</option>
+                </select>
+              </div>
               {importResult && (
                 <div style={{ backgroundColor: '#f1f5f9', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
                   <h4 style={{ fontWeight: 700, marginBottom: '8px' }}>Yükleme Sonucu:</h4>
@@ -1348,7 +1366,7 @@ export const Orders: React.FC = () => {
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowImportModal(false); setImportResult(null); setFile(null); }} disabled={importing}>Kapat</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowImportModal(false); setImportResult(null); setFile(null); setImportProfile('Auto'); }} disabled={importing}>Kapat</button>
                 <button type="submit" className="btn btn-primary" disabled={importing || !file}>
                   {importing ? 'İçe Aktarılıyor...' : 'Yükle & Çözümle'}
                 </button>

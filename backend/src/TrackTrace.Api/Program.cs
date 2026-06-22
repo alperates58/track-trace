@@ -618,7 +618,7 @@ app.MapGet("/api/orders/{id:guid}/import-batches", async (Guid id, IDbConnection
         Convert.ToInt32(x.usedcodecount),
         (string?)x.createdby,
         (DateTime)x.createdat,
-        Convert.ToInt32(x.linkedcodecount) > 0 && Convert.ToInt32(x.usedcodecount) == 0
+        Convert.ToInt32(x.usedcodecount) == 0
     ));
 
     return Results.Ok(items);
@@ -636,8 +636,8 @@ app.MapDelete("/api/orders/{orderId:guid}/import-batches/{batchId:guid}", async 
     using var transaction = connection.BeginTransaction();
     try
     {
-        var batch = await connection.QueryFirstOrDefaultAsync<dynamic>(
-            "SELECT Id, OrderId, FileName FROM ImportBatches WHERE Id = @BatchId AND OrderId = @OrderId FOR UPDATE",
+        var batch = await connection.QueryFirstOrDefaultAsync<TrackTrace.Domain.Entities.ImportBatch>(
+            "SELECT * FROM ImportBatches WHERE Id = @BatchId AND OrderId = @OrderId FOR UPDATE",
             new { BatchId = batchId, OrderId = orderId },
             transaction);
         if (batch == null)
@@ -845,7 +845,7 @@ app.MapPost("/api/orders/{id:guid}/print-codes", async (
 }).RequireAuthorization("OperatorOrAdmin");
 
 // Upload/Import Endpoints
-app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file, IMediator mediator) =>
+app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file, [FromQuery] string? profile, IMediator mediator) =>
 {
     if (file == null || file.Length == 0)
     {
@@ -855,7 +855,7 @@ app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file
     try
     {
         using var stream = file.OpenReadStream();
-        var result = await mediator.Send(new ImportProductCodesCommand(id, file.FileName, stream));
+        var result = await mediator.Send(new ImportProductCodesCommand(id, file.FileName, stream, profile ?? "Auto"));
         return Results.Ok(result);
     }
     catch (KeyNotFoundException)
