@@ -41,16 +41,16 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
             connection.Open();
         }
 
-        // 1. Check if Order exists and is in Draft state
+        // 1. Check if Order exists and can accept code uploads
         var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
             "SELECT Status, GTIN FROM Orders WHERE Id = @Id", new { Id = request.OrderId });
         if (order == null)
         {
             throw new KeyNotFoundException("Sipariş bulunamadı.");
         }
-        if (order.status != OrderStatus.Draft.ToString())
+        if (order.status != OrderStatus.Draft.ToString() && order.status != OrderStatus.Cancelled.ToString())
         {
-            throw new InvalidOperationException("Yalnızca taslak durumundaki siparişlere kod yüklenebilir.");
+            throw new InvalidOperationException("Yalnızca taslak veya iptal durumundaki siparişlere kod yüklenebilir.");
         }
 
         string orderGtin = order.gtin;
@@ -211,6 +211,20 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
             validCodesToInsert.Add((Guid.NewGuid(), parsed.Normalized, parsed.Gtin, parsed.SerialNo, parsed.CryptoTail));
         }
 
+        await connection.ExecuteAsync(@"
+            INSERT INTO ImportBatches (Id, OrderId, FileName, TotalRows, ImportedCount, DuplicateCount, InvalidCount, CreatedBy, CreatedAt)
+            VALUES (@Id, @OrderId, @FileName, @TotalRows, 0, 0, @InvalidCount, @CreatedBy, @CreatedAt)",
+            new
+            {
+                Id = batchId,
+                OrderId = request.OrderId,
+                FileName = request.FileName,
+                TotalRows = totalRows,
+                InvalidCount = invalidCount,
+                CreatedBy = currentUserId,
+                CreatedAt = DateTime.UtcNow
+            });
+
         // 3. Batch check duplicates against DB
         if (validCodesToInsert.Count > 0)
         {
@@ -250,13 +264,14 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
                 try
                 {
                     using (var writer = connection.BeginBinaryImport(
-                        "COPY ProductCodes (Id, OrderId, RawCode, Gtin, SerialNo, CryptoTail, Status, CreatedAt) FROM STDIN (FORMAT BINARY)"))
+                        "COPY ProductCodes (Id, OrderId, ImportBatchId, RawCode, Gtin, SerialNo, CryptoTail, Status, CreatedAt) FROM STDIN (FORMAT BINARY)"))
                     {
                         foreach (var code in uniqueValidCodes)
                         {
                             writer.StartRow();
                             writer.Write(code.Id, NpgsqlTypes.NpgsqlDbType.Uuid);
                             writer.Write(request.OrderId, NpgsqlTypes.NpgsqlDbType.Uuid);
+                            writer.Write(batchId, NpgsqlTypes.NpgsqlDbType.Uuid);
                             writer.Write(code.RawCode, NpgsqlTypes.NpgsqlDbType.Text);
                             writer.Write(code.Gtin ?? (object)DBNull.Value, NpgsqlTypes.NpgsqlDbType.Text);
                             writer.Write(code.SerialNo ?? (object)DBNull.Value, NpgsqlTypes.NpgsqlDbType.Text);
@@ -278,25 +293,23 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
             }
         }
 
-        // 5. Save Import Batch and Errors
+        // 5. Save Import Batch summary and Errors
         using (var transaction = connection.BeginTransaction())
         {
             try
             {
                 await connection.ExecuteAsync(@"
-                    INSERT INTO ImportBatches (Id, OrderId, FileName, TotalRows, ImportedCount, DuplicateCount, InvalidCount, CreatedBy, CreatedAt)
-                    VALUES (@Id, @OrderId, @FileName, @TotalRows, @ImportedCount, @DuplicateCount, @InvalidCount, @CreatedBy, @CreatedAt)",
+                    UPDATE ImportBatches
+                    SET ImportedCount = @ImportedCount,
+                        DuplicateCount = @DuplicateCount,
+                        InvalidCount = @InvalidCount
+                    WHERE Id = @Id",
                     new
                     {
                         Id = batchId,
-                        OrderId = request.OrderId,
-                        FileName = request.FileName,
-                        TotalRows = totalRows,
                         ImportedCount = importedCount,
                         DuplicateCount = duplicateCount,
-                        InvalidCount = invalidCount,
-                        CreatedBy = currentUserId,
-                        CreatedAt = DateTime.UtcNow
+                        InvalidCount = invalidCount
                     }, transaction);
 
                 if (errors.Count > 0)

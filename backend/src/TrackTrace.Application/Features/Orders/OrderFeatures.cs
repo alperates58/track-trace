@@ -275,9 +275,9 @@ public class OrderHandlers :
         var existing = await connection.QueryFirstOrDefaultAsync<dynamic>("SELECT Status FROM Orders WHERE Id = @Id", new { Id = request.Id });
         if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
         
-        if (existing.status != OrderStatus.Draft.ToString())
+        if (existing.status != OrderStatus.Draft.ToString() && existing.status != OrderStatus.Cancelled.ToString())
         {
-            throw new InvalidOperationException("Yalnızca taslak durumundaki siparişler aktifleştirilebilir.");
+            throw new InvalidOperationException("Yalnızca taslak veya iptal durumundaki siparişler aktifleştirilebilir.");
         }
 
         const string sql = "UPDATE Orders SET Status = @Status, UpdatedAt = @UpdatedAt WHERE Id = @Id";

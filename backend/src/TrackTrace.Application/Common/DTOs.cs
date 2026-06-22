@@ -58,6 +58,21 @@ public record ImportResultDto(
 
 public record ImportErrorDto(int RowNo, string? RawLine, string ErrorMessage);
 
+public record ImportBatchDto(
+    Guid Id,
+    Guid OrderId,
+    string? FileName,
+    int TotalRows,
+    int ImportedCount,
+    int DuplicateCount,
+    int InvalidCount,
+    int LinkedCodeCount,
+    int UsedCodeCount,
+    string? CreatedBy,
+    DateTime CreatedAt,
+    bool CanDelete
+);
+
 public record ScanRequest(Guid OrderId, string RawCode);
 
 public record ScanResponse(

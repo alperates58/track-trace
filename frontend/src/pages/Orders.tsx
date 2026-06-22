@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Upload, Search, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2, Eye } from 'lucide-react';
+import { Plus, Upload, Search, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2, Eye, Trash2, RotateCcw, Archive } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -17,6 +17,21 @@ interface Order {
   status: string;
   createdAt: string;
   scannedCount: number;
+}
+
+interface ImportBatch {
+  id: string;
+  orderId: string;
+  fileName: string | null;
+  totalRows: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  linkedCodeCount: number;
+  usedCodeCount: number;
+  createdBy: string | null;
+  createdAt: string;
+  canDelete: boolean;
 }
 
 export const Orders: React.FC = () => {
@@ -35,7 +50,7 @@ export const Orders: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   
   // Drawer / Detail Tabs
-  const [activeTab, setActiveTab] = useState<'summary' | 'cartons' | 'codes'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'cartons' | 'codes' | 'imports'>('summary');
 
   // Order Cartons State
   const [cartons, setCartons] = useState<any[]>([]);
@@ -51,6 +66,12 @@ export const Orders: React.FC = () => {
   const [codesTotal, setCodesTotal] = useState(0);
   const [codesSearch, setCodesSearch] = useState('');
   const [codesStatusFilter, setCodesStatusFilter] = useState('');
+
+  // Import batches
+  const [importBatches, setImportBatches] = useState<ImportBatch[]>([]);
+  const [importBatchesLoading, setImportBatchesLoading] = useState(false);
+  const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null);
+  const [clearingCodes, setClearingCodes] = useState(false);
 
   // Create Form State
   const [orderNo, setOrderNo] = useState('');
@@ -132,6 +153,15 @@ export const Orders: React.FC = () => {
       .finally(() => setCodesLoading(false));
   };
 
+  const fetchImportBatches = () => {
+    if (!selectedOrder) return;
+    setImportBatchesLoading(true);
+    api.get(`/api/orders/${selectedOrder.id}/import-batches`)
+      .then(res => setImportBatches(res || []))
+      .catch(console.error)
+      .finally(() => setImportBatchesLoading(false));
+  };
+
   const fetchOrderCartons = (orderId: string) => {
     setCartonsLoading(true);
     api.get(`/api/cartons?orderId=${orderId}&pageSize=1000`)
@@ -194,6 +224,9 @@ export const Orders: React.FC = () => {
     if (selectedOrder && activeTab === 'codes') {
       fetchProductCodes();
     }
+    if (selectedOrder && activeTab === 'imports') {
+      fetchImportBatches();
+    }
   }, [selectedOrder, activeTab, codesPage, codesStatusFilter]);
 
   useEffect(() => {
@@ -202,6 +235,7 @@ export const Orders: React.FC = () => {
       setCodesPage(1);
       setCodesSearch('');
       setCodesStatusFilter('');
+      setImportBatches([]);
       fetchOrderCartons(selectedOrder.id);
       setSelectedCartonForItems(null);
       setCartonItems([]);
@@ -305,6 +339,47 @@ export const Orders: React.FC = () => {
     }
   };
 
+  const refreshSelectedOrder = async () => {
+    if (!selectedOrder) return;
+    const updated = await api.get(`/api/orders/${selectedOrder.id}`);
+    setSelectedOrder(updated);
+    fetchOrders();
+  };
+
+  const handleDeleteImportBatch = async (batch: ImportBatch) => {
+    if (!selectedOrder) return;
+    if (!confirm(`${batch.fileName || 'Bu yükleme'} kaydı ve ona bağlı ${batch.linkedCodeCount} kod sunucudan silinsin mi?`)) return;
+    setDeletingBatchId(batch.id);
+    try {
+      await api.delete(`/api/orders/${selectedOrder.id}/import-batches/${batch.id}`);
+      await refreshSelectedOrder();
+      fetchImportBatches();
+      if (activeTab === 'codes') fetchProductCodes();
+    } catch (err: any) {
+      alert(err.message || 'Yükleme kaydı silinemedi.');
+    } finally {
+      setDeletingBatchId(null);
+    }
+  };
+
+  const handleClearOrderCodes = async () => {
+    if (!selectedOrder) return;
+    if (!confirm('Bu sipariş satırındaki tüm yüklenmiş barkodlar ve yükleme geçmişi sunucudan silinsin mi? Üretim/okutma başladıysa işlem engellenir.')) return;
+    setClearingCodes(true);
+    try {
+      const result = await api.delete(`/api/orders/${selectedOrder.id}/product-codes`);
+      await refreshSelectedOrder();
+      fetchImportBatches();
+      setCodes([]);
+      setCodesTotal(0);
+      alert(`${result?.deletedCodes || 0} kod silindi.`);
+    } catch (err: any) {
+      alert(err.message || 'Kodlar temizlenemedi.');
+    } finally {
+      setClearingCodes(false);
+    }
+  };
+
   const handlePrintCodes = async () => {
     if (!selectedOrder) return;
     setPrintingPdf(true);
@@ -368,6 +443,7 @@ export const Orders: React.FC = () => {
       fetchOrders();
       const updated = await api.get(`/api/orders/${selectedOrder.id}`);
       setSelectedOrder(updated);
+      fetchImportBatches();
     } catch (err: any) {
       setError(err.message || 'Kodlar yüklenirken hata oluştu.');
     } finally {
@@ -610,14 +686,14 @@ export const Orders: React.FC = () => {
 
             {/* Tabs */}
             <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 24px', backgroundColor: '#fff' }}>
-              <button 
+              <button
                 style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'summary' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'summary' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
                 onClick={() => setActiveTab('summary')}
               >
                 <FileText size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
                 Özet
               </button>
-              <button 
+              <button
                 style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'cartons' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'cartons' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
                 onClick={() => setActiveTab('cartons')}
               >
@@ -630,6 +706,13 @@ export const Orders: React.FC = () => {
               >
                 <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
                 Kodlar ({codesTotal})
+              </button>
+              <button
+                style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'imports' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'imports' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+                onClick={() => setActiveTab('imports')}
+              >
+                <Archive size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                Yüklemeler ({importBatches.length})
               </button>
             </div>
 
@@ -867,6 +950,88 @@ export const Orders: React.FC = () => {
                 </div>
               )}
 
+              {activeTab === 'imports' && (
+                <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '420px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div>
+                      <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>Kod Yükleme Kayıtları</h4>
+                      <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '4px 0 0' }}>Bu sipariş satırına yüklenen dosyaları ve bağlı kodları yönetin.</p>
+                    </div>
+                    {user?.role !== 'Viewer' && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Cancelled') && (
+                          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowImportModal(true)}>
+                            <Upload size={16} /> Yeni Kod Yükle
+                          </button>
+                        )}
+                        <button className="btn btn-danger" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleClearOrderCodes} disabled={clearingCodes}>
+                          {clearingCodes ? <Loader2 className="spinner" size={16} /> : <Trash2 size={16} />}
+                          Tüm Kodları Temizle
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                    <table className="data-table" style={{ margin: 0, minWidth: '980px' }}>
+                      <thead style={{ backgroundColor: '#f8fafc' }}>
+                        <tr>
+                          <th style={{ padding: '12px' }}>Tarih</th>
+                          <th style={{ padding: '12px' }}>Dosya</th>
+                          <th style={{ padding: '12px' }}>Satır</th>
+                          <th style={{ padding: '12px' }}>Eklenen</th>
+                          <th style={{ padding: '12px' }}>Mükerrer</th>
+                          <th style={{ padding: '12px' }}>Hatalı</th>
+                          <th style={{ padding: '12px' }}>Bağlı Kod</th>
+                          <th style={{ padding: '12px' }}>Kullanılan</th>
+                          <th style={{ padding: '12px' }}>Kullanıcı</th>
+                          <th style={{ padding: '12px', textAlign: 'right' }}>İşlem</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importBatchesLoading ? (
+                          <tr><td colSpan={10} style={{ textAlign: 'center', padding: '40px' }}><Loader2 className="spinner" size={24} style={{ margin: '0 auto' }} /></td></tr>
+                        ) : importBatches.length === 0 ? (
+                          <tr><td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Bu siparişe ait yükleme kaydı bulunamadı.</td></tr>
+                        ) : (
+                          importBatches.map((batch) => (
+                            <tr key={batch.id}>
+                              <td style={{ padding: '12px', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{new Date(batch.createdAt).toLocaleString('tr-TR')}</td>
+                              <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', maxWidth: '220px', wordBreak: 'break-word' }}>{batch.fileName || '-'}</td>
+                              <td style={{ padding: '12px' }}>{batch.totalRows.toLocaleString()}</td>
+                              <td style={{ padding: '12px', color: '#15803d', fontWeight: 700 }}>{batch.importedCount.toLocaleString()}</td>
+                              <td style={{ padding: '12px', color: '#b45309' }}>{batch.duplicateCount.toLocaleString()}</td>
+                              <td style={{ padding: '12px', color: batch.invalidCount > 0 ? '#b91c1c' : '#64748b' }}>{batch.invalidCount.toLocaleString()}</td>
+                              <td style={{ padding: '12px' }}>{batch.linkedCodeCount.toLocaleString()}</td>
+                              <td style={{ padding: '12px' }}>
+                                <span className="badge" style={{ backgroundColor: batch.usedCodeCount > 0 ? '#fee2e2' : '#dcfce7', color: batch.usedCodeCount > 0 ? '#b91c1c' : '#166534' }}>
+                                  {batch.usedCodeCount.toLocaleString()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px' }}>{batch.createdBy || '-'}</td>
+                              <td style={{ padding: '12px', textAlign: 'right' }}>
+                                {user?.role !== 'Viewer' && (
+                                  <button
+                                    className="btn btn-danger"
+                                    style={{ padding: '6px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                    disabled={!batch.canDelete || deletingBatchId === batch.id}
+                                    title={!batch.canDelete ? 'Bu yükleme eski kayıtlara bağlı değil veya kullanılan kod içeriyor.' : 'Bu yüklemenin kodlarını sil'}
+                                    onClick={() => handleDeleteImportBatch(batch)}
+                                  >
+                                    {deletingBatchId === batch.id ? <Loader2 className="spinner" size={14} /> : <Trash2 size={14} />}
+                                    Sil
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
             </div>
 
             {/* Modal Footer Actions */}
@@ -907,9 +1072,20 @@ export const Orders: React.FC = () => {
                 )}
 
                 {selectedOrder.status === 'Cancelled' && (
-                  <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
-                    Siparişi Sil
-                  </button>
+                  <>
+                    <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
+                      Siparişi Sil
+                    </button>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setActiveTab('imports')}>
+                      <Archive size={16} style={{ marginRight: '6px' }}/> Yüklemeleri Yönet
+                    </button>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
+                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
+                    </button>
+                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
+                      <RotateCcw size={16} style={{ marginRight: '6px' }}/> Tekrar Aktifleştir
+                    </button>
+                  </>
                 )}
               </div>
             )}

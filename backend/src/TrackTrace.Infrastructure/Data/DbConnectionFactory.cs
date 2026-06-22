@@ -93,8 +93,9 @@ public class DbConnectionFactory : IDbConnectionFactory
             Id UUID PRIMARY KEY, PalletId UUID NOT NULL REFERENCES Pallets(Id) ON DELETE CASCADE, CartonId UUID NOT NULL REFERENCES Cartons(Id) ON DELETE CASCADE, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT UQ_PalletCartons_Carton UNIQUE (CartonId)
         );
         CREATE TABLE IF NOT EXISTS ProductCodes (
-            Id UUID PRIMARY KEY, OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE, RawCode TEXT NOT NULL, Gtin TEXT, SerialNo TEXT, CryptoTail TEXT, Status TEXT NOT NULL, CartonId UUID REFERENCES Cartons(Id) ON DELETE SET NULL, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, ScannedAt TIMESTAMPTZ, ScannedBy UUID REFERENCES Users(Id) ON DELETE SET NULL
+            Id UUID PRIMARY KEY, OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE, ImportBatchId UUID REFERENCES ImportBatches(Id) ON DELETE SET NULL, RawCode TEXT NOT NULL, Gtin TEXT, SerialNo TEXT, CryptoTail TEXT, Status TEXT NOT NULL, CartonId UUID REFERENCES Cartons(Id) ON DELETE SET NULL, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, ScannedAt TIMESTAMPTZ, ScannedBy UUID REFERENCES Users(Id) ON DELETE SET NULL
         );
+        ALTER TABLE ProductCodes ADD COLUMN IF NOT EXISTS ImportBatchId UUID REFERENCES ImportBatches(Id) ON DELETE SET NULL;
         CREATE TABLE IF NOT EXISTS PrintJobs (
             Id UUID PRIMARY KEY, LabelType TEXT NOT NULL, EntityId UUID NOT NULL, PrintedBy UUID REFERENCES Users(Id) ON DELETE SET NULL, PrintCount INT NOT NULL DEFAULT 1, Format TEXT NOT NULL, CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -103,6 +104,7 @@ public class DbConnectionFactory : IDbConnectionFactory
         );
         CREATE UNIQUE INDEX IF NOT EXISTS UQ_ProductCodes_RawCode ON ProductCodes(RawCode);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status ON ProductCodes(OrderId, Status);
+        CREATE INDEX IF NOT EXISTS IX_ProductCodes_ImportBatchId ON ProductCodes(ImportBatchId);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_CartonId ON ProductCodes(CartonId);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status_ScannedAt ON ProductCodes(OrderId, Status, ScannedAt DESC);
         CREATE INDEX IF NOT EXISTS IX_Orders_OrderNo ON Orders(OrderNo);

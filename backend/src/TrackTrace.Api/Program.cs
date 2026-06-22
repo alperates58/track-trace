@@ -573,6 +573,160 @@ app.MapGet("/api/orders/{id:guid}/product-codes", async (
     });
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapGet("/api/orders/{id:guid}/import-batches", async (Guid id, IDbConnectionFactory dbFactory) =>
+{
+    using var connection = dbFactory.CreateConnection();
+    if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+
+    const string sql = @"
+        SELECT
+            ib.Id,
+            ib.OrderId,
+            ib.FileName,
+            ib.TotalRows,
+            ib.ImportedCount,
+            ib.DuplicateCount,
+            ib.InvalidCount,
+            ib.CreatedAt,
+            u.Name AS CreatedBy,
+            COALESCE(pc.LinkedCodeCount, 0) AS LinkedCodeCount,
+            COALESCE(pc.UsedCodeCount, 0) AS UsedCodeCount
+        FROM ImportBatches ib
+        LEFT JOIN Users u ON u.Id = ib.CreatedBy
+        LEFT JOIN (
+            SELECT
+                ImportBatchId,
+                COUNT(*) AS LinkedCodeCount,
+                COUNT(*) FILTER (WHERE Status <> 'Uploaded' OR CartonId IS NOT NULL OR ScannedAt IS NOT NULL) AS UsedCodeCount
+            FROM ProductCodes
+            WHERE ImportBatchId IS NOT NULL
+            GROUP BY ImportBatchId
+        ) pc ON pc.ImportBatchId = ib.Id
+        WHERE ib.OrderId = @OrderId
+        ORDER BY ib.CreatedAt DESC";
+
+    var rows = await connection.QueryAsync<dynamic>(sql, new { OrderId = id });
+    var items = rows.Select(x => new ImportBatchDto(
+        (Guid)x.id,
+        (Guid)x.orderid,
+        (string?)x.filename,
+        (int)x.totalrows,
+        (int)x.importedcount,
+        (int)x.duplicatecount,
+        (int)x.invalidcount,
+        Convert.ToInt32(x.linkedcodecount),
+        Convert.ToInt32(x.usedcodecount),
+        (string?)x.createdby,
+        (DateTime)x.createdat,
+        Convert.ToInt32(x.linkedcodecount) > 0 && Convert.ToInt32(x.usedcodecount) == 0
+    ));
+
+    return Results.Ok(items);
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapDelete("/api/orders/{orderId:guid}/import-batches/{batchId:guid}", async (
+    Guid orderId,
+    Guid batchId,
+    IDbConnectionFactory dbFactory,
+    IAuditLogService auditLogService) =>
+{
+    using var connection = dbFactory.CreateConnection();
+    if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+
+    using var transaction = connection.BeginTransaction();
+    try
+    {
+        var batch = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT Id, OrderId, FileName FROM ImportBatches WHERE Id = @BatchId AND OrderId = @OrderId FOR UPDATE",
+            new { BatchId = batchId, OrderId = orderId },
+            transaction);
+        if (batch == null)
+        {
+            transaction.Rollback();
+            return Results.NotFound(new { message = "Yükleme kaydı bulunamadı." });
+        }
+
+        int linkedCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM ProductCodes WHERE ImportBatchId = @BatchId",
+            new { BatchId = batchId },
+            transaction);
+        int usedCount = await connection.ExecuteScalarAsync<int>(@"
+            SELECT COUNT(*) FROM ProductCodes
+            WHERE ImportBatchId = @BatchId
+              AND (Status <> 'Uploaded' OR CartonId IS NOT NULL OR ScannedAt IS NOT NULL)",
+            new { BatchId = batchId },
+            transaction);
+
+        if (usedCount > 0)
+        {
+            transaction.Rollback();
+            return Results.BadRequest(new { message = "Bu yüklemede okutulmuş veya koliye alınmış kodlar var; batch silinemez." });
+        }
+
+        await connection.ExecuteAsync("DELETE FROM ProductCodes WHERE ImportBatchId = @BatchId", new { BatchId = batchId }, transaction);
+        await connection.ExecuteAsync("DELETE FROM ImportBatches WHERE Id = @BatchId", new { BatchId = batchId }, transaction);
+        transaction.Commit();
+
+        await auditLogService.LogAsync("ImportBatches", batchId, "DeleteBatch", batch, new { OrderId = orderId, DeletedCodes = linkedCount });
+        return Results.Ok(new { deletedCodes = linkedCount });
+    }
+    catch (Exception ex)
+    {
+        transaction.Rollback();
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapDelete("/api/orders/{id:guid}/product-codes", async (
+    Guid id,
+    IDbConnectionFactory dbFactory,
+    IAuditLogService auditLogService) =>
+{
+    using var connection = dbFactory.CreateConnection();
+    if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+
+    using var transaction = connection.BeginTransaction();
+    try
+    {
+        var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT Id, Status FROM Orders WHERE Id = @OrderId FOR UPDATE",
+            new { OrderId = id },
+            transaction);
+        if (order == null)
+        {
+            transaction.Rollback();
+            return Results.NotFound(new { message = "Sipariş bulunamadı." });
+        }
+
+        int usedCodeCount = await connection.ExecuteScalarAsync<int>(@"
+            SELECT COUNT(*) FROM ProductCodes
+            WHERE OrderId = @OrderId
+              AND (Status <> 'Uploaded' OR CartonId IS NOT NULL OR ScannedAt IS NOT NULL)",
+            new { OrderId = id },
+            transaction);
+        int cartonCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Cartons WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
+        int palletCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Pallets WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
+
+        if (usedCodeCount > 0 || cartonCount > 0 || palletCount > 0)
+        {
+            transaction.Rollback();
+            return Results.BadRequest(new { message = "Bu siparişte üretim/okutma/koli/palet kaydı var; yüklenen kodlar toplu silinemez." });
+        }
+
+        int deletedCodes = await connection.ExecuteAsync("DELETE FROM ProductCodes WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
+        await connection.ExecuteAsync("DELETE FROM ImportBatches WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
+        transaction.Commit();
+
+        await auditLogService.LogAsync("Orders", id, "ClearProductCodes", null, new { DeletedCodes = deletedCodes });
+        return Results.Ok(new { deletedCodes });
+    }
+    catch (Exception ex)
+    {
+        transaction.Rollback();
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
 app.MapPost("/api/orders", async (CreateOrderRequest request, IMediator mediator) =>
 {
     try

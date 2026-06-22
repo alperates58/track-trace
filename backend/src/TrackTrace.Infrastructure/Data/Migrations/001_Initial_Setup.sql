@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS PalletCartons (
 CREATE TABLE IF NOT EXISTS ProductCodes (
     Id UUID PRIMARY KEY,
     OrderId UUID NOT NULL REFERENCES Orders(Id) ON DELETE CASCADE,
+    ImportBatchId UUID REFERENCES ImportBatches(Id) ON DELETE SET NULL,
     RawCode TEXT NOT NULL,
     Gtin TEXT,
     SerialNo TEXT,
@@ -93,6 +94,9 @@ CREATE TABLE IF NOT EXISTS ProductCodes (
     ScannedAt TIMESTAMPTZ,
     ScannedBy UUID REFERENCES Users(Id) ON DELETE SET NULL
 );
+
+ALTER TABLE ProductCodes
+ADD COLUMN IF NOT EXISTS ImportBatchId UUID REFERENCES ImportBatches(Id) ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS PrintJobs (
     Id UUID PRIMARY KEY,
@@ -120,6 +124,7 @@ CREATE TABLE IF NOT EXISTS AuditLogs (
 
 CREATE UNIQUE INDEX IF NOT EXISTS UQ_ProductCodes_RawCode ON ProductCodes(RawCode);
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status ON ProductCodes(OrderId, Status);
+CREATE INDEX IF NOT EXISTS IX_ProductCodes_ImportBatchId ON ProductCodes(ImportBatchId);
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_Gtin ON ProductCodes(Gtin);
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_CartonId ON ProductCodes(CartonId);
 CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status_ScannedAt ON ProductCodes(OrderId, Status, ScannedAt DESC);

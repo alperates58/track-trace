@@ -35,6 +35,7 @@ public class ProductCode
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
+    public Guid? ImportBatchId { get; set; }
     public string RawCode { get; set; } = null!;
     public string? Gtin { get; set; }
     public string? SerialNo { get; set; }
