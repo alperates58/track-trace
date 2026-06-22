@@ -17,7 +17,6 @@ namespace TrackTrace.Infrastructure.Services;
 
 public class LabelGenerator : ILabelGenerator
 {
-    private const char DataMatrixFnc1 = (char)232;
     private readonly string _frontendUrl;
 
     public LabelGenerator(IConfiguration configuration)
@@ -420,7 +419,9 @@ public class LabelGenerator : ILabelGenerator
             bool isGs1 = content.Length > 0 && content[0] == Gs1AutoHelper.GS;
             if (isGs1)
             {
-                content = DataMatrixFnc1 + content.Substring(1).Replace(Gs1AutoHelper.GS, DataMatrixFnc1);
+                content = content.Substring(1);
+                options.Hints[EncodeHintType.GS1_FORMAT] = true;
+                options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
             }
 
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
