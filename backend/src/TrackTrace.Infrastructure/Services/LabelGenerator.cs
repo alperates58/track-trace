@@ -412,8 +412,7 @@ public class LabelGenerator : ILabelGenerator
                 Height = size,
                 Margin = 2,
                 PureBarcode = true,
-                SymbolShape = ZXing.Datamatrix.Encoder.SymbolShapeHint.FORCE_NONE,
-                GS1Format = true
+                SymbolShape = ZXing.Datamatrix.Encoder.SymbolShapeHint.FORCE_NONE
             };
 
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
