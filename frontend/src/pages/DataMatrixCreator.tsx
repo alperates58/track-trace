@@ -366,17 +366,7 @@ export const DataMatrixCreator: React.FC = () => {
         };
       }
 
-      // Try to split automatically if crypto indicator is present
-      let splitPos = -1;
-      const possibleAis = ['91', '92', '93'];
-      for (const ai of possibleAis) {
-        const idx = rest.indexOf(ai);
-        if (idx >= 0) {
-          if (splitPos === -1 || idx < splitPos) {
-            splitPos = idx;
-          }
-        }
-      }
+      const splitPos = findMissingGsSplitPosition(rest, selectedProfile);
 
       if (splitPos > 0) {
         serial = rest.substring(0, splitPos);
@@ -497,6 +487,38 @@ export const DataMatrixCreator: React.FC = () => {
             .replace(/\(92\)/g, '92')
             .replace(/\(93\)/g, '93')
             .trim();
+  };
+
+  const findMissingGsSplitPosition = (rest: string, selectedProfile: string): number => {
+    if (!rest) return -1;
+
+    if ((selectedProfile === 'Auto' || selectedProfile === 'ZnakShort') &&
+        rest.length === 12 &&
+        rest.substring(6, 8) === '93') {
+      return 6;
+    }
+
+    if ((selectedProfile === 'Auto' || selectedProfile === 'ZnakCosmetics') &&
+        rest.length > 12 &&
+        rest.substring(6).startsWith('91')) {
+      return 6;
+    }
+
+    if ((selectedProfile === 'Auto' || selectedProfile === 'ZnakLightIndustry') &&
+        rest.length > 19 &&
+        rest.substring(13).startsWith('91')) {
+      return 13;
+    }
+
+    let splitPos = -1;
+    for (const ai of ['91', '92', '93']) {
+      const idx = rest.indexOf(ai);
+      if (idx > 0 && (splitPos === -1 || idx < splitPos)) {
+        splitPos = idx;
+      }
+    }
+
+    return splitPos;
   };
 
   // High-performance asynchronous reader and validator

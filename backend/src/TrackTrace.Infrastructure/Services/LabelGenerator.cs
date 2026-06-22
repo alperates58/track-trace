@@ -415,6 +415,15 @@ public class LabelGenerator : ILabelGenerator
                 SymbolShape = ZXing.Datamatrix.Encoder.SymbolShapeHint.FORCE_NONE
             };
 
+            string content = text;
+            bool isGs1 = content.Length > 0 && content[0] == Gs1AutoHelper.GS;
+            if (isGs1)
+            {
+                content = content.Substring(1);
+                options.Hints[EncodeHintType.GS1_FORMAT] = true;
+                options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
+            }
+
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
             options.Hints[EncodeHintType.DISABLE_ECI] = true;
 
@@ -424,7 +433,7 @@ public class LabelGenerator : ILabelGenerator
                 Options = options
             };
 
-            using var bitmap = writer.Write(text);
+            using var bitmap = writer.Write(content);
             if (bitmap == null) return Array.Empty<byte>();
 
             using var image = SKImage.FromBitmap(bitmap);

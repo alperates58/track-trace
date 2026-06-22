@@ -202,19 +202,7 @@ namespace TrackTrace.Application.Common
 
                 // If Znak profile or Auto profile with crypto indicator, GS separator is missing!
                 // Try to split automatically if crypto indicator is present
-                int splitPos = -1;
-                string[] possibleAis = { "91", "92", "93" };
-                foreach (var ai in possibleAis)
-                {
-                    int idx = rest.IndexOf(ai);
-                    if (idx >= 0)
-                    {
-                        if (splitPos == -1 || idx < splitPos)
-                        {
-                            splitPos = idx;
-                        }
-                    }
-                }
+                int splitPos = FindMissingGsSplitPosition(rest, profile);
 
                 if (splitPos > 0)
                 {
@@ -470,6 +458,44 @@ namespace TrackTrace.Application.Common
                     .Replace("(92)", "92")
                     .Replace("(93)", "93")
                     .Trim();
+        }
+
+        private static int FindMissingGsSplitPosition(string rest, ValidationProfile profile)
+        {
+            if (string.IsNullOrEmpty(rest))
+                return -1;
+
+            if ((profile == ValidationProfile.Auto || profile == ValidationProfile.ZnakShort) &&
+                rest.Length == 12 &&
+                rest.Substring(6, 2) == "93")
+            {
+                return 6;
+            }
+
+            if ((profile == ValidationProfile.Auto || profile == ValidationProfile.ZnakCosmetics) &&
+                rest.Length > 12 &&
+                rest.Substring(6).StartsWith("91"))
+            {
+                return 6;
+            }
+
+            if ((profile == ValidationProfile.Auto || profile == ValidationProfile.ZnakLightIndustry) &&
+                rest.Length > 19 &&
+                rest.Substring(13).StartsWith("91"))
+            {
+                return 13;
+            }
+
+            string[] possibleAis = { "91", "92", "93" };
+            int splitPos = -1;
+            foreach (var ai in possibleAis)
+            {
+                int idx = rest.IndexOf(ai, StringComparison.Ordinal);
+                if (idx > 0 && (splitPos == -1 || idx < splitPos))
+                    splitPos = idx;
+            }
+
+            return splitPos;
         }
 
         private static string RemoveLeadingBomAndInvisible(string s)
