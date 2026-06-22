@@ -195,22 +195,20 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
             }
 
             var parsed = Gs1AutoHelper.NormalizeForEncoding(raw, request.Profile);
-            if (!parsed.Success)
-            {
-                invalidCount++;
-                errors.Add(new ImportErrorDto(rowNo, raw, parsed.ErrorMessage ?? "Barkod formatı çözümlenemedi."));
-                continue;
-            }
+            string finalNormalized = parsed.Success ? parsed.Normalized : raw;
+            string? finalGtin = parsed.Success ? parsed.Gtin : null;
+            string? finalSerialNo = parsed.Success ? parsed.SerialNo : null;
+            string? finalCryptoTail = parsed.Success ? parsed.CryptoTail : null;
 
-            if (seenRawCodesInFile.Contains(parsed.Normalized))
+            if (seenRawCodesInFile.Contains(finalNormalized))
             {
                 duplicateCount++;
                 errors.Add(new ImportErrorDto(rowNo, raw, "Dosya içinde mükerrer kod."));
                 continue;
             }
 
-            seenRawCodesInFile.Add(parsed.Normalized);
-            validCodesToInsert.Add((Guid.NewGuid(), parsed.Normalized, parsed.Gtin, parsed.SerialNo, parsed.CryptoTail));
+            seenRawCodesInFile.Add(finalNormalized);
+            validCodesToInsert.Add((Guid.NewGuid(), finalNormalized, finalGtin, finalSerialNo, finalCryptoTail));
         }
 
         await connection.ExecuteAsync(@"
