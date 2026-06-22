@@ -563,10 +563,11 @@ export const DataMatrixCreator: React.FC = () => {
       } else {
         // Completed validation!
         setFileCodes(validCodes);
+        const hardErrorsCount = errors.filter(e => !e.isWarning).length;
         setAnalysis({
-          totalLines: validCodes.length + errors.length,
+          totalLines: validCodes.length + hardErrorsCount,
           validCount: validCodes.length,
-          invalidCount: errors.length,
+          invalidCount: hardErrorsCount,
           previewCodes: validCodes.slice(0, 5),
           errors: errors,
           warningCount: warningCount
@@ -574,9 +575,9 @@ export const DataMatrixCreator: React.FC = () => {
 
         addLog(`Analiz tamamlandı.`);
         addLog(`Geçerli kod: ${validCodes.length.toLocaleString()}`);
-        addLog(`Hatalı satır: ${errors.length.toLocaleString()}`);
+        addLog(`Hatalı satır: ${hardErrorsCount.toLocaleString()}`);
         if (warningCount > 0) {
-          addLog(`⚠ ${warningCount.toLocaleString()} kodda doğrulama anahtarı eksik olabilir uyarısı mevcut.`);
+          addLog(`⚠ ${warningCount.toLocaleString()} kodda uyarı mevcut.`);
         }
 
         if (validCodes.length > 0) {
