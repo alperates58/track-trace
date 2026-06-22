@@ -157,11 +157,7 @@ namespace TrackTrace.Application.Common
                 return Fail("Seri numarası boş.", "Seri Numarası Eksik", "21 alanından sonra boş olmayan bir seri numarası eklenmelidir.");
             }
 
-            // Check if there are both 92 and 93
-            if (rest.Contains("92") && rest.Contains("93"))
-            {
-                return Fail("Hem 92 hem 93 alanı var; şablon belirsiz.", "Şablon Belirsiz", "Kripto alanlarından sadece birini kullanın (ya 91+92 ya da sadece 93).");
-            }
+
 
             // Split rest by GS separator (ASCII 29)
             int gsPos = rest.IndexOf(GS);
