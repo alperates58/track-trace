@@ -766,6 +766,7 @@ export const DataMatrixCreator: React.FC = () => {
         addLog(`Grup ${i + 1} gönderiliyor (${chunkCodes.length} kod)...`);
 
         const chunkBlob = new Blob([chunkCodes.join('\n')], { type: 'text/plain' });
+        const startIndex = i * chunkSizeVal + 1;
         
         const formData = new FormData();
         formData.append('file', chunkBlob, `part_${chunkIndexStr}.txt`);
@@ -778,6 +779,8 @@ export const DataMatrixCreator: React.FC = () => {
         formData.append('line1', line1);
         formData.append('line2', line2);
         formData.append('labelBelow', labelBelow.toString());
+        formData.append('startIndex', startIndex.toString());
+        formData.append('totalCodes', totalCodes.toString());
 
         const responseBlob = await api.post('/api/datamatrix/generate', formData);
 

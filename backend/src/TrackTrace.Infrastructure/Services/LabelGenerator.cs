@@ -289,15 +289,16 @@ public class LabelGenerator : ILabelGenerator
         return qrCode.GetGraphic(20);
     }
 
-    public byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow)
+    public byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow, int startIndex = 1, int totalCodes = -1)
     {
         var codesList = codes.ToList();
         cols = Math.Max(1, cols);
         rows = Math.Max(1, rows);
 
-        int totalCodes = codesList.Count;
+        int currentCodesCount = codesList.Count;
+        int displayTotalCodes = totalCodes > 0 ? totalCodes : currentCodesCount;
         int itemsPerPage = cols * rows;
-        int totalPages = (int)Math.Ceiling(totalCodes / (double)itemsPerPage);
+        int totalPages = (int)Math.Ceiling(currentCodesCount / (double)itemsPerPage);
         const float pageSize = 595f;
         const float pageMargin = 10f;
         const float footerHeight = 18f;
@@ -333,8 +334,8 @@ public class LabelGenerator : ILabelGenerator
                         }
 
                         var pageCodes = codesList.Skip(pageIdx * itemsPerPage).Take(itemsPerPage).ToList();
-                        int firstIdx = pageIdx * itemsPerPage + 1;
-                        int lastIdx = Math.Min((pageIdx + 1) * itemsPerPage, totalCodes);
+                        int firstIdx = startIndex + pageIdx * itemsPerPage;
+                        int lastIdx = Math.Min(startIndex + (pageIdx + 1) * itemsPerPage - 1, startIndex + currentCodesCount - 1);
 
                         mainCol.Item().Height(gridHeight).Grid(grid =>
                         {
@@ -368,8 +369,8 @@ public class LabelGenerator : ILabelGenerator
                         });
 
                         string footerText = (firstIdx == lastIdx)
-                            ? $"{firstIdx} / {totalCodes}"
-                            : $"{firstIdx}-{lastIdx} / {totalCodes}";
+                            ? $"{firstIdx} / {displayTotalCodes}"
+                            : $"{firstIdx}-{lastIdx} / {displayTotalCodes}";
                         mainCol.Item().Height(footerHeight).AlignCenter().AlignMiddle().Text(footerText).FontSize(9).Bold().FontColor(Colors.Grey.Darken2);
                     }
                 });
@@ -379,12 +380,12 @@ public class LabelGenerator : ILabelGenerator
         return stream.ToArray();
     }
 
-    public byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes)
+    public byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes, int startIndex = 1)
     {
         using var ms = new MemoryStream();
         using (var archive = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, true))
         {
-            int index = 1;
+            int index = startIndex;
             foreach (var code in codes)
             {
                  byte[] imgBytes = GenerateDataMatrixImageBytes(code, 400);

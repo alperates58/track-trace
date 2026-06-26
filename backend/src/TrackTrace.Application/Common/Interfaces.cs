@@ -34,8 +34,8 @@ public interface ILabelGenerator
     string GenerateCartonZplLabel(CartonDto carton, OrderDto order);
     byte[] GeneratePalletPdfLabel(PalletDto pallet, OrderDto order, int cartonCount);
     string GeneratePalletZplLabel(PalletDto pallet, OrderDto order, int cartonCount);
-    byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow);
-    byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes);
+    byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow, int startIndex = 1, int totalCodes = -1);
+    byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes, int startIndex = 1);
     byte[] GenerateDataMatrixImage(string text);
 }
 
