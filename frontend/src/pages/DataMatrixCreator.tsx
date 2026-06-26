@@ -344,7 +344,36 @@ export const DataMatrixCreator: React.FC = () => {
       return { success: false, normalized: '', errorMessage: 'Seri numarası boş.', errorType: 'Seri Numarası Eksik', suggestedFix: '21 alanından sonra boş olmayan bir seri numarası eklenmelidir.' };
     }
 
-    if (rest.includes('92') && rest.includes('93')) {
+    // Check if both AI 92 and AI 93 are actually present in the parsed structure
+    let hasAi92 = false;
+    let hasAi93 = false;
+
+    if (rest.includes(GS)) {
+      const parts = rest.split(GS);
+      // parts[0] is serial, parts[1..] are AI blocks
+      for (let i = 1; i < parts.length; i++) {
+        const part = parts[i];
+        if (part.startsWith('93')) {
+          hasAi93 = true;
+        }
+        if (part.startsWith('92') || part.startsWith('91')) {
+          hasAi92 = true;
+        }
+      }
+    } else {
+      // No GS character. Let's use findMissingGsSplitPosition to see what we get.
+      const splitPos = findMissingGsSplitPosition(rest, selectedProfile);
+      if (splitPos > 0) {
+        const remainderTemp = rest.substring(splitPos);
+        if (remainderTemp.startsWith('93')) {
+          hasAi93 = true;
+        } else if (remainderTemp.startsWith('91')) {
+          hasAi92 = true;
+        }
+      }
+    }
+
+    if (hasAi92 && hasAi93) {
       return { success: false, normalized: '', errorMessage: 'Hem 92 hem 93 alanı var; şablon belirsiz.', errorType: 'Şablon Belirsiz', suggestedFix: 'Kripto alanlarından sadece birini kullanın (ya 91+92 ya da sadece 93).' };
     }
 
