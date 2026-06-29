@@ -114,6 +114,7 @@ export const DataMatrixCreator: React.FC = () => {
   const [line1, setLine1] = useState('');
   const [line2, setLine2] = useState('');
   const [labelBelow, setLabelBelow] = useState(true);
+  const [fontSize, setFontSize] = useState(10);
 
   // Split PDF States
   const [splitOption, setSplitOption] = useState<string>('none');
@@ -781,6 +782,7 @@ export const DataMatrixCreator: React.FC = () => {
         formData.append('labelBelow', labelBelow.toString());
         formData.append('startIndex', startIndex.toString());
         formData.append('totalCodes', totalCodes.toString());
+        formData.append('fontSize', fontSize.toString());
 
         const responseBlob = await api.post('/api/datamatrix/generate', formData);
 
@@ -1283,6 +1285,25 @@ export const DataMatrixCreator: React.FC = () => {
                             Barkodun Altında
                           </label>
                         </div>
+                      </div>
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Yazı Boyutu (Punto)</label>
+                        <select 
+                          className="form-input" 
+                          value={fontSize} 
+                          onChange={(e) => setFontSize(parseInt(e.target.value))}
+                          style={{ marginTop: '4px' }}
+                        >
+                          <option value="6">6 pt</option>
+                          <option value="7">7 pt</option>
+                          <option value="8">8 pt</option>
+                          <option value="9">9 pt</option>
+                          <option value="10">10 pt</option>
+                          <option value="11">11 pt</option>
+                          <option value="12">12 pt</option>
+                          <option value="14">14 pt</option>
+                          <option value="16">16 pt</option>
+                        </select>
                       </div>
                     </div>
                   )}

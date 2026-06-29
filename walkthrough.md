@@ -80,3 +80,10 @@ Sistem WMS değildir; operatörün en hızlı şekilde okutma yapması için tas
 * **Hata Giderimi (ClosedXML Dynamic Binding Exception)**: Dapper dynamic nesnelerinin ClosedXML hücre atamaları esnasında runtime tip çözümleme hatası vermesi (`Cannot convert null to 'int'` ve implicit operator belirsizliği) düzeltildi. Veritabanı sorgularındaki kolon takma adları (aliases) çift tırnak içerisine alınarak PascalCase standardı korundu ve hücre atamalarında dinamik tipler `Convert.ToInt32(...)`, `(string)` gibi explicit ve güvenli dönüşüm metotları ile beslendi.
 * **Stok Bazlı Excel İhracatı**: Excel export altyapısı genişletildi. Kullanıcı artık tüm siparişin raporunu alabildiği gibi, Stok Detayı ekranı üzerinden **sadece o stok koduna ait** filtrelenmiş verileri barındıran `{OrderNo}_{StockCode}_TrackTrace_Raporu.xlsx` isimli özelleştirilmiş raporu indirebilir.
 * **UI Buton Eklemesi**: Stok Detayı ekranının sağ üst köşesine **Sipariş Exceli**, **Bu Stok Exceli** ve **Sipariş PDF'i** butonları eklenerek kullanım kolaylığı üst düzeye çıkarıldı.
+
+### 3. QuestPDF Page Break Fix & Adjustable Font Size in DataMatrix Generator (29.06.2026)
+* **Page Split Resolution**: Fixed an issue where adding text above or below the DataMatrix barcode caused the elements to split across multiple pages (e.g. text on page 1, barcode on page 2) inside the grid cell layout, especially noticeable in `1x1` size.
+* **Adjustable Font Size**: Added support for customizable font size (`fontSize`) parameter in the PDF generation pipeline (from frontend selection to backend parser), defaulting to `10pt` (increased from the original `8pt`).
+* **Dynamic Layout Adjustment**: Updated `LabelGenerator.GenerateDataMatrixCodesPdf` to dynamically compute `labelLineHeight` and vertical safety offsets based on the chosen font size. As the font size increases, the barcode image size dynamically shrinks to guarantee that both the barcode and the text fit on the same page.
+
+

@@ -289,7 +289,7 @@ public class LabelGenerator : ILabelGenerator
         return qrCode.GetGraphic(20);
     }
 
-    public byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow, int startIndex = 1, int totalCodes = -1)
+    public byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow, int startIndex = 1, int totalCodes = -1, int fontSize = 10)
     {
         var codesList = codes.ToList();
         cols = Math.Max(1, cols);
@@ -303,15 +303,15 @@ public class LabelGenerator : ILabelGenerator
         const float pageMargin = 10f;
         const float footerHeight = 18f;
         const float gridSpacing = 6f;
-        const float labelLineHeight = 10f;
+        float labelLineHeight = fontSize + 2f;
         float contentSize = pageSize - (pageMargin * 2);
         float gridHeight = contentSize - footerHeight;
         float cellWidth = (contentSize - (gridSpacing * (cols - 1))) / cols;
         float cellHeight = (gridHeight - (gridSpacing * (rows - 1))) / rows;
         float labelHeight = addText
-            ? ((!string.IsNullOrWhiteSpace(line1) ? labelLineHeight : 0f) + (!string.IsNullOrWhiteSpace(line2) ? labelLineHeight : 0f) + 4f)
+            ? ((!string.IsNullOrWhiteSpace(line1) ? labelLineHeight : 0f) + (!string.IsNullOrWhiteSpace(line2) ? labelLineHeight : 0f) + 12f)
             : 0f;
-        float barcodeSize = Math.Max(20f, Math.Min(cellWidth, cellHeight - labelHeight));
+        float barcodeSize = Math.Max(20f, Math.Min(cellWidth, cellHeight - labelHeight) - 4f);
 
         using var stream = new MemoryStream();
 
@@ -351,8 +351,8 @@ public class LabelGenerator : ILabelGenerator
                                     // If label is above
                                     if (!labelBelow && addText)
                                     {
-                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
-                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
+                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(fontSize).Bold();
+                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(fontSize);
                                     }
 
                                     byte[] imgBytes = GenerateDataMatrixImageBytes(code, size);
@@ -361,8 +361,8 @@ public class LabelGenerator : ILabelGenerator
                                     // If label is below
                                     if (labelBelow && addText)
                                     {
-                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(8).Bold();
-                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(8);
+                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(fontSize).Bold();
+                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(fontSize);
                                     }
                                 });
                             }

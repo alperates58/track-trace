@@ -985,6 +985,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
         bool labelBelow = !bool.TryParse(form["labelBelow"], out bool lb) || lb;
         int startIndex = int.TryParse(form["startIndex"], out int si) ? si : 1;
         int totalCodes = int.TryParse(form["totalCodes"], out int tc) ? tc : -1;
+        int fontSize = int.TryParse(form["fontSize"], out int fs) ? fs : 10;
 
         var validCodes = new List<string>();
         using (var reader = new StreamReader(file.OpenReadStream()))
@@ -1012,7 +1013,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
         else // PDF
         {
             byte[] pdfBytes = labelGenerator.GenerateDataMatrixCodesPdf(
-                validCodes, cols, rows, size, addText, line1, line2, labelBelow, startIndex, totalCodes);
+                validCodes, cols, rows, size, addText, line1, line2, labelBelow, startIndex, totalCodes, fontSize);
 
             return Results.File(pdfBytes, "application/pdf", "datamatrix_labels.pdf");
         }
