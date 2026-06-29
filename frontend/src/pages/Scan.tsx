@@ -62,8 +62,8 @@ export const Scan: React.FC = () => {
   const [isOnline, setIsOnline] = useState(true);
 
   // Printer settings
-  const [printMode, setPrintMode] = useState<'pdf' | 'network'>(() => {
-    return (localStorage.getItem('tt_print_mode') as 'pdf' | 'network') || 'pdf';
+  const [printMode, setPrintMode] = useState<'pdf' | 'network' | 'kiosk'>(() => {
+    return (localStorage.getItem('tt_print_mode') as 'pdf' | 'network' | 'kiosk') || 'pdf';
   });
   const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
     const val = localStorage.getItem('tt_auto_print');
@@ -315,6 +315,36 @@ export const Scan: React.FC = () => {
     }
   };
 
+  const printPDFDirectly = async (cartonId: string) => {
+    try {
+      const blob = await api.get(`/api/cartons/${cartonId}/label.pdf`) as Blob;
+      const url = window.URL.createObjectURL(blob);
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          window.URL.revokeObjectURL(url);
+        }, 5000);
+      };
+    } catch (err: any) {
+      console.error("Direct PDF print failed:", err);
+      alert("Doğrudan PDF yazdırma hatası: " + err.message);
+      throw err;
+    }
+  };
+
   const handleTestPrint = async () => {
     setIsTestingConnection(true);
     setTestMessage(null);
@@ -347,7 +377,7 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const handleSaveSettings = (mode: 'pdf' | 'network', auto: boolean) => {
+  const handleSaveSettings = (mode: 'pdf' | 'network' | 'kiosk', auto: boolean) => {
     localStorage.setItem('tt_print_mode', mode);
     localStorage.setItem('tt_auto_print', auto.toString());
     
@@ -389,25 +419,37 @@ export const Scan: React.FC = () => {
           setLastClosedCartonNo(res.cartonNo || null);
           setLastClosedCartonSSCC(res.sscc || null);
 
-          // Auto-print carton label if enabled and mode is network
+          // Auto-print carton label if enabled
           const currentMode = localStorage.getItem('tt_print_mode') || 'pdf';
           const currentAuto = localStorage.getItem('tt_auto_print') !== 'false';
 
-          if (currentMode === 'network' && currentAuto && res.cartonId) {
-            api.get(`/api/cartons/${res.cartonId}/label.zpl`)
-              .then(async (labelData) => {
-                if (labelData && labelData.zpl) {
-                  await printViaZebraBrowserPrint(labelData.zpl);
-                  console.log("Koli barkodu otomatik olarak yerel yazıcıya gönderildi.");
-                } else {
-                  throw new Error("ZPL barkod verisi alınamadı.");
-                }
-              })
-              .catch((printErr: any) => {
-                console.error("Otomatik yazdırma başarısız:", printErr);
-                playSound('warning');
-                alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
-              });
+          if (currentAuto && res.cartonId) {
+            if (currentMode === 'network') {
+              api.get(`/api/cartons/${res.cartonId}/label.zpl`)
+                .then(async (labelData) => {
+                  if (labelData && labelData.zpl) {
+                    await printViaZebraBrowserPrint(labelData.zpl);
+                    console.log("Koli barkodu otomatik olarak yerel yazıcıya gönderildi.");
+                  } else {
+                    throw new Error("ZPL barkod verisi alınamadı.");
+                  }
+                })
+                .catch((printErr: any) => {
+                  console.error("Otomatik yazdırma başarısız:", printErr);
+                  playSound('warning');
+                  alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
+                });
+            } else if (currentMode === 'kiosk') {
+              printPDFDirectly(res.cartonId)
+                .then(() => {
+                  console.log("Koli barkodu PDF olarak otomatik yazdırılmaya gönderildi.");
+                })
+                .catch((printErr: any) => {
+                  console.error("Otomatik PDF yazdırma başarısız:", printErr);
+                  playSound('warning');
+                  alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
+                });
+            }
           }
         } else {
           setStatus('success');
@@ -814,12 +856,23 @@ export const Scan: React.FC = () => {
                 
                 {lastClosedCartonId && (
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                    {printMode === 'network' ? (
+                    {printMode === 'network' || printMode === 'kiosk' ? (
                       <button 
                         className="btn btn-primary" 
                         disabled={isReprinting}
                         style={{ flex: '1 1 100%', padding: '6px 8px', fontSize: '0.75rem', backgroundColor: '#3b82f6', fontWeight: 700, borderRadius: '6px' }}
-                        onClick={handleNetworkPrint}
+                        onClick={async () => {
+                          if (printMode === 'network') {
+                            await handleNetworkPrint();
+                          } else if (printMode === 'kiosk' && lastClosedCartonId) {
+                            setIsReprinting(true);
+                            try {
+                              await printPDFDirectly(lastClosedCartonId);
+                            } finally {
+                              setIsReprinting(false);
+                            }
+                          }
+                        }}
                       >
                         {isReprinting ? 'Yazdırılıyor...' : 'Doğrudan Yazdır'}
                       </button>
@@ -1008,10 +1061,11 @@ export const Scan: React.FC = () => {
                   className="form-input"
                   style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600 }}
                   value={printMode}
-                  onChange={(e) => setPrintMode(e.target.value as 'pdf' | 'network')}
+                  onChange={(e) => setPrintMode(e.target.value as 'pdf' | 'network' | 'kiosk')}
                 >
                   <option value="pdf">Masaüstü PDF İndirme (Manuel)</option>
-                  <option value="network">Zebra Browser Print (Doğrudan Yerel Yazıcı)</option>
+                  <option value="kiosk">Doğrudan Yazdır (Tüm Yazıcılar - PDF/Kiosk)</option>
+                  <option value="network">Zebra Browser Print (Yalnızca Zebra)</option>
                 </select>
               </div>
 
@@ -1045,7 +1099,7 @@ export const Scan: React.FC = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        Bağlı Yazıcıyı Sorgula
+                        Bağlu Yazıcıyı Sorgula
                       </button>
                     </div>
                   </div>
@@ -1101,6 +1155,69 @@ export const Scan: React.FC = () => {
                         {testMessage.text}
                       </div>
                     )}
+                  </div>
+                </>
+              )}
+
+              {printMode === 'kiosk' && (
+                <>
+                  <div style={{ backgroundColor: '#f0fdf4', padding: '14px', borderRadius: '8px', border: '1px solid #bcf0da' }}>
+                    <p style={{ fontSize: '0.8rem', color: '#14532d', margin: '0 0 8px 0', lineHeight: '1.4', fontWeight: 600 }}>
+                      ✓ Bu mod, Argox dahil TÜM marka yazıcıları destekler.
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: '#166534', margin: 0, lineHeight: '1.4' }}>
+                      Bunun için etiket yazıcınızı Windows üzerinde <strong>Varsayılan Yazıcı</strong> yapmalısınız. Otomatik (onay penceresiz) baskı almak istiyorsanız, Google Chrome tarayıcınızı <code>--kiosk-printing</code> parametresi ile başlatmalısınız.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <input
+                      type="checkbox"
+                      id="autoPrintCheckbox"
+                      checked={autoPrintEnabled}
+                      onChange={(e) => setAutoPrintEnabled(e.target.checked)}
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
+                      Koli Tamamlanınca Otomatik Barkod Bas
+                    </label>
+                  </div>
+
+                  <div>
+                    <button
+                      type="button"
+                      disabled={isTestingConnection}
+                      onClick={async () => {
+                        if (lastClosedCartonId) {
+                          setIsTestingConnection(true);
+                          try {
+                            await printPDFDirectly(lastClosedCartonId);
+                          } finally {
+                            setIsTestingConnection(false);
+                          }
+                        } else {
+                          alert("Test edebilmek için sonlandırılmış en az bir koli bulunmalıdır.");
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        backgroundColor: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        color: '#334155',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      {isTestingConnection ? 'Yazdırılıyor...' : 'Test Et (Mevcut Koliyi Yazdır)'}
+                    </button>
                   </div>
                 </>
               )}
