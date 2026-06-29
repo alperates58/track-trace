@@ -1456,7 +1456,7 @@ export const DataMatrixCreator: React.FC = () => {
                   padding: '12px',
                   width: '100%',
                   maxWidth: '300px',
-                  aspectRatio: '1/1.414',
+                  aspectRatio: '1',
                   display: 'grid',
                   gridTemplateColumns: `repeat(${Math.min(cols, 4)}, 1fr)`,
                   gridTemplateRows: `repeat(${Math.min(rows, 4)}, 1fr)`,
@@ -1525,51 +1525,141 @@ export const DataMatrixCreator: React.FC = () => {
                 padding: '24px',
                 textAlign: 'center'
               }}>
-                {previewUrl ? (
-                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ 
-                      display: 'inline-flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      backgroundColor: 'white', 
-                      padding: '20px', 
-                      borderRadius: 'var(--radius-sm)', 
-                      boxShadow: 'var(--shadow-sm)', 
-                      border: '1px solid var(--border-color)',
-                      gap: '8px'
-                    }}>
-                      {addText && !labelBelow && (
-                        <div style={{ textAlign: 'center', wordBreak: 'break-word', maxWidth: '170px' }}>
-                          {line1 && <div style={{ fontSize: `${Math.max(10, fontSize)}px`, fontWeight: 'bold', color: 'black', marginBottom: '2px' }}>{line1}</div>}
-                          {line2 && <div style={{ fontSize: `${Math.max(9, fontSize - 2)}px`, color: '#334155' }}>{line2}</div>}
+                {previewUrl ? (() => {
+                  const PAGE_SIZE = 595.0; // PDF page width/height in points
+                  const PAGE_MARGIN = 20.0;
+                  const FOOTER_HEIGHT = 18.0;
+                  const GRID_SPACING = 6.0;
+                  const LABEL_LINE_HEIGHT = fontSize + 2.0;
+
+                  const contentSize = PAGE_SIZE - (PAGE_MARGIN * 2);
+                  const gridHeight = contentSize - FOOTER_HEIGHT;
+
+                  const cellWidth = (contentSize - (GRID_SPACING * (cols - 1))) / cols;
+                  const cellHeight = (gridHeight - (GRID_SPACING * (rows - 1))) / rows;
+
+                  const labelHeight = addText
+                    ? (((line1 && line1.trim()) ? LABEL_LINE_HEIGHT : 0) + ((line2 && line2.trim()) ? LABEL_LINE_HEIGHT : 0) + 12)
+                    : 0;
+
+                  const barcodeSize = Math.max(20, Math.min(cellWidth, cellHeight - labelHeight) - 4);
+
+                  // Scale factor to fit max 230px container nicely
+                  const maxPreviewW = 230;
+                  const maxPreviewH = 230;
+                  const scale = Math.min(maxPreviewW / cellWidth, maxPreviewH / cellHeight);
+
+                  const previewCellWidth = cellWidth * scale;
+                  const previewCellHeight = cellHeight * scale;
+                  const previewBarcodeSize = barcodeSize * scale;
+                  const previewFontSize = fontSize * scale;
+                  const previewLineSpacing = 3 * scale;
+
+                  return (
+                    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ 
+                        width: `${previewCellWidth}px`,
+                        height: `${previewCellHeight}px`,
+                        backgroundColor: 'white', 
+                        borderRadius: 'var(--radius-sm)', 
+                        boxShadow: 'var(--shadow-sm)', 
+                        border: '1px solid var(--border-color)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        boxSizing: 'border-box',
+                        overflow: 'hidden',
+                        padding: '4px'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: `${previewLineSpacing}px`,
+                          width: '100%',
+                          height: '100%'
+                        }}>
+                          {addText && !labelBelow && (
+                            <div style={{ textAlign: 'center', wordBreak: 'break-word', width: '100%', lineHeight: 1.15 }}>
+                              {line1 && (
+                                <div style={{ 
+                                  fontSize: `${previewFontSize}px`, 
+                                  fontWeight: 'bold', 
+                                  color: 'black', 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis', 
+                                  maxWidth: '100%' 
+                                }}>
+                                  {line1}
+                                </div>
+                              )}
+                              {line2 && (
+                                <div style={{ 
+                                  fontSize: `${previewFontSize}px`, 
+                                  color: '#334155', 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis', 
+                                  maxWidth: '100%' 
+                                }}>
+                                  {line2}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <img 
+                            src={previewUrl} 
+                            alt="DataMatrix Preview" 
+                            style={{ 
+                              width: `${previewBarcodeSize}px`, 
+                              height: `${previewBarcodeSize}px`, 
+                              objectFit: 'contain', 
+                              backgroundColor: 'white', 
+                            }}
+                          />
+                          {addText && labelBelow && (
+                            <div style={{ textAlign: 'center', wordBreak: 'break-word', width: '100%', lineHeight: 1.15 }}>
+                              {line1 && (
+                                <div style={{ 
+                                  fontSize: `${previewFontSize}px`, 
+                                  fontWeight: 'bold', 
+                                  color: 'black', 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis', 
+                                  maxWidth: '100%' 
+                                }}>
+                                  {line1}
+                                </div>
+                              )}
+                              {line2 && (
+                                <div style={{ 
+                                  fontSize: `${previewFontSize}px`, 
+                                  color: '#334155', 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis', 
+                                  maxWidth: '100%' 
+                                }}>
+                                  {line2}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <img 
-                        src={previewUrl} 
-                        alt="DataMatrix Preview" 
-                        style={{ 
-                          width: '150px', 
-                          height: '150px', 
-                          objectFit: 'contain', 
-                          backgroundColor: 'white', 
-                          padding: '2px', 
-                        }}
-                      />
-                      {addText && labelBelow && (
-                        <div style={{ textAlign: 'center', wordBreak: 'break-word', maxWidth: '170px' }}>
-                          {line1 && <div style={{ fontSize: `${Math.max(10, fontSize)}px`, fontWeight: 'bold', color: 'black', marginBottom: '2px' }}>{line1}</div>}
-                          {line2 && <div style={{ fontSize: `${Math.max(9, fontSize - 2)}px`, color: '#334155' }}>{line2}</div>}
-                        </div>
-                      )}
+                      </div>
+                      <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', width: '100%', maxWidth: '250px', wordBreak: 'break-all' }}>
+                        <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px', fontSize: '0.85rem' }}>Listenin İlk Geçerli Kodu:</p>
+                        <code style={{ fontSize: '0.75rem', backgroundColor: 'rgba(0,0,0,0.05)', padding: '2px 4px', borderRadius: '3px' }}>
+                          {analysis?.previewCodes[0]}
+                        </code>
+                      </div>
                     </div>
-                    <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', width: '100%', maxWidth: '250px', wordBreak: 'break-all' }}>
-                      <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px', fontSize: '0.85rem' }}>Listenin İlk Geçerli Kodu:</p>
-                      <code style={{ fontSize: '0.75rem', backgroundColor: 'rgba(0,0,0,0.05)', padding: '2px 4px', borderRadius: '3px' }}>
-                        {analysis?.previewCodes[0]}
-                      </code>
-                    </div>
-                  </div>
-                ) : (
+                  );
+                })() : (
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                     Lütfen dosya yükleyin. İlk geçerli barkodun sunucu görüntüsü burada görünecektir.
                   </div>
