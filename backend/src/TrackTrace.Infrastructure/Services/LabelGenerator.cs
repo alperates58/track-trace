@@ -300,7 +300,7 @@ public class LabelGenerator : ILabelGenerator
         int itemsPerPage = cols * rows;
         int totalPages = (int)Math.Ceiling(currentCodesCount / (double)itemsPerPage);
         const float pageSize = 595f;
-        const float pageMargin = 10f;
+        const float pageMargin = 20f;
         const float footerHeight = 18f;
         const float gridSpacing = 6f;
         float labelLineHeight = fontSize + 2f;

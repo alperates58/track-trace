@@ -1303,6 +1303,14 @@ export const DataMatrixCreator: React.FC = () => {
                           <option value="12">12 pt</option>
                           <option value="14">14 pt</option>
                           <option value="16">16 pt</option>
+                          <option value="18">18 pt</option>
+                          <option value="20">20 pt</option>
+                          <option value="24">24 pt</option>
+                          <option value="28">28 pt</option>
+                          <option value="32">32 pt</option>
+                          <option value="36">36 pt</option>
+                          <option value="40">40 pt</option>
+                          <option value="48">48 pt</option>
                         </select>
                       </div>
                     </div>
@@ -1471,7 +1479,7 @@ export const DataMatrixCreator: React.FC = () => {
                         textAlign: 'center'
                       }}
                     >
-                      {addText && (
+                      {!labelBelow && addText && (
                         <div style={{ scale: '0.75', transformOrigin: 'center', width: '100%' }}>
                           <div style={{ fontWeight: 'bold', color: '#000', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{line1 || 'Satır 1'}</div>
                           <div style={{ color: '#64748b', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{line2 || 'Satır 2'}</div>
@@ -1491,6 +1499,12 @@ export const DataMatrixCreator: React.FC = () => {
                         <rect x="8" y="16" width="6" height="4" fill="#000" />
                         <rect x="16" y="16" width="4" height="4" fill="#000" />
                       </svg>
+                      {labelBelow && addText && (
+                        <div style={{ scale: '0.75', transformOrigin: 'center', width: '100%' }}>
+                          <div style={{ fontWeight: 'bold', color: '#000', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{line1 || 'Satır 1'}</div>
+                          <div style={{ color: '#64748b', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{line2 || 'Satır 2'}</div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1513,20 +1527,41 @@ export const DataMatrixCreator: React.FC = () => {
               }}>
                 {previewUrl ? (
                   <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <img 
-                      src={previewUrl} 
-                      alt="DataMatrix Preview" 
-                      style={{ 
-                        width: '150px', 
-                        height: '150px', 
-                        objectFit: 'contain', 
-                        backgroundColor: 'white', 
-                        padding: '10px', 
-                        borderRadius: 'var(--radius-sm)',
-                        boxShadow: 'var(--shadow-sm)',
-                        border: '1px solid var(--border-color)'
-                      }}
-                    />
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      backgroundColor: 'white', 
+                      padding: '20px', 
+                      borderRadius: 'var(--radius-sm)', 
+                      boxShadow: 'var(--shadow-sm)', 
+                      border: '1px solid var(--border-color)',
+                      gap: '8px'
+                    }}>
+                      {addText && !labelBelow && (
+                        <div style={{ textAlign: 'center', wordBreak: 'break-word', maxWidth: '170px' }}>
+                          {line1 && <div style={{ fontSize: `${Math.max(10, fontSize)}px`, fontWeight: 'bold', color: 'black', marginBottom: '2px' }}>{line1}</div>}
+                          {line2 && <div style={{ fontSize: `${Math.max(9, fontSize - 2)}px`, color: '#334155' }}>{line2}</div>}
+                        </div>
+                      )}
+                      <img 
+                        src={previewUrl} 
+                        alt="DataMatrix Preview" 
+                        style={{ 
+                          width: '150px', 
+                          height: '150px', 
+                          objectFit: 'contain', 
+                          backgroundColor: 'white', 
+                          padding: '2px', 
+                        }}
+                      />
+                      {addText && labelBelow && (
+                        <div style={{ textAlign: 'center', wordBreak: 'break-word', maxWidth: '170px' }}>
+                          {line1 && <div style={{ fontSize: `${Math.max(10, fontSize)}px`, fontWeight: 'bold', color: 'black', marginBottom: '2px' }}>{line1}</div>}
+                          {line2 && <div style={{ fontSize: `${Math.max(9, fontSize - 2)}px`, color: '#334155' }}>{line2}</div>}
+                        </div>
+                      )}
+                    </div>
                     <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', width: '100%', maxWidth: '250px', wordBreak: 'break-all' }}>
                       <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px', fontSize: '0.85rem' }}>Listenin İlk Geçerli Kodu:</p>
                       <code style={{ fontSize: '0.75rem', backgroundColor: 'rgba(0,0,0,0.05)', padding: '2px 4px', borderRadius: '3px' }}>
