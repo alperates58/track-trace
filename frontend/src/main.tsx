@@ -9,10 +9,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
+// Unregister any existing service workers and clear cache storage
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('ServiceWorker registered', reg))
-      .catch(err => console.error('ServiceWorker registration failed', err));
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const registration of registrations) {
+      registration.unregister().then(success => {
+        if (success) console.log('ServiceWorker unregistered successfully');
+      });
+    }
+  });
+}
+
+if ('caches' in window) {
+  caches.keys().then(keys => {
+    for (const key of keys) {
+      caches.delete(key).then(success => {
+        if (success) console.log(`Cache ${key} deleted successfully`);
+      });
+    }
   });
 }
