@@ -97,13 +97,8 @@ export class ZplDownloadProvider implements IPrintProvider {
 
 export class LocalAgentProvider implements IPrintProvider {
   private getAgentToken(): string {
-    const saved = localStorage.getItem('trackTrace_printSettings');
-    if (saved) {
-      try {
-        const config = JSON.parse(saved);
-        if (config.agentToken) return config.agentToken;
-      } catch (e) {}
-    }
+    const token = localStorage.getItem('tt_agent_token');
+    if (token) return token;
     throw new Error("Agent eşleştirme (pairing) token'ı eksik, ayarlardan giriniz.");
   }
 

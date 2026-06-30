@@ -11,7 +11,6 @@ interface PrintConfig {
   autoPrintCarton: boolean;
   autoPrintPallet: boolean;
   showNotification: boolean;
-  agentToken?: string;
 }
 
 const DEFAULT_CONFIG: PrintConfig = {
@@ -20,8 +19,7 @@ const DEFAULT_CONFIG: PrintConfig = {
   defaultFormat: 'pdf',
   autoPrintCarton: true,
   autoPrintPallet: true,
-  showNotification: true,
-  agentToken: ''
+  showNotification: true
 };
 
 export const PrintSettings: React.FC = () => {
@@ -33,6 +31,12 @@ export const PrintSettings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [agentToken, setAgentToken] = useState(localStorage.getItem('tt_agent_token') || '');
+
+  const handleTokenChange = (val: string) => {
+    setAgentToken(val);
+    localStorage.setItem('tt_agent_token', val);
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -64,7 +68,7 @@ export const PrintSettings: React.FC = () => {
   const handleTestPrint = async () => {
     setTestMessage(null);
     try {
-      if (config.printMode === 'agent' && !config.agentToken) {
+      if (config.printMode === 'agent' && !agentToken) {
         throw new Error("Agent eşleştirme (pairing) token'ı eksik, 'Local Agent' sekmesinden giriniz.");
       }
       const provider = getPrintProvider(config.printMode);
@@ -233,12 +237,12 @@ export const PrintSettings: React.FC = () => {
                   <option value="browser">Browser Auto Print</option>
                   <option value="pdf">PDF Download</option>
                   <option value="zpl">ZPL Download</option>
-                  <option value="agent" disabled={!config.agentToken}>Local Print Agent</option>
+                  <option value="agent" disabled={!agentToken}>Local Print Agent</option>
                 </select>
                 <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                   Bu ayar tarayıcı bazlıdır ve o anki cihazın davranışını belirler.
                 </small>
-                {!config.agentToken && (
+                {!agentToken && (
                   <small style={{ color: 'var(--warning)', marginTop: '4px', display: 'block' }}>
                     Local Print Agent modunu seçebilmek için 'Local Agent' sekmesinden Pairing Token girmelisiniz.
                   </small>
@@ -420,8 +424,8 @@ export const PrintSettings: React.FC = () => {
                     type="password" 
                     className="input" 
                     placeholder="Local Agent kurulumunda verilen token"
-                    value={config.agentToken || ''}
-                    onChange={(e) => handleSaveLocal({ agentToken: e.target.value })}
+                    value={agentToken}
+                    onChange={(e) => handleTokenChange(e.target.value)}
                   />
                   <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                     Agent ile güvenli bağlantı kurmak için zorunludur. Token boş ise bu bilgisayarda Local Agent kullanılamaz.
@@ -432,8 +436,8 @@ export const PrintSettings: React.FC = () => {
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: '4px' }}>Agent Bağlantı Durumu</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: config.agentToken ? '#cbd5e1' : '#ef4444' }}></div>
-                      {config.agentToken ? 'Bağlantı Kurulmadı (Test Yapınız)' : 'Token Eksik'}
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: agentToken ? '#cbd5e1' : '#ef4444' }}></div>
+                      {agentToken ? 'Bağlantı Kurulmadı (Test Yapınız)' : 'Token Eksik'}
                     </div>
                   </div>
                   <div>
