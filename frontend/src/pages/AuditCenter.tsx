@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Search, Eye, RefreshCw, X } from 'lucide-react';
+import { TTTable } from '../components/common';
 
 interface AuditLog {
   id: string;
@@ -165,43 +166,36 @@ export const AuditCenter: React.FC = () => {
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Yükleniyor...</div>
         ) : (
           <>
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Tarih</th>
-                    <th>Kullanıcı</th>
-                    <th>IP Adresi</th>
-                    <th>Modül</th>
-                    <th>İşlem</th>
-                    <th style={{ textAlign: 'right' }}>Aksiyon</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map(log => (
-                    <tr key={log.id}>
-                      <td>{new Date(log.createdAt).toLocaleString('tr-TR')}</td>
-                      <td>{log.userName || '-'}</td>
-                      <td>{log.ipAddress || '-'}</td>
-                      <td><span className="badge badge-secondary">{log.entityName}</span></td>
-                      <td><span className="badge badge-primary">{log.action}</span></td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button className="btn btn-icon" onClick={() => openDetail(log.id)} title="Detay Görüntüle">
-                          <Eye size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {logs.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
-                        Kayıt bulunamadı.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <TTTable headers={[
+              'Tarih',
+              'Kullanıcı',
+              'IP Adresi',
+              'Modül',
+              'İşlem',
+              <div style={{ textAlign: 'right' }}>Aksiyon</div>
+            ]}>
+              {logs.map(log => (
+                <tr key={log.id}>
+                  <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.createdAt).toLocaleString('tr-TR')}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{log.userName || '-'}</td>
+                  <td style={{ whiteSpace: 'nowrap', fontFamily: 'monospace' }}>{log.ipAddress || '-'}</td>
+                  <td><span className="badge badge-secondary">{log.entityName}</span></td>
+                  <td><span className="badge badge-primary">{log.action}</span></td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button className="btn btn-icon" onClick={() => openDetail(log.id)} title="Detay Görüntüle">
+                      <Eye size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {logs.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                    Kayıt bulunamadı.
+                  </td>
+                </tr>
+              )}
+            </TTTable>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
