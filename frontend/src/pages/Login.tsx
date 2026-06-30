@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Package, ShieldCheck, Database } from 'lucide-react';
+import { Package, ShieldCheck, Database, Box, Activity, Shield } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -37,6 +37,21 @@ export const Login: React.FC = () => {
           <p>
             Gelişmiş Aggregation & Koli-Palet Yönetim Sistemi. Üretimden teslimata kadar tam izlenebilirlik ve kontrol.
           </p>
+
+          <div className="feature-list">
+            <div className="feature-item">
+              <div className="feature-icon-wrapper"><Box size={20} /></div>
+              <span>Koli-Palet İzlenebilirliği</span>
+            </div>
+            <div className="feature-item">
+              <div className="feature-icon-wrapper"><Activity size={20} /></div>
+              <span>Canlı Operasyon Kontrolü</span>
+            </div>
+            <div className="feature-item">
+              <div className="feature-icon-wrapper"><Shield size={20} /></div>
+              <span>Enterprise Güvenlik</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -109,7 +124,9 @@ export const Login: React.FC = () => {
         {/* Environment Footer Info */}
         <div className="login-footer-info">
           <span><span className="status-dot"></span> Production Environment</span>
+          <span className="footer-divider"></span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Database size={14} /> API Online</span>
+          <span className="footer-divider"></span>
           <span>v0.1.0</span>
         </div>
       </div>

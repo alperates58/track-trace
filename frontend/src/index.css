@@ -602,17 +602,27 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   padding: 32px;
   position: relative;
-  background-color: var(--bg-card);
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.login-right::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
   padding: 48px 40px;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.02);
   position: relative;
   z-index: 10;
 }
@@ -654,9 +664,18 @@ h1, h2, h3, h4, h5, h6 {
   right: 0;
   display: flex;
   justify-content: center;
-  gap: 24px;
-  font-size: 0.8rem;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.75rem;
   color: var(--text-muted);
+  font-weight: 500;
+}
+
+.footer-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
 }
 
 .login-footer-info span {
@@ -670,6 +689,48 @@ h1, h2, h3, h4, h5, h6 {
   height: 8px;
   border-radius: 50%;
   background-color: var(--success);
+}
+
+/* Hero Features */
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 32px;
+  text-align: left;
+  width: 100%;
+  max-width: 360px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  color: var(--text-white);
+  font-weight: 500;
+  font-size: 1.05rem;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.feature-item:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.feature-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
 }
 
 /* Scanner Operation Screen (Full Screen Focus) */
