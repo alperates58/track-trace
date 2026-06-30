@@ -394,15 +394,15 @@ export const Pallets: React.FC = () => {
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button className="btn btn-secondary" style={{ padding: '6px 10px' }} onClick={() => handlePalletClick(p)}>
-                          <Eye size={14} /> Detay
+                        <button className="btn btn-secondary" style={{ padding: '6px 10px' }} onClick={() => handlePalletClick(p)} title="Detay Göster">
+                          <Eye size={14} />
                         </button>
-                        <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => handlePrintPdf(p.id)}>
-                          <Printer size={14} /> PDF
+                        <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => handlePrintPdf(p.id)} title="PDF Etiketi İndir">
+                          <Printer size={14} />
                         </button>
                         {user?.role !== 'Viewer' && p.status !== 'Shipped' && (
-                          <button className="btn btn-secondary" style={{ padding: '6px 10px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }} onClick={() => handleDeletePallet(p.id)} title="Paleti Sil">
-                            <Trash2 size={14} /> Sil
+                          <button className="btn btn-secondary" style={{ padding: '6px 10px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }} onClick={() => handleDeletePallet(p.id)} title="Paleti Sil (Boz)">
+                            <Trash2 size={14} />
                           </button>
                         )}
                       </div>
