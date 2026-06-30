@@ -26,7 +26,9 @@ import {
   Package,
   Menu,
   QrCode,
-  BarChart3
+  BarChart3,
+  ChevronDown,
+  Bell
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -77,129 +79,134 @@ const AppShell: React.FC = () => {
       {/* Sidebar Navigation */}
       <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">
-          <Package size={24} color="var(--primary)" style={{ flexShrink: 0 }} />
-          <span>Track & Trace</span>
+          <Package size={28} color="var(--primary)" style={{ flexShrink: 0 }} />
+          <span>TrackTrace</span>
         </div>
         
-        <nav className="sidebar-nav">
-          <div 
-            className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => handleTabClick('dashboard')}
-            title="Dashboard"
-          >
-            <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
-            <span>Dashboard</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => handleTabClick('orders')}
-            title="Sipariş Yönetimi"
-          >
-            <FileText size={18} style={{ flexShrink: 0 }} />
-            <span>Sipariş Yönetimi</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
-            onClick={() => handleTabClick('scan')}
-            title="Ürün Okutma (Scan)"
-          >
-            <Barcode size={18} style={{ flexShrink: 0 }} />
-            <span>Ürün Okutma (Scan)</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'cartons' ? 'active' : ''}`}
-            onClick={() => handleTabClick('cartons')}
-            title="Koli Yönetimi"
-          >
-            <Inbox size={18} style={{ flexShrink: 0 }} />
-            <span>Koli Yönetimi</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'pallets' ? 'active' : ''}`}
-            onClick={() => handleTabClick('pallets')}
-            title="Palet Yönetimi"
-          >
-            <Layers size={18} style={{ flexShrink: 0 }} />
-            <span>Palet Yönetimi</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'traceability' ? 'active' : ''}`}
-            onClick={() => handleTabClick('traceability')}
-            title="İzlenebilirlik Merkezi"
-          >
-            <Search size={18} style={{ flexShrink: 0 }} />
-            <span>İzlenebilirlik Merkezi</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'dm-creator' ? 'active' : ''}`}
-            onClick={() => handleTabClick('dm-creator')}
-            title="DataMatrix Üretici"
-          >
-            <QrCode size={18} style={{ flexShrink: 0 }} />
-            <span>DataMatrix Üretici</span>
-          </div>
-
-          <div 
-            className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => handleTabClick('reports')}
-            title="Raporlama"
-          >
-            <BarChart3 size={18} style={{ flexShrink: 0 }} />
-            <span>Raporlama</span>
-          </div>
-
-          {user?.role === 'Admin' && (
-            <>
+        <div className="sidebar-scrollable" style={{ flex: 1, overflowY: 'auto' }}>
+          <nav className="sidebar-nav">
+            <div className="sidebar-section">
+              <span className="sidebar-section-title">Operations</span>
               <div 
-                className={`sidebar-link ${activeTab === 'users' ? 'active' : ''}`}
-                onClick={() => handleTabClick('users')}
-                title="Kullanıcı Yönetimi"
+                className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+                onClick={() => handleTabClick('dashboard')}
+                title="Dashboard"
               >
-                <UsersIcon size={18} style={{ flexShrink: 0 }} />
-                <span>Kullanıcı Yönetimi</span>
+                <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
+                <span>Dashboard</span>
               </div>
+
               <div 
-                className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
-                onClick={() => handleTabClick('system')}
-                title="Sistem Bilgisi"
+                className={`sidebar-link ${activeTab === 'orders' ? 'active' : ''}`}
+                onClick={() => handleTabClick('orders')}
+                title="Sipariş Yönetimi"
               >
-                <Settings size={18} style={{ flexShrink: 0 }} />
-                <span>Sistem Bilgisi</span>
+                <FileText size={18} style={{ flexShrink: 0 }} />
+                <span>Sipariş Yönetimi</span>
               </div>
-            </>
-          )}
-        </nav>
+
+              <div 
+                className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
+                onClick={() => handleTabClick('scan')}
+                title="Ürün Okutma (Scan)"
+              >
+                <Barcode size={18} style={{ flexShrink: 0 }} />
+                <span>Ürün Okutma (Scan)</span>
+              </div>
+
+              <div 
+                className={`sidebar-link ${activeTab === 'cartons' ? 'active' : ''}`}
+                onClick={() => handleTabClick('cartons')}
+                title="Koli Yönetimi"
+              >
+                <Inbox size={18} style={{ flexShrink: 0 }} />
+                <span>Koli Yönetimi</span>
+              </div>
+
+              <div 
+                className={`sidebar-link ${activeTab === 'pallets' ? 'active' : ''}`}
+                onClick={() => handleTabClick('pallets')}
+                title="Palet Yönetimi"
+              >
+                <Layers size={18} style={{ flexShrink: 0 }} />
+                <span>Palet Yönetimi</span>
+              </div>
+            </div>
+
+            <div className="sidebar-section" style={{ marginTop: '24px' }}>
+              <span className="sidebar-section-title">Intelligence</span>
+              <div 
+                className={`sidebar-link ${activeTab === 'traceability' ? 'active' : ''}`}
+                onClick={() => handleTabClick('traceability')}
+                title="İzlenebilirlik Merkezi"
+              >
+                <Search size={18} style={{ flexShrink: 0 }} />
+                <span>İzlenebilirlik Merkezi</span>
+              </div>
+
+              <div 
+                className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
+                onClick={() => handleTabClick('reports')}
+                title="Raporlama"
+              >
+                <BarChart3 size={18} style={{ flexShrink: 0 }} />
+                <span>Raporlama</span>
+              </div>
+
+              <div 
+                className={`sidebar-link ${activeTab === 'dm-creator' ? 'active' : ''}`}
+                onClick={() => handleTabClick('dm-creator')}
+                title="DataMatrix Üretici"
+              >
+                <QrCode size={18} style={{ flexShrink: 0 }} />
+                <span>DataMatrix Üretici</span>
+              </div>
+            </div>
+
+            {user?.role === 'Admin' && (
+              <div className="sidebar-section" style={{ marginTop: '24px' }}>
+                <span className="sidebar-section-title">Administration</span>
+                <div 
+                  className={`sidebar-link ${activeTab === 'users' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('users')}
+                  title="Kullanıcı Yönetimi"
+                >
+                  <UsersIcon size={18} style={{ flexShrink: 0 }} />
+                  <span>Kullanıcı Yönetimi</span>
+                </div>
+                <div 
+                  className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('system')}
+                  title="Sistem Bilgisi"
+                >
+                  <Settings size={18} style={{ flexShrink: 0 }} />
+                  <span>Sistem Bilgisi</span>
+                </div>
+              </div>
+            )}
+          </nav>
+        </div>
  
-        {/* Sidebar User Footer */}
-        <div className="sidebar-footer">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--text-white)' }}>
-            <UserIcon size={16} style={{ flexShrink: 0 }} />
-            <span style={{ fontWeight: 600 }}>{user?.name}</span>
+        {/* User Profile Card */}
+        <div className="sidebar-user-card">
+          <div className="user-avatar">
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
+            <span className="user-status-dot"></span>
           </div>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)' }}>
-            {user?.role === 'Admin' ? 'Yönetici' : user?.role === 'Operator' ? 'Operatör' : 'İzleyici'}
-          </span>
-          <div 
-            className="sidebar-link" 
-            onClick={logout}
-            style={{ padding: '8px 0', marginTop: '12px', borderTop: '1px solid #1e293b', color: '#ef4444', display: 'flex', gap: '8px' }}
-          >
-            <LogOut size={16} className="logout-icon-only" style={{ flexShrink: 0 }} />
-            <span>Çıkış Yap</span>
+          <div className="user-info">
+            <span className="user-name">{user?.name}</span>
+            <span className="user-role">{user?.role === 'Admin' ? 'Yönetici' : user?.role === 'Operator' ? 'Operatör' : 'İzleyici'}</span>
           </div>
+          <button className="user-menu-btn" onClick={logout} title="Çıkış Yap">
+            <LogOut size={16} />
+          </button>
         </div>
       </aside>
 
       {/* Main Page Layout */}
       <div className="main-content">
         <header className="header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
               onClick={() => {
                 if (window.innerWidth <= 768) {
@@ -213,12 +220,18 @@ const AppShell: React.FC = () => {
             >
               <Menu size={20} />
             </button>
-            <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', textTransform: 'capitalize' }}>
-              {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab}
-            </h2>
+            <div className="header-title-area">
+              <span className="header-breadcrumb">TrackTrace / {activeTab === 'dashboard' ? 'Operations' : activeTab === 'users' || activeTab === 'system' ? 'Administration' : 'Module'}</span>
+              <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
+                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </h2>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            <span className="online-indicator">Hattı Durumu: <strong style={{ color: 'var(--success)' }}>Çevrimiçi (Online)</strong></span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div className="system-status-badge">
+              <span className="status-dot-pulse"></span>
+              API Online
+            </div>
           </div>
         </header>
 
