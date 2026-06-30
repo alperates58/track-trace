@@ -541,10 +541,12 @@ export const Pallets: React.FC = () => {
       </div>
 
       {/* --- CREATE PALLET DRAWER --- */}
-      <div 
-        className={`drawer-backdrop ${showCreateDrawer ? 'open' : ''}`} 
-        onClick={() => setShowCreateDrawer(false)}
-      />
+      {showCreateDrawer && (
+        <div 
+          className="drawer-backdrop" 
+          onClick={() => setShowCreateDrawer(false)}
+        />
+      )}
       <div 
         ref={drawerRef}
         className={`drawer-container ${showCreateDrawer ? 'open' : ''}`}
