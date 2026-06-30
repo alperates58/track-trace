@@ -43,10 +43,10 @@ public class ExportJobFeaturesHandler :
 
     public async Task<Guid> Handle(CreateExportJobCommand request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_currentUserService.UserId))
+        if (!_currentUserService.UserId.HasValue)
             throw new UnauthorizedAccessException("Giriş yapmanız gerekiyor.");
 
-        var userId = Guid.Parse(_currentUserService.UserId);
+        var userId = _currentUserService.UserId.Value;
         var jobId = Guid.NewGuid();
 
         const string sql = @"
@@ -70,10 +70,10 @@ public class ExportJobFeaturesHandler :
 
     public async Task<List<ExportJobDto>> Handle(GetExportJobsQuery request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_currentUserService.UserId))
+        if (!_currentUserService.UserId.HasValue)
             throw new UnauthorizedAccessException();
 
-        var userId = Guid.Parse(_currentUserService.UserId);
+        var userId = _currentUserService.UserId.Value;
         var role = _currentUserService.Role;
 
         using var connection = _dbConnectionFactory.CreateConnection();
@@ -97,10 +97,10 @@ public class ExportJobFeaturesHandler :
 
     public async Task<ExportJobDto?> Handle(GetExportJobStatusQuery request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_currentUserService.UserId))
+        if (!_currentUserService.UserId.HasValue)
             throw new UnauthorizedAccessException();
 
-        var userId = Guid.Parse(_currentUserService.UserId);
+        var userId = _currentUserService.UserId.Value;
         var role = _currentUserService.Role;
 
         using var connection = _dbConnectionFactory.CreateConnection();

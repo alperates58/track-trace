@@ -357,7 +357,7 @@ public class OrderHandlers :
         if (request.SplitSize > 0 && codes.Count > request.SplitSize)
         {
             using var zipMs = new MemoryStream();
-            using (var archive = new System.IO.Compression.ZipArchive(zipMs, System.IO.Compression.ZipArchiveMode.Create, true))
+            using (var archive = new global::System.IO.Compression.ZipArchive(zipMs, global::System.IO.Compression.ZipArchiveMode.Create, true))
             {
                 int partNo = 1;
                 for (int i = 0; i < codes.Count; i += request.SplitSize)
@@ -387,7 +387,7 @@ public class OrderHandlers :
     public async Task<OrderImportResultDto> Handle(ImportOrdersExcelCommand request, CancellationToken cancellationToken)
     {
         using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
-        if (connection.State != System.Data.ConnectionState.Open) connection.Open();
+        if (connection.State != global::System.Data.ConnectionState.Open) connection.Open();
 
         var ordersToInsert = new List<dynamic>();
         var errors = new List<ImportErrorDto>();
@@ -609,7 +609,7 @@ public class OrderHandlers :
     {
         if (cell.DataType == ClosedXML.Excel.XLDataType.Number)
         {
-            return cell.Value.GetNumber().ToString("F0", System.Globalization.CultureInfo.InvariantCulture).Trim();
+            return cell.Value.GetNumber().ToString("F0", global::System.Globalization.CultureInfo.InvariantCulture).Trim();
         }
         return cell.GetFormattedString().Trim();
     }
@@ -619,18 +619,18 @@ public class OrderHandlers :
         value = 0;
         if (string.IsNullOrWhiteSpace(input)) return false;
 
-        if (int.TryParse(input, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out value))
+        if (int.TryParse(input, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out value))
         {
             return true;
         }
 
-        if (double.TryParse(input, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double doubleVal))
+        if (double.TryParse(input, global::System.Globalization.NumberStyles.Float, global::System.Globalization.CultureInfo.InvariantCulture, out double doubleVal))
         {
             value = (int)Math.Round(doubleVal);
             return true;
         }
 
-        if (double.TryParse(input.Replace(",", "."), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double doubleValComma))
+        if (double.TryParse(input.Replace(",", "."), global::System.Globalization.NumberStyles.Float, global::System.Globalization.CultureInfo.InvariantCulture, out double doubleValComma))
         {
             value = (int)Math.Round(doubleValComma);
             return true;

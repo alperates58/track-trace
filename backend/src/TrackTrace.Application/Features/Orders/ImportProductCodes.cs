@@ -36,7 +36,7 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
     public async Task<ImportResultDto> Handle(ImportProductCodesCommand request, CancellationToken cancellationToken)
     {
         using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
+        if (connection.State != global::System.Data.ConnectionState.Open)
         {
             connection.Open();
         }
@@ -97,7 +97,7 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
                         if (cell.DataType == ClosedXML.Excel.XLDataType.Number)
                         {
                             // Avoid scientific notation formatting for numeric barcodes
-                            cellVal = cell.Value.GetNumber().ToString("F0", System.Globalization.CultureInfo.InvariantCulture).Trim();
+                            cellVal = cell.Value.GetNumber().ToString("F0", global::System.Globalization.CultureInfo.InvariantCulture).Trim();
                         }
                         else
                         {
