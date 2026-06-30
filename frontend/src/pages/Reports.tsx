@@ -68,6 +68,11 @@ export const Reports: React.FC = () => {
   const [cartonItems, setCartonItems] = useState<Record<string, any[]>>({});
   const [cartonItemsLoading, setCartonItemsLoading] = useState<Record<string, boolean>>({});
 
+  // --- BACKGROUND JOBS STATES ---
+  const [showJobsPanel, setShowJobsPanel] = useState(false);
+  const [backgroundJobs, setBackgroundJobs] = useState<any[]>([]);
+  const [exportPrompt, setExportPrompt] = useState<any>(null); // { orderNo, stockCode, advice }
+
   // -------------------------------------------------------------
   // EFFECT: Fetch Main Order Reports
   // -------------------------------------------------------------
@@ -188,6 +193,23 @@ export const Reports: React.FC = () => {
   }, [viewMode, selectedOrderId, activeTab, tabPage]);
 
   // -------------------------------------------------------------
+  // EFFECT: Fetch Background Jobs
+  // -------------------------------------------------------------
+  useEffect(() => {
+    let interval: any;
+    if (showJobsPanel) {
+      const fetchJobs = () => {
+        api.get('/api/reports/jobs')
+          .then(res => setBackgroundJobs(res || []))
+          .catch(err => console.error(err));
+      };
+      fetchJobs();
+      interval = setInterval(fetchJobs, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [showJobsPanel]);
+
+  // -------------------------------------------------------------
   // Carton Items Expansion inside Tab 3
   // -------------------------------------------------------------
   const toggleCarton = (cartonId: string) => {
@@ -223,6 +245,16 @@ export const Reports: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const startBackgroundJob = async (orderNo: string, stockCode?: string) => {
+    try {
+      await api.post('/api/reports/jobs', { orderNo, stockCode, format: 'Excel' });
+      setShowJobsPanel(true);
+      setExportPrompt(null);
+    } catch (err: any) {
+      alert('Arka plan işi başlatılamadı: ' + err.message);
+    }
+  };
+
   const handleExportExcel = async (orderNo: string, e: React.MouseEvent, stockCode?: string) => {
     e.stopPropagation();
     const exportKey = `excel-${orderNo}-${stockCode || 'all'}`;
@@ -240,27 +272,10 @@ export const Reports: React.FC = () => {
         ? `${orderNo}_${stockCode}_TrackTrace_Raporu.xlsx`
         : `${orderNo}_TrackTrace_Raporu.xlsx`;
 
-      if (advice.strategy === 'large-excel-warning') {
-        setExportMessage(advice.message || 'Bu rapor büyük olabilir. Oluşturma süresi biraz uzun sürebilir.');
-      } else if (advice.strategy === 'split-excel-zip') {
-        setExportMessage(advice.message || 'Stok bazlı Excel ZIP hazırlanıyor...');
-        expectedFileName = `${orderNo}_Stok_Bazli_Excel_Raporlari.zip`;
-      } else if (advice.strategy === 'mixed') {
-        const safeCount = advice.safeStocks?.length || 0;
-        const riskyText = (advice.riskyStocks || [])
-          .map((s: any) => `${s.stockCode} (${Number(s.qrCount || 0).toLocaleString()} QR)`)
-          .join(', ');
-        const proceed = window.confirm(
-          `Bazı stoklar Excel için riskli: ${riskyText}.\n\n` +
-          `${safeCount} güvenli stok için Excel ZIP üretmek ister misiniz?\n\n` +
-          `Büyük stoklar için CSV ZIP Faz 3.3 kapsamında önerilir.`
-        );
-        if (!proceed) return;
-        safeOnly = true;
-        expectedFileName = `${orderNo}_Guvenli_Stoklar_Excel_Raporlari.zip`;
-        setExportMessage('Güvenli stoklar için Excel ZIP hazırlanıyor...');
-      } else if (advice.strategy === 'risky-stock') {
-        alert(advice.message || 'Bu stok kodu Excel için riskli büyüklükte. CSV ZIP export sonraki fazda önerilir.');
+      if (advice.strategy === 'large-excel-warning' || advice.strategy === 'split-excel-zip' || advice.strategy === 'mixed' || advice.strategy === 'risky-stock') {
+        setExportPrompt({ orderNo, stockCode, advice });
+        setExportingKey(null);
+        setExportMessage(null);
         return;
       }
 
@@ -1037,7 +1052,129 @@ export const Reports: React.FC = () => {
             </div>
           </div>
         </div>
+        </div>
       )}
+
+      {/* --- EXPORT PROMPT MODAL --- */}
+      {exportPrompt && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', maxWidth: '500px', width: '90%' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', color: 'var(--text-main)' }}>Rapor Hazırlama Seçenekleri</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>{exportPrompt.advice.message || 'Bu rapor oldukça büyük.'}</p>
+            {exportPrompt.advice.strategy === 'mixed' && (
+              <p style={{ color: 'var(--text-main)', marginBottom: '16px', fontSize: '0.9rem', backgroundColor: '#fff3cd', padding: '10px', borderRadius: '4px' }}>
+                Riskli Stoklar: {(exportPrompt.advice.riskyStocks || []).map((s:any) => s.stockCode).join(', ')}
+              </p>
+            )}
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode)}
+                style={{ padding: '12px' }}
+              >
+                Arka Planda Hazırla (Önerilen)
+              </button>
+              {exportPrompt.advice.strategy !== 'risky-stock' && (
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    const safeOnly = exportPrompt.advice.strategy === 'mixed';
+                    const params = new URLSearchParams();
+                    if (exportPrompt.stockCode) params.set('stockCode', exportPrompt.stockCode);
+                    if (safeOnly) params.set('safeOnly', 'true');
+                    const query = params.toString() ? `?${params.toString()}` : '';
+                    api.get(`/api/reports/orders/${encodeURIComponent(exportPrompt.orderNo)}/excel${query}`)
+                      .then(blob => downloadBlob(blob, `${exportPrompt.orderNo}_Rapor.zip`))
+                      .catch(err => alert(err.message))
+                      .finally(() => setExportPrompt(null));
+                    setExportPrompt(null);
+                  }}
+                  style={{ padding: '12px' }}
+                >
+                  Normal İndir (Uzun Sürebilir)
+                </button>
+              )}
+              <button className="btn btn-secondary" onClick={() => setExportPrompt(null)} style={{ padding: '12px' }}>
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- BACKGROUND JOBS DRAWER/PANEL --- */}
+      {showJobsPanel && (
+        <div style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '350px', backgroundColor: 'var(--bg-card)', boxShadow: '-2px 0 10px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-main)' }}>Arka Plan Görevleri</h3>
+            <button className="btn btn-secondary" onClick={() => setShowJobsPanel(false)}>Kapat</button>
+          </div>
+          <div style={{ padding: '20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {backgroundJobs.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px' }}>Aktif veya geçmiş bir görev bulunamadı.</p>
+            ) : (
+              backgroundJobs.map(job => (
+                <div key={job.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <strong style={{ color: 'var(--text-main)' }}>Sipariş: {job.orderNo}</strong>
+                    <span className={`badge ${job.status === 'Completed' ? 'badge-active' : job.status === 'Failed' ? 'badge-inactive' : 'badge-draft'}`}>
+                      {job.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                    {job.stockCode && <div>Stok: {job.stockCode}</div>}
+                    <div>Oluşturulma: {new Date(job.createdAt).toLocaleString()}</div>
+                  </div>
+                  
+                  {job.status === 'Processing' || job.status === 'Pending' ? (
+                    <div style={{ backgroundColor: '#e2e8f0', height: '6px', borderRadius: '3px', overflow: 'hidden', marginTop: '12px' }}>
+                      <div style={{ backgroundColor: 'var(--primary)', height: '100%', width: `${job.progress}%`, transition: 'width 0.3s' }}></div>
+                    </div>
+                  ) : job.status === 'Completed' ? (
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ width: '100%', marginTop: '12px' }}
+                      onClick={() => {
+                        window.location.href = `/api/reports/download/${job.downloadToken}`;
+                      }}
+                    >
+                      İndir
+                    </button>
+                  ) : job.status === 'Failed' ? (
+                    <div style={{ color: 'red', fontSize: '0.85rem', marginTop: '8px' }}>Hata: {job.errorMessage}</div>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Floating button to open jobs panel */}
+      <button 
+        onClick={() => setShowJobsPanel(true)}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '28px',
+          backgroundColor: 'var(--primary)',
+          color: 'white',
+          border: 'none',
+          boxShadow: 'var(--shadow-lg)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999
+        }}
+        title="Arka Plan Görevleri"
+      >
+        <RefreshCw size={24} className={backgroundJobs.some(j => j.status === 'Processing') ? 'spin' : ''} />
+      </button>
     </div>
   );
 };

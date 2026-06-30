@@ -164,3 +164,24 @@ SELECT setval('sscc_seq', COALESCE((
 -- ADD UNIQUE CONSTRAINTS FOR CARTONNO AND PALLETNO TO PREVENT DUPLICATES
 CREATE UNIQUE INDEX IF NOT EXISTS UQ_Cartons_CartonNo ON Cartons(CartonNo);
 CREATE UNIQUE INDEX IF NOT EXISTS UQ_Pallets_PalletNo ON Pallets(PalletNo);
+
+-- FAZ 3.2: ExportJobs
+CREATE TABLE IF NOT EXISTS ExportJobs (
+    Id UUID PRIMARY KEY,
+    UserId UUID NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
+    OrderNo TEXT NOT NULL,
+    StockCode TEXT,
+    ExportFormat TEXT NOT NULL,
+    Status TEXT NOT NULL,
+    Progress INT NOT NULL DEFAULT 0,
+    FilePath TEXT,
+    DownloadToken UUID UNIQUE,
+    ErrorMessage TEXT,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    StartedAt TIMESTAMPTZ,
+    CompletedAt TIMESTAMPTZ,
+    ExpiresAt TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS IX_ExportJobs_UserId_CreatedAt ON ExportJobs(UserId, CreatedAt DESC);
+CREATE INDEX IF NOT EXISTS IX_ExportJobs_Status_CreatedAt ON ExportJobs(Status, CreatedAt ASC);

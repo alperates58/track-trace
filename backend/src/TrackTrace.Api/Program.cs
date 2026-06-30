@@ -476,6 +476,65 @@ app.MapGet("/api/reports/orders/{orderNo}/pdf", async (string orderNo, IMediator
     }
 }).RequireAuthorization("ViewerOrAbove");
 
+
+
+// Export Jobs Endpoints
+app.MapPost("/api/reports/jobs", async (
+    [FromBody] TrackTrace.Application.Features.Reports.CreateExportJobCommand command, 
+    IMediator mediator) =>
+{
+    try
+    {
+        var jobId = await mediator.Send(command);
+        return Results.Ok(new { jobId, status = "Pending" });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/jobs", async (IMediator mediator) =>
+{
+    var jobs = await mediator.Send(new TrackTrace.Application.Features.Reports.GetExportJobsQuery());
+    return Results.Ok(jobs);
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/jobs/{jobId:guid}", async (Guid jobId, IMediator mediator) =>
+{
+    try
+    {
+        var job = await mediator.Send(new TrackTrace.Application.Features.Reports.GetExportJobStatusQuery(jobId));
+        if (job == null) return Results.NotFound();
+        return Results.Ok(job);
+    }
+    catch (UnauthorizedAccessException)
+    {
+        return Results.Forbid();
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/reports/download/{token:guid}", async (Guid token, IDbConnectionFactory db, HttpContext context) =>
+{
+    using var connection = db.CreateConnection();
+    var job = await connection.QueryFirstOrDefaultAsync<TrackTrace.Domain.Entities.ExportJob>(
+        "SELECT * FROM ExportJobs WHERE DownloadToken = @Token AND Status = 'Completed'", new { Token = token });
+
+    if (job == null || string.IsNullOrWhiteSpace(job.FilePath))
+        return Results.NotFound(new { message = "Dosya bulunamadı veya süresi dolmuş." });
+
+    if (!System.IO.File.Exists(job.FilePath))
+        return Results.NotFound(new { message = "Fiziksel dosya sunucuda yok." });
+
+    var contentType = job.ExportFormat == "Excel" 
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+        : "application/zip";
+    
+    var fileName = Path.GetFileName(job.FilePath);
+    
+    return Results.File(job.FilePath, contentType, fileName);
+});
+
 // Orders Endpoints
 app.MapGet("/api/orders", async (
     [FromQuery] int? pageNumber,

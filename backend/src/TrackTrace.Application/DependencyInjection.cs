@@ -10,6 +10,7 @@ public static class DependencyInjection
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddHostedService<TrackTrace.Application.Features.Reports.ExportJobBackgroundService>();
         return services;
     }
 }

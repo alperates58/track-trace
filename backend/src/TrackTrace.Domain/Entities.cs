@@ -128,3 +128,21 @@ public class AuditLog
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? IpAddress { get; set; }
 }
+
+public class ExportJob
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public string OrderNo { get; set; } = null!;
+    public string? StockCode { get; set; }
+    public string ExportFormat { get; set; } = null!;
+    public ExportJobStatus Status { get; set; } = ExportJobStatus.Pending;
+    public int Progress { get; set; } = 0;
+    public string? FilePath { get; set; }
+    public Guid? DownloadToken { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? StartedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}

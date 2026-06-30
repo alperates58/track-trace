@@ -38,3 +38,11 @@ public enum UserRole
     Operator,
     Viewer
 }
+
+public enum ExportJobStatus
+{
+    Pending,
+    Processing,
+    Completed,
+    Failed
+}
