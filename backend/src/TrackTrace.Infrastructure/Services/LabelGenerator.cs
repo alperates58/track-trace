@@ -24,6 +24,36 @@ public class LabelGenerator : ILabelGenerator
         _frontendUrl = configuration["FRONTEND_URL"] ?? "https://track.alperates.com.tr";
     }
 
+    public byte[] GenerateTestPdfLabel()
+    {
+        using var stream = new MemoryStream();
+        
+        Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(100, 80, Unit.Millimetre);
+                page.Margin(4, Unit.Millimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
+
+                page.Content().Border(1).BorderColor(Colors.Black).Padding(6).Column(col =>
+                {
+                    col.Spacing(4);
+                    col.Item().AlignCenter().Text("TEST ETİKETİ / TEST LABEL").Bold().FontSize(14);
+                    col.Item().LineHorizontal(1f);
+                    
+                    col.Item().PaddingTop(10).AlignCenter().Text("Bağlantı: Başarılı").Bold().FontSize(12).FontColor(Colors.Green.Darken2);
+                    col.Item().AlignCenter().Text($"Tarih: {DateTime.Now:dd.MM.yyyy HH:mm:ss}").FontSize(10);
+                    
+                    col.Item().PaddingTop(10).AlignCenter().Text("Track & Trace Termal Yazıcı Testi").FontSize(10).FontColor(Colors.Grey.Darken2);
+                });
+            });
+        }).GeneratePdf(stream);
+
+        return stream.ToArray();
+    }
+
     public byte[] GenerateCartonPdfLabel(CartonDto carton, OrderDto order)
     {
         // Generate QR code bytes using QRCoder pointing to frontend URL for customer scans

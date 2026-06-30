@@ -419,16 +419,21 @@ export const Scan: React.FC = () => {
           const currentAuto = autoPrintEnabled;
 
           if (currentAuto && res.cartonId) {
-            const provider = getPrintProvider(currentMode);
-            provider.print({ id: res.cartonId, type: 'carton' })
-              .then(() => {
-                console.log(`Koli barkodu otomatik yazdırılmaya gönderildi (Mode: ${currentMode}).`);
-              })
-              .catch((printErr: any) => {
-                console.error(`Otomatik yazdırma başarısız (Mode: ${currentMode}):`, printErr);
-                playSound('warning');
-                alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
-              });
+            if (currentMode === 'pdf') {
+              playSound('warning');
+              alert("PDF Download modunda otomatik yazdırma desteklenmez. Etiketi manuel olarak indirip yazdırın.");
+            } else {
+              const provider = getPrintProvider(currentMode);
+              provider.print({ id: res.cartonId, type: 'carton' })
+                .then(() => {
+                  console.log(`Koli barkodu otomatik yazdırılmaya gönderildi (Mode: ${currentMode}).`);
+                })
+                .catch((printErr: any) => {
+                  console.error(`Otomatik yazdırma başarısız (Mode: ${currentMode}):`, printErr);
+                  playSound('warning');
+                  alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
+                });
+            }
           }
         } else {
           setStatus('success');

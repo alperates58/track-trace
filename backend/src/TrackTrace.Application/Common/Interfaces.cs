@@ -37,6 +37,7 @@ public interface ILabelGenerator
     byte[] GenerateDataMatrixCodesPdf(System.Collections.Generic.IEnumerable<string> codes, int cols, int rows, int size, bool addText, string? line1, string? line2, bool labelBelow, int startIndex = 1, int totalCodes = -1, int fontSize = 10);
     byte[] GenerateDataMatrixZip(System.Collections.Generic.IEnumerable<string> codes, int startIndex = 1);
     byte[] GenerateDataMatrixImage(string text);
+    byte[] GenerateTestPdfLabel();
 }
 
 public interface IReportPdfGenerator

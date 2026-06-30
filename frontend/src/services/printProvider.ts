@@ -60,9 +60,13 @@ export class PdfDownloadProvider implements IPrintProvider {
   }
 
   async testPrint(_zplData: string): Promise<void> {
-    // Generate a dummy PDF or trigger test PDF endpoint if supported.
-    // For now, since test data is ZPL, we might need a backend call.
-    throw new Error("Test Print (PDF) should be handled via the backend /api/print/test endpoint returning a PDF blob.");
+    const blob = await api.post('/api/print/test', { format: 'pdf' });
+    if (!(blob instanceof Blob)) {
+      throw new Error("Geçersiz PDF formatı.");
+    }
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 }
 

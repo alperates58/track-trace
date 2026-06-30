@@ -1548,7 +1548,8 @@ app.MapPost("/api/print/test", (TestPrintRequest request, ILabelGenerator labelG
     }
     else
     {
-        return Results.File(System.Text.Encoding.UTF8.GetBytes("TEST ETIKETI PDF ICERIGI (MOCK)"), "application/pdf", "test_label.pdf");
+        var pdfBytes = labelGenerator.GenerateTestPdfLabel();
+        return Results.File(pdfBytes, "application/pdf", "test_label.pdf");
     }
 });
 

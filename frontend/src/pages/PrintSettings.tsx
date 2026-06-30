@@ -260,23 +260,31 @@ export const PrintSettings: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: config.printMode === 'pdf' ? 'not-allowed' : 'pointer', opacity: config.printMode === 'pdf' ? 0.6 : 1 }}>
                   <input 
                     type="checkbox" 
-                    checked={config.autoPrintCarton}
+                    checked={config.printMode === 'pdf' ? false : config.autoPrintCarton}
+                    disabled={config.printMode === 'pdf'}
                     onChange={(e) => handleSaveLocal({ autoPrintCarton: e.target.checked })}
                   />
                   Koli tamamlanınca otomatik yazdır
                 </label>
                 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: config.printMode === 'pdf' ? 'not-allowed' : 'pointer', opacity: config.printMode === 'pdf' ? 0.6 : 1 }}>
                   <input 
                     type="checkbox" 
-                    checked={config.autoPrintPallet}
+                    checked={config.printMode === 'pdf' ? false : config.autoPrintPallet}
+                    disabled={config.printMode === 'pdf'}
                     onChange={(e) => handleSaveLocal({ autoPrintPallet: e.target.checked })}
                   />
                   Palet kapatılınca otomatik yazdır
                 </label>
+                
+                {config.printMode === 'pdf' && (
+                  <div style={{ fontSize: '0.85rem', color: 'var(--warning)', marginTop: '-4px', marginLeft: '24px' }}>
+                    PDF Download modunda otomatik yazdırma desteklenmez. Etiketi manuel olarak indirip yazdırın.
+                  </div>
+                )}
                 
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input 
