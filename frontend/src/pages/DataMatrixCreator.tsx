@@ -7,7 +7,6 @@ import {
   FileText, 
   AlertCircle, 
   AlertTriangle,
-  QrCode, 
   Download, 
   RefreshCw,
   Layers,
