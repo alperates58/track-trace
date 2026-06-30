@@ -21,14 +21,11 @@ import {
   Search, 
   Settings, 
   LogOut, 
-  User as UserIcon,
   Users as UsersIcon,
   Package,
   Menu,
   QrCode,
-  BarChart3,
-  ChevronDown,
-  Bell
+  BarChart3
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
