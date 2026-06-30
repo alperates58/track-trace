@@ -127,7 +127,8 @@ export const Pallets: React.FC = () => {
     if (!selectedOrder) return;
     try {
       setPalletCreationLoading(true);
-      const newPalletId = await api.post(`/api/pallets?orderId=${selectedOrder.id}`);
+      const res = await api.post(`/api/pallets?orderId=${selectedOrder.id}`);
+      const newPalletId = res?.id || res;
       
       // Fetch details of newly created pallet for step 3 success display
       const palletDetails = await api.get(`/api/pallets/${newPalletId}`);
