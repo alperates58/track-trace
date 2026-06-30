@@ -28,6 +28,7 @@ public class ExportJobBackgroundService : BackgroundService
         {
             try
             {
+                await RecoverStuckJobsAsync(stoppingToken);
                 await ProcessPendingJobsAsync(stoppingToken);
             }
             catch (Exception ex)
@@ -117,6 +118,54 @@ public class ExportJobBackgroundService : BackgroundService
                 "UPDATE ExportJobs SET Status = 'Failed', ErrorMessage = @Error, CompletedAt = @CompletedAt WHERE Id = @Id",
                 new { Error = ex.Message, CompletedAt = DateTime.UtcNow, Id = job.Id }
             );
+        }
+    }
+
+    private async Task RecoverStuckJobsAsync(CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var dbConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConnectionFactory>();
+
+        using var connection = dbConnectionFactory.CreateConnection();
+        // Since we call this every 5 seconds, let's just do a quick check without tracking.
+        var threshold = DateTime.UtcNow.AddMinutes(-30);
+        
+        var stuckJobs = await connection.QueryAsync<ExportJobDto>(
+            "SELECT * FROM ExportJobs WHERE Status = 'Processing' AND StartedAt < @Threshold",
+            new { Threshold = threshold }
+        );
+
+        foreach (var job in stuckJobs)
+        {
+            _logger.LogWarning($"Recovering stuck job {job.Id}");
+            
+            await connection.ExecuteAsync(
+                "UPDATE ExportJobs SET Status = 'Failed', ErrorMessage = 'Job interrupted and reset/recovered after timeout.', CompletedAt = @CompletedAt WHERE Id = @Id",
+                new { CompletedAt = DateTime.UtcNow, Id = job.Id }
+            );
+
+            // Delete orphaned files if any
+            var exportDir = "/app/data/exports";
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                exportDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "exports");
+            }
+
+            if (Directory.Exists(exportDir))
+            {
+                var files = Directory.GetFiles(exportDir, $"{job.Id}_*.*");
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Failed to delete orphaned file {file} for stuck job {job.Id}");
+                    }
+                }
+            }
         }
     }
 }
