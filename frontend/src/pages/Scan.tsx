@@ -62,10 +62,27 @@ export const Scan: React.FC = () => {
   const [isOnline, setIsOnline] = useState(true);
 
   // Printer settings
-  const [printMode, setPrintMode] = useState<'pdf' | 'network' | 'kiosk'>(() => {
-    return (localStorage.getItem('tt_print_mode') as 'pdf' | 'network' | 'kiosk') || 'pdf';
+  const [printMode, setPrintMode] = useState<string>(() => {
+    const globalSettings = localStorage.getItem('trackTrace_printSettings');
+    if (globalSettings) {
+      try {
+        const parsed = JSON.parse(globalSettings);
+        if (parsed.printMode === 'browser') return 'kiosk';
+        if (parsed.printMode === 'agent') return 'network'; // For future compatibility
+        return parsed.printMode;
+      } catch (e) {}
+    }
+    return localStorage.getItem('tt_print_mode') || 'kiosk';
   });
+  
   const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
+    const globalSettings = localStorage.getItem('trackTrace_printSettings');
+    if (globalSettings) {
+      try {
+        const parsed = JSON.parse(globalSettings);
+        return parsed.autoPrintCarton;
+      } catch (e) {}
+    }
     const val = localStorage.getItem('tt_auto_print');
     return val !== 'false';
   });
@@ -377,10 +394,28 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const handleSaveSettings = (mode: 'pdf' | 'network' | 'kiosk', auto: boolean) => {
+  const handleSaveSettings = (mode: string, auto: boolean) => {
+    // Legacy support
     localStorage.setItem('tt_print_mode', mode);
     localStorage.setItem('tt_auto_print', auto.toString());
     
+    // Phase 5A Global Sync
+    const globalSettings = localStorage.getItem('trackTrace_printSettings');
+    let parsed: any = {
+      printMode: 'browser',
+      defaultLabelType: 'carton',
+      defaultFormat: 'pdf',
+      autoPrintCarton: true,
+      autoPrintPallet: true,
+      showNotification: true
+    };
+    if (globalSettings) {
+      try { parsed = { ...parsed, ...JSON.parse(globalSettings) }; } catch(e){}
+    }
+    parsed.printMode = mode === 'kiosk' ? 'browser' : (mode === 'network' ? 'agent' : mode);
+    parsed.autoPrintCarton = auto;
+    localStorage.setItem('trackTrace_printSettings', JSON.stringify(parsed));
+
     setPrintMode(mode);
     setAutoPrintEnabled(auto);
     setIsSettingsModalOpen(false);
@@ -1061,11 +1096,12 @@ export const Scan: React.FC = () => {
                   className="form-input"
                   style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600 }}
                   value={printMode}
-                  onChange={(e) => setPrintMode(e.target.value as 'pdf' | 'network' | 'kiosk')}
+                  onChange={(e) => setPrintMode(e.target.value)}
                 >
-                  <option value="pdf">Masaüstü PDF İndirme (Manuel)</option>
-                  <option value="kiosk">Doğrudan Yazdır (Tüm Yazıcılar - PDF/Kiosk)</option>
-                  <option value="network">Zebra Browser Print (Yalnızca Zebra)</option>
+                  <option value="kiosk">Browser Auto Print (Chrome)</option>
+                  <option value="pdf">PDF Download (Manuel)</option>
+                  <option value="zpl">ZPL Download</option>
+                  <option value="network">Zebra Browser Print / Agent</option>
                 </select>
               </div>
 
