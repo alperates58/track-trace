@@ -96,12 +96,52 @@ export class ZplDownloadProvider implements IPrintProvider {
 }
 
 export class LocalAgentProvider implements IPrintProvider {
-  async print(_request: PrintRequest): Promise<void> {
-    throw new Error("Local Print Agent henüz yapılandırılmadı (Yapım Aşamasında).");
+  private getAgentToken(): string {
+    const saved = localStorage.getItem('trackTrace_printSettings');
+    if (saved) {
+      try {
+        const config = JSON.parse(saved);
+        if (config.agentToken) return config.agentToken;
+      } catch (e) {}
+    }
+    throw new Error("Agent eşleştirme (pairing) token'ı eksik, ayarlardan giriniz.");
   }
 
-  async testPrint(_zplData: string): Promise<void> {
-    throw new Error("Local Print Agent henüz yapılandırılmadı (Yapım Aşamasında).");
+  private async sendToAgent(path: string, body: any): Promise<void> {
+    const token = this.getAgentToken();
+    try {
+      const res = await fetch(`http://127.0.0.1:5000${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      
+      if (res.status === 401) {
+        throw new Error("Yetkisiz Erişim (401): Agent Pairing Token geçersiz.");
+      }
+      if (!res.ok) {
+        throw new Error(`Agent Hatası (${res.status}): Yazdırma işlemi başarısız.`);
+      }
+    } catch (err: any) {
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        throw new Error("Local Agent'a ulaşılamıyor. Uygulamanın çalıştığından ve 5000 portunun açık olduğundan emin olun.");
+      }
+      throw err;
+    }
+  }
+
+  async print(request: PrintRequest): Promise<void> {
+    const labelRes = await api.get(`/api/${request.type}s/${request.id}/label.zpl`);
+    if (labelRes && labelRes.zpl) {
+      await this.sendToAgent('/api/print', { data: labelRes.zpl });
+    }
+  }
+
+  async testPrint(zplData: string): Promise<void> {
+    await this.sendToAgent('/api/print/test', { data: zplData });
   }
 }
 

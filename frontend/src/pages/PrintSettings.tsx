@@ -11,6 +11,7 @@ interface PrintConfig {
   autoPrintCarton: boolean;
   autoPrintPallet: boolean;
   showNotification: boolean;
+  agentToken?: string;
 }
 
 const DEFAULT_CONFIG: PrintConfig = {
@@ -19,7 +20,8 @@ const DEFAULT_CONFIG: PrintConfig = {
   defaultFormat: 'pdf',
   autoPrintCarton: true,
   autoPrintPallet: true,
-  showNotification: true
+  showNotification: true,
+  agentToken: ''
 };
 
 export const PrintSettings: React.FC = () => {
@@ -62,6 +64,9 @@ export const PrintSettings: React.FC = () => {
   const handleTestPrint = async () => {
     setTestMessage(null);
     try {
+      if (config.printMode === 'agent' && !config.agentToken) {
+        throw new Error("Agent eşleştirme (pairing) token'ı eksik, 'Local Agent' sekmesinden giriniz.");
+      }
       const provider = getPrintProvider(config.printMode);
       const testZpl = `^XA^CI28^PW800^LL640^FO50,50^A0N,44,44^FDTEST PRINT^FS^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS^FO50,150^A0N,24,24^FDTarih: ${new Date().toLocaleString('tr-TR')}^FS^FO50,200^GB700,3,3^FS^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS^XZ\n`;
       await provider.testPrint(testZpl);
@@ -228,11 +233,16 @@ export const PrintSettings: React.FC = () => {
                   <option value="browser">Browser Auto Print</option>
                   <option value="pdf">PDF Download</option>
                   <option value="zpl">ZPL Download</option>
-                  <option value="agent" disabled>Local Print Agent (Yakında)</option>
+                  <option value="agent" disabled={!config.agentToken}>Local Print Agent</option>
                 </select>
                 <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                   Bu ayar tarayıcı bazlıdır ve o anki cihazın davranışını belirler.
                 </small>
+                {!config.agentToken && (
+                  <small style={{ color: 'var(--warning)', marginTop: '4px', display: 'block' }}>
+                    Local Print Agent modunu seçebilmek için 'Local Agent' sekmesinden Pairing Token girmelisiniz.
+                  </small>
+                )}
               </div>
 
               <div className="form-group">
@@ -396,36 +406,41 @@ export const PrintSettings: React.FC = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                 <h3 style={{ margin: 0 }}>Local Print Agent</h3>
-                <span className="badge badge-warning">Yapım Aşamasında</span>
               </div>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                Bu yöntem ileride TrackTrace bulut sistemi ile depodaki yerel ağ yazıcısı (Network Printer) arasında 
-                doğrudan ve güvenli bir bağlantı kurmak için kullanılacaktır. Tarayıcı bağımsızdır.
+                Tarayıcı kısıtlarından bağımsız olarak yerel yazıcınıza doğrudan yazdırmak için kullanılır. 
+                Bilgisayarınızda çalışan TrackTrace Local Agent ile güvenli haberleşme sağlar.
               </p>
 
               <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                
+                <div className="form-group" style={{ marginBottom: '24px' }}>
+                  <label>Agent Pairing Token <span style={{ color: 'var(--danger)' }}>*</span></label>
+                  <input 
+                    type="password" 
+                    className="input" 
+                    placeholder="Local Agent kurulumunda verilen token"
+                    value={config.agentToken || ''}
+                    onChange={(e) => handleSaveLocal({ agentToken: e.target.value })}
+                  />
+                  <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                    Agent ile güvenli bağlantı kurmak için zorunludur. Token boş ise bu bilgisayarda Local Agent kullanılamaz.
+                  </small>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '16px', background: 'var(--bg-card)', borderRadius: '6px' }}>
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: '4px' }}>Agent Bağlantı Durumu</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#cbd5e1' }}></div>
-                      Bekleniyor...
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: config.agentToken ? '#cbd5e1' : '#ef4444' }}></div>
+                      {config.agentToken ? 'Bağlantı Kurulmadı (Test Yapınız)' : 'Token Eksik'}
                     </div>
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: '4px' }}>Port</div>
-                    <div style={{ color: 'var(--text-muted)' }}>5000 (Varsayılan)</div>
+                    <div style={{ color: 'var(--text-muted)' }}>127.0.0.1:5000</div>
                   </div>
                 </div>
-
-                <h4 style={{ marginBottom: '16px', marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>Planlanan Özellikler:</h4>
-                <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px', color: 'var(--text-muted)' }}>
-                  <li><strong>Windows Service:</strong> Arka planda kesintisiz çalışma.</li>
-                  <li><strong>SignalR Bağlantısı:</strong> Bulut ile eşzamanlı ve güvenli veri akışı.</li>
-                  <li><strong>Durum Takibi:</strong> Yazıcı online/offline durumunu buluttan izleme.</li>
-                  <li><strong>Raw TCP Yazdırma:</strong> Port 9100 üzerinden aracısız (driversız) direkt baskı.</li>
-                  <li><strong>Yazıcı Kuyruğu (Queue):</strong> Başarısız baskılarda retry mekanizması ve loglama.</li>
-                </ul>
               </div>
             </div>
           )}
