@@ -245,9 +245,9 @@ export const Reports: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const startBackgroundJob = async (orderNo: string, stockCode?: string) => {
+  const startBackgroundJob = async (orderNo: string, stockCode?: string, format: string = 'CSV') => {
     try {
-      await api.post('/api/reports/jobs', { orderNo, stockCode, format: 'Excel' });
+      await api.post('/api/reports/jobs', { orderNo, stockCode, format });
       setShowJobsPanel(true);
       setExportPrompt(null);
     } catch (err: any) {
@@ -1070,11 +1070,20 @@ export const Reports: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
               <button 
                 className="btn btn-primary" 
-                onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode)}
+                onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'CSV')}
                 style={{ padding: '12px' }}
               >
-                Arka Planda Hazırla (Önerilen)
+                Arka Planda Hazırla (CSV ZIP - Önerilen)
               </button>
+              {exportPrompt.advice.strategy !== 'risky-stock' && (
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'Excel')}
+                  style={{ padding: '12px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                >
+                  Arka Planda Hazırla (Excel ZIP)
+                </button>
+              )}
               {exportPrompt.advice.strategy !== 'risky-stock' && (
                 <button 
                   className="btn btn-secondary" 

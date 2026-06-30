@@ -67,17 +67,7 @@ public class ExportJobBackgroundService : BackgroundService
 
         try
         {
-            _logger.LogInformation($"Starting export job {job.Id}");
-            
-            // Mocking progress
-            await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 10 WHERE Id = @Id", new { Id = job.Id });
-
-            // Generate report using existing query
-            var result = await mediator.Send(new GetOrderReportExcelQuery(job.OrderNo, job.StockCode, false), cancellationToken);
-
-            await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 90 WHERE Id = @Id", new { Id = job.Id });
-
-            // Save to disk
+            // Set up directory
             var exportDir = "/app/data/exports";
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
@@ -89,8 +79,32 @@ public class ExportJobBackgroundService : BackgroundService
                 Directory.CreateDirectory(exportDir);
             }
 
-            var filePath = Path.Combine(exportDir, $"{job.Id}_{result.FileName}");
-            await File.WriteAllBytesAsync(filePath, result.Bytes, cancellationToken);
+            string filePath;
+            if (job.ExportFormat == "CSV")
+            {
+                _logger.LogInformation($"Starting CSV export stream for job {job.Id}");
+                await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 5 WHERE Id = @Id", new { Id = job.Id });
+                
+                var fileName = string.IsNullOrEmpty(job.StockCode) 
+                    ? $"{job.OrderNo}_TrackTrace_Raporu.zip" 
+                    : $"{job.OrderNo}_{job.StockCode}_TrackTrace_Raporu.zip";
+                
+                filePath = Path.Combine(exportDir, $"{job.Id}_{fileName}");
+                await mediator.Send(new ExportCsvZipCommand(job.Id, job.OrderNo, job.StockCode, filePath), cancellationToken);
+            }
+            else
+            {
+                _logger.LogInformation($"Starting Excel export memory generation for job {job.Id}");
+                await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 10 WHERE Id = @Id", new { Id = job.Id });
+
+                // Generate report using existing query
+                var result = await mediator.Send(new GetOrderReportExcelQuery(job.OrderNo, job.StockCode, false), cancellationToken);
+
+                await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 90 WHERE Id = @Id", new { Id = job.Id });
+
+                filePath = Path.Combine(exportDir, $"{job.Id}_{result.FileName}");
+                await File.WriteAllBytesAsync(filePath, result.Bytes, cancellationToken);
+            }
 
             // Mark complete
             var downloadToken = Guid.NewGuid();
