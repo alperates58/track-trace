@@ -86,4 +86,12 @@ Sistem WMS değildir; operatörün en hızlı şekilde okutma yapması için tas
 * **Adjustable Font Size**: Added support for customizable font size (`fontSize`) parameter in the PDF generation pipeline (from frontend selection to backend parser), defaulting to `10pt` (increased from the original `8pt`).
 * **Dynamic Layout Adjustment**: Updated `LabelGenerator.GenerateDataMatrixCodesPdf` to dynamically compute `labelLineHeight` and vertical safety offsets based on the chosen font size. As the font size increases, the barcode image size dynamically shrinks to guarantee that both the barcode and the text fit on the same page.
 
+### 4. Premium Pallet Creation Drawer UI Redesign (30.06.2026)
+* **Drawer-Based Workflow**: Replaced the simple pop-up modal on the Pallet Management page with a 600px wide, right-aligned interactive Drawer matching Stripe/Linear design aesthetics. Operates smoothly with CSS transitions, backdrop-blur effect, and keeps operators in the context of the pallet list.
+* **Instant Client-Side Filtering**: Implemented real-time search on active orders by matching Order Number, Customer, and Stock Code instantly on keystrokes.
+* **Live Statistics & Background Fetching**: Integrated background stats calculation. Opening the drawer automatically queries the cartons API for each active order in parallel to calculate total cartons, open cartons, completed cartons, and current products status, rendering high-fidelity shimmering skeleton loaders while loading.
+* **Read-only System Information**: Added a dedicated segment showcasing Pallet Number, SSCC code, and sequence generation method to clarify auto-generation behaviors.
+* **Keyboard Accessibility & Touch Screen Support**: Equipped with full keyboard navigation (ESC to close, ENTER to proceed/confirm) and large tap targets tailored for industrial touchscreen devices in warehouses.
+
+
 
