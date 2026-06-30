@@ -61,31 +61,37 @@ export const Scan: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
 
-  // Printer settings
-  const [printMode, setPrintMode] = useState<string>(() => {
-    const globalSettings = localStorage.getItem('trackTrace_printSettings');
-    if (globalSettings) {
-      try {
-        const parsed = JSON.parse(globalSettings);
-        if (parsed.printMode === 'browser') return 'kiosk';
-        if (parsed.printMode === 'agent') return 'network'; // For future compatibility
-        return parsed.printMode;
-      } catch (e) {}
-    }
-    return localStorage.getItem('tt_print_mode') || 'kiosk';
-  });
-  
-  const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
-    const globalSettings = localStorage.getItem('trackTrace_printSettings');
-    if (globalSettings) {
-      try {
-        const parsed = JSON.parse(globalSettings);
-        return parsed.autoPrintCarton;
-      } catch (e) {}
-    }
-    const val = localStorage.getItem('tt_auto_print');
-    return val !== 'false';
-  });
+  const [printMode, setPrintMode] = useState<string>('kiosk');
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      let activeMode = 'kiosk';
+      let activeAutoPrint = true;
+
+      const localSettings = localStorage.getItem('trackTrace_printSettings');
+      if (localSettings) {
+        try {
+          const parsed = JSON.parse(localSettings);
+          activeMode = parsed.printMode === 'browser' ? 'kiosk' : (parsed.printMode === 'agent' ? 'network' : parsed.printMode);
+          activeAutoPrint = parsed.autoPrintCarton !== false;
+        } catch (e) {}
+      } else {
+        try {
+          const res = await api.get('/api/settings/GlobalPrintConfig');
+          if (res && res.value) {
+            const parsed = JSON.parse(res.value);
+            activeMode = parsed.printMode === 'browser' ? 'kiosk' : (parsed.printMode === 'agent' ? 'network' : parsed.printMode);
+            activeAutoPrint = parsed.autoPrintCarton !== false;
+          }
+        } catch (e) {}
+      }
+
+      setPrintMode(activeMode);
+      setAutoPrintEnabled(activeAutoPrint);
+    };
+    loadSettings();
+  }, []);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);

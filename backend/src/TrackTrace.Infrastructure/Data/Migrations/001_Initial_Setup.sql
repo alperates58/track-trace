@@ -187,3 +187,12 @@ CREATE TABLE IF NOT EXISTS ExportJobs (
 
 CREATE INDEX IF NOT EXISTS IX_ExportJobs_UserId_CreatedAt ON ExportJobs(UserId, CreatedAt DESC);
 CREATE INDEX IF NOT EXISTS IX_ExportJobs_Status_CreatedAt ON ExportJobs(Status, CreatedAt ASC);
+
+-- FAZ 5B: SystemSettings
+CREATE TABLE IF NOT EXISTS SystemSettings (
+    Id UUID PRIMARY KEY,
+    Key TEXT UNIQUE NOT NULL,
+    Value JSONB,
+    UpdatedBy UUID REFERENCES Users(Id) ON DELETE SET NULL,
+    UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

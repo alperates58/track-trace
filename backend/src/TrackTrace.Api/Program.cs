@@ -1525,8 +1525,36 @@ app.MapGet("/api/system/health", async (IDbConnectionFactory dbFactory) =>
     }
 }).RequireAuthorization("AdminOnly");
 
+// FAZ 5B: System Settings
+app.MapGet("/api/settings/{key}", async (string key, IMediator mediator) =>
+{
+    var result = await mediator.Send(new TrackTrace.Application.Features.SystemSettings.GetSettingQuery(key));
+    if (result == null) return Results.NotFound();
+    return Results.Ok(result);
+});
+
+app.MapPut("/api/settings/{key}", async (string key, TrackTrace.Application.Features.SystemSettings.SettingDto request, IMediator mediator) =>
+{
+    var success = await mediator.Send(new TrackTrace.Application.Features.SystemSettings.UpdateSettingCommand(key, request.Value));
+    return success ? Results.Ok() : Results.BadRequest();
+}).RequireAuthorization("AdminOnly");
+
+// FAZ 5B: Test Print
+app.MapPost("/api/print/test", (TestPrintRequest request, ILabelGenerator labelGenerator) =>
+{
+    if (request.Format.Equals("zpl", StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.Ok(new { Data = "^XA^FO50,50^ADN,36,20^FDTEST ETIKETI^FS^FO50,100^BCN,100,Y,N,N^FDTEST-000000^FS^XZ" });
+    }
+    else
+    {
+        return Results.File(System.Text.Encoding.UTF8.GetBytes("TEST ETIKETI PDF ICERIGI (MOCK)"), "application/pdf", "test_label.pdf");
+    }
+});
+
 app.Run();
 
+public record TestPrintRequest(string Format);
 public record PrintCodesRequest(
     int Cols,
     int Rows,

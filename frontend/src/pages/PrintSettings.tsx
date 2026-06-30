@@ -24,24 +24,68 @@ const DEFAULT_CONFIG: PrintConfig = {
 export const PrintSettings: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
-  const [config, setConfig] = useState<PrintConfig>(DEFAULT_CONFIG);
+  const [globalConfig, setGlobalConfig] = useState<PrintConfig>(DEFAULT_CONFIG);
+  const [localConfig, setLocalConfig] = useState<PrintConfig | null>(null);
+  const [isUsingLocalOverride, setIsUsingLocalOverride] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings/GlobalPrintConfig');
+        if (res.ok) {
+          const data = await res.json();
+          setGlobalConfig({ ...DEFAULT_CONFIG, ...JSON.parse(data.value) });
+        }
+      } catch (e) {
+        console.error('Failed to fetch global print settings', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSettings();
+
     const saved = localStorage.getItem('trackTrace_printSettings');
     if (saved) {
       try {
-        setConfig({ ...DEFAULT_CONFIG, ...JSON.parse(saved) });
-      } catch (e) {
-        console.error('Failed to parse print settings', e);
-      }
+        setLocalConfig({ ...DEFAULT_CONFIG, ...JSON.parse(saved) });
+        setIsUsingLocalOverride(true);
+      } catch (e) {}
     }
   }, []);
 
-  const handleSave = (newConfig: Partial<PrintConfig>) => {
+  const config = isUsingLocalOverride ? (localConfig || DEFAULT_CONFIG) : globalConfig;
+
+  const handleSaveLocal = (newConfig: Partial<PrintConfig>) => {
     const updated = { ...config, ...newConfig };
-    setConfig(updated);
+    setLocalConfig(updated);
+    setIsUsingLocalOverride(true);
     localStorage.setItem('trackTrace_printSettings', JSON.stringify(updated));
+  };
+
+  const handleSaveGlobal = async (newConfig: Partial<PrintConfig>) => {
+    const updated = { ...config, ...newConfig };
+    try {
+      await fetch('/api/settings/GlobalPrintConfig', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ key: 'GlobalPrintConfig', value: JSON.stringify(updated) })
+      });
+      setGlobalConfig(updated);
+      alert('Global ayarlar başarıyla kaydedildi.');
+    } catch (e) {
+      alert('Global ayarlar kaydedilemedi.');
+    }
+  };
+
+  const clearLocalOverride = () => {
+    localStorage.removeItem('trackTrace_printSettings');
+    setLocalConfig(null);
+    setIsUsingLocalOverride(false);
   };
 
   const copyToClipboard = (text: string) => {
@@ -61,6 +105,10 @@ export const PrintSettings: React.FC = () => {
     );
   }
 
+  if (isLoading) {
+    return <div className="page-container">Yükleniyor...</div>;
+  }
+
   return (
     <div className="page-container">
       <TTPageHeader 
@@ -69,6 +117,23 @@ export const PrintSettings: React.FC = () => {
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <TTCard>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Ayar Kaynağı</div>
+            <div style={{ fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', color: isUsingLocalOverride ? 'var(--warning)' : 'var(--primary)' }}>
+              {isUsingLocalOverride ? 'Local Override (Bu PC)' : 'Global Default'}
+            </div>
+            {isUsingLocalOverride && (
+              <button 
+                onClick={clearLocalOverride}
+                style={{ fontSize: '0.75rem', color: 'var(--danger)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginTop: '4px' }}
+              >
+                Yerel ayarı temizle
+              </button>
+            )}
+          </div>
+        </TTCard>
+
         <TTCard>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Aktif Yazdırma Modu</div>
@@ -144,7 +209,7 @@ export const PrintSettings: React.FC = () => {
                 <select 
                   className="input" 
                   value={config.printMode} 
-                  onChange={(e) => handleSave({ printMode: e.target.value as any })}
+                  onChange={(e) => handleSaveLocal({ printMode: e.target.value as any })}
                 >
                   <option value="browser">Browser Auto Print</option>
                   <option value="pdf">PDF Download</option>
@@ -161,7 +226,7 @@ export const PrintSettings: React.FC = () => {
                 <select 
                   className="input" 
                   value={config.defaultLabelType}
-                  onChange={(e) => handleSave({ defaultLabelType: e.target.value as any })}
+                  onChange={(e) => handleSaveLocal({ defaultLabelType: e.target.value as any })}
                 >
                   <option value="carton">Koli Etiketi</option>
                   <option value="pallet">Palet Etiketi</option>
@@ -173,7 +238,7 @@ export const PrintSettings: React.FC = () => {
                 <select 
                   className="input" 
                   value={config.defaultFormat}
-                  onChange={(e) => handleSave({ defaultFormat: e.target.value as any })}
+                  onChange={(e) => handleSaveLocal({ defaultFormat: e.target.value as any })}
                 >
                   <option value="pdf">PDF</option>
                   <option value="zpl">ZPL</option>
@@ -185,7 +250,7 @@ export const PrintSettings: React.FC = () => {
                   <input 
                     type="checkbox" 
                     checked={config.autoPrintCarton}
-                    onChange={(e) => handleSave({ autoPrintCarton: e.target.checked })}
+                    onChange={(e) => handleSaveLocal({ autoPrintCarton: e.target.checked })}
                   />
                   Koli tamamlanınca otomatik yazdır
                 </label>
@@ -194,7 +259,7 @@ export const PrintSettings: React.FC = () => {
                   <input 
                     type="checkbox" 
                     checked={config.autoPrintPallet}
-                    onChange={(e) => handleSave({ autoPrintPallet: e.target.checked })}
+                    onChange={(e) => handleSaveLocal({ autoPrintPallet: e.target.checked })}
                   />
                   Palet kapatılınca otomatik yazdır
                 </label>
@@ -203,10 +268,20 @@ export const PrintSettings: React.FC = () => {
                   <input 
                     type="checkbox" 
                     checked={config.showNotification}
-                    onChange={(e) => handleSave({ showNotification: e.target.checked })}
+                    onChange={(e) => handleSaveLocal({ showNotification: e.target.checked })}
                   />
                   Yazdırma sonrası bildirim göster
                 </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => handleSaveGlobal(config)}
+                  style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Şu Anki Ayarları Global Olarak Kaydet
+                </button>
               </div>
             </div>
           )}
