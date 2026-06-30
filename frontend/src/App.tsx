@@ -13,6 +13,7 @@ import { SystemInfo } from './pages/SystemInfo';
 import { Users } from './pages/Users';
 import { Reports } from './pages/Reports';
 import { AuditCenter } from './pages/AuditCenter';
+import { PermissionMatrix } from './pages/PermissionMatrix';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -27,7 +28,8 @@ import {
   Menu,
   QrCode,
   BarChart3,
-  Shield
+  Shield,
+  Key
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -60,6 +62,8 @@ const AppShell: React.FC = () => {
         return <SystemInfo />;
       case 'audit':
         return <AuditCenter />;
+      case 'permission-matrix':
+        return <PermissionMatrix />;
       default:
         return <Dashboard />;
     }
@@ -184,6 +188,14 @@ const AppShell: React.FC = () => {
                   <span>Audit Center</span>
                 </div>
                 <div 
+                  className={`sidebar-link ${activeTab === 'permission-matrix' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('permission-matrix')}
+                  title="Yetki Matrisi"
+                >
+                  <Key size={18} style={{ flexShrink: 0 }} />
+                  <span>Yetki Matrisi</span>
+                </div>
+                <div 
                   className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
                   onClick={() => handleTabClick('system')}
                   title="Sistem Bilgisi"
@@ -232,7 +244,7 @@ const AppShell: React.FC = () => {
             <div className="header-title-area">
               <span className="header-breadcrumb">TrackTrace / {activeTab === 'dashboard' ? 'Operations' : activeTab === 'users' || activeTab === 'system' ? 'Administration' : 'Module'}</span>
               <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
-                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </h2>
             </div>
           </div>
