@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Search, Filter, Eye, RefreshCw, X } from 'lucide-react';
+import { Search, Eye, RefreshCw, X } from 'lucide-react';
 
 interface AuditLog {
   id: string;
@@ -37,7 +37,6 @@ export const AuditCenter: React.FC = () => {
 
   // Detail Modal
   const [selectedLog, setSelectedLog] = useState<AuditLogDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -93,14 +92,11 @@ export const AuditCenter: React.FC = () => {
   };
 
   const openDetail = async (id: string) => {
-    setDetailLoading(true);
     try {
       const data = await api.get(`/api/audit-logs/${id}`);
       setSelectedLog(data);
     } catch (err: any) {
       alert('Detay yüklenemedi: ' + err.message);
-    } finally {
-      setDetailLoading(false);
     }
   };
 
