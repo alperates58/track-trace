@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
+import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
 import { Volume2, VolumeX, Barcode, Printer } from 'lucide-react';
 
@@ -293,50 +294,7 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const printViaZebraBrowserPrint = async (zplText: string) => {
-    try {
-      const defaultRes = await fetch("https://localhost:9101/default?type=printer", {
-        method: "GET"
-      });
-      if (!defaultRes.ok) {
-        throw new Error("Varsayılan yazıcı bilgisi alınamadı.");
-      }
-      const rawText = await defaultRes.text();
-      let deviceObj;
-      try {
-        deviceObj = JSON.parse(rawText);
-      } catch (parseErr) {
-        throw new Error("Yazıcı bilgisi çözümlenemedi (JSON Hatası).");
-      }
 
-      if (!deviceObj) {
-        throw new Error("Varsayılan yazıcı bulunamadı. Lütfen Zebra Browser Print uygulamasından yazıcınızı varsayılan olarak seçin.");
-      }
-
-      const writePayload = {
-        device: deviceObj,
-        data: zplText
-      };
-
-      const writeRes = await fetch("https://localhost:9101/write", {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain"
-        },
-        body: JSON.stringify(writePayload)
-      });
-
-      if (!writeRes.ok) {
-        throw new Error("Yazıcıya gönderim hatası (HTTP " + writeRes.status + ").");
-      }
-    } catch (err: any) {
-      console.error("Zebra Browser Print error:", err);
-      if (err.message && (err.message.includes("Failed to fetch") || err.name === "TypeError")) {
-        throw new Error("Zebra Browser Print uygulamasına bağlanılamadı. Uygulamanın çalıştığından ve tarayıcınızın https://localhost:9101 adresindeki yerel SSL sertifikasına güvendiğinden emin olun.");
-      }
-      throw err;
-    }
-  };
 
   const printPDFDirectly = async (cartonId: string) => {
     try {
@@ -372,9 +330,10 @@ export const Scan: React.FC = () => {
     setIsTestingConnection(true);
     setTestMessage(null);
     try {
+      const provider = getPrintProvider(printMode);
       const testZpl = `^XA^CI28^PW800^LL640^FO50,50^A0N,44,44^FDTEST PRINT^FS^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS^FO50,150^A0N,24,24^FDTarih: ${new Date().toLocaleString('tr-TR')}^FS^FO50,200^GB700,3,3^FS^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS^XZ\n`;
-      await printViaZebraBrowserPrint(testZpl);
-      setTestMessage({ text: 'Bağlantı başarılı, test sayfası yazıcıya gönderildi!', type: 'success' });
+      await provider.testPrint(testZpl);
+      setTestMessage({ text: 'Test sayfası başarıyla tetiklendi!', type: 'success' });
     } catch (err: any) {
       setTestMessage({ text: err.message || 'Yazıcıya bağlanılamadı.', type: 'error' });
     } finally {
@@ -386,13 +345,8 @@ export const Scan: React.FC = () => {
     if (!lastClosedCartonId) return;
     setIsReprinting(true);
     try {
-      const labelRes = await api.get(`/api/cartons/${lastClosedCartonId}/label.zpl`);
-      if (labelRes && labelRes.zpl) {
-        await printViaZebraBrowserPrint(labelRes.zpl);
-        alert("Koli etiketi başarıyla yazdırıldı.");
-      } else {
-        throw new Error("ZPL barkod verisi alınamadı.");
-      }
+      const provider = getPrintProvider(printMode);
+      await provider.print({ id: lastClosedCartonId, type: 'carton' });
     } catch (err: any) {
       alert("Yazdırma hatası: " + err.message);
     } finally {
@@ -461,36 +415,20 @@ export const Scan: React.FC = () => {
           setLastClosedCartonSSCC(res.sscc || null);
 
           // Auto-print carton label if enabled
-          const currentMode = localStorage.getItem('tt_print_mode') || 'pdf';
-          const currentAuto = localStorage.getItem('tt_auto_print') !== 'false';
+          const currentMode = printMode || 'kiosk';
+          const currentAuto = autoPrintEnabled;
 
           if (currentAuto && res.cartonId) {
-            if (currentMode === 'network') {
-              api.get(`/api/cartons/${res.cartonId}/label.zpl`)
-                .then(async (labelData) => {
-                  if (labelData && labelData.zpl) {
-                    await printViaZebraBrowserPrint(labelData.zpl);
-                    console.log("Koli barkodu otomatik olarak yerel yazıcıya gönderildi.");
-                  } else {
-                    throw new Error("ZPL barkod verisi alınamadı.");
-                  }
-                })
-                .catch((printErr: any) => {
-                  console.error("Otomatik yazdırma başarısız:", printErr);
-                  playSound('warning');
-                  alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
-                });
-            } else if (currentMode === 'kiosk') {
-              printPDFDirectly(res.cartonId)
-                .then(() => {
-                  console.log("Koli barkodu PDF olarak otomatik yazdırılmaya gönderildi.");
-                })
-                .catch((printErr: any) => {
-                  console.error("Otomatik PDF yazdırma başarısız:", printErr);
-                  playSound('warning');
-                  alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
-                });
-            }
+            const provider = getPrintProvider(currentMode);
+            provider.print({ id: res.cartonId, type: 'carton' })
+              .then(() => {
+                console.log(`Koli barkodu otomatik yazdırılmaya gönderildi (Mode: ${currentMode}).`);
+              })
+              .catch((printErr: any) => {
+                console.error(`Otomatik yazdırma başarısız (Mode: ${currentMode}):`, printErr);
+                playSound('warning');
+                alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
+              });
           }
         } else {
           setStatus('success');
@@ -897,27 +835,14 @@ export const Scan: React.FC = () => {
                 
                 {lastClosedCartonId && (
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                    {printMode === 'network' || printMode === 'kiosk' ? (
-                      <button 
-                        className="btn btn-primary" 
-                        disabled={isReprinting}
-                        style={{ flex: '1 1 100%', padding: '6px 8px', fontSize: '0.75rem', backgroundColor: '#3b82f6', fontWeight: 700, borderRadius: '6px' }}
-                        onClick={async () => {
-                          if (printMode === 'network') {
-                            await handleNetworkPrint();
-                          } else if (printMode === 'kiosk' && lastClosedCartonId) {
-                            setIsReprinting(true);
-                            try {
-                              await printPDFDirectly(lastClosedCartonId);
-                            } finally {
-                              setIsReprinting(false);
-                            }
-                          }
-                        }}
-                      >
-                        {isReprinting ? 'Yazdırılıyor...' : 'Doğrudan Yazdır'}
-                      </button>
-                    ) : null}
+                    <button 
+                      className="btn btn-primary" 
+                      disabled={isReprinting}
+                      style={{ flex: '1 1 100%', padding: '6px 8px', fontSize: '0.75rem', backgroundColor: '#3b82f6', fontWeight: 700, borderRadius: '6px' }}
+                      onClick={handleNetworkPrint}
+                    >
+                      {isReprinting ? 'Yazdırılıyor...' : 'Doğrudan Yazdır'}
+                    </button>
                     <button 
                       className="btn btn-secondary" 
                       style={{ flex: 1, padding: '6px 8px', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px' }}

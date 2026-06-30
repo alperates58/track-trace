@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
 import { TTCard, TTPageHeader } from '../components/common';
 import { Settings, MonitorPlay, FileDown, Server, Info, Copy, Check } from 'lucide-react';
@@ -29,6 +30,7 @@ export const PrintSettings: React.FC = () => {
   const [isUsingLocalOverride, setIsUsingLocalOverride] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -56,6 +58,18 @@ export const PrintSettings: React.FC = () => {
   }, []);
 
   const config = isUsingLocalOverride ? (localConfig || DEFAULT_CONFIG) : globalConfig;
+
+  const handleTestPrint = async () => {
+    setTestMessage(null);
+    try {
+      const provider = getPrintProvider(config.printMode);
+      const testZpl = `^XA^CI28^PW800^LL640^FO50,50^A0N,44,44^FDTEST PRINT^FS^FO50,110^A0N,28,28^FDBaglanti: Basarili^FS^FO50,150^A0N,24,24^FDTarih: ${new Date().toLocaleString('tr-TR')}^FS^FO50,200^GB700,3,3^FS^FO50,230^A0N,20,20^FDTrack & Trace Termal Yazici Testi^FS^XZ\n`;
+      await provider.testPrint(testZpl);
+      setTestMessage({ text: 'Test yazdırma başarılı!', type: 'success' });
+    } catch (err: any) {
+      setTestMessage({ text: err.message || 'Test yazdırma başarısız.', type: 'error' });
+    }
+  };
 
   const handleSaveLocal = (newConfig: Partial<PrintConfig>) => {
     const updated = { ...config, ...newConfig };
@@ -282,7 +296,20 @@ export const PrintSettings: React.FC = () => {
                 >
                   Şu Anki Ayarları Global Olarak Kaydet
                 </button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={handleTestPrint}
+                  style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Test Etiketi Yazdır
+                </button>
               </div>
+
+              {testMessage && (
+                <div style={{ padding: '12px', marginTop: '12px', borderRadius: '6px', backgroundColor: testMessage.type === 'success' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${testMessage.type === 'success' ? '#bbf7d0' : '#fecaca'}`, color: testMessage.type === 'success' ? '#16a34a' : '#ef4444' }}>
+                  {testMessage.text}
+                </div>
+              )}
             </div>
           )}
 
@@ -361,15 +388,29 @@ export const PrintSettings: React.FC = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                 <h3 style={{ margin: 0 }}>Local Print Agent</h3>
-                <span className="badge badge-warning">Yakında</span>
+                <span className="badge badge-warning">Yapım Aşamasında</span>
               </div>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
                 Bu yöntem ileride TrackTrace bulut sistemi ile depodaki yerel ağ yazıcısı (Network Printer) arasında 
                 doğrudan ve güvenli bir bağlantı kurmak için kullanılacaktır. Tarayıcı bağımsızdır.
               </p>
 
-              <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px' }}>
-                <h4 style={{ marginBottom: '16px' }}>Planlanan Özellikler:</h4>
+              <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>Agent Bağlantı Durumu</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#cbd5e1' }}></div>
+                      Bekleniyor...
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>Port</div>
+                    <div style={{ color: 'var(--text-muted)' }}>5000 (Varsayılan)</div>
+                  </div>
+                </div>
+
+                <h4 style={{ marginBottom: '16px', marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>Planlanan Özellikler:</h4>
                 <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px', color: 'var(--text-muted)' }}>
                   <li><strong>Windows Service:</strong> Arka planda kesintisiz çalışma.</li>
                   <li><strong>SignalR Bağlantısı:</strong> Bulut ile eşzamanlı ve güvenli veri akışı.</li>
