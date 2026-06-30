@@ -244,10 +244,141 @@ const AuthGate: React.FC = () => {
   return isAuthenticated ? <AppShell /> : <Login />;
 };
 
+const VersionChecker: React.FC = () => {
+  const [showBanner, setShowBanner] = React.useState(false);
+  const [serverVersion, setServerVersion] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      return;
+    }
+
+    const checkVersion = async () => {
+      try {
+        const response = await fetch('/version.json', { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        if (typeof __APP_VERSION_INFO__ !== 'undefined' && data && data.version) {
+          if (data.version !== __APP_VERSION_INFO__.version) {
+            setServerVersion(data);
+            setShowBanner(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to check application version:', err);
+      }
+    };
+
+    checkVersion();
+    const interval = setInterval(checkVersion, 600 * 1000); // Check every 10 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!showBanner) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '24px',
+      right: '24px',
+      backgroundColor: 'rgba(30, 41, 59, 0.95)',
+      color: '#f8fafc',
+      padding: '16px 20px',
+      borderRadius: '12px',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+      border: '1px solid #3b82f6',
+      zIndex: 99999,
+      fontFamily: "'Outfit', 'Inter', system-ui, sans-serif",
+      maxWidth: '400px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      backdropFilter: 'blur(8px)',
+      animation: 'slideIn 0.3s ease-out'
+    }}>
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateY(100px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        <div style={{
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '50%',
+          padding: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(59, 130, 246, 0.2)',
+          flexShrink: 0
+        }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <span style={{ fontWeight: 700, fontSize: '15px', color: '#f1f5f9' }}>Yeni Sürüm Yayınlandı</span>
+          <span style={{ fontSize: '13px', color: '#94a3b8', lineHeight: '1.4' }}>
+            Uygulama arka planda güncellendi. Yeni özellikleri kullanabilmek için sayfayı yenilemeniz önerilir.
+          </span>
+          {serverVersion?.builtAt && (
+            <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+              Yayınlanma: {new Date(serverVersion.builtAt).toLocaleString('tr-TR')}
+            </span>
+          )}
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <button 
+          onClick={() => setShowBanner(false)}
+          style={{
+            background: 'transparent',
+            border: '1px solid #334155',
+            color: '#94a3b8',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'all 0.2s'
+          }}
+          onMouseOver={(e) => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.backgroundColor = '#1e293b'; }}
+          onMouseOut={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+        >
+          Daha Sonra
+        </button>
+        <button 
+          onClick={() => window.location.reload(true)}
+          style={{
+            background: '#2563eb',
+            border: 'none',
+            color: '#fff',
+            padding: '6px 16px',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+        >
+          Yenile
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <AuthGate />
+      <VersionChecker />
     </AuthProvider>
   );
 };

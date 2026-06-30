@@ -13,10 +13,16 @@ async function request(path: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (error: any) {
+    console.error('API request error:', error);
+    throw new Error('API sunucusuna ulaşılamıyor. İnternet bağlantınızı veya sunucu durumunu kontrol edin.');
+  }
 
   if (response.status === 401 && path !== '/api/auth/login') {
     localStorage.removeItem('tt_token');

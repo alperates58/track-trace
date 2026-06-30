@@ -12,6 +12,99 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Global Chunk/Network Error Recovery Script -->
+    <script>
+      (function() {
+        var ERROR_PATTERNS = [
+          'Failed to fetch dynamically imported module',
+          'Loading chunk failed',
+          'Importing a module script failed',
+          'net::ERR_CONNECTION_CLOSED',
+          'Failed to fetch'
+        ];
+
+        function isChunkError(message) {
+          if (!message) return false;
+          var msgStr = String(message);
+          for (var i = 0; i < ERROR_PATTERNS.length; i++) {
+            if (msgStr.indexOf(ERROR_PATTERNS[i]) !== -1) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        function handleRecovery(reason) {
+          console.warn('Chunk or network load failure detected:', reason);
+          var now = Date.now();
+          var lastReload = sessionStorage.getItem('tt_last_chunk_reload');
+          
+          if (lastReload && (now - parseInt(lastReload, 10)) < 30000) {
+            // Throttled: Already reloaded in the last 30s. Show manual recovery UI.
+            showRecoveryUI();
+          } else {
+            // First time or >30s since last reload: Attempt auto hard reload.
+            sessionStorage.setItem('tt_last_chunk_reload', String(now));
+            showReloadOverlay();
+            setTimeout(function() {
+              window.location.reload(true);
+            }, 1500);
+          }
+        }
+
+        function showReloadOverlay() {
+          if (document.getElementById('tt-reload-overlay')) return;
+          var overlay = document.createElement('div');
+          overlay.id = 'tt-reload-overlay';
+          overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.95);color:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;padding:20px;text-align:center;';
+          overlay.innerHTML = 
+            '<div style="font-size:24px;font-weight:bold;margin-bottom:10px;color:#3b82f6;">Sistem Güncelleniyor</div>' +
+            '<div style="font-size:16px;color:#94a3b8;">Sistem güncellendi veya bağlantı yenilendi. Sayfa yeniden yükleniyor...</div>';
+          document.body.appendChild(overlay);
+        }
+
+        function showRecoveryUI() {
+          var overlay = document.getElementById('tt-reload-overlay');
+          if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'tt-reload-overlay';
+            document.body.appendChild(overlay);
+          }
+          overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.95);color:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;padding:20px;text-align:center;';
+          overlay.innerHTML = 
+            '<div style="font-size:24px;font-weight:bold;margin-bottom:10px;color:#ef4444;">Bağlantı veya Sürüm Hatası</div>' +
+            '<div style="font-size:16px;color:#94a3b8;margin-bottom:20px;max-width:400px;">' +
+              'Sistem yeni sürüme güncellendi veya sunucuyla bağlantı kurulamadı. Sayfayı manuel yenilemeyi deneyebilirsiniz.' +
+            '</div>' +
+            '<button onclick="window.location.reload(true)" style="background:#2563eb;color:#fff;border:none;padding:10px 20px;font-size:16px;border-radius:6px;cursor:pointer;font-weight:bold;transition:background 0.2s;">' +
+              'Sayfayı Yenile' +
+            '</button>';
+        }
+
+        // 1. Capture script/link load errors (using capture phase)
+        window.addEventListener('error', function(event) {
+          var target = event.target;
+          if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+            var url = target.src || target.href || '';
+            if (url.indexOf('/assets/') !== -1 || url.indexOf('main.tsx') !== -1) {
+              handleRecovery('Resource failed to load: ' + url);
+            }
+          } else if (event.message && isChunkError(event.message)) {
+            handleRecovery(event.message);
+          }
+        }, true);
+
+        // 2. Capture unhandled promise rejections (thrown by import() dynamic loads)
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event.reason ? String(event.reason) : '';
+          if (isChunkError(reason)) {
+            event.preventDefault(); // Stop outputting to console if we are handling it
+            handleRecovery(reason);
+          }
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
