@@ -138,7 +138,9 @@ CREATE INDEX IF NOT EXISTS IX_Pallets_OrderId_Status ON Pallets(OrderId, Status)
 DROP INDEX IF EXISTS IX_Pallets_SSCC;
 
 CREATE INDEX IF NOT EXISTS IX_AuditLogs_EntityName_EntityId ON AuditLogs(EntityName, EntityId);
-CREATE INDEX IF NOT EXISTS IX_AuditLogs_CreatedAt ON AuditLogs(CreatedAt);
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_CreatedAt ON AuditLogs(CreatedAt DESC);
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_UserId ON AuditLogs(UserId);
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_Action ON AuditLogs(Action);
 
 CREATE INDEX IF NOT EXISTS IX_PrintJobs_EntityId ON PrintJobs(EntityId);
 

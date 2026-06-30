@@ -534,6 +534,28 @@ app.MapGet("/api/reports/download/{token:guid}", async (Guid token, IDbConnectio
     
     return Results.File(job.FilePath, contentType, fileName);
 });
+// Audit Logs Endpoints
+app.MapGet("/api/audit-logs", async (
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] DateTime? startDate,
+    [FromQuery] DateTime? endDate,
+    [FromQuery] Guid? userId,
+    [FromQuery] string? entityName,
+    [FromQuery] string? action,
+    IMediator mediator) =>
+{
+    var result = await mediator.Send(new TrackTrace.Application.Features.System.GetAuditLogsQuery(
+        pageNumber ?? 1, pageSize ?? 50, startDate, endDate, userId, entityName, action));
+    return Results.Ok(result);
+}).RequireAuthorization("AdminOnly");
+
+app.MapGet("/api/audit-logs/{id:guid}", async (Guid id, IMediator mediator) =>
+{
+    var log = await mediator.Send(new TrackTrace.Application.Features.System.GetAuditLogDetailQuery(id));
+    if (log == null) return Results.NotFound();
+    return Results.Ok(log);
+}).RequireAuthorization("AdminOnly");
 
 // Orders Endpoints
 app.MapGet("/api/orders", async (

@@ -12,6 +12,7 @@ import { DataMatrixCreator } from './pages/DataMatrixCreator';
 import { SystemInfo } from './pages/SystemInfo';
 import { Users } from './pages/Users';
 import { Reports } from './pages/Reports';
+import { AuditCenter } from './pages/AuditCenter';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -25,7 +26,8 @@ import {
   Package,
   Menu,
   QrCode,
-  BarChart3
+  BarChart3,
+  Shield
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -56,6 +58,8 @@ const AppShell: React.FC = () => {
         return <Users />;
       case 'system':
         return <SystemInfo />;
+      case 'audit':
+        return <AuditCenter />;
       default:
         return <Dashboard />;
     }
@@ -170,6 +174,14 @@ const AppShell: React.FC = () => {
                 >
                   <UsersIcon size={18} style={{ flexShrink: 0 }} />
                   <span>Kullanıcı Yönetimi</span>
+                </div>
+                <div 
+                  className={`sidebar-link ${activeTab === 'audit' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('audit')}
+                  title="Audit Center"
+                >
+                  <Shield size={18} style={{ flexShrink: 0 }} />
+                  <span>Audit Center</span>
                 </div>
                 <div 
                   className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
