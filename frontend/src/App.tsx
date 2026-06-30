@@ -14,6 +14,7 @@ import { Users } from './pages/Users';
 import { Reports } from './pages/Reports';
 import { AuditCenter } from './pages/AuditCenter';
 import { PermissionMatrix } from './pages/PermissionMatrix';
+import { PrintSettings } from './pages/PrintSettings';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -29,7 +30,8 @@ import {
   QrCode,
   BarChart3,
   Shield,
-  Key
+  Key,
+  Printer
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -64,6 +66,8 @@ const AppShell: React.FC = () => {
         return <AuditCenter />;
       case 'permission-matrix':
         return <PermissionMatrix />;
+      case 'print-settings':
+        return <PrintSettings />;
       default:
         return <Dashboard />;
     }
@@ -194,6 +198,14 @@ const AppShell: React.FC = () => {
                 >
                   <Key size={18} style={{ flexShrink: 0 }} />
                   <span>Yetki Matrisi</span>
+                </div>
+                <div 
+                  className={`sidebar-link ${activeTab === 'print-settings' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('print-settings')}
+                  title="Yazdırma Ayarları"
+                >
+                  <Printer size={18} style={{ flexShrink: 0 }} />
+                  <span>Yazdırma Ayarları</span>
                 </div>
                 <div 
                   className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
