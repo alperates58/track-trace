@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Printer, Eye, Search, Barcode, Trash2, X, Check, Loader2, ArrowRight, Clock, Package } from 'lucide-react';
-
+import { Plus, Printer, Eye, Search, Barcode, Trash2, X, Check, Loader2, ArrowRight, Clock, Package, Layers } from 'lucide-react';
+import { TTPageHeader, TTLoadingState, TTEmptyState, TTButton } from '../components/common';
 interface Pallet {
   id: string;
   orderId: string;
@@ -317,18 +317,17 @@ export const Pallets: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>Palet Yönetimi</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Kolileri paletlere yerleştirme, palet kapatma ve etiket yazdırma.</p>
-        </div>
-        {user?.role !== 'Viewer' && (
-          <button className="btn btn-primary" onClick={handleOpenCreateDrawer}>
-            <Plus size={18} /> Yeni Palet Aç
-          </button>
-        )}
-      </div>
-
+      <TTPageHeader
+        title="Palet Yönetimi"
+        description="Kolileri paletlere yerleştirme, palet kapatma ve etiket yazdırma."
+        actions={
+          user?.role !== 'Viewer' ? (
+            <TTButton variant="primary" onClick={handleOpenCreateDrawer} icon={<Plus size={18} />}>
+              Yeni Palet Aç
+            </TTButton>
+          ) : undefined
+        }
+      />
       {/* Filter Bar */}
       <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div className="form-group" style={{ flex: 1, minWidth: '250px', marginBottom: 0 }}>
@@ -377,9 +376,9 @@ export const Pallets: React.FC = () => {
             </thead>
             <tbody>
               {loading && pallets.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px' }}>Yükleniyor...</td></tr>
+                <tr><td colSpan={6} style={{ padding: '0' }}><TTLoadingState /></td></tr>
               ) : pallets.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>Palet bulunamadı.</td></tr>
+                <tr><td colSpan={6} style={{ padding: '0' }}><TTEmptyState icon={<Layers size={32} />} title="Palet Bulunamadı" /></td></tr>
               ) : (
                 pallets.map((p) => (
                   <tr key={p.id} style={{ cursor: 'pointer', backgroundColor: selectedPallet?.id === p.id ? '#f1f5f9' : '' }} onClick={() => handlePalletClick(p)}>

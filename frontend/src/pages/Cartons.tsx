@@ -19,6 +19,7 @@ import {
   SlidersHorizontal, 
   RefreshCw 
 } from 'lucide-react';
+import { TTPageHeader, TTLoadingState, TTEmptyState, TTButton } from '../components/common';
 
 interface Carton {
   id: string;
@@ -546,21 +547,20 @@ export const Cartons: React.FC = () => {
   return (
     <div>
       {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>Koli Yönetimi</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Oluşturulan kolilerin durumları, içerdikleri ürünler ve etiket yazdırma işlemleri.</p>
-        </div>
-        <button 
-          className="btn btn-secondary" 
-          disabled={loading || refreshing} 
-          onClick={() => loadAllData(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-          {refreshing ? 'Güncelleniyor...' : 'Verileri Yenile'}
-        </button>
-      </div>
+      <TTPageHeader
+        title="Koli Yönetimi"
+        description="Oluşturulan kolilerin durumları, içerdikleri ürünler ve etiket yazdırma işlemleri."
+        actions={
+          <TTButton 
+            variant="secondary" 
+            disabled={loading || refreshing} 
+            onClick={() => loadAllData(true)}
+            icon={<RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />}
+          >
+            {refreshing ? 'Güncelleniyor...' : 'Verileri Yenile'}
+          </TTButton>
+        }
+      />
 
       {/* KPI Cards Grid */}
       <div className="stats-grid">
@@ -761,14 +761,13 @@ export const Cartons: React.FC = () => {
 
       {/* Main List Layout */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', backgroundColor: '#ffffff', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-          <RefreshCw size={24} className="animate-spin" style={{ color: 'var(--primary)', marginBottom: '10px' }} />
-          <div style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>Veriler Yükleniyor...</div>
-        </div>
+        <TTLoadingState text="Veriler Yükleniyor..." />
       ) : totalItemsCount === 0 ? (
-        <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: '#ffffff' }}>
-          Arama kriterlerinize uygun koli veya sipariş bulunamadı.
-        </div>
+        <TTEmptyState
+          icon={<Inbox size={32} />}
+          title="Kayıt Bulunamadı"
+          description="Arama kriterlerinize uygun koli veya sipariş bulunamadı."
+        />
       ) : isGroupedByOrder ? (
         /* 1. Grouped View */
         <div className="table-container">

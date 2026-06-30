@@ -18,6 +18,7 @@ import {
   Settings,
   FileSpreadsheet
 } from 'lucide-react';
+import { TTPageHeader, TTAlert, TTCard } from '../components/common';
 
 // Types & Interfaces
 interface ValidationError {
@@ -945,23 +946,15 @@ export const DataMatrixCreator: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Top Header Card */}
-      <div className="card" style={{ padding: '24px', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: 'white' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <QrCode size={32} color="var(--primary)" />
-          <div>
-            <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'white' }}>DataMatrix Üretici ve Doğrulayıcı</h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
-              Büyük hacimli üretimler (25.000 - 100.000 kod) için optimize edilmiş; Rusya Chestny ZNAK ve standart GS1 kurallarına göre anlık doğrulama yapabilen etiket şablonlama aracı.
-            </p>
-          </div>
-        </div>
-      </div>
+      <TTPageHeader
+        title="DataMatrix Üretici ve Doğrulayıcı"
+        description="Büyük hacimli üretimler (25.000 - 100.000 kod) için optimize edilmiş; Rusya Chestny ZNAK ve standart GS1 kurallarına göre anlık doğrulama yapabilen etiket şablonlama aracı."
+      />
 
       {errorMessage && (
-        <div className="error-alert" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-          <AlertCircle size={18} style={{ flexShrink: 0 }} />
-          <span>{errorMessage}</span>
-        </div>
+        <TTAlert variant="error">
+          {errorMessage}
+        </TTAlert>
       )}
 
       {/* Main Grid */}

@@ -14,8 +14,10 @@ import {
   AlertTriangle, 
   RefreshCw,
   Eye,
-  Percent
+  Percent,
+  TrendingDown
 } from 'lucide-react';
+import { TTPageHeader, TTButton, TTLoadingState, TTEmptyState } from '../components/common';
 
 // View states
 type ViewMode = 'main' | 'order' | 'stock';
@@ -343,16 +345,15 @@ export const Reports: React.FC = () => {
       {viewMode === 'main' && (
         <div>
           {/* Header */}
-          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>Sipariş Bazlı Raporlama</h2>
-              <p style={{ color: 'var(--text-muted)' }}>Sipariş bazında yükleme, okutma, koli, palet ve tamamlanma oranları takibi.</p>
-            </div>
-            <button className="btn btn-secondary" onClick={fetchOrderReports} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <RefreshCw size={14} className={loading ? 'spin-anim' : ''} />
-              Yenile
-            </button>
-          </div>
+          <TTPageHeader
+            title="Sipariş Bazlı Raporlama"
+            description="Sipariş bazında yükleme, okutma, koli, palet ve tamamlanma oranları takibi."
+            actions={
+              <TTButton variant="secondary" onClick={fetchOrderReports} icon={<RefreshCw size={14} className={loading ? 'spin-anim' : ''} />}>
+                Yenile
+              </TTButton>
+            }
+          />
 
           {/* Filters Panel */}
           <div className="table-container" style={{ padding: '20px', marginBottom: '24px', backgroundColor: 'var(--bg-card)' }}>
