@@ -351,7 +351,7 @@ const VersionChecker: React.FC = () => {
           Daha Sonra
         </button>
         <button 
-          onClick={() => window.location.reload(true)}
+          onClick={() => window.location.reload()}
           style={{
             background: '#2563eb',
             border: 'none',
