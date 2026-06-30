@@ -49,10 +49,10 @@ public record OrderImportResultDto(
     int ImportedCount,
     int DuplicateCount,
     int InvalidCount,
-    System.Collections.Generic.List<ImportErrorDto> Errors
+    global::System.Collections.Generic.List<ImportErrorDto> Errors
 );
 
-public record ImportOrdersExcelCommand(System.IO.Stream FileStream, string FileName) : IRequest<OrderImportResultDto>;
+public record ImportOrdersExcelCommand(global::System.IO.Stream FileStream, string FileName) : IRequest<OrderImportResultDto>;
 
 public class OrderKeyDto
 {
