@@ -14,10 +14,9 @@ import {
   AlertTriangle, 
   RefreshCw,
   Eye,
-  Percent,
-  TrendingDown
+  Percent
 } from 'lucide-react';
-import { TTPageHeader, TTButton, TTLoadingState, TTEmptyState } from '../components/common';
+import { TTPageHeader, TTButton } from '../components/common';
 
 // View states
 type ViewMode = 'main' | 'order' | 'stock';

@@ -303,7 +303,7 @@ export const Users: React.FC = () => {
         footer={
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
             <TTButton variant="secondary" onClick={() => setShowCreateDrawer(false)}>İptal</TTButton>
-            <TTButton variant="primary" onClick={handleCreateUser}>Kullanıcıyı Kaydet</TTButton>
+            <TTButton variant="primary" type="submit" form="create-user-form">Kullanıcıyı Kaydet</TTButton>
           </div>
         }
       >
@@ -344,7 +344,7 @@ export const Users: React.FC = () => {
         footer={
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
             <TTButton variant="secondary" onClick={() => { setShowEditDrawer(false); setSelectedUser(null); }}>İptal</TTButton>
-            <TTButton variant="primary" onClick={handleUpdateUser}>Değişiklikleri Kaydet</TTButton>
+            <TTButton variant="primary" type="submit" form="edit-user-form">Değişiklikleri Kaydet</TTButton>
           </div>
         }
       >

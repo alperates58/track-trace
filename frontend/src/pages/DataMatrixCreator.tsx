@@ -18,7 +18,7 @@ import {
   Settings,
   FileSpreadsheet
 } from 'lucide-react';
-import { TTPageHeader, TTAlert, TTCard } from '../components/common';
+import { TTPageHeader, TTAlert } from '../components/common';
 
 // Types & Interfaces
 interface ValidationError {
