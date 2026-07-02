@@ -1213,6 +1213,28 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     }
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapGet("/api/agent/download", (IConfiguration config, IWebHostEnvironment env) =>
+{
+    var downloadUrl = config.GetValue<string>("AgentDownloadUrl");
+    if (string.IsNullOrWhiteSpace(downloadUrl))
+    {
+        return Results.NotFound(new { message = "Agent download URL is not configured." });
+    }
+
+    if (downloadUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.Redirect(downloadUrl);
+    }
+    
+    var filePath = Path.Combine(env.WebRootPath ?? "wwwroot", downloadUrl.TrimStart('/'));
+    if (System.IO.File.Exists(filePath))
+    {
+        return Results.File(filePath, "application/octet-stream", Path.GetFileName(filePath));
+    }
+    
+    return Results.Redirect(downloadUrl);
+}).RequireAuthorization("ViewerOrAbove");
+
 app.MapPost("/api/print/test-network", async ([FromBody] PrintTestRequest request) =>
 {
     try

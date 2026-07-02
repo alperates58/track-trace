@@ -408,12 +408,24 @@ export const PrintSettings: React.FC = () => {
 
           {activeTab === 'agent' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0 }}>Local Print Agent</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h3 style={{ margin: 0 }}>Local Print Agent</h3>
+                </div>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => window.open('/api/agent/download', '_blank')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', padding: '10px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  <FileDown size={18} />
+                  Local Agent İndir
+                </button>
               </div>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
                 Tarayıcı kısıtlarından bağımsız olarak yerel yazıcınıza doğrudan yazdırmak için kullanılır. 
                 Bilgisayarınızda çalışan TrackTrace Local Agent ile güvenli haberleşme sağlar.
+                <strong> Her yazdırma bilgisayarına Local Agent ayrı kurulmalıdır. </strong>
+                Kurulum yapılmadıysa Browser Auto Print kullanılmaya devam edilebilir.
               </p>
 
               <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px', border: '1px solid var(--border)' }}>
@@ -423,12 +435,12 @@ export const PrintSettings: React.FC = () => {
                   <input 
                     type="password" 
                     className="input" 
-                    placeholder="Local Agent kurulumunda verilen token"
+                    placeholder="Local Agent kurulumu bittiğinde ekranda gösterilen token'ı buraya yapıştırın"
                     value={agentToken}
                     onChange={(e) => handleTokenChange(e.target.value)}
                   />
                   <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-                    Agent ile güvenli bağlantı kurmak için zorunludur. Token boş ise bu bilgisayarda Local Agent kullanılamaz.
+                    Agent ile güvenli bağlantı kurmak için zorunludur. Local Agent kurulumunu tamamladığınızda son ekranda karşınıza çıkan Pairing Token değerini kopyalayıp buraya yapıştırın. Bu işlem cihaz başına bir kez yapılır.
                   </small>
                 </div>
 
