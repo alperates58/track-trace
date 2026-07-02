@@ -14,10 +14,10 @@ using System.Security.Cryptography;
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,
-    ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? Path.GetDirectoryName(Environment.ProcessPath) : default
+    ContentRootPath = AppContext.BaseDirectory
 });
 
-builder.Services.AddWindowsService();
+builder.Host.UseWindowsService();
 
 builder.Services.AddSingleton<IPrintService, RawPrintService>();
 builder.Services.AddCors(options =>

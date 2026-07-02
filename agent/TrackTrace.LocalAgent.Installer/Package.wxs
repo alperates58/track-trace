@@ -1,0 +1,64 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package Name="TrackTrace Local Agent" Manufacturer="TrackTrace" Version="1.0.0.0" UpgradeCode="d78b8af2-8c1d-44aa-9c5d-8b0114f6b217">
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="TrackTraceAgent">
+        
+        <!-- Agent Executable and Service -->
+        <Component Id="AgentExecutable" Guid="3a207212-0750-4d5f-9721-3d60c239f285">
+          <File Id="AgentExeFile" Source="..\publish_single\TrackTrace.LocalAgent.exe" KeyPath="yes" />
+          
+          <ServiceInstall Id="ServiceInstaller"
+                          Type="ownProcess"
+                          Name="TrackTraceAgent"
+                          DisplayName="TrackTrace Local Agent"
+                          Description="TrackTrace Local Printing Service"
+                          Start="auto"
+                          Account="LocalSystem"
+                          ErrorControl="normal" />
+          <ServiceControl Id="StartService"
+                          Start="install"
+                          Stop="both"
+                          Remove="uninstall"
+                          Name="TrackTraceAgent"
+                          Wait="yes" />
+        </Component>
+
+        <!-- AppSettings JSON -->
+        <Component Id="AgentSettings" Guid="4b207212-0750-4d5f-9721-3d60c239f286">
+          <File Id="AgentSettingsFile" Source="..\publish_single\appsettings.json" KeyPath="yes" />
+        </Component>
+        
+        <!-- AppSettings Development JSON (Optional, but good if exists) -->
+        <!-- We will ignore it for production installer. Or include if we want. Let's just do appsettings.json -->
+      </Directory>
+    </StandardDirectory>
+
+    <!-- ProgramData Directory Setup -->
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="ProgramDataFolder" Name="TrackTraceAgent">
+        <Component Id="ProgramDataFolderComponent" Guid="a63e9b11-9a74-4b5c-a110-8f69c5e3f434">
+          <CreateFolder>
+             <util:PermissionEx User="Users" GenericAll="yes" />
+          </CreateFolder>
+        </Component>
+        <Directory Id="LogsFolder" Name="Logs">
+          <Component Id="LogsFolderComponent" Guid="c38b2d18-3568-45d2-97b1-2d7c585ea150">
+             <CreateFolder>
+                <util:PermissionEx User="Users" GenericAll="yes" />
+             </CreateFolder>
+          </Component>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentRef Id="AgentExecutable" />
+      <ComponentRef Id="AgentSettings" />
+      <ComponentRef Id="ProgramDataFolderComponent" />
+      <ComponentRef Id="LogsFolderComponent" />
+    </Feature>
+  </Package>
+</Wix>
