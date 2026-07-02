@@ -36,6 +36,7 @@ async function request(path: string, options: RequestInit = {}) {
   if (contentType && (
     contentType.includes('application/pdf') || 
     contentType.includes('application/zip') || 
+    contentType.includes('application/vnd.microsoft.portable-executable') ||
     contentType.includes('application/octet-stream') ||
     contentType.includes('spreadsheet') ||
     contentType.includes('sheet') ||

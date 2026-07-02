@@ -17,4 +17,12 @@
   <ItemGroup>
     <ProjectReference Include="..\TrackTrace.Infrastructure\TrackTrace.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\..\agent\installer\Output\TrackTraceLocalAgentSetup.exe" Condition="Exists('..\..\..\agent\installer\Output\TrackTraceLocalAgentSetup.exe')">
+      <Link>wwwroot\downloads\TrackTraceLocalAgentSetup.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

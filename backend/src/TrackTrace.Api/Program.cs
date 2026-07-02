@@ -1215,24 +1215,75 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
 
 app.MapGet("/api/agent/download", (IConfiguration config, IWebHostEnvironment env) =>
 {
-    var downloadUrl = config.GetValue<string>("AgentDownloadUrl");
-    if (string.IsNullOrWhiteSpace(downloadUrl))
+    const string installerFileName = "TrackTraceLocalAgentSetup.exe";
+    var candidatePaths = new List<string>();
+
+    void AddCandidate(string? configuredPath)
     {
-        return Results.NotFound(new { message = "Agent download URL is not configured." });
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            return;
+        }
+
+        var trimmed = configuredPath.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) && uri.IsFile)
+        {
+            candidatePaths.Add(uri.LocalPath);
+            return;
+        }
+
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out uri))
+        {
+            return;
+        }
+
+        if (Path.IsPathRooted(trimmed))
+        {
+            candidatePaths.Add(trimmed);
+            return;
+        }
+
+        var relativePath = trimmed.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+        if (!string.IsNullOrWhiteSpace(env.WebRootPath))
+        {
+            candidatePaths.Add(Path.Combine(env.WebRootPath, relativePath));
+        }
+
+        candidatePaths.Add(Path.Combine(env.ContentRootPath, "wwwroot", relativePath));
+        candidatePaths.Add(Path.Combine(env.ContentRootPath, relativePath));
+        candidatePaths.Add(Path.Combine(AppContext.BaseDirectory, "wwwroot", relativePath));
+        candidatePaths.Add(Path.Combine(AppContext.BaseDirectory, relativePath));
     }
 
-    if (downloadUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+    void AddRepositoryFallbacks(string startPath)
     {
-        return Results.Redirect(downloadUrl);
+        var directory = new DirectoryInfo(startPath);
+        while (directory is not null)
+        {
+            candidatePaths.Add(Path.Combine(directory.FullName, "agent", "installer", "Output", installerFileName));
+            directory = directory.Parent;
+        }
     }
-    
-    var filePath = Path.Combine(env.WebRootPath ?? "wwwroot", downloadUrl.TrimStart('/'));
-    if (System.IO.File.Exists(filePath))
+
+    AddCandidate(config.GetValue<string>("AgentDownloadPath"));
+    AddCandidate(config.GetValue<string>("AgentDownloadUrl"));
+    AddRepositoryFallbacks(env.ContentRootPath);
+    AddRepositoryFallbacks(AppContext.BaseDirectory);
+
+    var installerPath = candidatePaths
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .FirstOrDefault(System.IO.File.Exists);
+
+    if (installerPath is null)
     {
-        return Results.File(filePath, "application/octet-stream", Path.GetFileName(filePath));
+        return Results.NotFound(new
+        {
+            message = "TrackTrace Local Agent installer file is not present on the server.",
+            fileName = installerFileName
+        });
     }
-    
-    return Results.Redirect(downloadUrl);
+
+    return Results.File(installerPath, "application/vnd.microsoft.portable-executable", installerFileName);
 }).RequireAuthorization("ViewerOrAbove");
 
 app.MapPost("/api/print/test-network", async ([FromBody] PrintTestRequest request) =>

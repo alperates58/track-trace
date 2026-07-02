@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getPrintProvider } from '../services/printProvider';
+import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { TTCard, TTPageHeader } from '../components/common';
 import { Settings, MonitorPlay, FileDown, Server, Info, Copy, Check } from 'lucide-react';
@@ -22,6 +23,9 @@ const DEFAULT_CONFIG: PrintConfig = {
   showNotification: true
 };
 
+type AgentConnectionStatus = 'idle' | 'testing' | 'online' | 'invalid-token' | 'offline' | 'missing-token';
+type InlineMessage = { text: string; type: 'success' | 'error' | 'info' };
+
 export const PrintSettings: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
@@ -32,10 +36,102 @@ export const PrintSettings: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [agentToken, setAgentToken] = useState(localStorage.getItem('tt_agent_token') || '');
+  const [tokenSaveMessage, setTokenSaveMessage] = useState<string | null>(null);
+  const [agentStatus, setAgentStatus] = useState<AgentConnectionStatus>(agentToken ? 'idle' : 'missing-token');
+  const [agentStatusDetail, setAgentStatusDetail] = useState<string | null>(null);
+  const [downloadMessage, setDownloadMessage] = useState<InlineMessage | null>(null);
 
   const handleTokenChange = (val: string) => {
     setAgentToken(val);
-    localStorage.setItem('tt_agent_token', val);
+    const trimmed = val.trim();
+    if (trimmed) {
+      localStorage.setItem('tt_agent_token', trimmed);
+    } else {
+      localStorage.removeItem('tt_agent_token');
+    }
+    setTokenSaveMessage(null);
+    setAgentStatus(trimmed ? 'idle' : 'missing-token');
+    setAgentStatusDetail(null);
+  };
+
+  const handleSaveAgentToken = () => {
+    const trimmed = agentToken.trim();
+    if (!trimmed) {
+      localStorage.removeItem('tt_agent_token');
+      setAgentStatus('missing-token');
+      setAgentStatusDetail('Token girip kaydedin.');
+      setTokenSaveMessage('Token boş bırakılamaz');
+      return;
+    }
+
+    localStorage.setItem('tt_agent_token', trimmed);
+    setAgentToken(trimmed);
+    setTokenSaveMessage('Token kaydedildi');
+    setTimeout(() => setTokenSaveMessage(null), 2500);
+  };
+
+  const handleTestAgentConnection = async () => {
+    const token = agentToken.trim() || localStorage.getItem('tt_agent_token')?.trim() || '';
+
+    if (!token) {
+      setAgentStatus('missing-token');
+      setAgentStatusDetail('Token girip kaydedin.');
+      return;
+    }
+
+    setAgentStatus('testing');
+    setAgentStatusDetail(null);
+
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/agent/status', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.status === 401) {
+        setAgentStatus('invalid-token');
+        setAgentStatusDetail('Token hatalı.');
+        return;
+      }
+
+      if (!res.ok) {
+        setAgentStatus('offline');
+        setAgentStatusDetail('Agent kapalı veya erişilemiyor.');
+        return;
+      }
+
+      const data = await res.json().catch(() => null);
+      setAgentStatus('online');
+      setAgentStatusDetail(data?.printer ? `Yazıcı: ${data.printer}` : 'Agent çalışıyor.');
+    } catch {
+      setAgentStatus('offline');
+      setAgentStatusDetail('Agent kapalı veya erişilemiyor.');
+    }
+  };
+
+  const handleDownloadAgent = async () => {
+    setDownloadMessage({ text: 'İndirme hazırlanıyor...', type: 'info' });
+
+    try {
+      const blob = await api.get('/api/agent/download');
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error('Installer dosyası indirilemedi.');
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'TrackTraceLocalAgentSetup.exe';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setDownloadMessage({ text: 'İndirme başlatıldı', type: 'success' });
+    } catch (err: any) {
+      setDownloadMessage({ text: err.message || 'Local Agent indirilemedi.', type: 'error' });
+    }
   };
 
   useEffect(() => {
@@ -64,6 +160,17 @@ export const PrintSettings: React.FC = () => {
   }, []);
 
   const config = isUsingLocalOverride ? (localConfig || DEFAULT_CONFIG) : globalConfig;
+  const agentStatusView = {
+    idle: {
+      text: agentToken.trim() ? 'Bağlantı Kurulmadı (Test Yapınız)' : 'Token Eksik',
+      color: agentToken.trim() ? '#cbd5e1' : '#ef4444'
+    },
+    testing: { text: 'Bağlantı test ediliyor...', color: '#3b82f6' },
+    online: { text: 'Agent çalışıyor', color: '#16a34a' },
+    'invalid-token': { text: 'Token hatalı', color: '#ef4444' },
+    offline: { text: 'Agent kapalı veya erişilemiyor', color: '#ef4444' },
+    'missing-token': { text: 'Token Eksik', color: '#ef4444' }
+  }[agentStatus];
 
   const handleTestPrint = async () => {
     setTestMessage(null);
@@ -414,7 +521,7 @@ export const PrintSettings: React.FC = () => {
                 </div>
                 <button 
                   className="btn btn-primary"
-                  onClick={() => window.open('/api/agent/download', '_blank')}
+                  onClick={handleDownloadAgent}
                   style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', padding: '10px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                 >
                   <FileDown size={18} />
@@ -428,34 +535,82 @@ export const PrintSettings: React.FC = () => {
                 Kurulum yapılmadıysa Browser Auto Print kullanılmaya devam edilebilir.
               </p>
 
+              {downloadMessage && (
+                <div style={{
+                  padding: '10px 12px',
+                  marginBottom: '16px',
+                  borderRadius: '6px',
+                  backgroundColor: downloadMessage.type === 'success' ? '#f0fdf4' : downloadMessage.type === 'error' ? '#fef2f2' : '#eff6ff',
+                  border: `1px solid ${downloadMessage.type === 'success' ? '#bbf7d0' : downloadMessage.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
+                  color: downloadMessage.type === 'success' ? '#16a34a' : downloadMessage.type === 'error' ? '#ef4444' : '#2563eb'
+                }}>
+                  {downloadMessage.text}
+                </div>
+              )}
+
               <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px', border: '1px solid var(--border)' }}>
                 
                 <div className="form-group" style={{ marginBottom: '24px' }}>
                   <label>Agent Pairing Token <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input 
-                    type="password" 
-                    className="input" 
-                    placeholder="Local Agent kurulumu bittiğinde ekranda gösterilen token'ı buraya yapıştırın"
-                    value={agentToken}
-                    onChange={(e) => handleTokenChange(e.target.value)}
-                  />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="password"
+                      className="input"
+                      placeholder="Local Agent kurulumu bittiğinde ekranda gösterilen token'ı buraya yapıştırın"
+                      value={agentToken}
+                      onChange={(e) => handleTokenChange(e.target.value)}
+                      style={{ flex: '1 1 320px' }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleSaveAgentToken}
+                      style={{ padding: '10px 16px', borderRadius: '6px', fontWeight: 600 }}
+                    >
+                      Kaydet
+                    </button>
+                  </div>
+                  {tokenSaveMessage && (
+                    <small style={{
+                      color: tokenSaveMessage.includes('kaydedildi') ? 'var(--success)' : 'var(--danger)',
+                      marginTop: '6px',
+                      display: 'block',
+                      fontWeight: 600
+                    }}>
+                      {tokenSaveMessage}
+                    </small>
+                  )}
                   <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                     Agent ile güvenli bağlantı kurmak için zorunludur. Local Agent kurulumunu tamamladığınızda son ekranda karşınıza çıkan Pairing Token değerini kopyalayıp buraya yapıştırın. Bu işlem cihaz başına bir kez yapılır.
                   </small>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '16px', background: 'var(--bg-card)', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '16px', background: 'var(--bg-card)', borderRadius: '6px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: '4px' }}>Agent Bağlantı Durumu</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: agentToken ? '#cbd5e1' : '#ef4444' }}></div>
-                      {agentToken ? 'Bağlantı Kurulmadı (Test Yapınız)' : 'Token Eksik'}
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: agentStatusView.color }}></div>
+                      {agentStatusView.text}
                     </div>
+                    {agentStatusDetail && (
+                      <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                        {agentStatusDetail}
+                      </small>
+                    )}
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: '4px' }}>Port</div>
                     <div style={{ color: 'var(--text-muted)' }}>127.0.0.1:5000</div>
                   </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleTestAgentConnection}
+                    disabled={agentStatus === 'testing'}
+                    style={{ padding: '10px 16px', borderRadius: '6px', fontWeight: 600, cursor: agentStatus === 'testing' ? 'wait' : 'pointer' }}
+                  >
+                    {agentStatus === 'testing' ? 'Test ediliyor...' : 'Bağlantıyı Test Et'}
+                  </button>
                 </div>
               </div>
             </div>
