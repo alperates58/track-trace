@@ -14,12 +14,11 @@ Name: "{commonappdata}\TrackTraceAgent"
 Name: "{commonappdata}\TrackTraceAgent\Logs"
 
 [Files]
-Source: "..\TrackTrace.LocalAgent\bin\Release\net8.0\win-x64\publish\TrackTrace.LocalAgent.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\TrackTrace.LocalAgent\bin\Release\net8.0\win-x64\publish\appsettings.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Run]
-Filename: "{sys}\sc.exe"; Parameters: "create TrackTraceAgent binPath= ""{app}\TrackTrace.LocalAgent.exe"" start= auto displayname= ""TrackTrace Local Agent"""; Flags: runhidden
-Filename: "{sys}\sc.exe"; Parameters: "start TrackTraceAgent"; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "create TrackTraceAgent binPath= ""{app}\TrackTrace.LocalAgent.exe"" start= auto displayname= ""TrackTrace Local Agent"""; Flags: runhidden; Check: FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe'))
+Filename: "{sys}\sc.exe"; Parameters: "start TrackTraceAgent"; Flags: runhidden; Check: FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe'))
 
 [UninstallRun]
 Filename: "{sys}\sc.exe"; Parameters: "stop TrackTraceAgent"; Flags: runhidden; RunOnceId: "StopService"
@@ -30,6 +29,18 @@ var
   TokenEdit: TNewEdit;
   CopyButton: TNewButton;
   OpenTrackTraceButton: TNewButton;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+begin
+  if CurStep = ssInstall then
+  begin
+    // Eski bozuk servis varsa kurulum basinda sil
+    Exec(ExpandConstant('{sys}\sc.exe'), 'stop TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'delete TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end;
+end;
 
 function GetPairingToken(): String;
 var
@@ -86,16 +97,20 @@ begin
   ShellExec('open', 'https://track.alperates.com.tr', '', '', SW_SHOW, ewNoWait, ErrorCode);
 end;
 
-procedure InitializeWizard();
-begin
-end;
-
 procedure CurPageChanged(CurPageID: Integer);
 var
   TokenValue: String;
+  ExePath: String;
 begin
   if CurPageID = wpFinished then
   begin
+    ExePath := ExpandConstant('{app}\TrackTrace.LocalAgent.exe');
+    if not FileExists(ExePath) then
+    begin
+      WizardForm.FinishedLabel.Caption := 'Kurulum başarisiz oldu: TrackTrace.LocalAgent.exe dosyasi bulunamadi!' + #13#10 + 'Lütfen kurulum paketini kontrol ediniz.';
+      Exit;
+    end;
+    
     WizardForm.FinishedLabel.Caption := 'TrackTrace Local Agent başarıyla kuruldu.' + #13#10 + #13#10 + 'Lütfen aşağıdaki Pairing Token değerini kopyalayın ve TrackTrace uygulamasındaki Local Agent ayarlarına yapıştırın. Bu işlem yalnızca bir kez yapılacaktır.';
     
     TokenValue := GetPairingToken();
