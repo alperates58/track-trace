@@ -14,7 +14,8 @@ Name: "{commonappdata}\TrackTraceAgent"
 Name: "{commonappdata}\TrackTraceAgent\Logs"
 
 [Files]
-Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "publish\TrackTrace.LocalAgent.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion; Excludes: "TrackTrace.LocalAgent.exe"
 
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "create TrackTraceAgent binPath= ""{app}\TrackTrace.LocalAgent.exe"" start= auto displayname= ""TrackTrace Local Agent"""; Flags: runhidden; Check: FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe'))
@@ -39,6 +40,14 @@ begin
     // Eski bozuk servis varsa kurulum basinda sil
     Exec(ExpandConstant('{sys}\sc.exe'), 'stop TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Exec(ExpandConstant('{sys}\sc.exe'), 'delete TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end
+  else if CurStep = ssPostInstall then
+  begin
+    if not FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe')) then
+    begin
+      MsgBox('TrackTrace.LocalAgent.exe kurulum klasörüne kopyalanamadı!', mbError, MB_OK);
+      Abort;
+    end;
   end;
 end;
 
