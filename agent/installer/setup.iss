@@ -1,29 +1,31 @@
 [Setup]
 AppName=TrackTrace Local Agent
 AppVersion=1.0.0
-DefaultDirName={pf}\TrackTraceAgent
+DefaultDirName={autopf}\TrackTraceAgent
 DefaultGroupName=TrackTrace Local Agent
 OutputBaseFilename=TrackTraceLocalAgentSetup
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 
 [Dirs]
 Name: "{commonappdata}\TrackTraceAgent"
 Name: "{commonappdata}\TrackTraceAgent\Logs"
 
 [Files]
-Source: "publish\TrackTrace.LocalAgent.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion; Excludes: "TrackTrace.LocalAgent.exe"
+Source: "publish\TrackTrace.LocalAgent.exe"; DestDir: "{app}"; Flags: ignoreversion; BeforeInstall: PreInstallCleanup
+Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "TrackTrace.LocalAgent.exe"
 
 [Run]
-Filename: "{sys}\sc.exe"; Parameters: "create TrackTraceAgent binPath= ""{app}\TrackTrace.LocalAgent.exe"" start= auto displayname= ""TrackTrace Local Agent"""; Flags: runhidden; Check: FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe'))
-Filename: "{sys}\sc.exe"; Parameters: "start TrackTraceAgent"; Flags: runhidden; Check: FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe'))
+Filename: "{sys}\sc.exe"; Parameters: "create TrackTraceAgent binPath= ""{app}\TrackTrace.LocalAgent.exe"" DisplayName= ""TrackTrace Local Agent"" start= auto"; Flags: runhidden waituntilterminated; StatusMsg: "Creating service..."
+Filename: "{sys}\sc.exe"; Parameters: "config TrackTraceAgent start= auto"; Flags: runhidden waituntilterminated; StatusMsg: "Configuring service startup..."
+Filename: "{sys}\sc.exe"; Parameters: "start TrackTraceAgent"; Flags: runhidden waituntilterminated; StatusMsg: "Starting service..."
 
 [UninstallRun]
-Filename: "{sys}\sc.exe"; Parameters: "stop TrackTraceAgent"; Flags: runhidden; RunOnceId: "StopService"
-Filename: "{sys}\sc.exe"; Parameters: "delete TrackTraceAgent"; Flags: runhidden; RunOnceId: "DeleteService"
+Filename: "{sys}\sc.exe"; Parameters: "stop TrackTraceAgent"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
+Filename: "{sys}\sc.exe"; Parameters: "delete TrackTraceAgent"; Flags: runhidden waituntilterminated; RunOnceId: "DeleteService"
 
 [Code]
 var
@@ -31,21 +33,22 @@ var
   CopyButton: TNewButton;
   OpenTrackTraceButton: TNewButton;
 
-procedure CurStepChanged(CurStep: TSetupStep);
+procedure PreInstallCleanup();
 var
   ResultCode: Integer;
 begin
-  if CurStep = ssInstall then
-  begin
-    // Eski bozuk servis varsa kurulum basinda sil
-    Exec(ExpandConstant('{sys}\sc.exe'), 'stop TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Exec(ExpandConstant('{sys}\sc.exe'), 'delete TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end
-  else if CurStep = ssPostInstall then
+  Exec(ExpandConstant('{sys}\sc.exe'), 'stop TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\sc.exe'), 'delete TrackTraceAgent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(1500);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
   begin
     if not FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe')) then
     begin
-      MsgBox('TrackTrace.LocalAgent.exe kurulum klasörüne kopyalanamadı!', mbError, MB_OK);
+      MsgBox('HATA: TrackTrace.LocalAgent.exe dosyası kurulum klasörüne kopyalanamadı! Antivirüs yazılımınız engelliyor olabilir veya dosya açık kalmış olabilir.', mbError, MB_OK);
       Abort;
     end;
   end;
@@ -116,7 +119,7 @@ begin
     ExePath := ExpandConstant('{app}\TrackTrace.LocalAgent.exe');
     if not FileExists(ExePath) then
     begin
-      WizardForm.FinishedLabel.Caption := 'Kurulum başarisiz oldu: TrackTrace.LocalAgent.exe dosyasi bulunamadi!' + #13#10 + 'Lütfen kurulum paketini kontrol ediniz.';
+      WizardForm.FinishedLabel.Caption := 'Kurulum başarısız oldu: TrackTrace.LocalAgent.exe dosyası bulunamadı!';
       Exit;
     end;
     
