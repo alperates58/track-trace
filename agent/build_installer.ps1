@@ -40,9 +40,20 @@ if (-not (Test-Path $ExpectedAgentExe)) {
 }
 
 Write-Host "2. Building installer with Inno Setup Compiler..."
-$InnoPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-if (-not (Test-Path $InnoPath)) {
-    throw "Inno Setup was not found: $InnoPath"
+$InnoPaths = @(
+    "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+    "C:\Users\alper.ates.LIDER\AppData\Local\Programs\Inno Setup 6\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+)
+$InnoPath = $null
+foreach ($path in $InnoPaths) {
+    if (Test-Path $path) {
+        $InnoPath = $path
+        break
+    }
+}
+if ($null -eq $InnoPath) {
+    throw "Inno Setup was not found in any standard locations."
 }
 
 & $InnoPath "$InstallerDir\setup.iss"
