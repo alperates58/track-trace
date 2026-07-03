@@ -107,7 +107,6 @@ export const Stations: React.FC = () => {
     <div className="page-animate">
       <TTPageHeader 
         title="İstasyon Yönetimi" 
-        icon={<Server size={24} />}
         action={
           isAdmin && (
             <TTButton onClick={() => { resetForm(); setShowCreateDrawer(true); }}>
