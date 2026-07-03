@@ -62,7 +62,7 @@ export const Scan: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
 
-  const [printMode, setPrintMode] = useState<string>('kiosk');
+  const [printMode, setPrintMode] = useState<string>('browser');
   const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(true);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export const Scan: React.FC = () => {
       if (localSettings) {
         try {
           const parsed = JSON.parse(localSettings);
-          activeMode = parsed.printMode === 'browser' ? 'kiosk' : (parsed.printMode === 'agent' ? 'network' : parsed.printMode);
+          activeMode = parsed.printMode || 'browser';
           activeAutoPrint = parsed.autoPrintCarton !== false;
         } catch (e) {}
       } else {
@@ -82,7 +82,7 @@ export const Scan: React.FC = () => {
           const res = await api.get('/api/settings/GlobalPrintConfig');
           if (res && res.value) {
             const parsed = JSON.parse(res.value);
-            activeMode = parsed.printMode === 'browser' ? 'kiosk' : (parsed.printMode === 'agent' ? 'network' : parsed.printMode);
+            activeMode = parsed.printMode || 'browser';
             activeAutoPrint = parsed.autoPrintCarton !== false;
           }
         } catch (e) {}
@@ -372,7 +372,7 @@ export const Scan: React.FC = () => {
     if (globalSettings) {
       try { parsed = { ...parsed, ...JSON.parse(globalSettings) }; } catch(e){}
     }
-    parsed.printMode = mode === 'kiosk' ? 'browser' : (mode === 'network' ? 'agent' : mode);
+    parsed.printMode = mode;
     parsed.autoPrintCarton = auto;
     localStorage.setItem('trackTrace_printSettings', JSON.stringify(parsed));
 

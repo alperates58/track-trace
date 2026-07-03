@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { getPrintProvider } from '../utils/printProvider';
 import { 
   Printer, 
   Eye, 
@@ -497,28 +498,20 @@ export const Cartons: React.FC = () => {
     }
   };
 
-  const handleNetworkPrint = async (cartonId: string) => {
-    if (!printerIp.trim()) {
-      alert('Lütfen geçerli bir IP adresi girin.');
-      return;
-    }
-    const portNum = parseInt(printerPort);
-    if (isNaN(portNum) || portNum <= 0 || portNum > 65535) {
-      alert('Lütfen geçerli bir port numarası girin (1-65535).');
-      return;
-    }
-
+  const handleUnifiedPrint = async (cartonId: string) => {
     setPrintLoading(true);
     try {
-      localStorage.setItem('network_printer_ip', printerIp.trim());
-      localStorage.setItem('network_printer_port', printerPort.toString());
-
-      await api.post(`/api/cartons/${cartonId}/print-network`, {
-        IpAddress: printerIp.trim(),
-        Port: portNum
-      });
-      alert('Yazdırma komutu başarıyla gönderildi.');
-      await loadAllData();
+      const settingsRaw = localStorage.getItem('trackTrace_printSettings');
+      let mode = 'browser';
+      if (settingsRaw) {
+         try {
+           mode = JSON.parse(settingsRaw).printMode || 'browser';
+         } catch(e) {}
+      }
+      
+      const provider = getPrintProvider(mode);
+      await provider.print({ id: cartonId, type: 'carton' });
+      alert('Yazdırma işlemi başarıyla tamamlandı.');
     } catch (err: any) {
       alert('Yazdırma hatası: ' + err.message);
     } finally {
@@ -1082,50 +1075,14 @@ export const Cartons: React.FC = () => {
                     <Barcode size={16} /> ZPL Üret
                   </button>
                   <button 
-                    className={`btn ${showPrinterSettings ? 'btn-primary' : 'btn-secondary'}`}
+                    className="btn btn-secondary"
                     style={{ flex: 1, padding: '8px' }} 
-                    onClick={() => setShowPrinterSettings(!showPrinterSettings)}
+                    disabled={printLoading}
+                    onClick={() => handleUnifiedPrint(selectedCarton.id)}
                   >
-                    <Printer size={16} /> Yazdır
+                    <Printer size={16} /> {printLoading ? 'Yazdırılıyor...' : 'Yazdır'}
                   </button>
                 </div>
-
-                {/* Zebra Direct Network Print Panel */}
-                {showPrinterSettings && (
-                  <div className="card" style={{ padding: '16px', border: '1px solid var(--primary)', backgroundColor: 'var(--primary-light)', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: 'none' }}>
-                    <h4 style={{ fontSize: '0.85rem', color: 'var(--primary)', margin: 0, fontWeight: 700 }}>Zebra IP Yazıcıya Gönder</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Yazıcı IP Adresi</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          style={{ height: '36px', fontSize: '0.85rem', padding: '6px 10px' }}
-                          value={printerIp}
-                          onChange={(e) => setPrinterIp(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Port</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          style={{ height: '36px', fontSize: '0.85rem', padding: '6px 10px' }}
-                          value={printerPort}
-                          onChange={(e) => setPrinterPort(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ width: '100%', height: '36px', fontSize: '0.85rem' }}
-                      disabled={printLoading}
-                      onClick={() => handleNetworkPrint(selectedCarton.id)}
-                    >
-                      {printLoading ? 'Yazdırılıyor...' : 'Yazıcıya Gönder (ZPL)'}
-                    </button>
-                  </div>
-                )}
 
                 {/* Decompose action */}
                 {user?.role !== 'Viewer' && (
