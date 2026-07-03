@@ -402,7 +402,6 @@ export const Cartons: React.FC = () => {
     setItemsLoading(true);
     setBarcodeSearch('');
     setBarcodePage(1);
-    setShowPrinterSettings(false);
 
     try {
       const items = await api.get(`/api/cartons/${carton.id}/items`);
