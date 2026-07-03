@@ -84,7 +84,7 @@ public class LabelGenerator : ILabelGenerator
                         // Left Column: Details (60% width)
                         row.RelativeItem(3).Column(details =>
                         {
-                            details.Spacing(1);
+                            details.Spacing(0);
 
                             // Müşteri / Customer
                             details.Item().Column(c =>
@@ -135,13 +135,13 @@ public class LabelGenerator : ILabelGenerator
                             {
                                 r.RelativeItem().Column(c =>
                                 {
-                                    c.Item().Text("Koli No / Carton No:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
-                                    c.Item().Text(carton.CartonNo).FontSize(8);
+                                    c.Item().Text("Koli No / Carton No:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(carton.CartonNo).FontSize(7);
                                 });
                                 r.RelativeItem().Column(c =>
                                 {
-                                    c.Item().Text("Tarih / Date:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
-                                    c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(8);
+                                    c.Item().Text("Tarih / Date:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(7);
                                 });
                             });
 
@@ -150,13 +150,13 @@ public class LabelGenerator : ILabelGenerator
                             {
                                 r.RelativeItem().Column(c =>
                                 {
-                                    c.Item().Text("İstasyon / Station:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
-                                    c.Item().Text(carton.StationName ?? "-").FontSize(8);
+                                    c.Item().Text("İstasyon / Station:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(carton.StationName ?? "-").FontSize(7);
                                 });
                                 r.RelativeItem().Column(c =>
                                 {
-                                    c.Item().Text("Kullanıcı / User:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
-                                    c.Item().Text(carton.UserName ?? "-").FontSize(8);
+                                    c.Item().Text("Kullanıcı / User:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(carton.UserName ?? "-").FontSize(7);
                                 });
                             });
                         });
