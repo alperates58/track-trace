@@ -198,10 +198,7 @@ export const Cartons: React.FC = () => {
   const [barcodeSearch, setBarcodeSearch] = useState('');
   const [barcodePage, setBarcodePage] = useState(1);
 
-  // Direct Printer Settings
-  const [printerIp, setPrinterIp] = useState(localStorage.getItem('network_printer_ip') || '192.168.1.100');
-  const [printerPort, setPrinterPort] = useState(localStorage.getItem('network_printer_port') || '9100');
-  const [showPrinterSettings, setShowPrinterSettings] = useState(false);
+
   const [printLoading, setPrintLoading] = useState(false);
 
   // Decompose count tracking for cancelled KPIs in this session
