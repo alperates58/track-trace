@@ -222,6 +222,10 @@ public class CartonHandlers :
         {
             pdfData = _labelGenerator.GenerateCartonPdfLabel(cartonDto, orderDto);
         }
+        else if (request.Format.Equals("PPLB", StringComparison.OrdinalIgnoreCase))
+        {
+            zplData = _labelGenerator.GenerateCartonPplbLabel(cartonDto, orderDto);
+        }
         else
         {
             zplData = _labelGenerator.GenerateCartonZplLabel(cartonDto, orderDto);

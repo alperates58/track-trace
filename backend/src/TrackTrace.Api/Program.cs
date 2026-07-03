@@ -1213,6 +1213,19 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     }
 }).RequireAuthorization("ViewerOrAbove");
 
+app.MapGet("/api/cartons/{id:guid}/label.pplb", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        var (_, pplbText) = await mediator.Send(new PrintCartonLabelCommand(id, "PPLB"));
+        return Results.Ok(new { data = pplbText, pplb = pplbText });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
 app.MapGet("/api/agent/download", (IConfiguration config, IWebHostEnvironment env) =>
 {
     const string installerFileName = "TrackTraceLocalAgentSetup.exe";
@@ -1525,6 +1538,19 @@ app.MapGet("/api/pallets/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     {
         var (_, zplText) = await mediator.Send(new PrintPalletLabelCommand(id, "ZPL"));
         return Results.Ok(new { zpl = zplText });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/pallets/{id:guid}/label.pplb", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        var (_, pplbText) = await mediator.Send(new PrintPalletLabelCommand(id, "PPLB"));
+        return Results.Ok(new { data = pplbText, pplb = pplbText });
     }
     catch (Exception ex)
     {

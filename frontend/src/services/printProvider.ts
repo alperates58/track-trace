@@ -102,6 +102,42 @@ export class LocalAgentProvider implements IPrintProvider {
     throw new Error("Agent eşleştirme (pairing) token'ı eksik, ayarlardan giriniz.");
   }
 
+  private async getAgentStatus(): Promise<{ status?: string; printer?: string }> {
+    const token = this.getAgentToken();
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/agent/status', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.status === 401) {
+        throw new Error("Yetkisiz Erisim (401): Agent Pairing Token gecersiz.");
+      }
+
+      if (!res.ok) {
+        throw new Error(`Agent Hatasi (${res.status}): Baglanti durumu okunamadi.`);
+      }
+
+      return await res.json();
+    } catch (err: any) {
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        throw new Error("Local Agent'a ulasilamiyor. Uygulamanin calistigindan ve 5000 portunun acik oldugundan emin olun.");
+      }
+      throw err;
+    }
+  }
+
+  private async getAgentPrinterLanguage(): Promise<'pplb' | 'zpl'> {
+    const status = await this.getAgentStatus();
+    const printer = status.printer?.toLowerCase() || '';
+    if (/(pplz|zpl|zebra)/i.test(printer)) {
+      return 'zpl';
+    }
+    return /(pplb|argox)/i.test(printer) ? 'pplb' : 'zpl';
+  }
+
   private async sendToAgent(path: string, body: any): Promise<void> {
     const token = this.getAgentToken();
     try {
@@ -129,14 +165,35 @@ export class LocalAgentProvider implements IPrintProvider {
   }
 
   async print(request: PrintRequest): Promise<void> {
-    const labelRes = await api.get(`/api/${request.type}s/${request.id}/label.zpl`);
-    if (labelRes && labelRes.zpl) {
-      await this.sendToAgent('/api/print', { data: labelRes.zpl });
+    const language = await this.getAgentPrinterLanguage();
+    const labelRes = await api.get(`/api/${request.type}s/${request.id}/label.${language}`);
+    const labelData = labelRes?.data || labelRes?.pplb || labelRes?.zpl;
+    if (labelData) {
+      await this.sendToAgent('/api/print', { data: labelData });
     }
   }
 
   async testPrint(zplData: string): Promise<void> {
-    await this.sendToAgent('/api/printer/test', { data: zplData });
+    const language = await this.getAgentPrinterLanguage();
+    const data = language === 'pplb' ? this.createPplbTestLabel() : zplData;
+    await this.sendToAgent('/api/printer/test', { data });
+  }
+
+  private createPplbTestLabel(): string {
+    return [
+      'N',
+      'q800',
+      'Q640,24',
+      'S3',
+      'D8',
+      'ZT',
+      'A50,50,0,4,1,1,N,"TEST PRINT"',
+      'A50,105,0,3,1,1,N,"Baglanti: Basarili"',
+      `A50,150,0,2,1,1,N,"Tarih: ${new Date().toLocaleString('tr-TR')}"`,
+      'A50,205,0,2,1,1,N,"TrackTrace Local Agent PPLB Testi"',
+      'B50,270,0,E,2,4,100,B,"123456789012"',
+      'P1'
+    ].join('\n') + '\n';
   }
 }
 

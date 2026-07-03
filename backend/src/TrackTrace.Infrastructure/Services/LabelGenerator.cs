@@ -1,6 +1,8 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using QRCoder;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -189,6 +191,35 @@ public class LabelGenerator : ILabelGenerator
 ^XZ";
     }
 
+    public string GenerateCartonPplbLabel(CartonDto carton, OrderDto order)
+    {
+        var customerLines = WrapPplbText(order.CustomerName, 34, 2).ToArray();
+        var productLines = WrapPplbText(order.ProductName ?? "-", 34, 2).ToArray();
+        var stockCode = ToPplbText(order.StockCode ?? "-");
+        var ssccData = OnlyBarcodeSafeDigits(carton.SSCC);
+
+        var sb = new StringBuilder();
+        AppendPplbHeader(sb, 800, 640);
+        AddPplbText(sb, 40, 35, 4, "KOLI ETIKETI / CARTON LABEL");
+        AddPplbText(sb, 40, 80, 2, "Musteri / Customer:");
+        AddPplbText(sb, 40, 105, 3, customerLines.ElementAtOrDefault(0) ?? "-");
+        if (customerLines.Length > 1) AddPplbText(sb, 40, 130, 3, customerLines[1]);
+        AddPplbText(sb, 40, 170, 2, $"Siparis No: {ToPplbText(order.OrderNo)}");
+        AddPplbText(sb, 40, 200, 2, $"Stok Kodu: {stockCode}");
+        AddPplbText(sb, 40, 235, 2, "Urun Adi / Product:");
+        AddPplbText(sb, 40, 260, 3, productLines.ElementAtOrDefault(0) ?? "-");
+        if (productLines.Length > 1) AddPplbText(sb, 40, 285, 3, productLines[1]);
+        AddPplbText(sb, 40, 325, 2, $"Is Emri No: {ToPplbText(order.GTIN)}");
+        AddPplbText(sb, 40, 355, 3, $"Adet: {carton.ActualQuantity} / {carton.TargetQuantity}");
+        AddPplbText(sb, 40, 390, 2, $"Koli No: {ToPplbText(carton.CartonNo)}");
+        AddPplbText(sb, 40, 420, 2, $"Tarih: {carton.CreatedAt:dd.MM.yyyy HH:mm}");
+        AddPplbText(sb, 40, 455, 2, "SSCC:");
+        AddPplbBarcode(sb, 40, 485, $"00{ssccData}", 95);
+        AddPplbText(sb, 40, 610, 2, $"(00){ssccData}");
+        sb.AppendLine("P1");
+        return sb.ToString();
+    }
+
     public byte[] GeneratePalletPdfLabel(PalletDto pallet, OrderDto order, int cartonCount)
     {
         byte[] qrCodeImageBytes = GenerateQRCodeBytes($"{_frontendUrl}/?code={pallet.SSCC}");
@@ -309,6 +340,139 @@ public class LabelGenerator : ILabelGenerator
         ^FO200,420^BQN,2,8^FDQA,{_frontendUrl}/?code={pallet.SSCC}^FS
         ^FO150,680^BY3^FO150,700^BCN,150,Y,N,N^FD(00){pallet.SSCC}^FS
         ^XZ";
+    }
+
+    public string GeneratePalletPplbLabel(PalletDto pallet, OrderDto order, int cartonCount)
+    {
+        var customerLines = WrapPplbText(order.CustomerName, 34, 2).ToArray();
+        var productLines = WrapPplbText(order.ProductName ?? "-", 34, 2).ToArray();
+        var ssccData = OnlyBarcodeSafeDigits(pallet.SSCC);
+
+        var sb = new StringBuilder();
+        AppendPplbHeader(sb, 812, 1218);
+        AddPplbText(sb, 50, 50, 4, "PALET ETIKETI / PALLET LABEL");
+        AddPplbText(sb, 50, 115, 2, "Musteri / Customer:");
+        AddPplbText(sb, 50, 145, 3, customerLines.ElementAtOrDefault(0) ?? "-");
+        if (customerLines.Length > 1) AddPplbText(sb, 50, 175, 3, customerLines[1]);
+        AddPplbText(sb, 50, 235, 2, $"Siparis No: {ToPplbText(order.OrderNo)}");
+        AddPplbText(sb, 400, 235, 2, $"Stok Kodu: {ToPplbText(order.StockCode ?? "-")}");
+        AddPplbText(sb, 50, 290, 2, "Urun Adi / Product:");
+        AddPplbText(sb, 50, 320, 3, productLines.ElementAtOrDefault(0) ?? "-");
+        if (productLines.Length > 1) AddPplbText(sb, 50, 350, 3, productLines[1]);
+        AddPplbText(sb, 50, 410, 2, $"Is Emri No: {ToPplbText(order.GTIN)}");
+        AddPplbText(sb, 400, 410, 2, $"Koli Sayisi: {cartonCount} / {order.CartonPerPallet}");
+        AddPplbText(sb, 50, 465, 2, $"Palet No: {ToPplbText(pallet.PalletNo)}");
+        AddPplbText(sb, 400, 465, 2, $"Tarih: {pallet.CreatedAt:dd.MM.yyyy HH:mm}");
+        AddPplbText(sb, 50, 545, 3, "SSCC");
+        AddPplbBarcode(sb, 50, 590, $"00{ssccData}", 140);
+        AddPplbText(sb, 50, 760, 3, $"(00){ssccData}");
+        sb.AppendLine("P1");
+        return sb.ToString();
+    }
+
+    private static void AppendPplbHeader(StringBuilder sb, int widthDots, int heightDots)
+    {
+        sb.AppendLine("N");
+        sb.AppendLine($"q{widthDots}");
+        sb.AppendLine($"Q{heightDots},24");
+        sb.AppendLine("S3");
+        sb.AppendLine("D8");
+        sb.AppendLine("ZT");
+    }
+
+    private static void AddPplbText(StringBuilder sb, int x, int y, int font, string text)
+    {
+        sb.AppendLine($"A{x},{y},0,{font},1,1,N,\"{ToPplbText(text)}\"");
+    }
+
+    private static void AddPplbBarcode(StringBuilder sb, int x, int y, string data, int height)
+    {
+        sb.AppendLine($"B{x},{y},0,E,2,4,{height},B,\"{OnlyBarcodeSafeDigits(data)}\"");
+    }
+
+    private static string ToPplbText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "-";
+        }
+
+        var normalized = value
+            .Replace('ı', 'i')
+            .Replace('İ', 'I')
+            .Replace('ğ', 'g')
+            .Replace('Ğ', 'G')
+            .Replace('ü', 'u')
+            .Replace('Ü', 'U')
+            .Replace('ş', 's')
+            .Replace('Ş', 'S')
+            .Replace('ö', 'o')
+            .Replace('Ö', 'O')
+            .Replace('ç', 'c')
+            .Replace('Ç', 'C')
+            .Normalize(NormalizationForm.FormD);
+
+        var sb = new StringBuilder();
+        foreach (var ch in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+            {
+                continue;
+            }
+
+            if (ch == '"')
+            {
+                sb.Append('\'');
+            }
+            else if (ch >= 32 && ch <= 126)
+            {
+                sb.Append(ch);
+            }
+        }
+
+        var result = sb.ToString().Trim();
+        return string.IsNullOrWhiteSpace(result) ? "-" : result;
+    }
+
+    private static string OnlyBarcodeSafeDigits(string? value)
+    {
+        var digits = new string((value ?? string.Empty).Where(char.IsDigit).ToArray());
+        return string.IsNullOrWhiteSpace(digits) ? "0" : digits;
+    }
+
+    private static System.Collections.Generic.IEnumerable<string> WrapPplbText(string? text, int maxLength, int maxLines)
+    {
+        var words = ToPplbText(text).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var lines = new System.Collections.Generic.List<string>();
+        var current = string.Empty;
+
+        foreach (var word in words)
+        {
+            var candidate = string.IsNullOrEmpty(current) ? word : $"{current} {word}";
+            if (candidate.Length <= maxLength)
+            {
+                current = candidate;
+                continue;
+            }
+
+            if (!string.IsNullOrEmpty(current))
+            {
+                lines.Add(current);
+            }
+
+            current = word.Length <= maxLength ? word : word[..maxLength];
+            if (lines.Count >= maxLines)
+            {
+                break;
+            }
+        }
+
+        if (lines.Count < maxLines && !string.IsNullOrEmpty(current))
+        {
+            lines.Add(current);
+        }
+
+        return lines.Take(maxLines);
     }
 
     private byte[] GenerateQRCodeBytes(string text)

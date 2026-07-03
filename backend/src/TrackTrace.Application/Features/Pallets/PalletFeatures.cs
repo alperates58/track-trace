@@ -345,6 +345,10 @@ public class PalletHandlers :
         {
             pdfData = _labelGenerator.GeneratePalletPdfLabel(palletDto, orderDto, palletDto.CartonCount);
         }
+        else if (request.Format.Equals("PPLB", StringComparison.OrdinalIgnoreCase))
+        {
+            zplData = _labelGenerator.GeneratePalletPplbLabel(palletDto, orderDto, palletDto.CartonCount);
+        }
         else
         {
             zplData = _labelGenerator.GeneratePalletZplLabel(palletDto, orderDto, palletDto.CartonCount);
