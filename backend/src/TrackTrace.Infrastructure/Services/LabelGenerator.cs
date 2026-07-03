@@ -197,6 +197,7 @@ public class LabelGenerator : ILabelGenerator
         var productLines = WrapPplbText(order.ProductName ?? "-", 32, 2).ToArray();
         var stockCode = ToPplbText(order.StockCode ?? "-");
         var ssccData = OnlyBarcodeSafeDigits(carton.SSCC);
+        var ssccLines = SplitFixed($"(00){ssccData}", 15).ToArray();
         var qrData = $"{_frontendUrl}/?code={carton.SSCC}";
 
         var sb = new StringBuilder();
@@ -205,33 +206,35 @@ public class LabelGenerator : ILabelGenerator
         AddPplbLine(sb, 500, 20, 2, 600);
         AddPplbLine(sb, 20, 92, 760, 2);
 
-        AddPplbText(sb, 515, 45, 4, "KOLI ETIKETI / CARTON LABEL");
+        AddPplbText(sb, 535, 45, 3, "KOLI ETIKETI /");
+        AddPplbText(sb, 555, 72, 3, "CARTON LABEL");
         AddPplbText(sb, 40, 40, 2, "Musteri / Customer:");
         AddPplbText(sb, 40, 65, 3, customerLines.ElementAtOrDefault(0) ?? "-");
         if (customerLines.Length > 1) AddPplbText(sb, 40, 90, 3, customerLines[1]);
 
-        AddPplbText(sb, 40, 122, 2, "Siparis No / Order No:");
-        AddPplbText(sb, 40, 147, 3, ToPplbText(order.OrderNo));
-        AddPplbText(sb, 285, 122, 2, "Stok Kodu / Stock Code:");
-        AddPplbText(sb, 285, 147, 3, stockCode);
+        AddPplbText(sb, 40, 125, 2, "Siparis No / Order No:");
+        AddPplbText(sb, 40, 150, 3, ToPplbText(order.OrderNo));
+        AddPplbText(sb, 285, 125, 2, "Stok Kodu / Stock Code:");
+        AddPplbText(sb, 285, 150, 3, stockCode);
 
-        AddPplbText(sb, 40, 190, 2, "Urun Adi / Product Name:");
-        AddPplbText(sb, 40, 215, 3, productLines.ElementAtOrDefault(0) ?? "-");
-        if (productLines.Length > 1) AddPplbText(sb, 40, 240, 3, productLines[1]);
+        AddPplbText(sb, 40, 195, 2, "Urun Adi / Product Name:");
+        AddPplbText(sb, 40, 220, 3, productLines.ElementAtOrDefault(0) ?? "-");
+        if (productLines.Length > 1) AddPplbText(sb, 40, 247, 3, productLines[1]);
 
-        AddPplbText(sb, 40, 290, 2, "Is Emri No:");
-        AddPplbText(sb, 40, 315, 3, ToPplbText(order.GTIN));
-        AddPplbText(sb, 285, 290, 2, "Adet / Quantity:");
-        AddPplbText(sb, 285, 315, 3, $"{carton.ActualQuantity} / {carton.TargetQuantity}");
+        AddPplbText(sb, 40, 292, 2, "Is Emri No:");
+        AddPplbText(sb, 40, 317, 3, ToPplbText(order.GTIN));
+        AddPplbText(sb, 285, 292, 2, "Adet / Quantity:");
+        AddPplbText(sb, 285, 317, 3, $"{carton.ActualQuantity} / {carton.TargetQuantity}");
 
-        AddPplbText(sb, 40, 372, 2, "Koli No / Carton No:");
-        AddPplbText(sb, 40, 397, 3, ToPplbText(carton.CartonNo));
-        AddPplbText(sb, 285, 372, 2, "Tarih / Date:");
-        AddPplbText(sb, 285, 397, 3, $"{carton.CreatedAt:dd.MM.yyyy}");
+        AddPplbText(sb, 40, 370, 2, "Koli No / Carton No:");
+        AddPplbText(sb, 40, 395, 3, ToPplbText(carton.CartonNo));
+        AddPplbText(sb, 285, 370, 2, "Tarih / Date:");
+        AddPplbText(sb, 285, 395, 3, $"{carton.CreatedAt:dd.MM.yyyy}");
 
-        AddPplbText(sb, 560, 165, 3, "SSCC BARCODE");
-        AddPplbQr(sb, 550, 220, qrData, 5);
-        AddPplbText(sb, 560, 505, 3, $"(00){ssccData}");
+        AddPplbText(sb, 560, 165, 2, "SSCC BARCODE");
+        AddPplbQr(sb, 555, 215, qrData, 4);
+        AddPplbText(sb, 545, 465, 2, ssccLines.ElementAtOrDefault(0) ?? $"(00){ssccData}");
+        if (ssccLines.Length > 1) AddPplbText(sb, 585, 492, 2, ssccLines[1]);
         sb.AppendLine("P1");
         return sb.ToString();
     }
@@ -507,6 +510,15 @@ public class LabelGenerator : ILabelGenerator
         }
 
         return lines.Take(maxLines);
+    }
+
+    private static System.Collections.Generic.IEnumerable<string> SplitFixed(string text, int chunkSize)
+    {
+        var normalized = ToPplbText(text);
+        for (var i = 0; i < normalized.Length; i += chunkSize)
+        {
+            yield return normalized.Substring(i, Math.Min(chunkSize, normalized.Length - i));
+        }
     }
 
     private byte[] GenerateQRCodeBytes(string text)
