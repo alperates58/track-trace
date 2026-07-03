@@ -107,7 +107,7 @@ export const Stations: React.FC = () => {
     <div className="page-animate">
       <TTPageHeader 
         title="İstasyon Yönetimi" 
-        action={
+        actions={
           isAdmin && (
             <TTButton onClick={() => { resetForm(); setShowCreateDrawer(true); }}>
               <Plus size={18} />
