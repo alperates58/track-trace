@@ -72,9 +72,9 @@ public class LabelGenerator : ILabelGenerator
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
 
-                page.Content().Border(1).BorderColor(Colors.Black).Padding(6).Column(col =>
+                page.Content().Border(1).BorderColor(Colors.Black).Padding(4).Column(col =>
                 {
-                    col.Spacing(4);
+                    col.Spacing(2);
 
                     col.Item().AlignCenter().Text("KOLİ ETİKETİ / CARTON LABEL").Bold().FontSize(11);
                     col.Item().LineHorizontal(0.5f);
@@ -84,7 +84,7 @@ public class LabelGenerator : ILabelGenerator
                         // Left Column: Details (60% width)
                         row.RelativeItem(3).Column(details =>
                         {
-                            details.Spacing(4);
+                            details.Spacing(1);
 
                             // Müşteri / Customer
                             details.Item().Column(c =>
