@@ -14,6 +14,14 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+public class Station
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = null!;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
 public class Order
 {
     public Guid Id { get; set; }
@@ -51,6 +59,8 @@ public class Carton
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
+    public string? StockCode { get; set; }
+    public Guid? StationId { get; set; }
     public string CartonNo { get; set; } = null!;
     public string SSCC { get; set; } = null!;
     public int TargetQuantity { get; set; }

@@ -265,6 +265,43 @@ app.MapPost("/api/auth/login", async (LoginRequest request, IMediator mediator) 
     }
 }).AllowAnonymous();
 
+// Stations Endpoints
+app.MapGet("/api/stations", async (bool? includeInactive, IMediator mediator) =>
+{
+    var stations = await mediator.Send(new TrackTrace.Application.Features.Stations.GetStationsQuery(includeInactive ?? false));
+    return Results.Ok(stations);
+}).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/stations", async (CreateStationRequest request, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(new TrackTrace.Application.Features.Stations.CreateStationCommand(request));
+        return Results.Created($"/api/stations/{result.Id}", result);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
+
+app.MapPut("/api/stations/{id:guid}", async (Guid id, UpdateStationRequest request, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(new TrackTrace.Application.Features.Stations.UpdateStationCommand(id, request));
+        return Results.Ok(result);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound(new { message = "İstasyon bulunamadı." });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
+
 // Users Endpoints
 app.MapGet("/api/users", async (IMediator mediator) =>
 {
@@ -1423,6 +1460,23 @@ app.MapPost("/api/cartons/{id:guid}/add-product", async (Guid id, [FromQuery] st
         return Results.BadRequest(new { message = ex.Message });
     }
 }).RequireAuthorization("OperatorOrAdmin");
+
+app.MapPost("/api/cartons/{id:guid}/transfer", async (Guid id, [FromBody] TransferCartonRequest request, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new TransferCartonCommand(id, request));
+        return Results.Ok();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
 
 // Pallets Endpoints
 app.MapGet("/api/pallets", async (

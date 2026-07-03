@@ -11,6 +11,7 @@ import { TraceabilityCenter } from './pages/TraceabilityCenter';
 import { DataMatrixCreator } from './pages/DataMatrixCreator';
 import { SystemInfo } from './pages/SystemInfo';
 import { Users } from './pages/Users';
+import { Stations } from './pages/Stations';
 import { Reports } from './pages/Reports';
 import { AuditCenter } from './pages/AuditCenter';
 import { PermissionMatrix } from './pages/PermissionMatrix';
@@ -29,9 +30,11 @@ import {
   Menu,
   QrCode,
   BarChart3,
+  BarChart3,
   Shield,
   Key,
-  Printer
+  Printer,
+  Server
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
@@ -60,6 +63,8 @@ const AppShell: React.FC = () => {
         return <Reports />;
       case 'users':
         return <Users />;
+      case 'stations':
+        return <Stations />;
       case 'system':
         return <SystemInfo />;
       case 'audit':
@@ -184,6 +189,14 @@ const AppShell: React.FC = () => {
                   <span>Kullanıcı Yönetimi</span>
                 </div>
                 <div 
+                  className={`sidebar-link ${activeTab === 'stations' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('stations')}
+                  title="İstasyon Yönetimi"
+                >
+                  <Server size={18} style={{ flexShrink: 0 }} />
+                  <span>İstasyon Yönetimi</span>
+                </div>
+                <div 
                   className={`sidebar-link ${activeTab === 'audit' ? 'active' : ''}`}
                   onClick={() => handleTabClick('audit')}
                   title="Audit Center"
@@ -256,7 +269,7 @@ const AppShell: React.FC = () => {
             <div className="header-title-area">
               <span className="header-breadcrumb">TrackTrace / {activeTab === 'dashboard' ? 'Operations' : activeTab === 'users' || activeTab === 'system' ? 'Administration' : 'Module'}</span>
               <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
-                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'stations' ? 'İstasyon Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </h2>
             </div>
           </div>

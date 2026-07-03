@@ -23,6 +23,32 @@ interface PublicBarcodeSearchProps {
   code: string;
 }
 
+const FormattedBarcode: React.FC<{ code: string }> = ({ code }) => {
+  if (!code) return null;
+  // Remove AIM identifiers and split by Group Separator
+  const parts = code.replace(/^\]d2/, '').replace(/^\]C1/, '').split('\x1D');
+  return (
+    <span style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+      {parts.map((part, i) => (
+        <React.Fragment key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <span style={{ 
+              backgroundColor: '#e0e7ff', 
+              color: '#4338ca', 
+              fontSize: '0.65rem', 
+              padding: '2px 4px', 
+              borderRadius: '4px', 
+              margin: '0 2px',
+              fontWeight: 700 
+            }}>GS</span>
+          )}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+};
+
 export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }) => {
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -231,7 +257,7 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
                       fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600,
                       color: '#334155', wordBreak: 'break-all', lineHeight: '1.4'
                     }}>
-                      {item}
+                      <FormattedBarcode code={item} />
                     </span>
                   </div>
                   <button 

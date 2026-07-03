@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -30,28 +31,32 @@ public class DbConnectionFactory : IDbConnectionFactory
         connection.Open();
 
         // 1. Run migrations
-        // Locate migration file in application paths
-        string migrationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "Migrations", "001_Initial_Setup.sql");
+        // Locate migration directory in application paths
+        string migrationDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "Migrations");
         
         // Fallback for development run
-        if (!File.Exists(migrationPath))
+        if (!Directory.Exists(migrationDir))
         {
-            migrationPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "TrackTrace.Infrastructure", "Data", "Migrations", "001_Initial_Setup.sql");
+            migrationDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "TrackTrace.Infrastructure", "Data", "Migrations");
         }
-        if (!File.Exists(migrationPath))
+        if (!Directory.Exists(migrationDir))
         {
-            migrationPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Migrations", "001_Initial_Setup.sql");
+            migrationDir = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Migrations");
         }
 
-        if (File.Exists(migrationPath))
+        if (Directory.Exists(migrationDir))
         {
-            string sql = File.ReadAllText(migrationPath);
-            using var cmd = new NpgsqlCommand(sql, connection);
-            cmd.ExecuteNonQuery();
+            var sqlFiles = Directory.GetFiles(migrationDir, "*.sql").OrderBy(f => f).ToList();
+            foreach (var file in sqlFiles)
+            {
+                string sql = File.ReadAllText(file);
+                using var cmd = new NpgsqlCommand(sql, connection);
+                cmd.ExecuteNonQuery();
+            }
         }
         else
         {
-            // If the physical file isn't found, write a minimal inline version to ensure tables are always created
+            // If the physical directory isn't found, write a minimal inline version to ensure tables are always created
             using var cmd = new NpgsqlCommand(GetFallbackMigrationSql(), connection);
             cmd.ExecuteNonQuery();
         }

@@ -29,6 +29,8 @@ public record RemoveProductFromCartonCommand(Guid CartonId, string RawCode) : IR
 
 public record AddProductToCartonCommand(Guid CartonId, string RawCode) : IRequest<Unit>;
 
+public record TransferCartonCommand(Guid Id, TransferCartonRequest Request) : IRequest<Unit>;
+
 public class CartonHandlers :
     IRequestHandler<GetCartonsQuery, (IEnumerable<CartonDto> Items, int TotalCount)>,
     IRequestHandler<GetCartonByIdQuery, CartonDto>,
@@ -36,7 +38,8 @@ public class CartonHandlers :
     IRequestHandler<PrintCartonLabelCommand, (byte[]? FileContent, string? ZplText)>,
     IRequestHandler<DecomposeCartonCommand, Unit>,
     IRequestHandler<RemoveProductFromCartonCommand, Unit>,
-    IRequestHandler<AddProductToCartonCommand, Unit>
+    IRequestHandler<AddProductToCartonCommand, Unit>,
+    IRequestHandler<TransferCartonCommand, Unit>
 {
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly ICurrentUserService _currentUserService;
@@ -66,9 +69,10 @@ public class CartonHandlers :
         var builder = new SqlBuilder();
         
         var selector = builder.AddTemplate(@"
-            SELECT c.*, o.OrderNo
+            SELECT c.*, o.OrderNo, s.Name as StationName
             FROM Cartons c
             INNER JOIN Orders o ON c.OrderId = o.Id
+            LEFT JOIN Stations s ON c.StationId = s.Id
             /**where**/
             ORDER BY c.CreatedAt DESC
             LIMIT @Limit OFFSET @Offset", new { Limit = request.PageSize, Offset = (request.PageNumber - 1) * request.PageSize });
@@ -77,6 +81,7 @@ public class CartonHandlers :
             SELECT COUNT(*) 
             FROM Cartons c
             INNER JOIN Orders o ON c.OrderId = o.Id
+            LEFT JOIN Stations s ON c.StationId = s.Id
             /**where**/");
 
         if (!string.IsNullOrWhiteSpace(request.Search))
@@ -108,6 +113,9 @@ public class CartonHandlers :
             (Guid)x.id,
             (Guid)x.orderid,
             (string)x.orderno,
+            (string?)x.stockcode,
+            (Guid?)x.stationid,
+            (string?)x.stationname,
             (string)x.cartonno,
             (string)x.sscc,
             (int)x.targetquantity,
@@ -125,9 +133,10 @@ public class CartonHandlers :
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         const string sql = @"
-            SELECT c.*, o.OrderNo
+            SELECT c.*, o.OrderNo, s.Name as StationName
             FROM Cartons c
             INNER JOIN Orders o ON c.OrderId = o.Id
+            LEFT JOIN Stations s ON c.StationId = s.Id
             WHERE c.Id = @Id";
 
         var x = await connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = request.Id });
@@ -140,6 +149,9 @@ public class CartonHandlers :
             (Guid)x.id,
             (Guid)x.orderid,
             (string)x.orderno,
+            (string?)x.stockcode,
+            (Guid?)x.stationid,
+            (string?)x.stationname,
             (string)x.cartonno,
             (string)x.sscc,
             (int)x.targetquantity,
@@ -148,6 +160,7 @@ public class CartonHandlers :
             (DateTime)x.createdat,
             (DateTime?)x.closedat,
             (DateTime?)x.printedat
+
         );
     }
 
@@ -449,6 +462,74 @@ public class CartonHandlers :
             transaction.Commit();
 
             await _auditLogService.LogAsync("Cartons", request.CartonId, "AddProduct", null, new { RawCode = searchCode, CartonNo = cartonNo, NewQuantity = actualQty, Closed = closedAt != null });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<Unit> Handle(TransferCartonCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // 1. Get Carton
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.Id }, transaction);
+            if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+            
+            if (carton.status != CartonStatus.Open.ToString())
+            {
+                throw new InvalidOperationException("Yalnızca açık koliler devredilebilir.");
+            }
+
+            Guid orderId = carton.orderid;
+            string? stockCode = carton.stockcode;
+            Guid? oldStationId = carton.stationid;
+            string cartonNo = carton.cartonno;
+
+            // 2. Validate Target Station exists and is active
+            var targetStation = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Stations WHERE Id = @Id", new { Id = request.Request.TargetStationId }, transaction);
+            if (targetStation == null || targetStation.isactive == false)
+            {
+                throw new InvalidOperationException("Hedef istasyon bulunamadı veya pasif durumda.");
+            }
+
+            // 3. Ensure no duplicate open carton on target station for same order and stock code
+            var duplicateCarton = await connection.QueryFirstOrDefaultAsync<dynamic>(@"
+                SELECT * FROM Cartons 
+                WHERE OrderId = @OrderId AND StockCode = @StockCode AND StationId = @StationId AND Status = 'Open'", 
+                new { OrderId = orderId, StockCode = stockCode, StationId = request.Request.TargetStationId }, transaction);
+            
+            if (duplicateCarton != null)
+            {
+                throw new InvalidOperationException("Hedef istasyonda bu sipariş ve stok kodu için halihazırda açık bir koli bulunmaktadır. Devir işlemi yapılamaz.");
+            }
+
+            // 4. Update Carton
+            await connection.ExecuteAsync(@"
+                UPDATE Cartons 
+                SET StationId = @StationId 
+                WHERE Id = @Id",
+                new
+                {
+                    Id = request.Id,
+                    StationId = request.Request.TargetStationId
+                }, transaction);
+
+            transaction.Commit();
+
+            await _auditLogService.LogAsync("Cartons", request.Id, "Transfer", 
+                new { OldStationId = oldStationId }, 
+                new { NewStationId = request.Request.TargetStationId, CartonNo = cartonNo });
+                
             return Unit.Value;
         }
         catch (Exception)

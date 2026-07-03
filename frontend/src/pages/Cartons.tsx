@@ -34,6 +34,12 @@ interface Carton {
   createdAt: string;
   closedAt: string | null;
   printedAt: string | null;
+  stationName?: string;
+}
+
+interface Station {
+  id: string;
+  name: string;
 }
 
 interface ProductCode {
@@ -68,6 +74,32 @@ const FullnessIndicator: React.FC<{ actual: number; target: number }> = ({ actua
   );
 };
 
+export const FormattedBarcode: React.FC<{ code: string }> = ({ code }) => {
+  if (!code) return null;
+  // Remove AIM identifiers and split by Group Separator
+  const parts = code.replace(/^\]d2/, '').replace(/^\]C1/, '').split('\x1D');
+  return (
+    <span style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+      {parts.map((part, i) => (
+        <React.Fragment key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <span style={{ 
+              backgroundColor: '#e0e7ff', 
+              color: '#4338ca', 
+              fontSize: '0.65rem', 
+              padding: '2px 4px', 
+              borderRadius: '4px', 
+              margin: '0 2px',
+              fontWeight: 700 
+            }}>GS</span>
+          )}
+        </React.Fragment>
+      ))}
+    </span>
+  );
+};
+
 // Desktop Table Row for Flat List View
 const CartonTableRow: React.FC<{ 
   c: Carton; 
@@ -84,6 +116,7 @@ const CartonTableRow: React.FC<{
       <td style={{ fontWeight: 600 }}>{c.cartonNo}</td>
       <td>{c.orderNo}</td>
       <td><span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>{orderStockCode || '-'}</span></td>
+      <td>{c.stationName || 'Ana İstasyon'}</td>
       <td><code style={{ fontSize: '0.85rem' }}>{c.sscc}</code></td>
       <td>
         <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
@@ -138,6 +171,11 @@ const CartonMobileCard: React.FC<{
       </div>
 
       <div className="mobile-card-row">
+        <span className="mobile-card-label">İstasyon:</span>
+        <span className="mobile-card-value">{c.stationName || 'Ana İstasyon'}</span>
+      </div>
+
+      <div className="mobile-card-row">
         <span className="mobile-card-label">SSCC:</span>
         <span className="mobile-card-value" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{c.sscc}</span>
       </div>
@@ -170,6 +208,8 @@ export const Cartons: React.FC = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [cartons, setCartons] = useState<Carton[]>([]);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [transferStationId, setTransferStationId] = useState('');
   const [summaryData, setSummaryData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -210,14 +250,16 @@ export const Cartons: React.FC = () => {
     else setLoading(true);
 
     try {
-      const [ordersRes, cartonsRes, summaryRes] = await Promise.all([
+      const [ordersRes, cartonsRes, summaryRes, stationsRes] = await Promise.all([
         api.get('/api/orders?pageSize=1000'),
         api.get('/api/cartons?pageSize=10000'),
-        api.get('/api/dashboard/summary').catch(() => null)
+        api.get('/api/dashboard/summary').catch(() => null),
+        api.get('/api/stations?includeInactive=false').catch(() => [])
       ]);
 
       setOrders(ordersRes.items || []);
       setCartons(cartonsRes.items || []);
+      setStations(stationsRes || []);
       if (summaryRes) setSummaryData(summaryRes);
     } catch (err) {
       console.error('Error fetching carton screen data:', err);
@@ -941,6 +983,7 @@ export const Cartons: React.FC = () => {
                 <th>Koli No</th>
                 <th>Sipariş No</th>
                 <th>Stok Kodu</th>
+                <th>İstasyon</th>
                 <th>SSCC (18 Hane)</th>
                 <th>Doluluk</th>
                 <th>Durum</th>
@@ -1049,6 +1092,10 @@ export const Cartons: React.FC = () => {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Stok Kodu</span>
                   <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{orders.find(o => o.id === selectedCarton.orderId)?.stockCode || '-'}</span>
                 </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>İstasyon</span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedCarton.stationName || 'Ana İstasyon'}</span>
+                </div>
                 <div style={{ marginTop: '8px' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Durum</span>
                   <span className={`badge badge-${selectedCarton.status.toLowerCase()}`}>
@@ -1080,11 +1127,49 @@ export const Cartons: React.FC = () => {
                   </button>
                 </div>
 
+                {/* Transfer action */}
+                {user?.role === 'Admin' && selectedCarton.status === 'Open' && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center' }}>
+                    <select
+                      className="form-input"
+                      style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
+                      value={transferStationId}
+                      onChange={(e) => setTransferStationId(e.target.value)}
+                    >
+                      <option value="">-- İstasyon Seç (Devret) --</option>
+                      {stations.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      className="btn btn-primary"
+                      style={{ padding: '8px 16px', height: '36px' }}
+                      onClick={async () => {
+                        if (!transferStationId) {
+                            alert("Lütfen devredilecek istasyonu seçin.");
+                            return;
+                        }
+                        if (!window.confirm('Bu koliyi seçilen istasyona devretmek istediğinize emin misiniz?')) return;
+                        try {
+                          await api.post(`/api/cartons/${selectedCarton.id}/transfer`, { targetStationId: transferStationId });
+                          alert("Koli başarıyla devredildi.");
+                          setTransferStationId('');
+                          setSelectedCarton(null);
+                          loadAllData(true);
+                        } catch (err: any) {
+                          alert("Devir işlemi başarısız: " + err.message);
+                        }
+                      }}
+                    >
+                      Devret
+                    </button>
+                  </div>
+                )}
                 {/* Decompose action */}
                 {user?.role !== 'Viewer' && (
                   <button 
                     className="btn btn-danger" 
-                    style={{ width: '100%', padding: '10px' }} 
+                    style={{ width: '100%', padding: '10px', marginTop: '10px' }} 
                     onClick={() => handleDecompose(selectedCarton.id)}
                   >
                     Koliyi Boz (İptal Et)
@@ -1166,7 +1251,9 @@ export const Cartons: React.FC = () => {
                           border: '1px solid var(--border-color)'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                            <div style={{ fontWeight: 600, wordBreak: 'break-all', maxWidth: '85%', color: 'var(--text-main)' }}>{item.rawCode}</div>
+                            <div style={{ fontWeight: 600, maxWidth: '85%', color: 'var(--text-main)' }}>
+                              <FormattedBarcode code={item.rawCode} />
+                            </div>
                             {user?.role !== 'Viewer' && (
                               <button 
                                 onClick={() => handleRemoveProduct(selectedCarton.id, item.rawCode)}

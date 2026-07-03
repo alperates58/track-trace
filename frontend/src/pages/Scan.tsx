@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
-import { Volume2, VolumeX, Barcode, Printer } from 'lucide-react';
+import { Volume2, VolumeX, Barcode, Printer, Server } from 'lucide-react';
+
+interface Station {
+  id: string;
+  name: string;
+}
 
 interface ActiveOrder {
   id: string;
@@ -27,6 +32,10 @@ interface ScanHistory {
 
 export const Scan: React.FC = () => {
   const { user } = useAuth();
+
+  // Stations
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationId, setSelectedStationId] = useState<string>('');
 
   // Orders lists
   const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
@@ -114,23 +123,36 @@ export const Scan: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Load Active Orders
+  // Load Active Orders & Stations
   useEffect(() => {
     api.get('/api/orders?pageSize=100&status=Active')
       .then(res => {
         setActiveOrders(res.items);
       })
       .catch(console.error);
+
+    api.get('/api/stations?includeInactive=false')
+      .then(res => {
+        setStations(res);
+        const savedStation = localStorage.getItem('trackTrace_selectedStation');
+        if (savedStation && res.some((s: Station) => s.id === savedStation)) {
+          setSelectedStationId(savedStation);
+        } else if (res.length > 0) {
+          setSelectedStationId(res[0].id);
+          localStorage.setItem('trackTrace_selectedStation', res[0].id);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   // Handle Order Select
   useEffect(() => {
-    if (selectedOrderId) {
+    if (selectedOrderId && selectedStationId) {
       const order = activeOrders.find(o => o.id === selectedOrderId) || null;
       setSelectedOrder(order);
       
       // Fetch current progress from backend
-      api.get(`/api/scan/current-carton?orderId=${selectedOrderId}`)
+      api.get(`/api/scan/current-carton?orderId=${selectedOrderId}&stationId=${selectedStationId}`)
         .then(res => {
           setCartonNo(res.cartonNo);
           setCartonSSCC(res.sscc);
@@ -191,14 +213,14 @@ export const Scan: React.FC = () => {
       setLastScannedBarcode('');
       setErrorMsg('');
     }
-  }, [selectedOrderId]);
+  }, [selectedOrderId, selectedStationId]);
 
   // Keep focus on hidden input
   useEffect(() => {
     focusInput();
     const interval = setInterval(focusInput, 1500); // periodically enforce focus
     return () => clearInterval(interval);
-  }, [selectedOrderId]);
+  }, [selectedOrderId, selectedStationId]);
 
   // Handle global F8 keydown to refocus the input
   useEffect(() => {
@@ -395,8 +417,16 @@ export const Scan: React.FC = () => {
       return;
     }
 
+    if (!selectedStationId) {
+      playSound('warning');
+      setStatus('error');
+      setLastScannedBarcode(code);
+      setErrorMsg('Lütfen okutmaya başlamadan önce bir istasyon seçin.');
+      return;
+    }
+
     try {
-      const res = await api.post('/api/scan/product', { orderId: selectedOrderId, rawCode: code });
+      const res = await api.post('/api/scan/product', { orderId: selectedOrderId, rawCode: code, stationId: selectedStationId });
       
       if (res.success) {
         playSound('success');
@@ -589,6 +619,25 @@ export const Scan: React.FC = () => {
       {/* Configuration & Controls Panel */}
       <div className="card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '12px', flex: 1, minWidth: '320px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '150px' }}>
+            <select
+              className="form-input"
+              style={{ width: '100%', height: '42px', fontWeight: 600, borderRadius: '8px', border: '1px solid #cbd5e1' }}
+              value={selectedStationId}
+              onChange={(e) => {
+                const newId = e.target.value;
+                setSelectedStationId(newId);
+                if (newId) localStorage.setItem('trackTrace_selectedStation', newId);
+                else localStorage.removeItem('trackTrace_selectedStation');
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="">-- İSTASYON SEÇİN --</option>
+              {stations.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ flex: 1, minWidth: '150px' }}>
             <select
               className="form-input"

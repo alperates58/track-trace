@@ -21,6 +21,7 @@ public class ScanProductCommandValidator : AbstractValidator<ScanProductCommand>
     {
         RuleFor(x => x.Request.OrderId).NotEmpty().WithMessage("Sipariş seçilmelidir.");
         RuleFor(x => x.Request.RawCode).NotEmpty().WithMessage("Barkod okutulmalıdır.");
+        RuleFor(x => x.Request.StationId).NotEmpty().WithMessage("Lütfen aktif bir istasyon seçin.");
     }
 }
 
@@ -94,14 +95,15 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
 
             int productPerCarton = order.productpercarton;
             string orderNo = order.orderno;
+            string? orderStockCode = order.stockcode;
 
             // 3. SELECT OPEN CARTON WITH LOCK
             const string openCartonSql = @"
                 SELECT * FROM Cartons 
-                WHERE OrderId = @OrderId AND Status = 'Open' 
+                WHERE OrderId = @OrderId AND StockCode = @StockCode AND StationId = @StationId AND Status = 'Open' 
                 ORDER BY CreatedAt DESC 
                 LIMIT 1 FOR UPDATE";
-            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = req.OrderId }, transaction);
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = req.OrderId, StockCode = orderStockCode, StationId = req.StationId }, transaction);
 
             Guid cartonId;
             string cartonNo;
@@ -124,13 +126,15 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
                 actualQty = 0;
 
                 const string insertCartonSql = @"
-                    INSERT INTO Cartons (Id, OrderId, CartonNo, SSCC, TargetQuantity, ActualQuantity, Status, CreatedBy, CreatedAt)
-                    VALUES (@Id, @OrderId, @CartonNo, @SSCC, @TargetQuantity, @ActualQuantity, @Status, @CreatedBy, @CreatedAt)";
+                    INSERT INTO Cartons (Id, OrderId, StockCode, StationId, CartonNo, SSCC, TargetQuantity, ActualQuantity, Status, CreatedBy, CreatedAt)
+                    VALUES (@Id, @OrderId, @StockCode, @StationId, @CartonNo, @SSCC, @TargetQuantity, @ActualQuantity, @Status, @CreatedBy, @CreatedAt)";
 
                 await connection.ExecuteAsync(insertCartonSql, new
                 {
                     Id = cartonId,
                     OrderId = req.OrderId,
+                    StockCode = orderStockCode,
+                    StationId = req.StationId,
                     CartonNo = cartonNo,
                     SSCC = sscc,
                     TargetQuantity = productPerCarton,
@@ -263,7 +267,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
         }
     }
 
-public record GetCurrentCartonQuery(Guid OrderId) : IRequest<CurrentCartonDto>;
+public record GetCurrentCartonQuery(Guid OrderId, Guid StationId) : IRequest<CurrentCartonDto>;
 
 public record CurrentCartonDto(
     bool HasOpenCarton,
@@ -273,7 +277,9 @@ public record CurrentCartonDto(
     int CartonTargetQty,
     int CompletedCartonsCount,
     int TotalScannedCount,
-    int ExpectedQuantity
+    int ExpectedQuantity,
+    Guid? StationId,
+    string? StationName
 );
 
 public class GetCurrentCartonQueryHandler : IRequestHandler<GetCurrentCartonQuery, CurrentCartonDto>
@@ -289,25 +295,29 @@ public class GetCurrentCartonQueryHandler : IRequestHandler<GetCurrentCartonQuer
     {
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        // 1. Get order details (product per carton, expected quantity)
-        const string orderSql = "SELECT ProductPerCarton, ExpectedQuantity FROM Orders WHERE Id = @OrderId";
+        // 1. Get order details (product per carton, expected quantity, stockcode)
+        const string orderSql = "SELECT ProductPerCarton, ExpectedQuantity, StockCode FROM Orders WHERE Id = @OrderId";
         var order = await connection.QueryFirstOrDefaultAsync<dynamic>(orderSql, new { OrderId = request.OrderId });
         if (order == null)
         {
-            return new CurrentCartonDto(false, null, null, 0, 0, 0, 0, 0);
+            return new CurrentCartonDto(false, null, null, 0, 0, 0, 0, 0, null, null);
         }
 
         int productPerCarton = order.productpercarton;
         int expectedQuantity = order.expectedquantity;
+        string? stockCode = order.stockcode;
 
-        // 2. Get active open carton details
+        // 1.5 Get Station Name
+        var stationName = await connection.ExecuteScalarAsync<string>("SELECT Name FROM Stations WHERE Id = @StationId", new { StationId = request.StationId });
+
+        // 2. Get active open carton details for this station and stock code
         const string openCartonSql = @"
             SELECT CartonNo, SSCC, ActualQuantity, TargetQuantity 
             FROM Cartons 
-            WHERE OrderId = @OrderId AND Status = 'Open' 
+            WHERE OrderId = @OrderId AND StockCode = @StockCode AND StationId = @StationId AND Status = 'Open' 
             ORDER BY CreatedAt DESC 
             LIMIT 1";
-        var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = request.OrderId });
+        var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = request.OrderId, StockCode = stockCode, StationId = request.StationId });
 
         bool hasOpenCarton = carton != null;
         string? cartonNo = carton?.cartonno;
@@ -315,13 +325,14 @@ public class GetCurrentCartonQueryHandler : IRequestHandler<GetCurrentCartonQuer
         int cartonCurrentQty = carton != null ? (int)carton.actualquantity : 0;
         int cartonTargetQty = carton != null ? (int)carton.targetquantity : productPerCarton;
 
-        // 3. Get completed cartons count
+        // 3. Get completed cartons count (for order)
         const string completedCountSql = "SELECT COUNT(*) FROM Cartons WHERE OrderId = @OrderId AND Status != 'Open'";
         int completedCartonsCount = await connection.ExecuteScalarAsync<int>(completedCountSql, new { OrderId = request.OrderId });
 
-        // 4. Get total scanned count
+        // 4. Get total scanned count (for order)
         const string totalScannedSql = "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @OrderId AND Status = 'Scanned'";
         int totalScannedCount = await connection.ExecuteScalarAsync<int>(totalScannedSql, new { OrderId = request.OrderId });
+
 
         return new CurrentCartonDto(
             HasOpenCarton: hasOpenCarton,
@@ -331,7 +342,9 @@ public class GetCurrentCartonQueryHandler : IRequestHandler<GetCurrentCartonQuer
             CartonTargetQty: cartonTargetQty,
             CompletedCartonsCount: completedCartonsCount,
             TotalScannedCount: totalScannedCount,
-            ExpectedQuantity: expectedQuantity
+            ExpectedQuantity: expectedQuantity,
+            StationId: request.StationId,
+            StationName: stationName
         );
     }
 }

@@ -73,7 +73,13 @@ public record ImportBatchDto(
     bool CanDelete
 );
 
-public record ScanRequest(Guid OrderId, string RawCode);
+public record StationDto(Guid Id, string Name, bool IsActive, DateTime CreatedAt);
+public record CreateStationRequest(string Name, bool IsActive);
+public record UpdateStationRequest(string Name, bool IsActive);
+
+public record ScanRequest(Guid OrderId, string RawCode, Guid StationId);
+
+public record TransferCartonRequest(Guid TargetStationId);
 
 public record ScanResponse(
     bool Success,
@@ -93,6 +99,9 @@ public record CartonDto(
     Guid Id,
     Guid OrderId,
     string OrderNo,
+    string? StockCode,
+    Guid? StationId,
+    string? StationName,
     string CartonNo,
     string SSCC,
     int TargetQuantity,
