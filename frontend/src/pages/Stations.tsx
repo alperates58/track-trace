@@ -107,7 +107,6 @@ export const Stations: React.FC = () => {
     <div className="page-animate">
       <TTPageHeader 
         title="İstasyon Yönetimi" 
-        subtitle="Sistemde tanımlı fiziksel çalışma noktalarını ve istasyonları yönetin."
         icon={<Server size={24} />}
         action={
           isAdmin && (

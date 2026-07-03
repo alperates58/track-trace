@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
-import { Volume2, VolumeX, Barcode, Printer, Server } from 'lucide-react';
+import { Volume2, VolumeX, Barcode, Printer } from 'lucide-react';
 
 interface Station {
   id: string;

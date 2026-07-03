@@ -30,7 +30,6 @@ import {
   Menu,
   QrCode,
   BarChart3,
-  BarChart3,
   Shield,
   Key,
   Printer,
