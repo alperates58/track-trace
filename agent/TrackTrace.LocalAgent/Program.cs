@@ -10,6 +10,7 @@ using TrackTrace.LocalAgent;
 using System.IO;
 using System;
 using System.Security.Cryptography;
+using System.Management;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -103,6 +104,37 @@ app.Use(async (context, next) =>
 app.MapGet("/api/agent/status", () =>
 {
     return Results.Ok(new { status = "Online", printer = agentConfig.DefaultPrinter });
+});
+
+app.MapGet("/api/agent/printers", () =>
+{
+    var printers = new System.Collections.Generic.List<string>();
+    try
+    {
+        using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Printer"))
+        {
+            foreach (var printer in searcher.Get())
+            {
+                printers.Add(printer["Name"]?.ToString() ?? "");
+            }
+        }
+        return Results.Ok(printers);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Failed to get printers: {ex.Message}");
+    }
+});
+
+app.MapPost("/api/agent/config", (AgentConfig newConfig) =>
+{
+    if (!string.IsNullOrEmpty(newConfig.DefaultPrinter))
+        agentConfig.DefaultPrinter = newConfig.DefaultPrinter;
+        
+    agentConfig.EnableDummyMode = newConfig.EnableDummyMode;
+    
+    System.IO.File.WriteAllText(configPath, JsonSerializer.Serialize(agentConfig, new JsonSerializerOptions { WriteIndented = true }));
+    return Results.Ok(new { message = "Configuration updated successfully", printer = agentConfig.DefaultPrinter });
 });
 
 app.MapPost("/api/printer/test", (PrintRequest req, IPrintService printService, ILogger<Program> logger) =>

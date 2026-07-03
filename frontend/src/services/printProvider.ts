@@ -136,7 +136,7 @@ export class LocalAgentProvider implements IPrintProvider {
   }
 
   async testPrint(zplData: string): Promise<void> {
-    await this.sendToAgent('/api/print/test', { data: zplData });
+    await this.sendToAgent('/api/printer/test', { data: zplData });
   }
 }
 

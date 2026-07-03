@@ -39,6 +39,8 @@ export const PrintSettings: React.FC = () => {
   const [tokenSaveMessage, setTokenSaveMessage] = useState<string | null>(null);
   const [agentStatus, setAgentStatus] = useState<AgentConnectionStatus>(agentToken ? 'idle' : 'missing-token');
   const [agentStatusDetail, setAgentStatusDetail] = useState<string | null>(null);
+  const [agentPrinters, setAgentPrinters] = useState<string[]>([]);
+  const [selectedAgentPrinter, setSelectedAgentPrinter] = useState<string>('');
   const [downloadMessage, setDownloadMessage] = useState<InlineMessage | null>(null);
 
   const handleTokenChange = (val: string) => {
@@ -105,9 +107,40 @@ export const PrintSettings: React.FC = () => {
       const data = await res.json().catch(() => null);
       setAgentStatus('online');
       setAgentStatusDetail(data?.printer ? `Yazıcı: ${data.printer}` : 'Agent çalışıyor.');
+      if (data?.printer) setSelectedAgentPrinter(data.printer);
+
+      try {
+        const pRes = await fetch('http://127.0.0.1:5000/api/agent/printers', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (pRes.ok) {
+          const list = await pRes.json();
+          setAgentPrinters(list);
+        }
+      } catch(e) {}
     } catch {
       setAgentStatus('offline');
       setAgentStatusDetail('Agent kapalı veya erişilemiyor.');
+    }
+  };
+
+  const handleUpdateAgentPrinter = async (printerName: string) => {
+    setSelectedAgentPrinter(printerName);
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/agent/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${agentToken}`
+        },
+        body: JSON.stringify({ defaultPrinter: printerName })
+      });
+      if (res.ok) {
+        setAgentStatusDetail(`Yazıcı: ${printerName}`);
+        alert("Yazıcı başarıyla güncellendi.");
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -596,6 +629,20 @@ export const PrintSettings: React.FC = () => {
                       <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                         {agentStatusDetail}
                       </small>
+                    )}
+                    {agentStatus === 'online' && agentPrinters.length > 0 && (
+                      <div style={{ marginTop: '8px' }}>
+                        <select 
+                          className="input" 
+                          style={{ width: '100%', maxWidth: '250px', padding: '6px', fontSize: '0.85rem' }}
+                          value={selectedAgentPrinter}
+                          onChange={(e) => handleUpdateAgentPrinter(e.target.value)}
+                        >
+                          {agentPrinters.map(p => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                   </div>
                   <div>

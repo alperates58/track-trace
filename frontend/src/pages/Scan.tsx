@@ -1034,14 +1034,14 @@ export const Scan: React.FC = () => {
                   value={printMode}
                   onChange={(e) => setPrintMode(e.target.value)}
                 >
-                  <option value="kiosk">Browser Auto Print (Chrome)</option>
-                  <option value="pdf">PDF Download (Manuel)</option>
+                  <option value="browser">Browser Auto Print</option>
+                  <option value="pdf">PDF Download</option>
                   <option value="zpl">ZPL Download</option>
-                  <option value="network">Zebra Browser Print / Agent</option>
+                  <option value="agent">Local Print Agent</option>
                 </select>
               </div>
 
-              {printMode === 'network' && (
+              {printMode === 'browser' && (
                 <>
                   <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 12px 0', lineHeight: '1.4' }}>
@@ -1071,7 +1071,7 @@ export const Scan: React.FC = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        Bağlu Yazıcıyı Sorgula
+                        Bağlı Yazıcıyı Sorgula
                       </button>
                     </div>
                   </div>
