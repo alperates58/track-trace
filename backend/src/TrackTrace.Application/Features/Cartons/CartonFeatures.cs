@@ -69,10 +69,11 @@ public class CartonHandlers :
         var builder = new SqlBuilder();
         
         var selector = builder.AddTemplate(@"
-            SELECT c.*, o.OrderNo, s.Name as StationName
+            SELECT c.*, o.OrderNo, s.Name as StationName, u.Name as UserName
             FROM Cartons c
             INNER JOIN Orders o ON c.OrderId = o.Id
             LEFT JOIN Stations s ON c.StationId = s.Id
+            LEFT JOIN Users u ON c.CreatedBy = u.Id
             /**where**/
             ORDER BY c.CreatedAt DESC
             LIMIT @Limit OFFSET @Offset", new { Limit = request.PageSize, Offset = (request.PageNumber - 1) * request.PageSize });
@@ -123,7 +124,8 @@ public class CartonHandlers :
             (string)x.status,
             (DateTime)x.createdat,
             (DateTime?)x.closedat,
-            (DateTime?)x.printedat
+            (DateTime?)x.printedat,
+            (string?)x.username
         ));
 
         return (cartonDtos, totalCount);
@@ -133,10 +135,11 @@ public class CartonHandlers :
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         const string sql = @"
-            SELECT c.*, o.OrderNo, s.Name as StationName
+            SELECT c.*, o.OrderNo, s.Name as StationName, u.Name as UserName
             FROM Cartons c
             INNER JOIN Orders o ON c.OrderId = o.Id
             LEFT JOIN Stations s ON c.StationId = s.Id
+            LEFT JOIN Users u ON c.CreatedBy = u.Id
             WHERE c.Id = @Id";
 
         var x = await connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = request.Id });
@@ -159,8 +162,8 @@ public class CartonHandlers :
             (string)x.status,
             (DateTime)x.createdat,
             (DateTime?)x.closedat,
-            (DateTime?)x.printedat
-
+            (DateTime?)x.printedat,
+            (string?)x.username
         );
     }
 

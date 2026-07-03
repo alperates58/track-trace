@@ -144,6 +144,21 @@ public class LabelGenerator : ILabelGenerator
                                     c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(8);
                                 });
                             });
+
+                            // İstasyon & Kullanıcı
+                            details.Item().Row(r =>
+                            {
+                                r.RelativeItem().Column(c =>
+                                {
+                                    c.Item().Text("İstasyon / Station:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(carton.StationName ?? "-").FontSize(8);
+                                });
+                                r.RelativeItem().Column(c =>
+                                {
+                                    c.Item().Text("Kullanıcı / User:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(carton.UserName ?? "-").FontSize(8);
+                                });
+                            });
                         });
 
                         // Gutter
@@ -184,6 +199,7 @@ public class LabelGenerator : ILabelGenerator
 ^FO40,325^A0N,22,22^FDAdet / Quantity: {carton.ActualQuantity} / {carton.TargetQuantity}^FS
 ^FO40,360^A0N,18,18^FDKoli No / Carton No: {carton.CartonNo}^FS
 ^FO40,390^A0N,18,18^FDTarih / Date: {carton.CreatedAt:dd.MM.yyyy HH:mm}^FS
+^FO40,420^A0N,18,18^FDIstasyon: {carton.StationName ?? "-"}  Kullanici: {carton.UserName ?? "-"}^FS
 ^FO490,110^GB3,310,3^FS
 ^FO500,110^A0N,20,20^FB280,1,0,C^FDSSCC BARCODE^FS
 ^FO525,150^BQN,2,7^FDQA,{_frontendUrl}/?code={carton.SSCC}^FS
@@ -232,8 +248,10 @@ public class LabelGenerator : ILabelGenerator
         AddPplbText(sb, 300, 440, 2, "Tarih / Date:");
         AddPplbText(sb, 300, 465, 2, $"{carton.CreatedAt:dd.MM.yyyy HH:mm}");
 
-        AddPplbText(sb, 48, 525, 2, "No:");
-        AddPplbText(sb, 90, 525, 2, cartonSequence);
+        AddPplbText(sb, 48, 500, 2, $"Istasyon: {carton.StationName ?? "-"}  Kullanici: {carton.UserName ?? "-"}");
+
+        AddPplbText(sb, 48, 535, 2, "No:");
+        AddPplbText(sb, 90, 535, 2, cartonSequence);
 
         AddPplbText(sb, 590, 130, 2, "SSCC BARCODE");
         AddPplbQr(sb, 585, 185, qrData, 4);

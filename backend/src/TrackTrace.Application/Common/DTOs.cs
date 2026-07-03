@@ -109,7 +109,8 @@ public record CartonDto(
     string Status,
     DateTime CreatedAt,
     DateTime? ClosedAt,
-    DateTime? PrintedAt
+    DateTime? PrintedAt,
+    string? UserName = null
 );
 
 public record PalletDto(
