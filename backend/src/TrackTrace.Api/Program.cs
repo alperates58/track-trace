@@ -1168,9 +1168,9 @@ app.MapPost("/api/scan/product", async (ScanRequest request, IMediator mediator)
     return Results.Ok(response);
 }).RequireAuthorization("OperatorOrAdmin");
 
-app.MapGet("/api/scan/current-carton", async ([FromQuery] Guid orderId, IMediator mediator) =>
+app.MapGet("/api/scan/current-carton", async ([FromQuery] Guid orderId, [FromQuery] Guid stationId, IMediator mediator) =>
 {
-    var response = await mediator.Send(new GetCurrentCartonQuery(orderId));
+    var response = await mediator.Send(new GetCurrentCartonQuery(orderId, stationId));
     return Results.Ok(response);
 }).RequireAuthorization("OperatorOrAdmin");
 
