@@ -5,7 +5,6 @@ import { UserPlus, Shield, CheckCircle, XCircle, Edit, Users as UsersIcon, List,
 import {
   TTPageHeader,
   TTButton,
-  TTCard,
   TTBadge,
   TTTable,
   TTUserAvatar,
@@ -22,53 +21,10 @@ interface User {
   isActive: boolean;
 }
 
-const RoleMatrix = () => {
-  const matrix = [
-    { module: 'Dashboard', admin: 'view', operator: 'view', viewer: 'view' },
-    { module: 'Sipariş Yönetimi (Orders)', admin: 'all', operator: 'view', viewer: 'view' },
-    { module: 'Ürün Okutma (Scan)', admin: 'all', operator: 'all', viewer: 'none' },
-    { module: 'Koli Yönetimi', admin: 'all', operator: 'all', viewer: 'view' },
-    { module: 'Palet Yönetimi', admin: 'all', operator: 'all', viewer: 'view' },
-    { module: 'İzlenebilirlik Merkezi', admin: 'all', operator: 'view', viewer: 'view' },
-    { module: 'Raporlama', admin: 'all', operator: 'view', viewer: 'view' },
-    { module: 'DataMatrix Üretici', admin: 'all', operator: 'all', viewer: 'none' },
-    { module: 'Kullanıcı Yönetimi', admin: 'all', operator: 'none', viewer: 'none' },
-    { module: 'Sistem Bilgisi', admin: 'view', operator: 'none', viewer: 'none' },
-  ];
-
-  const renderAccess = (level: string) => {
-    switch (level) {
-      case 'all': return <TTBadge variant="success" size="sm">Tüm Yetkiler</TTBadge>;
-      case 'view': return <TTBadge variant="info" size="sm">Sadece Görüntüleme</TTBadge>;
-      case 'none': return <TTBadge variant="neutral" size="sm">Yetki Yok</TTBadge>;
-      default: return null;
-    }
-  };
-
-  return (
-    <TTCard padding="md">
-      <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '1.15rem', marginBottom: '8px' }}>Rol ve Yetki Matrisi</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Mevcut rollerin sistem üzerindeki erişim ve işlem yetkileri aşağıda listelenmiştir. (Salt okunur görünüm)
-        </p>
-      </div>
-      <TTTable headers={['Modül / Ekran', 'Yönetici (Admin)', 'Operatör (Operator)', 'İzleyici (Viewer)']}>
-        {matrix.map((row, idx) => (
-          <tr key={idx}>
-            <td style={{ fontWeight: 500 }}>{row.module}</td>
-            <td>{renderAccess(row.admin)}</td>
-            <td>{renderAccess(row.operator)}</td>
-            <td>{renderAccess(row.viewer)}</td>
-          </tr>
-        ))}
-      </TTTable>
-    </TTCard>
-  );
-};
+import { PermissionMatrix } from './PermissionMatrix';
 
 export const Users: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, hasPermission } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,13 +145,15 @@ export const Users: React.FC = () => {
         title="Kullanıcı Yönetimi"
         description="Sistem kullanıcılarını ekleyin, rollerini ve erişim yetkilerini yönetin."
         actions={
-          <TTButton
-            variant="primary"
-            icon={<UserPlus size={18} />}
-            onClick={() => { resetForm(); setShowCreateDrawer(true); }}
-          >
-            Yeni Kullanıcı Ekle
-          </TTButton>
+          (hasPermission('users.create') || hasPermission('users.manage')) ? (
+            <TTButton
+              variant="primary"
+              icon={<UserPlus size={18} />}
+              onClick={() => { resetForm(); setShowCreateDrawer(true); }}
+            >
+              Yeni Kullanıcı Ekle
+            </TTButton>
+          ) : undefined
         }
       />
 
@@ -272,18 +230,22 @@ export const Users: React.FC = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <TTButton variant="secondary" size="sm" icon={<Edit size={14} />} onClick={() => handleEditOpen(u)}>
-                        Düzenle
-                      </TTButton>
-                      <TTButton
-                        variant={u.isActive ? 'secondary' : 'primary'}
-                        size="sm"
-                        icon={u.isActive ? <XCircle size={14} /> : <CheckCircle size={14} />}
-                        disabled={currentUser?.id === u.id}
-                        onClick={() => handleToggleActive(u)}
-                      >
-                        {u.isActive ? 'Pasif Yap' : 'Aktif Yap'}
-                      </TTButton>
+                      {(hasPermission('users.edit') || hasPermission('users.manage')) && (
+                        <TTButton variant="secondary" size="sm" icon={<Edit size={14} />} onClick={() => handleEditOpen(u)}>
+                          Düzenle
+                        </TTButton>
+                      )}
+                      {(hasPermission('users.delete') || hasPermission('users.manage')) && (
+                        <TTButton
+                          variant={u.isActive ? 'secondary' : 'primary'}
+                          size="sm"
+                          icon={u.isActive ? <XCircle size={14} /> : <CheckCircle size={14} />}
+                          disabled={currentUser?.id === u.id}
+                          onClick={() => handleToggleActive(u)}
+                        >
+                          {u.isActive ? 'Pasif Yap' : 'Aktif Yap'}
+                        </TTButton>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -293,7 +255,11 @@ export const Users: React.FC = () => {
         </>
       )}
 
-      {activeTab === 'matrix' && <RoleMatrix />}
+      {activeTab === 'matrix' && (
+        <div style={{ marginTop: '20px' }}>
+          <PermissionMatrix />
+        </div>
+      )}
 
       {/* CREATE USER DRAWER */}
       <TTDrawer

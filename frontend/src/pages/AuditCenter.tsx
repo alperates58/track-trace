@@ -21,7 +21,7 @@ interface AuditLogDetail extends AuditLog {
 }
 
 export const AuditCenter: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   
@@ -101,7 +101,7 @@ export const AuditCenter: React.FC = () => {
     }
   };
 
-  if (user?.role !== 'Admin') {
+  if (!hasPermission('audit.view')) {
     return (
       <div className="page-container">
         <div className="empty-state">

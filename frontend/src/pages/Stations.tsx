@@ -21,7 +21,7 @@ interface Station {
 }
 
 export const Stations: React.FC = () => {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
   const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,19 +101,17 @@ export const Stations: React.FC = () => {
     }
   };
 
-  const isAdmin = user?.role === 'Admin';
-
   return (
     <div className="page-animate">
       <TTPageHeader 
         title="İstasyon Yönetimi" 
         actions={
-          isAdmin && (
+          (hasPermission('stations.create') || hasPermission('system.manage')) ? (
             <TTButton onClick={() => { resetForm(); setShowCreateDrawer(true); }}>
               <Plus size={18} />
               Yeni İstasyon
             </TTButton>
-          )
+          ) : undefined
         }
       />
 
@@ -137,7 +135,7 @@ export const Stations: React.FC = () => {
                 'İstasyon Adı',
                 'Durum',
                 'Kayıt Tarihi',
-                ...(isAdmin ? ['İşlemler'] : [])
+                ...( (hasPermission('stations.edit') || hasPermission('system.manage')) ? ['İşlemler'] : [])
               ]}
             >
               {stations.map(station => (
@@ -167,7 +165,7 @@ export const Stations: React.FC = () => {
                   <td style={{ color: 'var(--text-muted)' }}>
                     {new Date(station.createdAt).toLocaleString('tr-TR')}
                   </td>
-                  {isAdmin && (
+                  { (hasPermission('stations.edit') || hasPermission('system.manage')) && (
                     <td>
                       <TTButton variant="ghost" size="sm" onClick={() => handleEditOpen(station)}>
                         <Edit size={16} />

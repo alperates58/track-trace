@@ -37,7 +37,16 @@ import {
 } from 'lucide-react';
 
 const AppShell: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
+
+  const showUsers = hasPermission('users.view');
+  const showStations = hasPermission('stations.view');
+  const showAudit = hasPermission('audit.view');
+  const showPermissions = hasPermission('permissions.manage') || user?.role === 'Admin';
+  const showPrintSettings = hasPermission('system.manage');
+  const showSystemInfo = hasPermission('system.view');
+
+  const showAdminMenu = showUsers || showStations || showAudit || showPermissions || showPrintSettings || showSystemInfo;
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -176,57 +185,75 @@ const AppShell: React.FC = () => {
               </div>
             </div>
 
-            {user?.role === 'Admin' && (
+            {showAdminMenu && (
               <div className="sidebar-section" style={{ marginTop: '24px' }}>
                 <span className="sidebar-section-title">Administration</span>
-                <div 
-                  className={`sidebar-link ${activeTab === 'users' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('users')}
-                  title="Kullanıcı Yönetimi"
-                >
-                  <UsersIcon size={18} style={{ flexShrink: 0 }} />
-                  <span>Kullanıcı Yönetimi</span>
-                </div>
-                <div 
-                  className={`sidebar-link ${activeTab === 'stations' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('stations')}
-                  title="İstasyon Yönetimi"
-                >
-                  <Server size={18} style={{ flexShrink: 0 }} />
-                  <span>İstasyon Yönetimi</span>
-                </div>
-                <div 
-                  className={`sidebar-link ${activeTab === 'audit' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('audit')}
-                  title="Audit Center"
-                >
-                  <Shield size={18} style={{ flexShrink: 0 }} />
-                  <span>Audit Center</span>
-                </div>
-                <div 
-                  className={`sidebar-link ${activeTab === 'permission-matrix' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('permission-matrix')}
-                  title="Yetki Matrisi"
-                >
-                  <Key size={18} style={{ flexShrink: 0 }} />
-                  <span>Yetki Matrisi</span>
-                </div>
-                <div 
-                  className={`sidebar-link ${activeTab === 'print-settings' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('print-settings')}
-                  title="Yazdırma Ayarları"
-                >
-                  <Printer size={18} style={{ flexShrink: 0 }} />
-                  <span>Yazdırma Ayarları</span>
-                </div>
-                <div 
-                  className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('system')}
-                  title="Sistem Bilgisi"
-                >
-                  <Settings size={18} style={{ flexShrink: 0 }} />
-                  <span>Sistem Bilgisi</span>
-                </div>
+                
+                {showUsers && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'users' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('users')}
+                    title="Kullanıcı Yönetimi"
+                  >
+                    <UsersIcon size={18} style={{ flexShrink: 0 }} />
+                    <span>Kullanıcı Yönetimi</span>
+                  </div>
+                )}
+
+                {showStations && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'stations' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('stations')}
+                    title="İstasyon Yönetimi"
+                  >
+                    <Server size={18} style={{ flexShrink: 0 }} />
+                    <span>İstasyon Yönetimi</span>
+                  </div>
+                )}
+
+                {showAudit && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'audit' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('audit')}
+                    title="Audit Center"
+                  >
+                    <Shield size={18} style={{ flexShrink: 0 }} />
+                    <span>Audit Center</span>
+                  </div>
+                )}
+
+                {showPermissions && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'permission-matrix' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('permission-matrix')}
+                    title="Yetki Matrisi"
+                  >
+                    <Key size={18} style={{ flexShrink: 0 }} />
+                    <span>Yetki Matrisi</span>
+                  </div>
+                )}
+
+                {showPrintSettings && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'print-settings' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('print-settings')}
+                    title="Yazdırma Ayarları"
+                  >
+                    <Printer size={18} style={{ flexShrink: 0 }} />
+                    <span>Yazdırma Ayarları</span>
+                  </div>
+                )}
+
+                {showSystemInfo && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'system' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('system')}
+                    title="Sistem Bilgisi"
+                  >
+                    <Settings size={18} style={{ flexShrink: 0 }} />
+                    <span>Sistem Bilgisi</span>
+                  </div>
+                )}
               </div>
             )}
           </nav>

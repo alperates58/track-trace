@@ -31,13 +31,13 @@ interface SystemHealth {
 }
 
 export const SystemInfo: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.role !== 'Admin') {
+    if (!hasPermission('system.view')) {
       setLoading(false);
       return;
     }
@@ -54,7 +54,7 @@ export const SystemInfo: React.FC = () => {
       .finally(() => setLoading(false));
   }, [user]);
 
-  if (user?.role !== 'Admin') {
+  if (!hasPermission('system.view')) {
     return (
       <TTEmptyState
         icon={<ShieldAlert size={48} color="var(--danger)" />}

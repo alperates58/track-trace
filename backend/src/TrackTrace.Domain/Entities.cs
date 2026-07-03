@@ -156,3 +156,17 @@ public class ExportJob
     public DateTime? CompletedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
 }
+
+public class Permission
+{
+    public string Key { get; set; } = null!;
+    public string Module { get; set; } = null!;
+    public string Action { get; set; } = null!;
+    public string? Description { get; set; }
+}
+
+public class RolePermission
+{
+    public string Role { get; set; } = null!;
+    public string PermissionKey { get; set; } = null!;
+}

@@ -265,6 +265,32 @@ app.MapPost("/api/auth/login", async (LoginRequest request, IMediator mediator) 
     }
 }).AllowAnonymous();
 
+app.MapGet("/api/auth/my-permissions", async (IMediator mediator) =>
+{
+    var permissions = await mediator.Send(new TrackTrace.Application.Features.Permissions.GetMyPermissionsQuery());
+    return Results.Ok(permissions);
+}).RequireAuthorization();
+
+// Permissions Endpoints
+app.MapGet("/api/permissions/matrix", async (IMediator mediator) =>
+{
+    var matrix = await mediator.Send(new TrackTrace.Application.Features.Permissions.GetPermissionMatrixQuery());
+    return Results.Ok(matrix);
+}).RequireAuthorization("AdminOnly");
+
+app.MapPost("/api/permissions/matrix", async ([FromBody] TrackTrace.Application.Features.Permissions.UpdatePermissionMatrixCommand command, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(command);
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly");
+
 // Stations Endpoints
 app.MapGet("/api/stations", async (bool? includeInactive, IMediator mediator) =>
 {
