@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Barcode, AlertCircle, Package, Check, Copy, ShieldCheck } from 'lucide-react';
+import { Barcode, AlertCircle, Package, Check, Copy, ShieldCheck, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 interface SearchResult {
   rawCode: string;
@@ -55,6 +55,12 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
   const [error, setError] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [copiedProductIndex, setCopiedProductIndex] = useState<string | null>(null);
+
+  // Accordion states for Pallet -> Carton -> Products
+  const [expandedCartons, setExpandedCartons] = useState<Record<string, string[]>>({});
+  const [loadingCartons, setLoadingCartons] = useState<Record<string, boolean>>({});
+  const [openAccordion, setOpenAccordion] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchPublicData = async () => {
@@ -64,7 +70,7 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
         const data = await api.get(`/api/barcodes/public/search?code=${encodeURIComponent(code.trim())}`);
         setResult(data);
       } catch (err: any) {
-        setError(err.message || 'Barkod veya Koli bilgisi bulunamadı.');
+        setError(err.message || 'Barkod, Koli veya Palet bilgisi bulunamadı.');
       } finally {
         setLoading(false);
       }
@@ -84,12 +90,41 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
+  const copyProductToClipboard = (text: string, uniqueKey: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedProductIndex(uniqueKey);
+    setTimeout(() => setCopiedProductIndex(null), 2000);
+  };
+
   const copyAllCodes = () => {
     if (!result?.cartonItems) return;
     const allCodes = result.cartonItems.join('\n');
     navigator.clipboard.writeText(allCodes);
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2000);
+  };
+
+  const toggleCarton = async (sscc: string) => {
+    if (openAccordion[sscc]) {
+      setOpenAccordion(prev => ({ ...prev, [sscc]: false }));
+      return;
+    }
+
+    setOpenAccordion(prev => ({ ...prev, [sscc]: true }));
+
+    if (expandedCartons[sscc]) return;
+
+    setLoadingCartons(prev => ({ ...prev, [sscc]: true }));
+    try {
+      const data = await api.get(`/api/barcodes/public/search?code=${encodeURIComponent(sscc)}`);
+      if (data && data.cartonItems) {
+        setExpandedCartons(prev => ({ ...prev, [sscc]: data.cartonItems }));
+      }
+    } catch (err) {
+      console.error('Koli yüklenemedi', err);
+    } finally {
+      setLoadingCartons(prev => ({ ...prev, [sscc]: false }));
+    }
   };
 
   if (loading) {
@@ -102,7 +137,7 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
           width: '50px', height: '50px', border: '4px solid #e2e8f0', borderTop: '4px solid #2563eb',
           borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '20px'
         }} />
-        <p style={{ color: '#64748b', fontFamily: 'var(--font-primary)' }}>Koli bilgileri yükleniyor...</p>
+        <p style={{ color: '#64748b', fontFamily: 'var(--font-primary)' }}>Bilgiler yükleniyor...</p>
         <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -136,7 +171,9 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
     );
   }
 
-  const isCarton = result.cartonItems && result.cartonItems.length > 0;
+  const isPallet = !!result.palletNo && !result.cartonNo;
+  const isCarton = !!result.cartonNo;
+  const hasItems = result.cartonItems && result.cartonItems.length > 0;
 
   return (
     <div style={{
@@ -163,7 +200,7 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
             <Package size={20} color="var(--primary)" />
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
-              {isCarton ? 'Koli Bilgileri' : 'Ürün / Barkod Bilgileri'}
+              {isPallet ? 'Palet Bilgileri' : isCarton ? 'Koli Bilgileri' : 'Ürün / Barkod Bilgileri'}
             </h3>
             <span style={{
               marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 600, padding: '4px 8px',
@@ -197,19 +234,27 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
               <div>
-                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Koli No / Carton No:</span>
-                <div style={{ fontWeight: 600, color: '#0f172a' }}>{result.cartonNo || '-'}</div>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                  {isPallet ? 'Palet No / Pallet No:' : 'Koli No / Carton No:'}
+                </span>
+                <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                  {isPallet ? (result.palletNo || '-') : (result.cartonNo || '-')}
+                </div>
               </div>
               <div>
-                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Koli SSCC:</span>
-                <div style={{ fontWeight: 600, color: '#0f172a', fontFamily: 'monospace', fontSize: '0.85rem' }}>{result.cartonSSCC || '-'}</div>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                  {isPallet ? 'Palet SSCC:' : 'Koli SSCC:'}
+                </span>
+                <div style={{ fontWeight: 600, color: '#0f172a', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                  {isPallet ? (result.palletSSCC || '-') : (result.cartonSSCC || '-')}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Content list card (Alt Alta Kodlar) */}
-        {isCarton && result.cartonItems && (
+        {hasItems && (
           <div style={{
             backgroundColor: '#fff', borderRadius: '16px', padding: '20px',
             boxShadow: 'var(--shadow-md)', border: '1px solid #e2e8f0'
@@ -218,66 +263,150 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Barcode size={20} color="var(--success)" />
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
-                  Koli İçeriği ({result.cartonItems.length} Ürün)
+                  {isPallet ? `Palet İçeriği (${result.cartonItems!.length} Koli)` : `Koli İçeriği (${result.cartonItems!.length} Ürün)`}
                 </h3>
               </div>
-              <button 
-                onClick={copyAllCodes}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600,
-                  color: 'var(--primary)', border: '1px solid var(--border-color)', backgroundColor: 'transparent',
-                  padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', transition: 'var(--transition)'
-                }}
-              >
-                {copiedAll ? (
-                  <>
-                    <Check size={14} color="var(--success)" /> Kopyalandı
-                  </>
-                ) : (
-                  <>
-                    <Copy size={14} /> Tümünü Kopyala
-                  </>
-                )}
-              </button>
+              {!isPallet && (
+                <button 
+                  onClick={copyAllCodes}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600,
+                    color: 'var(--primary)', border: '1px solid var(--border-color)', backgroundColor: 'transparent',
+                    padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', transition: 'var(--transition)'
+                  }}
+                >
+                  {copiedAll ? (
+                    <>
+                      <Check size={14} color="var(--success)" /> Kopyalandı
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} /> Tümünü Kopyala
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
-            {/* List showing products one under another */}
+            {/* List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {result.cartonItems.map((item, idx) => (
-                <div key={idx} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 14px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0',
-                  borderRadius: '10px', transition: 'var(--transition)'
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, marginRight: '12px' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8' }}>
-                      Ürün #{idx + 1}
-                    </span>
-                    <span style={{
-                      fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600,
-                      color: '#334155', wordBreak: 'break-all', lineHeight: '1.4'
+              {result.cartonItems!.map((item, idx) => {
+                // If it is a pallet, items are Cartons (SSCC). If carton, items are Products (RawCode).
+                if (isPallet) {
+                  const isOpen = !!openAccordion[item];
+                  const isLoading = !!loadingCartons[item];
+                  const cartonProducts = expandedCartons[item] || [];
+
+                  return (
+                    <div key={idx} style={{
+                      backgroundColor: '#f8fafc', border: '1px solid #e2e8f0',
+                      borderRadius: '10px', transition: 'var(--transition)', overflow: 'hidden'
                     }}>
-                      <FormattedBarcode code={item} />
-                    </span>
+                      <div 
+                        onClick={() => toggleCarton(item)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '12px 14px', cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, marginRight: '12px' }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8' }}>
+                            Koli #{idx + 1}
+                          </span>
+                          <span style={{
+                            fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600,
+                            color: '#334155', wordBreak: 'break-all', lineHeight: '1.4'
+                          }}>
+                            {item}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {cartonProducts.length > 0 && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', backgroundColor: '#e0e7ff', padding: '2px 8px', borderRadius: '12px' }}>
+                              {cartonProducts.length} Ürün
+                            </span>
+                          )}
+                          {isLoading ? <Loader2 size={16} className="animate-spin" color="#64748b" /> : (isOpen ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />)}
+                        </div>
+                      </div>
+
+                        {/* Accordion Content for Products inside Carton */}
+                        {isOpen && (
+                          <div style={{ borderTop: '1px solid #e2e8f0', padding: '12px 14px', backgroundColor: '#fff' }}>
+                            {isLoading ? (
+                              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', padding: '10px' }}>Ürünler yükleniyor...</div>
+                            ) : cartonProducts.length === 0 ? (
+                              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', padding: '10px' }}>Bu kolide ürün bulunamadı.</div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {cartonProducts.map((prod, pIdx) => (
+                                  <div key={pIdx} style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '8px 10px', backgroundColor: '#f1f5f9', borderRadius: '6px'
+                                  }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8' }}>Ürün #{pIdx + 1}</span>
+                                      <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 600, color: '#475569', wordBreak: 'break-all' }}>
+                                        <FormattedBarcode code={prod} />
+                                      </span>
+                                    </div>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); copyProductToClipboard(prod, `${item}-${pIdx}`); }}
+                                      style={{
+                                        border: 'none', backgroundColor: 'transparent', width: '28px', height: '28px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                      }}
+                                      title="Kopyala"
+                                    >
+                                      {copiedProductIndex === `${item}-${pIdx}` ? <Check size={14} color="var(--success)" /> : <Copy size={14} color="#64748b" />}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  );
+                }
+
+                // Normal Product row
+                return (
+                  <div key={idx} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 14px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0',
+                    borderRadius: '10px', transition: 'var(--transition)'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, marginRight: '12px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8' }}>
+                        Ürün #{idx + 1}
+                      </span>
+                      <span style={{
+                        fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600,
+                        color: '#334155', wordBreak: 'break-all', lineHeight: '1.4'
+                      }}>
+                        <FormattedBarcode code={item} />
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => copyToClipboard(item, idx)}
+                      style={{
+                        border: 'none', backgroundColor: '#fff', width: '32px', height: '32px',
+                        borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', borderStyle: 'solid', borderWidth: '1px', borderColor: '#e2e8f0',
+                        flexShrink: 0
+                      }}
+                      title="Kopyala"
+                    >
+                      {copiedIndex === idx ? (
+                        <Check size={14} color="var(--success)" />
+                      ) : (
+                        <Copy size={14} color="#64748b" />
+                      )}
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => copyToClipboard(item, idx)}
-                    style={{
-                      border: 'none', backgroundColor: '#fff', width: '32px', height: '32px',
-                      borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', borderStyle: 'solid', borderWidth: '1px', borderColor: '#e2e8f0',
-                      flexShrink: 0
-                    }}
-                    title="Kopyala"
-                  >
-                    {copiedIndex === idx ? (
-                      <Check size={14} color="var(--success)" />
-                    ) : (
-                      <Copy size={14} color="#64748b" />
-                    )}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
