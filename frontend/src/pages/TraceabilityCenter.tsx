@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   Search, 
   Info, 
@@ -81,6 +82,7 @@ const FullnessIndicator: React.FC<{ actual: number; target: number }> = ({ actua
 };
 
 export const TraceabilityCenter: React.FC = () => {
+  const { hasPermission } = useAuth();
   const [queryCode, setQueryCode] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -878,9 +880,11 @@ export const TraceabilityCenter: React.FC = () => {
                               <td>{job.printedBy || 'Sistem'}</td>
                               <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(job.createdAt).toLocaleString('tr-TR')}</td>
                               <td>
-                                <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleReprint(job)}>
-                                  <Printer size={12} /> Tekrar Yazdır
-                                </button>
+                                {hasPermission('traceability.print') && (
+                                  <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleReprint(job)}>
+                                    <Printer size={12} /> Tekrar Yazdır
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -910,9 +914,11 @@ export const TraceabilityCenter: React.FC = () => {
                             <span className="mobile-card-label">Tarih:</span>
                             <span className="mobile-card-value" style={{ fontSize: '0.75rem' }}>{new Date(job.createdAt).toLocaleString('tr-TR')}</span>
                           </div>
-                          <button className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem', padding: '8px', marginTop: '4px' }} onClick={() => handleReprint(job)}>
-                            <Printer size={12} /> Tekrar Yazdır
-                          </button>
+                          {hasPermission('traceability.print') && (
+                            <button className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem', padding: '8px', marginTop: '4px' }} onClick={() => handleReprint(job)}>
+                              <Printer size={12} /> Tekrar Yazdır
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

@@ -94,7 +94,7 @@ const getCodesFromDB = async (id: string): Promise<string[] | null> => {
 };
 
 export const DataMatrixCreator: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   // File & Upload States
   const [file, setFile] = useState<File | null>(null);
@@ -1351,33 +1351,35 @@ export const DataMatrixCreator: React.FC = () => {
                 </div>
               )}
 
-              <button 
-                className="btn btn-primary"
-                disabled={fileCodes.length === 0 || generating || analyzing}
-                onClick={handleGenerate}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '12px',
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  marginTop: '8px'
-                }}
-              >
-                {generating ? (
-                  <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    Belgeler Üretiliyor...
-                  </>
-                ) : (
-                  <>
-                    <Download size={16} />
-                    {format === 'PDF' ? 'Şablon İndir (PDF)' : 'ZIP formatında PNG\'leri İndir'}
-                  </>
-                )}
-              </button>
+              {hasPermission('generator.create') && (
+                <button 
+                  className="btn btn-primary"
+                  disabled={fileCodes.length === 0 || generating || analyzing}
+                  onClick={handleGenerate}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '12px',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    marginTop: '8px'
+                  }}
+                >
+                  {generating ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Belgeler Üretiliyor...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={16} />
+                      {format === 'PDF' ? 'Şablon İndir (PDF)' : 'ZIP formatında PNG\'leri İndir'}
+                    </>
+                  )}
+                </button>
+              )}
 
               {generating && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
@@ -1740,14 +1742,16 @@ export const DataMatrixCreator: React.FC = () => {
               GS1 Doğrulama Raporu ({analysis.invalidCount > 0 ? `${analysis.invalidCount} hata` : ''} {analysis.invalidCount > 0 && analysis.warningCount > 0 ? 've' : ''} {analysis.warningCount > 0 ? `${analysis.warningCount} uyarı` : ''} tespit edildi)
             </h3>
             
-            <button 
-              className="btn btn-secondary" 
-              onClick={downloadErrorsCSV}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '0.8rem' }}
-            >
-              <FileSpreadsheet size={16} />
-              Hatalı / Uyarılı Satırları CSV Olarak İndir
-            </button>
+            {hasPermission('generator.export') && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={downloadErrorsCSV}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '0.8rem' }}
+              >
+                <FileSpreadsheet size={16} />
+                Hatalı / Uyarılı Satırları CSV Olarak İndir
+              </button>
+            )}
           </div>
 
           <div style={{
@@ -1838,14 +1842,16 @@ export const DataMatrixCreator: React.FC = () => {
                     </td>
                     <td style={{ padding: '10px' }}>{item.username}</td>
                     <td style={{ padding: '10px', textAlign: 'center' }}>
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={() => handleReDownload(item)}
-                        style={{ padding: '3px 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Clock size={12} />
-                        Tekrar Yükle
-                      </button>
+                      {hasPermission('generator.create') && (
+                        <button 
+                          className="btn btn-secondary" 
+                          onClick={() => handleReDownload(item)}
+                          style={{ padding: '3px 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Clock size={12} />
+                          Tekrar Yükle
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
