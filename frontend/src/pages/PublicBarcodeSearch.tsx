@@ -223,7 +223,7 @@ export const PublicBarcodeSearch: React.FC<PublicBarcodeSearchProps> = ({ code }
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '4px' }}>
               <div>
-                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>GTIN:</span>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>İş Emri / Work Order:</span>
                 <div style={{ fontWeight: 600, color: '#0f172a', fontFamily: 'monospace' }}>{result.gtin || '-'}</div>
               </div>
               <div>
