@@ -644,7 +644,7 @@ app.MapGet("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
     {
         return Results.NotFound();
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
 
 app.MapGet("/api/orders/{id:guid}/product-codes", async (
     Guid id,
@@ -716,7 +716,7 @@ app.MapGet("/api/orders/{id:guid}/product-codes", async (
         page = page ?? 1,
         pageSize = limit
     });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
 
 app.MapGet("/api/orders/{id:guid}/import-batches", async (Guid id, IDbConnectionFactory dbFactory) =>
 {
@@ -767,7 +767,7 @@ app.MapGet("/api/orders/{id:guid}/import-batches", async (Guid id, IDbConnection
     ));
 
     return Results.Ok(items);
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
 
 app.MapDelete("/api/orders/{orderId:guid}/import-batches/{batchId:guid}", async (
     Guid orderId,
@@ -820,7 +820,7 @@ app.MapDelete("/api/orders/{orderId:guid}/import-batches/{batchId:guid}", async 
         transaction.Rollback();
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.delete");
 
 app.MapDelete("/api/orders/{id:guid}/product-codes", async (
     Guid id,
@@ -870,7 +870,7 @@ app.MapDelete("/api/orders/{id:guid}/product-codes", async (
         transaction.Rollback();
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.delete");
 
 app.MapPost("/api/orders", async (CreateOrderRequest request, IMediator mediator) =>
 {
@@ -883,7 +883,7 @@ app.MapPost("/api/orders", async (CreateOrderRequest request, IMediator mediator
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.create");
 
 app.MapPut("/api/orders/{id:guid}", async (Guid id, UpdateOrderRequest request, IMediator mediator) =>
 {
@@ -900,7 +900,7 @@ app.MapPut("/api/orders/{id:guid}", async (Guid id, UpdateOrderRequest request, 
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.edit");
 
 app.MapPost("/api/orders/{id:guid}/activate", async (Guid id, IMediator mediator) =>
 {
@@ -913,7 +913,7 @@ app.MapPost("/api/orders/{id:guid}/activate", async (Guid id, IMediator mediator
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.edit");
 
 app.MapPost("/api/orders/{id:guid}/complete", async (Guid id, IMediator mediator) =>
 {
@@ -926,7 +926,7 @@ app.MapPost("/api/orders/{id:guid}/complete", async (Guid id, IMediator mediator
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.edit");
 
 app.MapPost("/api/orders/{id:guid}/cancel", async (Guid id, IMediator mediator) =>
 {
@@ -939,7 +939,7 @@ app.MapPost("/api/orders/{id:guid}/cancel", async (Guid id, IMediator mediator) 
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.edit");
 
 app.MapDelete("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
 {
@@ -956,7 +956,7 @@ app.MapDelete("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.delete");
 
 app.MapPost("/api/orders/{id:guid}/print-codes", async (
     Guid id,
@@ -987,7 +987,7 @@ app.MapPost("/api/orders/{id:guid}/print-codes", async (
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.print");
 
 // Upload/Import Endpoints
 app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file, [FromQuery] string? profile, IMediator mediator) =>
@@ -1011,7 +1011,7 @@ app.MapPost("/api/orders/{id:guid}/import-codes", async (Guid id, IFormFile file
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery().RequirePermission("orders.create");
 
 app.MapPost("/api/orders/import-excel", async (IFormFile file, IMediator mediator) =>
 {
@@ -1030,7 +1030,7 @@ app.MapPost("/api/orders/import-excel", async (IFormFile file, IMediator mediato
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery().RequirePermission("orders.create");
 
 app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
 {
@@ -1213,7 +1213,7 @@ app.MapGet("/api/cartons", async (
 {
     var (items, count) = await mediator.Send(new GetCartonsQuery(pageNumber ?? 1, pageSize ?? 10, search, status, orderId, palletId));
     return Results.Ok(new { items, totalCount = count });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("cartons.view");
 
 app.MapGet("/api/cartons/{id:guid}", async (Guid id, IMediator mediator) =>
 {
@@ -1226,13 +1226,13 @@ app.MapGet("/api/cartons/{id:guid}", async (Guid id, IMediator mediator) =>
     {
         return Results.NotFound();
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("cartons.view");
 
 app.MapGet("/api/cartons/{id:guid}/items", async (Guid id, IMediator mediator) =>
 {
     var items = await mediator.Send(new GetCartonItemsQuery(id));
     return Results.Ok(items);
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("cartons.view");
 
 app.MapPost("/api/cartons/{id:guid}/print", async (Guid id, [FromQuery] string format, IMediator mediator) =>
 {
@@ -1249,7 +1249,7 @@ app.MapPost("/api/cartons/{id:guid}/print", async (Guid id, [FromQuery] string f
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.print");
 
 app.MapGet("/api/cartons/{id:guid}/label.pdf", async (Guid id, IMediator mediator) =>
 {
@@ -1262,7 +1262,7 @@ app.MapGet("/api/cartons/{id:guid}/label.pdf", async (Guid id, IMediator mediato
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("cartons.print");
 
 app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediator) =>
 {
@@ -1275,7 +1275,7 @@ app.MapGet("/api/cartons/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("cartons.print");
 
 app.MapGet("/api/cartons/{id:guid}/label.pplb", async (Guid id, IMediator mediator) =>
 {
@@ -1288,7 +1288,7 @@ app.MapGet("/api/cartons/{id:guid}/label.pplb", async (Guid id, IMediator mediat
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("cartons.print");
 
 app.MapGet("/api/agent/download", (IConfiguration config, IWebHostEnvironment env) =>
 {
@@ -1447,7 +1447,7 @@ app.MapPost("/api/cartons/{id:guid}/print-network", async (Guid id, [FromBody] P
     {
         return Results.BadRequest(new { message = $"Yazdırma hatası: {ex.Message}" });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.print");
 
 app.MapPost("/api/cartons/{id:guid}/decompose", async (Guid id, IMediator mediator) =>
 {
@@ -1460,7 +1460,7 @@ app.MapPost("/api/cartons/{id:guid}/decompose", async (Guid id, IMediator mediat
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.delete");
 
 app.MapPost("/api/cartons/{id:guid}/remove-product", async (Guid id, [FromQuery] string rawCode, IMediator mediator) =>
 {
@@ -1473,7 +1473,7 @@ app.MapPost("/api/cartons/{id:guid}/remove-product", async (Guid id, [FromQuery]
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.edit");
 
 app.MapPost("/api/cartons/{id:guid}/add-product", async (Guid id, [FromQuery] string rawCode, IMediator mediator) =>
 {
@@ -1486,7 +1486,7 @@ app.MapPost("/api/cartons/{id:guid}/add-product", async (Guid id, [FromQuery] st
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.edit");
 
 app.MapPost("/api/cartons/{id:guid}/transfer", async (Guid id, [FromBody] TransferCartonRequest request, IMediator mediator) =>
 {
@@ -1503,7 +1503,7 @@ app.MapPost("/api/cartons/{id:guid}/transfer", async (Guid id, [FromBody] Transf
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("cartons.edit");
 
 // Pallets Endpoints
 app.MapGet("/api/pallets", async (
@@ -1516,7 +1516,7 @@ app.MapGet("/api/pallets", async (
 {
     var (items, count) = await mediator.Send(new GetPalletsQuery(pageNumber ?? 1, pageSize ?? 10, search, status, orderId));
     return Results.Ok(new { items, totalCount = count });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("pallets.view");
 
 app.MapPost("/api/pallets", async ([FromQuery] Guid orderId, IMediator mediator) =>
 {
@@ -1529,7 +1529,7 @@ app.MapPost("/api/pallets", async ([FromQuery] Guid orderId, IMediator mediator)
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("pallets.create");
 
 app.MapGet("/api/pallets/{id:guid}", async (Guid id, IMediator mediator) =>
 {
@@ -1542,7 +1542,7 @@ app.MapGet("/api/pallets/{id:guid}", async (Guid id, IMediator mediator) =>
     {
         return Results.NotFound();
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("pallets.view");
 
 app.MapPost("/api/pallets/{id:guid}/add-carton", async (Guid id, [FromQuery] string cartonSscc, IMediator mediator) =>
 {
@@ -1555,7 +1555,7 @@ app.MapPost("/api/pallets/{id:guid}/add-carton", async (Guid id, [FromQuery] str
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("pallets.edit");
 
 app.MapPost("/api/pallets/{id:guid}/transfer-carton", async (Guid id, [FromQuery] Guid cartonId, IMediator mediator) =>
 {
@@ -1568,7 +1568,7 @@ app.MapPost("/api/pallets/{id:guid}/transfer-carton", async (Guid id, [FromQuery
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("pallets.edit");
 
 app.MapPost("/api/pallets/{id:guid}/close", async (Guid id, IMediator mediator) =>
 {
@@ -1581,7 +1581,7 @@ app.MapPost("/api/pallets/{id:guid}/close", async (Guid id, IMediator mediator) 
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("pallets.close");
 
 app.MapDelete("/api/pallets/{id:guid}", async (Guid id, IMediator mediator) =>
 {
@@ -1598,7 +1598,7 @@ app.MapDelete("/api/pallets/{id:guid}", async (Guid id, IMediator mediator) =>
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("pallets.delete");
 
 app.MapGet("/api/pallets/{id:guid}/label.pdf", async (Guid id, IMediator mediator) =>
 {
@@ -1611,7 +1611,7 @@ app.MapGet("/api/pallets/{id:guid}/label.pdf", async (Guid id, IMediator mediato
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("pallets.print");
 
 app.MapGet("/api/pallets/{id:guid}/label.zpl", async (Guid id, IMediator mediator) =>
 {
@@ -1624,7 +1624,7 @@ app.MapGet("/api/pallets/{id:guid}/label.zpl", async (Guid id, IMediator mediato
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("pallets.print");
 
 app.MapGet("/api/pallets/{id:guid}/label.pplb", async (Guid id, IMediator mediator) =>
 {
@@ -1637,7 +1637,7 @@ app.MapGet("/api/pallets/{id:guid}/label.pplb", async (Guid id, IMediator mediat
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("pallets.print");
 
 // Barcode Search
 app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator mediator) =>
