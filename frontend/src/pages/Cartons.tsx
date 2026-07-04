@@ -205,7 +205,7 @@ const CartonMobileCard: React.FC<{
 };
 
 export const Cartons: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [cartons, setCartons] = useState<Carton[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
@@ -1110,22 +1110,24 @@ export const Cartons: React.FC = () => {
 
               {/* Action Buttons & Document Printing */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => handlePrintPdf(selectedCarton.id)}>
-                    <FileText size={16} /> PDF Etiketi
-                  </button>
-                  <button className="btn btn-secondary" style={{ flex: 1, padding: '8px' }} onClick={() => handlePrintZpl(selectedCarton.id)}>
-                    <Barcode size={16} /> ZPL Üret
-                  </button>
-                  <button 
-                    className="btn btn-secondary"
-                    style={{ flex: 1, padding: '8px' }} 
-                    disabled={printLoading}
-                    onClick={() => handleUnifiedPrint(selectedCarton.id)}
-                  >
-                    <Printer size={16} /> {printLoading ? 'Yazdırılıyor...' : 'Yazdır'}
-                  </button>
-                </div>
+                {hasPermission('cartons.print') && (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => handlePrintPdf(selectedCarton.id)}>
+                      <FileText size={16} /> PDF Etiketi
+                    </button>
+                    <button className="btn btn-secondary" style={{ flex: 1, padding: '8px' }} onClick={() => handlePrintZpl(selectedCarton.id)}>
+                      <Barcode size={16} /> ZPL Üret
+                    </button>
+                    <button 
+                      className="btn btn-secondary"
+                      style={{ flex: 1, padding: '8px' }} 
+                      disabled={printLoading}
+                      onClick={() => handleUnifiedPrint(selectedCarton.id)}
+                    >
+                      <Printer size={16} /> {printLoading ? 'Yazdırılıyor...' : 'Yazdır'}
+                    </button>
+                  </div>
+                )}
 
                 {/* Transfer action */}
                 {user?.role === 'Admin' && selectedCarton.status === 'Open' && (
@@ -1166,7 +1168,7 @@ export const Cartons: React.FC = () => {
                   </div>
                 )}
                 {/* Decompose action */}
-                {user?.role !== 'Viewer' && (
+                {hasPermission('cartons.create') && (
                   <button 
                     className="btn btn-danger" 
                     style={{ width: '100%', padding: '10px', marginTop: '10px' }} 
@@ -1196,7 +1198,7 @@ export const Cartons: React.FC = () => {
               )}
 
               {/* Scan Barcode Form */}
-              {selectedCarton.status === 'Open' && user?.role !== 'Viewer' && (
+              {selectedCarton.status === 'Open' && hasPermission('cartons.create') && (
                 <form onSubmit={handleAddProduct} className="card" style={{ padding: '14px', backgroundColor: 'var(--primary-light)', border: '1px solid #bfdbfe', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: 'none' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>Koliye Ürün Ekle (Barkod Okutun)</span>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -1254,7 +1256,7 @@ export const Cartons: React.FC = () => {
                             <div style={{ fontWeight: 600, maxWidth: '85%', color: 'var(--text-main)' }}>
                               <FormattedBarcode code={item.rawCode} />
                             </div>
-                            {user?.role !== 'Viewer' && (
+                            {hasPermission('cartons.create') && (
                               <button 
                                 onClick={() => handleRemoveProduct(selectedCarton.id, item.rawCode)}
                                 style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}

@@ -35,7 +35,7 @@ interface ImportBatch {
 }
 
 export const Orders: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   
   // Lists & Paging
   const [orders, setOrders] = useState<Order[]>([]);
@@ -507,7 +507,7 @@ export const Orders: React.FC = () => {
           <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', marginBottom: '6px', color: '#0f172a', fontWeight: 700 }}>Sipariş Yönetimi</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Sipariş oluşturma, barkod yükleme, okutma ve sevkiyat takibi.</p>
         </div>
-        {user?.role !== 'Viewer' && (
+        {hasPermission('orders.create') && (
           <div style={{ display: 'flex', gap: '12px' }}>
             <button className="btn" style={{ backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #e2e8f0', fontWeight: 600 }} onClick={() => { setShowExcelImportModal(true); setExcelFile(null); setExcelImportResult(null); setExcelError(null); }}>
               <Upload size={18} style={{ marginRight: '6px' }}/> Excel'den Sipariş Aktar
@@ -957,7 +957,7 @@ export const Orders: React.FC = () => {
                       <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>Kod Yükleme Kayıtları</h4>
                       <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '4px 0 0' }}>Bu sipariş satırına yüklenen dosyaları ve bağlı kodları yönetin.</p>
                     </div>
-                    {user?.role !== 'Viewer' && (
+                    {hasPermission('orders.edit') && (
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {(selectedOrder.status === 'Draft' || selectedOrder.status === 'Cancelled' || selectedOrder.status === 'Active') && (
                           <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowImportModal(true)}>
@@ -1010,7 +1010,7 @@ export const Orders: React.FC = () => {
                               </td>
                               <td style={{ padding: '12px' }}>{batch.createdBy || '-'}</td>
                               <td style={{ padding: '12px', textAlign: 'right' }}>
-                                {user?.role !== 'Viewer' && (
+                                {hasPermission('orders.edit') && (
                                   <button
                                     className="btn btn-danger"
                                     style={{ padding: '6px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -1035,56 +1035,76 @@ export const Orders: React.FC = () => {
             </div>
 
             {/* Modal Footer Actions */}
-            {user?.role !== 'Viewer' && activeTab === 'summary' && (
+            {activeTab === 'summary' && (
               <div style={{ padding: '20px 24px', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 {selectedOrder.status === 'Draft' && (
                   <>
-                    <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
-                      Siparişi Sil
-                    </button>
-                    <button className="btn" style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }} onClick={() => openEditModal(selectedOrder)}>
-                      Düzenle
-                    </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
-                    </button>
-                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <Play size={16} style={{ marginRight: '6px' }}/> Aktifleştir
-                    </button>
+                    {hasPermission('orders.delete') && (
+                      <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
+                        Siparişi Sil
+                      </button>
+                    )}
+                    {hasPermission('orders.edit') && (
+                      <>
+                        <button className="btn" style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }} onClick={() => openEditModal(selectedOrder)}>
+                          Düzenle
+                        </button>
+                        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
+                          <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
+                        </button>
+                        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
+                          <Play size={16} style={{ marginRight: '6px' }}/> Aktifleştir
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
 
                 {selectedOrder.status === 'Active' && (
                   <>
-                    <button className="btn btn-danger" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
-                      <XCircle size={16} style={{ marginRight: '6px' }}/> İptal Et
-                    </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => { setPrintLine1(selectedOrder.productName || ''); setPrintLine2(selectedOrder.gtin); setShowPrintModal(true); }}>
-                      <Printer size={16} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
-                    </button>
-                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
-                      <Barcode size={16} style={{ marginRight: '6px' }}/> Scan Ekranına Git
-                    </button>
-                    <button className="btn btn-primary" style={{ backgroundColor: '#10b981', display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
-                      <CheckCircle2 size={16} style={{ marginRight: '6px' }}/> Tamamla
-                    </button>
+                    {hasPermission('orders.edit') && (
+                      <button className="btn btn-danger" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
+                        <XCircle size={16} style={{ marginRight: '6px' }}/> İptal Et
+                      </button>
+                    )}
+                    {user?.role !== 'Viewer' && (
+                      <>
+                        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => { setPrintLine1(selectedOrder.productName || ''); setPrintLine2(selectedOrder.gtin); setShowPrintModal(true); }}>
+                          <Printer size={16} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
+                        </button>
+                        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
+                          <Barcode size={16} style={{ marginRight: '6px' }}/> Scan Ekranına Git
+                        </button>
+                      </>
+                    )}
+                    {hasPermission('orders.edit') && (
+                      <button className="btn btn-primary" style={{ backgroundColor: '#10b981', display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
+                        <CheckCircle2 size={16} style={{ marginRight: '6px' }}/> Tamamla
+                      </button>
+                    )}
                   </>
                 )}
 
                 {selectedOrder.status === 'Cancelled' && (
                   <>
-                    <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
-                      Siparişi Sil
-                    </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setActiveTab('imports')}>
-                      <Archive size={16} style={{ marginRight: '6px' }}/> Yüklemeleri Yönet
-                    </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
-                    </button>
-                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <RotateCcw size={16} style={{ marginRight: '6px' }}/> Tekrar Aktifleştir
-                    </button>
+                    {hasPermission('orders.delete') && (
+                      <button className="btn btn-danger" onClick={() => handleDeleteOrder(selectedOrder.id)}>
+                        Siparişi Sil
+                      </button>
+                    )}
+                    {hasPermission('orders.edit') && (
+                      <>
+                        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setActiveTab('imports')}>
+                          <Archive size={16} style={{ marginRight: '6px' }}/> Yüklemeleri Yönet
+                        </button>
+                        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
+                          <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
+                        </button>
+                        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
+                          <RotateCcw size={16} style={{ marginRight: '6px' }}/> Tekrar Aktifleştir
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </div>

@@ -34,7 +34,7 @@ interface ActiveOrder {
 }
 
 export const Pallets: React.FC = () => {
-  const { user } = useAuth();
+  const { hasPermission } = useAuth();
   const [pallets, setPallets] = useState<Pallet[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -321,7 +321,7 @@ export const Pallets: React.FC = () => {
         title="Palet Yönetimi"
         description="Kolileri paletlere yerleştirme, palet kapatma ve etiket yazdırma."
         actions={
-          user?.role !== 'Viewer' ? (
+          hasPermission('pallets.create') ? (
             <TTButton variant="primary" onClick={handleOpenCreateDrawer} icon={<Plus size={18} />}>
               Yeni Palet Aç
             </TTButton>
@@ -396,10 +396,12 @@ export const Pallets: React.FC = () => {
                         <button className="btn btn-secondary" style={{ padding: '6px 10px' }} onClick={() => handlePalletClick(p)} title="Detay Göster">
                           <Eye size={14} />
                         </button>
-                        <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => handlePrintPdf(p.id)} title="PDF Etiketi İndir">
-                          <Printer size={14} />
-                        </button>
-                        {user?.role !== 'Viewer' && p.status !== 'Shipped' && (
+                        {hasPermission('pallets.print') && (
+                          <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => handlePrintPdf(p.id)} title="PDF Etiketi İndir">
+                            <Printer size={14} />
+                          </button>
+                        )}
+                        {hasPermission('pallets.create') && p.status !== 'Shipped' && (
                           <button className="btn btn-secondary" style={{ padding: '6px 10px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }} onClick={() => handleDeletePallet(p.id)} title="Paleti Sil (Boz)">
                             <Trash2 size={14} />
                           </button>
@@ -432,14 +434,16 @@ export const Pallets: React.FC = () => {
               <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem', marginLeft: 'auto' }} onClick={() => setSelectedPallet(null)}>Kapat</button>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handlePrintPdf(selectedPallet.id)}>
-                <Printer size={16} /> PDF Etiketi İndir
-              </button>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handlePrintZpl(selectedPallet.id)}>
-                <Barcode size={16} /> ZPL Kodu Üret
-              </button>
-            </div>
+            {hasPermission('pallets.print') && (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handlePrintPdf(selectedPallet.id)}>
+                  <Printer size={16} /> PDF Etiketi İndir
+                </button>
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handlePrintZpl(selectedPallet.id)}>
+                  <Barcode size={16} /> ZPL Kodu Üret
+                </button>
+              </div>
+            )}
 
             {/* ZPL Code */}
             {zplOutput && (
@@ -457,7 +461,7 @@ export const Pallets: React.FC = () => {
             )}
 
             {/* Scan Carton to Pallet Form */}
-            {selectedPallet.status === 'Open' && user?.role !== 'Viewer' ? (
+            {selectedPallet.status === 'Open' && hasPermission('pallets.create') ? (
               <form onSubmit={handleAddCarton} className="card" style={{ padding: '16px', backgroundColor: 'var(--primary-light)', border: '1px solid #bfdbfe' }}>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>Koli Ekle (SSCC Okutun)</h4>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -473,21 +477,21 @@ export const Pallets: React.FC = () => {
                   <button type="submit" className="btn btn-primary" style={{ height: '40px' }}>Ekle</button>
                 </div>
               </form>
-            ) : selectedPallet.status === 'Open' && user?.role === 'Viewer' ? null : (
+            ) : selectedPallet.status === 'Open' && !hasPermission('pallets.create') ? null : (
               <div style={{ padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '4px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Bu palet kapatıldığı için yeni koli ekleme yapılamaz.
               </div>
             )}
 
             {/* Manual Close Pallet Action */}
-            {selectedPallet.status === 'Open' && user?.role !== 'Viewer' && (
+            {selectedPallet.status === 'Open' && hasPermission('pallets.close') && (
               <button className="btn btn-danger" style={{ width: '100%', height: '42px' }} onClick={() => handleClosePallet(selectedPallet.id)}>
                 Paleti Kapat (Closed)
               </button>
             )}
 
             {/* Delete Pallet Action */}
-            {selectedPallet.status !== 'Shipped' && user?.role !== 'Viewer' && (
+            {selectedPallet.status !== 'Shipped' && hasPermission('pallets.create') && (
               <button className="btn btn-secondary" style={{ width: '100%', height: '42px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => handleDeletePallet(selectedPallet.id)}>
                 <Trash2 size={16} /> Paleti Sil (Boz)
               </button>
@@ -521,7 +525,7 @@ export const Pallets: React.FC = () => {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontWeight: 600 }}>{c.actualQuantity} adet</span>
-                        {user?.role !== 'Viewer' && (
+                        {hasPermission('pallets.create') && (
                           <button 
                             className="btn btn-secondary" 
                             style={{ padding: '4px 8px', fontSize: '0.75rem' }}
