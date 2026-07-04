@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
   ArrowLeft, 
   Search, 
@@ -22,6 +23,7 @@ import { TTPageHeader, TTButton } from '../components/common';
 type ViewMode = 'main' | 'order' | 'stock';
 
 export const Reports: React.FC = () => {
+  const { hasPermission } = useAuth();
   // Navigation & View States
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [selectedOrderNo, setSelectedOrderNo] = useState<string>('');
@@ -526,22 +528,26 @@ export const Reports: React.FC = () => {
                           >
                             <Eye size={12} /> Detay
                           </button>
-                          <button 
-                            className="btn btn-secondary" 
-                            style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#16a34a' }}
-                            onClick={(e) => handleExportExcel(o.orderno, e)} disabled={!!exportingKey}
-                            title="Excel İndir"
-                          >
-                            <FileSpreadsheet size={12} /> Excel
-                          </button>
-                          <button 
-                            className="btn btn-secondary" 
-                            style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}
-                            onClick={(e) => handleExportPdf(o.orderno, e)} disabled={!!exportingKey}
-                            title="PDF İndir"
-                          >
-                            <FileDown size={12} /> PDF
-                          </button>
+                          {hasPermission('reports.export') && (
+                            <>
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#16a34a' }}
+                                onClick={(e) => handleExportExcel(o.orderno, e)} disabled={!!exportingKey}
+                                title="Excel İndir"
+                              >
+                                <FileSpreadsheet size={12} /> Excel
+                              </button>
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}
+                                onClick={(e) => handleExportPdf(o.orderno, e)} disabled={!!exportingKey}
+                                title="PDF İndir"
+                              >
+                                <FileDown size={12} /> PDF
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -576,12 +582,16 @@ export const Reports: React.FC = () => {
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)' }}>Sipariş Detay Raporu: <strong style={{ color: 'var(--primary)' }}>{selectedOrderNo}</strong></h2>
             
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
-                <FileSpreadsheet size={16} /> Excel Raporu Al
-              </button>
-              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
-                <FileDown size={16} /> PDF Raporu Al
-              </button>
+              {hasPermission('reports.export') && (
+                <>
+                  <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
+                    <FileSpreadsheet size={16} /> Excel Raporu Al
+                  </button>
+                  <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
+                    <FileDown size={16} /> PDF Raporu Al
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -712,15 +722,19 @@ export const Reports: React.FC = () => {
             <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>({stockDetail.productname})</span>
             
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
-                <FileSpreadsheet size={16} /> Sipariş Exceli
-              </button>
-              <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e, stockDetail.stockcode)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#059669' }}>
-                <FileSpreadsheet size={16} /> Bu Stok Exceli
-              </button>
-              <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
-                <FileDown size={16} /> Sipariş PDF'i
-              </button>
+              {hasPermission('reports.export') && (
+                <>
+                  <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a' }}>
+                    <FileSpreadsheet size={16} /> Sipariş Exceli
+                  </button>
+                  <button className="btn btn-secondary" onClick={(e) => handleExportExcel(selectedOrderNo, e, stockDetail.stockcode)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#059669' }}>
+                    <FileSpreadsheet size={16} /> Bu Stok Exceli
+                  </button>
+                  <button className="btn btn-secondary" onClick={(e) => handleExportPdf(selectedOrderNo, e)} disabled={!!exportingKey} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626' }}>
+                    <FileDown size={16} /> Sipariş PDF'i
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -1160,29 +1174,31 @@ export const Reports: React.FC = () => {
       )}
 
       {/* Floating button to open jobs panel */}
-      <button 
-        onClick={() => setShowJobsPanel(true)}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          width: '56px',
-          height: '56px',
-          borderRadius: '28px',
-          backgroundColor: 'var(--primary)',
-          color: 'white',
-          border: 'none',
-          boxShadow: 'var(--shadow-lg)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999
-        }}
-        title="Arka Plan Görevleri"
-      >
-        <RefreshCw size={24} className={backgroundJobs.some(j => j.status === 'Processing') ? 'spin' : ''} />
-      </button>
+      {hasPermission('reports.export') && (
+        <button 
+          onClick={() => setShowJobsPanel(true)}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '28px',
+            backgroundColor: 'var(--primary)',
+            color: 'white',
+            border: 'none',
+            boxShadow: 'var(--shadow-lg)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999
+          }}
+          title="Arka Plan Görevleri"
+        >
+          <RefreshCw size={24} className={backgroundJobs.some(j => j.status === 'Processing') ? 'spin' : ''} />
+        </button>
+      )}
     </div>
   );
 };
