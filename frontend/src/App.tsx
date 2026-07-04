@@ -36,6 +36,14 @@ import {
   Server
 } from 'lucide-react';
 
+const Unauthorized: React.FC = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '16px', color: 'var(--text-muted)' }}>
+    <Shield size={64} style={{ color: 'var(--danger)', opacity: 0.8 }} />
+    <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-main)' }}>Yetkisiz Erişim</h2>
+    <p>Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
+  </div>
+);
+
 const AppShell: React.FC = () => {
   const { user, logout, hasPermission } = useAuth();
 
@@ -45,44 +53,75 @@ const AppShell: React.FC = () => {
   const showPermissions = hasPermission('permissions.manage') || user?.role === 'Admin';
   const showPrintSettings = hasPermission('system.manage');
   const showSystemInfo = hasPermission('system.view');
-
   const showAdminMenu = showUsers || showStations || showAudit || showPermissions || showPrintSettings || showSystemInfo;
-  const [activeTab, setActiveTab] = useState('dashboard');
+
+  const showDashboard = hasPermission('dashboard.view');
+  const showOrders = hasPermission('orders.view');
+  const showScan = hasPermission('scan.view');
+  const showCartons = hasPermission('cartons.view');
+  const showPallets = hasPermission('pallets.view');
+  const showTraceability = hasPermission('traceability.view');
+  const showReports = hasPermission('reports.view');
+  const showDmCreator = hasPermission('generator.view');
+
+  const showOpsMenu = showDashboard || showOrders || showScan || showCartons || showPallets;
+  const showIntelMenu = showTraceability || showReports || showDmCreator;
+
+  const availableTabs = [
+    ...(showDashboard ? ['dashboard'] : []),
+    ...(showOrders ? ['orders'] : []),
+    ...(showScan ? ['scan'] : []),
+    ...(showCartons ? ['cartons'] : []),
+    ...(showPallets ? ['pallets'] : []),
+    ...(showTraceability ? ['traceability'] : []),
+    ...(showReports ? ['reports'] : []),
+    ...(showDmCreator ? ['dm-creator'] : []),
+    ...(showUsers ? ['users'] : []),
+    ...(showStations ? ['stations'] : []),
+    ...(showAudit ? ['audit'] : []),
+    ...(showPermissions ? ['permission-matrix'] : []),
+    ...(showPrintSettings ? ['print-settings'] : []),
+    ...(showSystemInfo ? ['system'] : [])
+  ];
+
+  const [activeTab, setActiveTab] = useState(() => {
+    return availableTabs.length > 0 ? availableTabs[0] : 'dashboard';
+  });
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const renderActivePage = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
+        return showDashboard ? <Dashboard /> : <Unauthorized />;
       case 'orders':
-        return <Orders />;
+        return showOrders ? <Orders /> : <Unauthorized />;
       case 'scan':
-        return <Scan />;
+        return showScan ? <Scan /> : <Unauthorized />;
       case 'cartons':
-        return <Cartons />;
+        return showCartons ? <Cartons /> : <Unauthorized />;
       case 'pallets':
-        return <Pallets />;
+        return showPallets ? <Pallets /> : <Unauthorized />;
       case 'traceability':
-        return <TraceabilityCenter />;
+        return showTraceability ? <TraceabilityCenter /> : <Unauthorized />;
       case 'dm-creator':
-        return <DataMatrixCreator />;
+        return showDmCreator ? <DataMatrixCreator /> : <Unauthorized />;
       case 'reports':
-        return <Reports />;
+        return showReports ? <Reports /> : <Unauthorized />;
       case 'users':
-        return <Users />;
+        return showUsers ? <Users /> : <Unauthorized />;
       case 'stations':
-        return <Stations />;
+        return showStations ? <Stations /> : <Unauthorized />;
       case 'system':
-        return <SystemInfo />;
+        return showSystemInfo ? <SystemInfo /> : <Unauthorized />;
       case 'audit':
-        return <AuditCenter />;
+        return showAudit ? <AuditCenter /> : <Unauthorized />;
       case 'permission-matrix':
-        return <PermissionMatrix />;
+        return showPermissions ? <PermissionMatrix /> : <Unauthorized />;
       case 'print-settings':
-        return <PrintSettings />;
+        return showPrintSettings ? <PrintSettings /> : <Unauthorized />;
       default:
-        return <Dashboard />;
+        return <Unauthorized />;
     }
   };
 
@@ -107,83 +146,103 @@ const AppShell: React.FC = () => {
         
         <div className="sidebar-scrollable" style={{ flex: 1, overflowY: 'auto' }}>
           <nav className="sidebar-nav">
-            <div className="sidebar-section">
-              <span className="sidebar-section-title">Operations</span>
-              <div 
-                className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => handleTabClick('dashboard')}
-                title="Dashboard"
-              >
-                <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
-                <span>Dashboard</span>
-              </div>
+            {showOpsMenu && (
+              <div className="sidebar-section">
+                <span className="sidebar-section-title">Operations</span>
+                {showDashboard && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('dashboard')}
+                    title="Dashboard"
+                  >
+                    <LayoutDashboard size={18} style={{ flexShrink: 0 }} />
+                    <span>Dashboard</span>
+                  </div>
+                )}
 
-              <div 
-                className={`sidebar-link ${activeTab === 'orders' ? 'active' : ''}`}
-                onClick={() => handleTabClick('orders')}
-                title="Sipariş Yönetimi"
-              >
-                <FileText size={18} style={{ flexShrink: 0 }} />
-                <span>Sipariş Yönetimi</span>
-              </div>
+                {showOrders && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'orders' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('orders')}
+                    title="Sipariş Yönetimi"
+                  >
+                    <FileText size={18} style={{ flexShrink: 0 }} />
+                    <span>Sipariş Yönetimi</span>
+                  </div>
+                )}
 
-              <div 
-                className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
-                onClick={() => handleTabClick('scan')}
-                title="Ürün Okutma (Scan)"
-              >
-                <Barcode size={18} style={{ flexShrink: 0 }} />
-                <span>Ürün Okutma (Scan)</span>
-              </div>
+                {showScan && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('scan')}
+                    title="Ürün Okutma (Scan)"
+                  >
+                    <Barcode size={18} style={{ flexShrink: 0 }} />
+                    <span>Ürün Okutma (Scan)</span>
+                  </div>
+                )}
 
-              <div 
-                className={`sidebar-link ${activeTab === 'cartons' ? 'active' : ''}`}
-                onClick={() => handleTabClick('cartons')}
-                title="Koli Yönetimi"
-              >
-                <Inbox size={18} style={{ flexShrink: 0 }} />
-                <span>Koli Yönetimi</span>
-              </div>
+                {showCartons && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'cartons' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('cartons')}
+                    title="Koli Yönetimi"
+                  >
+                    <Inbox size={18} style={{ flexShrink: 0 }} />
+                    <span>Koli Yönetimi</span>
+                  </div>
+                )}
 
-              <div 
-                className={`sidebar-link ${activeTab === 'pallets' ? 'active' : ''}`}
-                onClick={() => handleTabClick('pallets')}
-                title="Palet Yönetimi"
-              >
-                <Layers size={18} style={{ flexShrink: 0 }} />
-                <span>Palet Yönetimi</span>
+                {showPallets && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'pallets' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('pallets')}
+                    title="Palet Yönetimi"
+                  >
+                    <Layers size={18} style={{ flexShrink: 0 }} />
+                    <span>Palet Yönetimi</span>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="sidebar-section" style={{ marginTop: '24px' }}>
-              <span className="sidebar-section-title">Intelligence</span>
-              <div 
-                className={`sidebar-link ${activeTab === 'traceability' ? 'active' : ''}`}
-                onClick={() => handleTabClick('traceability')}
-                title="İzlenebilirlik Merkezi"
-              >
-                <Search size={18} style={{ flexShrink: 0 }} />
-                <span>İzlenebilirlik Merkezi</span>
-              </div>
+            {showIntelMenu && (
+              <div className="sidebar-section" style={{ marginTop: '24px' }}>
+                <span className="sidebar-section-title">Intelligence</span>
+                {showTraceability && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'traceability' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('traceability')}
+                    title="İzlenebilirlik Merkezi"
+                  >
+                    <Search size={18} style={{ flexShrink: 0 }} />
+                    <span>İzlenebilirlik Merkezi</span>
+                  </div>
+                )}
 
-              <div 
-                className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
-                onClick={() => handleTabClick('reports')}
-                title="Raporlama"
-              >
-                <BarChart3 size={18} style={{ flexShrink: 0 }} />
-                <span>Raporlama</span>
-              </div>
+                {showReports && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'reports' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('reports')}
+                    title="Raporlama"
+                  >
+                    <BarChart3 size={18} style={{ flexShrink: 0 }} />
+                    <span>Raporlama</span>
+                  </div>
+                )}
 
-              <div 
-                className={`sidebar-link ${activeTab === 'dm-creator' ? 'active' : ''}`}
-                onClick={() => handleTabClick('dm-creator')}
-                title="DataMatrix Üretici"
-              >
-                <QrCode size={18} style={{ flexShrink: 0 }} />
-                <span>DataMatrix Üretici</span>
+                {showDmCreator && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'dm-creator' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('dm-creator')}
+                    title="DataMatrix Üretici"
+                  >
+                    <QrCode size={18} style={{ flexShrink: 0 }} />
+                    <span>DataMatrix Üretici</span>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {showAdminMenu && (
               <div className="sidebar-section" style={{ marginTop: '24px' }}>
