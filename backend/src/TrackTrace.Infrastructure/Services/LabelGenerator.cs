@@ -378,8 +378,8 @@ public class LabelGenerator : ILabelGenerator
 ^FO50,335^A0N,20,20^FDPalet No: {pallet.PalletNo}^FS
 ^FO400,335^A0N,20,20^FDTarih: {pallet.CreatedAt:dd.MM.yyyy HH:mm}^FS
         ^FO50,380^GB712,3,3^FS
-        ^FO200,420^BQN,2,8^FDQA,{_frontendUrl}/?code={pallet.SSCC}^FS
-        ^FO150,680^BY3^FO150,700^BCN,150,Y,N,N^FD(00){pallet.SSCC}^FS
+        ^FO250,420^BQN,2,6^FDQA,{_frontendUrl}/?code={pallet.SSCC}^FS
+        ^FO100,680^BY2^FO100,700^BCN,150,Y,N,N^FD(00){pallet.SSCC}^FS
         ^XZ";
     }
 

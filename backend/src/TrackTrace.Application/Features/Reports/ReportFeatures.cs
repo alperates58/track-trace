@@ -249,6 +249,44 @@ public class ReportHandlers :
             );
         }
 
+        // Try searching for Pallet if not found as carton
+        string cleanSearchPallet = ExtractSscc(request.RawCode);
+        const string palletSql = @"
+            SELECT p.Id, p.PalletNo, p.SSCC as PalletSSCC, p.Status, p.CreatedAt,
+                   o.OrderNo, o.CustomerName, o.ProductName, o.Gtin
+            FROM Pallets p
+            INNER JOIN Orders o ON p.OrderId = o.Id
+            WHERE p.SSCC = @Search OR p.PalletNo = @Search";
+
+        var pallet = await connection.QueryFirstOrDefaultAsync<dynamic>(palletSql, new { Search = cleanSearchPallet });
+        if (pallet != null)
+        {
+            const string cartonItemsSql = @"
+                SELECT c.SSCC 
+                FROM Cartons c
+                INNER JOIN PalletCartons pc ON c.Id = pc.CartonId
+                WHERE pc.PalletId = @PalletId
+                ORDER BY pc.CreatedAt DESC";
+            var palletItems = await connection.QueryAsync<string>(cartonItemsSql, new { PalletId = (Guid)pallet.id });
+
+            return new BarcodeSearchResultDto(
+                RawCode: request.RawCode,
+                Gtin: (string?)pallet.gtin,
+                SerialNo: null,
+                Status: (string)pallet.status,
+                ScannedAt: (DateTime)pallet.createdat,
+                ScannedBy: null,
+                OrderNo: (string?)pallet.orderno,
+                CustomerName: (string?)pallet.customername,
+                ProductName: (string?)pallet.productname,
+                CartonNo: null,
+                CartonSSCC: null,
+                PalletNo: (string?)pallet.palletno,
+                PalletSSCC: (string?)pallet.palletsscc,
+                CartonItems: palletItems
+            );
+        }
+
         return null;
     }
 
