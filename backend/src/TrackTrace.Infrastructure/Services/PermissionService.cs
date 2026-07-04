@@ -19,14 +19,14 @@ public class PermissionService : IPermissionService
         _cache = cache;
     }
 
-    public async Task<bool> HasPermissionAsync(string role, string permissionKey)
+    public async Task<bool> HasPermissionAsync(Guid? userId, string role, string permissionKey)
     {
         if (string.IsNullOrEmpty(role) || string.IsNullOrEmpty(permissionKey))
             return false;
 
-        string cacheKey = $"permissions_{role}";
+        string roleCacheKey = $"permissions_{role}";
 
-        if (!_cache.TryGetValue(cacheKey, out HashSet<string>? rolePermissions))
+        if (!_cache.TryGetValue(roleCacheKey, out HashSet<string>? rolePermissions))
         {
             using var db = _dbFactory.CreateConnection();
             var perms = await db.QueryAsync<string>(
@@ -36,9 +36,32 @@ public class PermissionService : IPermissionService
 
             rolePermissions = new HashSet<string>(perms ?? Enumerable.Empty<string>());
             
-            _cache.Set(cacheKey, rolePermissions, CacheDuration);
+            _cache.Set(roleCacheKey, rolePermissions, CacheDuration);
+        }
+        
+        bool hasRolePerm = rolePermissions != null && rolePermissions.Contains(permissionKey);
+
+        if (userId.HasValue)
+        {
+            string userCacheKey = $"user_permissions_{userId.Value}";
+            if (!_cache.TryGetValue(userCacheKey, out Dictionary<string, bool>? userPermissions))
+            {
+                using var db = _dbFactory.CreateConnection();
+                var userPerms = await db.QueryAsync<(string Key, bool IsGranted)>(
+                    "SELECT PermissionKey, IsGranted FROM UserPermissions WHERE UserId = @UserId",
+                    new { UserId = userId.Value }
+                );
+                
+                userPermissions = userPerms.ToDictionary(x => x.Key, x => x.IsGranted);
+                _cache.Set(userCacheKey, userPermissions, CacheDuration);
+            }
+            
+            if (userPermissions != null && userPermissions.TryGetValue(permissionKey, out bool isGranted))
+            {
+                return isGranted; // User override takes precedence
+            }
         }
 
-        return rolePermissions != null && rolePermissions.Contains(permissionKey);
+        return hasRolePerm;
     }
 }

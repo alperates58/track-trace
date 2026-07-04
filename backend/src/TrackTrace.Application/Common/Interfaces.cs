@@ -58,5 +58,5 @@ public interface IReportPdfGenerator
 
 public interface IPermissionService
 {
-    Task<bool> HasPermissionAsync(string role, string permissionKey);
+    Task<bool> HasPermissionAsync(Guid? userId, string role, string permissionKey);
 }

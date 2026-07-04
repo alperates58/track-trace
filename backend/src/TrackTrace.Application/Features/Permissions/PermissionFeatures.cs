@@ -54,8 +54,26 @@ public class GetMyPermissionsHandler : IRequestHandler<GetMyPermissionsQuery, Li
             return new List<string>();
 
         using var _db = _dbFactory.CreateConnection();
-        var permissions = await _db.QueryAsync<string>("SELECT PermissionKey FROM RolePermissions WHERE Role = @Role", new { Role = role });
-        return permissions.ToList();
+        var rolePerms = await _db.QueryAsync<string>("SELECT PermissionKey FROM RolePermissions WHERE Role = @Role", new { Role = role });
+        
+        var finalPermissions = new HashSet<string>(rolePerms ?? Enumerable.Empty<string>());
+
+        if (_currentUserService.UserId.HasValue)
+        {
+            var userPerms = await _db.QueryAsync<(string Key, bool IsGranted)>(
+                "SELECT PermissionKey, IsGranted FROM UserPermissions WHERE UserId = @UserId", 
+                new { UserId = _currentUserService.UserId.Value });
+
+            foreach (var perm in userPerms)
+            {
+                if (perm.IsGranted)
+                    finalPermissions.Add(perm.Key);
+                else
+                    finalPermissions.Remove(perm.Key);
+            }
+        }
+
+        return finalPermissions.ToList();
     }
 }
 

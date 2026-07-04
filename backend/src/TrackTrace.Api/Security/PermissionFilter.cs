@@ -32,7 +32,7 @@ public class PermissionFilter : IEndpointFilter
             return Results.Forbid();
         }
 
-        var hasPermission = await permissionService.HasPermissionAsync(role, _permissionKey);
+        var hasPermission = await permissionService.HasPermissionAsync(currentUserService.UserId, role, _permissionKey);
 
         if (!hasPermission)
         {
