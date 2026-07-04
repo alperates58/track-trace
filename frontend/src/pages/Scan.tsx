@@ -31,7 +31,7 @@ interface ScanHistory {
 }
 
 export const Scan: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   // Stations
   const [stations, setStations] = useState<Station[]>([]);
@@ -887,7 +887,7 @@ export const Scan: React.FC = () => {
                   )}
                 </div>
                 
-                {lastClosedCartonId && (
+                {lastClosedCartonId && hasPermission('cartons.print') && (
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
                     <button 
                       className="btn btn-primary" 
