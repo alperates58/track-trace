@@ -28,8 +28,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchPermissions = useCallback(async () => {
     try {
-      const res = await api.get('/api/auth/my-permissions');
-      setPermissions(res.data || []);
+      const permissionsResponse = await api.get('/api/auth/my-permissions');
+      const nextPermissions = Array.isArray(permissionsResponse)
+        ? permissionsResponse
+        : Array.isArray(permissionsResponse?.data)
+          ? permissionsResponse.data
+          : [];
+      setPermissions(nextPermissions);
     } catch (e) {
       console.error('Failed to fetch permissions', e);
       setPermissions([]);
@@ -74,16 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Fallback to hardcoded roles if table is empty or API failed
     if (user?.role === 'Admin') return true; // Admin has all by default in fallback
     
-    // Basic fallback for Operator/Viewer
-    // Since Phase 7B will convert all buttons, we keep a minimal fallback here.
-    if (user?.role === 'Operator') {
-      if (key.endsWith('.view') || key.endsWith('.print') || key.includes('.create')) return true;
-      return false;
-    }
-    if (user?.role === 'Viewer') {
-      if (key.endsWith('.view')) return true;
-      return false;
-    }
+    // Fail-safe: Operator and Viewer should not get access to anything by default if permissions fail to load
     return false;
   };
 

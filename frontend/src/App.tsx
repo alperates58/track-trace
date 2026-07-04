@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -87,6 +87,14 @@ const AppShell: React.FC = () => {
   const [activeTab, setActiveTab] = useState(() => {
     return availableTabs.length > 0 ? availableTabs[0] : 'dashboard';
   });
+
+  const availableTabsStr = availableTabs.join(',');
+  useEffect(() => {
+    if (!availableTabs.includes(activeTab) && availableTabs.length > 0) {
+      setActiveTab(availableTabs[0]);
+    }
+  }, [availableTabsStr, activeTab]);
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
