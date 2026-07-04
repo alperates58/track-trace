@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TTPageHeader, TTCard } from '../components/common';
+import { TTPageHeader, TTCard, TTButton } from '../components/common';
 import { Check, Minus, ShieldAlert, Save, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -34,10 +34,10 @@ export const PermissionMatrix: React.FC = () => {
       setLoading(true);
       setError(null);
       const res = await api.get('/api/permissions/matrix');
-      setPermissions(res.data.permissions || []);
-      setRolePermissions(res.data.rolePermissions || []);
+      setPermissions(res.permissions || []);
+      setRolePermissions(res.rolePermissions || []);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Yetki matrisi yüklenirken hata oluştu.');
+      setError(err.message || 'Yetki matrisi yüklenirken hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export const PermissionMatrix: React.FC = () => {
       // Show success somehow (toast etc if available, or just reload)
       await fetchMatrix();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Kaydetme sırasında hata oluştu.');
+      setError(err.message || 'Kaydetme sırasında hata oluştu.');
     } finally {
       setSaving(false);
     }
@@ -92,12 +92,12 @@ export const PermissionMatrix: React.FC = () => {
         description="Sistemdeki tüm modüller için rol bazlı yetkilerin genel görünümü."
         actions={isAdmin ? (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={fetchMatrix} disabled={saving} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <RefreshCw size={16} /> Yenile
-            </button>
-            <button onClick={saveMatrix} disabled={saving} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Save size={16} /> {saving ? 'Kaydediliyor...' : 'Kaydet'}
-            </button>
+            <TTButton onClick={fetchMatrix} disabled={saving} variant="secondary" icon={<RefreshCw size={16} />}>
+              Yenile
+            </TTButton>
+            <TTButton onClick={saveMatrix} disabled={saving} variant="primary" icon={<Save size={16} />}>
+              {saving ? 'Kaydediliyor...' : 'Kaydet'}
+            </TTButton>
           </div>
         ) : undefined}
       />
