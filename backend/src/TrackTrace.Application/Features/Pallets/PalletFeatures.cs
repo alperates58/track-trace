@@ -62,7 +62,7 @@ public class PalletHandlers :
 
         var selector = builder.AddTemplate(@"
             SELECT p.*, o.OrderNo,
-                   COALESCE((SELECT COUNT(*) FROM PalletCartons pc WHERE pc.PalletId = p.Id), 0) AS "CartonCount"
+                   COALESCE((SELECT COUNT(*) FROM PalletCartons pc WHERE pc.PalletId = p.Id), 0) AS ""CartonCount""
             FROM Pallets p
             INNER JOIN Orders o ON p.OrderId = o.Id
             /**where**/
@@ -115,7 +115,7 @@ public class PalletHandlers :
         using var connection = _dbConnectionFactory.CreateConnection();
         const string sql = @"
             SELECT p.*, o.OrderNo,
-                   COALESCE((SELECT COUNT(*) FROM PalletCartons pc WHERE pc.PalletId = p.Id), 0) AS "CartonCount"
+                   COALESCE((SELECT COUNT(*) FROM PalletCartons pc WHERE pc.PalletId = p.Id), 0) AS ""CartonCount""
             FROM Pallets p
             INNER JOIN Orders o ON p.OrderId = o.Id
             WHERE p.Id = @Id";
