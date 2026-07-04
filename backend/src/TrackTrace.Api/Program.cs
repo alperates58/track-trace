@@ -334,7 +334,7 @@ app.MapGet("/api/users", async (IMediator mediator) =>
 {
     var users = await mediator.Send(new GetUsersQuery());
     return Results.Ok(users);
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("users.view");
 
 app.MapPost("/api/users", async (CreateUserRequest request, IMediator mediator) =>
 {
@@ -347,7 +347,7 @@ app.MapPost("/api/users", async (CreateUserRequest request, IMediator mediator) 
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("users.create");
 
 app.MapPut("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, IMediator mediator) =>
 {
@@ -360,7 +360,7 @@ app.MapPut("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, IM
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("users.edit");
 
 app.MapPost("/api/users/{id:guid}/toggle", async (Guid id, IMediator mediator) =>
 {
@@ -373,7 +373,7 @@ app.MapPost("/api/users/{id:guid}/toggle", async (Guid id, IMediator mediator) =
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("users.edit");
 
 // Dashboard Summary
 app.MapGet("/api/dashboard/summary", async (IMediator mediator) =>
@@ -612,14 +612,14 @@ app.MapGet("/api/audit-logs", async (
     var result = await mediator.Send(new TrackTrace.Application.Features.System.GetAuditLogsQuery(
         pageNumber ?? 1, pageSize ?? 50, startDate, endDate, userId, entityName, action));
     return Results.Ok(result);
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("audit.view");
 
 app.MapGet("/api/audit-logs/{id:guid}", async (Guid id, IMediator mediator) =>
 {
     var log = await mediator.Send(new TrackTrace.Application.Features.System.GetAuditLogDetailQuery(id));
     if (log == null) return Results.NotFound();
     return Results.Ok(log);
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("audit.view");
 
 // Orders Endpoints
 app.MapGet("/api/orders", async (
