@@ -411,7 +411,7 @@ app.MapGet("/api/reports/orders", async (
         onlyPalletized
     ));
     return Results.Ok(new { items, totalCount });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/{orderNo}", async (string orderNo, IMediator mediator) =>
 {
@@ -424,7 +424,7 @@ app.MapGet("/api/reports/orders/{orderNo}", async (string orderNo, IMediator med
     {
         return Results.NotFound();
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/items/{orderId:guid}", async (Guid orderId, IMediator mediator) =>
 {
@@ -437,7 +437,7 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}", async (Guid orderId, IMed
     {
         return Results.NotFound();
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/items/{orderId:guid}/scanned-codes", async (
     Guid orderId,
@@ -451,7 +451,7 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}/scanned-codes", async (
     var (items, totalCount) = await mediator.Send(new GetStockCodeUsedCodesQuery(
         orderId, pageNumber ?? 1, pageSize ?? 10, search, cartonNo, palletNo));
     return Results.Ok(new { items, totalCount });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/items/{orderId:guid}/missing-codes", async (
     Guid orderId,
@@ -463,7 +463,7 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}/missing-codes", async (
     var (items, totalCount) = await mediator.Send(new GetStockCodeMissingCodesQuery(
         orderId, pageNumber ?? 1, pageSize ?? 10, search));
     return Results.Ok(new { items, totalCount });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/items/{orderId:guid}/cartons", async (
     Guid orderId,
@@ -475,7 +475,7 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}/cartons", async (
     var (items, totalCount) = await mediator.Send(new GetStockCodeCartonsQuery(
         orderId, pageNumber ?? 1, pageSize ?? 10, search));
     return Results.Ok(new { items, totalCount });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/items/{orderId:guid}/pallets", async (
     Guid orderId,
@@ -487,7 +487,7 @@ app.MapGet("/api/reports/orders/items/{orderId:guid}/pallets", async (
     var (items, totalCount) = await mediator.Send(new GetStockCodePalletsQuery(
         orderId, pageNumber ?? 1, pageSize ?? 10, search));
     return Results.Ok(new { items, totalCount });
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/orders/{orderNo}/export-advice", async (string orderNo, string? stockCode, IMediator mediator, CancellationToken cancellationToken) =>
 {
@@ -504,7 +504,7 @@ app.MapGet("/api/reports/orders/{orderNo}/export-advice", async (string orderNo,
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.export");
 
 app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string? stockCode, bool? safeOnly, IMediator mediator, CancellationToken cancellationToken) =>
 {
@@ -521,7 +521,7 @@ app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string?
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.export");
 
 app.MapGet("/api/reports/orders/{orderNo}/pdf", async (string orderNo, IMediator mediator, CancellationToken cancellationToken) =>
 {
@@ -538,7 +538,7 @@ app.MapGet("/api/reports/orders/{orderNo}/pdf", async (string orderNo, IMediator
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.export");
 
 
 
@@ -556,13 +556,13 @@ app.MapPost("/api/reports/jobs", async (
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.export");
 
 app.MapGet("/api/reports/jobs", async (IMediator mediator) =>
 {
     var jobs = await mediator.Send(new TrackTrace.Application.Features.Reports.GetExportJobsQuery());
     return Results.Ok(jobs);
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/jobs/{jobId:guid}", async (Guid jobId, IMediator mediator) =>
 {
@@ -576,7 +576,7 @@ app.MapGet("/api/reports/jobs/{jobId:guid}", async (Guid jobId, IMediator mediat
     {
         return Results.Forbid();
     }
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.view");
 
 app.MapGet("/api/reports/download/{token:guid}", async (Guid token, IDbConnectionFactory db, HttpContext context) =>
 {
@@ -1106,7 +1106,7 @@ app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("generator.create").DisableAntiforgery();
 
 app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenerator labelGenerator) =>
 {
@@ -1167,7 +1167,7 @@ app.MapPost("/api/datamatrix/generate", async (HttpRequest request, ILabelGenera
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery();
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("generator.create").DisableAntiforgery();
 
 app.MapGet("/api/datamatrix/preview", (string text, string? profile, ILabelGenerator labelGenerator) =>
 {
@@ -1182,7 +1182,7 @@ app.MapGet("/api/datamatrix/preview", (string text, string? profile, ILabelGener
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("generator.create");
 
 // Scan Endpoints
 app.MapPost("/api/scan/product", async (ScanRequest request, IMediator mediator) =>
@@ -1648,7 +1648,7 @@ app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator med
         return Results.NotFound(new { message = "Barkod bulunamadı." });
     }
     return Results.Ok(result);
-}).RequireAuthorization("ViewerOrAbove");
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("traceability.view");
 
 app.MapGet("/api/barcodes/public/search", async ([FromQuery] string code, IMediator mediator) =>
 {
@@ -1748,3 +1748,4 @@ public record PrintCodesRequest(
 
 public record PrintTestRequest(string IpAddress, int Port);
 public record PrintNetworkRequest(string IpAddress, int Port);
+
