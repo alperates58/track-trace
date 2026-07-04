@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getPrintProvider } from '../services/printProvider';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { TTCard, TTPageHeader } from '../components/common';
-import { Settings, MonitorPlay, FileDown, Server, Info, Copy, Check } from 'lucide-react';
+import { TTCard, TTPageHeader, TTButton } from '../components/common';
+import { Settings, MonitorPlay, FileDown, Server, Info, Copy, Check, Save, Printer } from 'lucide-react';
 
 interface PrintConfig {
   printMode: 'browser' | 'pdf' | 'zpl' | 'agent';
@@ -370,7 +370,7 @@ export const PrintSettings: React.FC = () => {
               <div className="form-group">
                 <label>Varsayılan Yazdırma Modu</label>
                 <select 
-                  className="input" 
+                  className="form-input" 
                   value={config.printMode} 
                   onChange={(e) => handleSaveLocal({ printMode: e.target.value as any })}
                 >
@@ -392,7 +392,7 @@ export const PrintSettings: React.FC = () => {
               <div className="form-group">
                 <label>Varsayılan Etiket Tipi</label>
                 <select 
-                  className="input" 
+                  className="form-input" 
                   value={config.defaultLabelType}
                   onChange={(e) => handleSaveLocal({ defaultLabelType: e.target.value as any })}
                 >
@@ -404,7 +404,7 @@ export const PrintSettings: React.FC = () => {
               <div className="form-group">
                 <label>Varsayılan Format</label>
                 <select 
-                  className="input" 
+                  className="form-input" 
                   value={config.defaultFormat}
                   onChange={(e) => handleSaveLocal({ defaultFormat: e.target.value as any })}
                 >
@@ -451,20 +451,20 @@ export const PrintSettings: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
-                <button 
-                  className="btn btn-secondary" 
+                <TTButton 
+                  variant="primary" 
                   onClick={() => handleSaveGlobal(config)}
-                  style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                  icon={<Save size={16} />}
                 >
                   Şu Anki Ayarları Global Olarak Kaydet
-                </button>
-                <button 
-                  className="btn btn-secondary" 
+                </TTButton>
+                <TTButton 
+                  variant="secondary" 
                   onClick={handleTestPrint}
-                  style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                  icon={<Printer size={16} />}
                 >
                   Test Etiketi Yazdır
-                </button>
+                </TTButton>
               </div>
 
               {testMessage && (
@@ -588,7 +588,7 @@ export const PrintSettings: React.FC = () => {
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <input
                       type="password"
-                      className="input"
+                      className="form-input"
                       placeholder="Local Agent kurulumu bittiğinde ekranda gösterilen token'ı buraya yapıştırın"
                       value={agentToken}
                       onChange={(e) => handleTokenChange(e.target.value)}
@@ -633,7 +633,7 @@ export const PrintSettings: React.FC = () => {
                     {agentStatus === 'online' && agentPrinters.length > 0 && (
                       <div style={{ marginTop: '8px' }}>
                         <select 
-                          className="input" 
+                          className="form-input" 
                           style={{ width: '100%', maxWidth: '250px', padding: '6px', fontSize: '0.85rem' }}
                           value={selectedAgentPrinter}
                           onChange={(e) => handleUpdateAgentPrinter(e.target.value)}
