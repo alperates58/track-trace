@@ -1193,13 +1193,13 @@ app.MapPost("/api/scan/product", async (ScanRequest request, IMediator mediator)
         return Results.BadRequest(response);
     }
     return Results.Ok(response);
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("scan.create");
 
 app.MapGet("/api/scan/current-carton", async ([FromQuery] Guid orderId, [FromQuery] Guid stationId, IMediator mediator) =>
 {
     var response = await mediator.Send(new GetCurrentCartonQuery(orderId, stationId));
     return Results.Ok(response);
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("scan.view");
 
 // Cartons Endpoints
 app.MapGet("/api/cartons", async (
@@ -1402,7 +1402,7 @@ app.MapPost("/api/print/test-network", async ([FromBody] PrintTestRequest reques
     {
         return Results.BadRequest(new { message = $"Yazdırma hatası: {ex.Message}" });
     }
-}).RequireAuthorization("OperatorOrAdmin");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("scan.print");
 
 app.MapPost("/api/cartons/{id:guid}/print-network", async (Guid id, [FromBody] PrintNetworkRequest request, IMediator mediator) =>
 {
@@ -1731,7 +1731,7 @@ app.MapPost("/api/print/test", (TestPrintRequest request, ILabelGenerator labelG
         var pdfBytes = labelGenerator.GenerateTestPdfLabel();
         return Results.File(pdfBytes, "application/pdf", "test_label.pdf");
     }
-});
+}).RequireAuthorization("AdminOnly").RequirePermission("scan.print");
 
 app.Run();
 
