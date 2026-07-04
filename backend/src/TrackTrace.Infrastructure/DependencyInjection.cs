@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<ILabelGenerator, LabelGenerator>();
         services.AddScoped<IReportPdfGenerator, ReportPdfGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddMemoryCache();
         services.AddHttpContextAccessor();
         return services;
     }

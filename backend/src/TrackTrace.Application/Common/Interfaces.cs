@@ -55,3 +55,8 @@ public interface IReportPdfGenerator
         int maxMissingSummaryRows,
         System.Threading.CancellationToken cancellationToken);
 }
+
+public interface IPermissionService
+{
+    Task<bool> HasPermissionAsync(string role, string permissionKey);
+}

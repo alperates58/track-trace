@@ -17,6 +17,7 @@ using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
 using Serilog;
 using TrackTrace.Application;
+using TrackTrace.Api.Security;
 using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
 using TrackTrace.Application.Features.Auth;
@@ -1679,7 +1680,7 @@ app.MapGet("/api/system/info", async (IMediator mediator, IConfiguration config)
 
     var result = await mediator.Send(new GetSystemInfoQuery(version, date, sha, frontendUrl));
     return Results.Ok(result);
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("AdminOnly").RequirePermission("system.view");
 
 app.MapGet("/api/system/health", async (IDbConnectionFactory dbFactory) =>
 {
