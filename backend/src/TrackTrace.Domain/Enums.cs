@@ -19,7 +19,10 @@ public enum ProductCodeStatus
 public enum CartonStatus
 {
     Open,
+    PrePrinted,
+    Filling,
     Closed,
+    Void,
     Printed,
     Palletized
 }

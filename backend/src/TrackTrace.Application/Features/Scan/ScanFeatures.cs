@@ -97,13 +97,55 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             string orderNo = order.orderno;
             string? orderStockCode = order.stockcode;
 
-            // 3. SELECT OPEN CARTON WITH LOCK
-            const string openCartonSql = @"
-                SELECT * FROM Cartons 
-                WHERE OrderId = @OrderId AND StockCode = @StockCode AND StationId = @StationId AND Status = 'Open' 
-                ORDER BY CreatedAt DESC 
-                LIMIT 1 FOR UPDATE";
-            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = req.OrderId, StockCode = orderStockCode, StationId = req.StationId }, transaction);
+            // 3. SELECT OPEN/FILLING CARTON WITH LOCK
+            dynamic carton = null;
+            if (req.Mode == "PrePrinted")
+            {
+                if (req.ActiveCartonId == null)
+                {
+                    return new ScanResponse(false, "Aktif koli bulunamadı. Lütfen önce koli barkodunu okutun.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                }
+
+                const string fillingCartonSql = @"
+                    SELECT * FROM Cartons 
+                    WHERE Id = @ActiveCartonId
+                    FOR UPDATE";
+                carton = await connection.QueryFirstOrDefaultAsync<dynamic>(fillingCartonSql, new { ActiveCartonId = req.ActiveCartonId }, transaction);
+                
+                if (carton == null)
+                {
+                    return new ScanResponse(false, "Koli bulunamadı.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                }
+                
+                if (carton.status != CartonStatus.Filling.ToString())
+                {
+                    return new ScanResponse(false, "Koli doldurulabilir durumda değil.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                }
+
+                if ((Guid?)carton.assigneduserid != _currentUserService.UserId || (Guid?)carton.openedby != _currentUserService.UserId)
+                {
+                    return new ScanResponse(false, "Bu koli başka bir kullanıcı tarafından açılmış.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                }
+
+                if ((Guid?)carton.stationid != req.StationId)
+                {
+                    return new ScanResponse(false, "Aktif koli farklı bir istasyonda okutuluyor. Lütfen doğru istasyonu seçin.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                }
+                
+                if ((Guid)carton.orderid != req.OrderId)
+                {
+                     return new ScanResponse(false, "Okutulan koli seçili siparişe ait değil!", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                }
+            }
+            else
+            {
+                const string openCartonSql = @"
+                    SELECT * FROM Cartons 
+                    WHERE OrderId = @OrderId AND StationId = @StationId AND Status = @StatusOpen 
+                    ORDER BY CreatedAt DESC 
+                    LIMIT 1 FOR UPDATE";
+                carton = await connection.QueryFirstOrDefaultAsync<dynamic>(openCartonSql, new { OrderId = req.OrderId, StationId = req.StationId, StatusOpen = CartonStatus.Open.ToString() }, transaction);
+            }
 
             Guid cartonId;
             string cartonNo;
@@ -111,7 +153,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             int actualQty;
             bool newlyCreated = false;
 
-            if (carton == null)
+            if (carton == null && req.Mode != "PrePrinted")
             {
                 // Create a new Carton
                 cartonId = Guid.NewGuid();
@@ -143,8 +185,6 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
                     CreatedBy = _currentUserService.UserId,
                     CreatedAt = DateTime.UtcNow
                 }, transaction);
-
-                newlyCreated = true;
             }
             else
             {
@@ -170,7 +210,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
 
             // 5. UPDATE CARTON QUANTITY
             actualQty++;
-            string cartonStatus = CartonStatus.Open.ToString();
+            string cartonStatus = req.Mode == "PrePrinted" ? CartonStatus.Filling.ToString() : CartonStatus.Open.ToString();
             DateTime? closedAt = null;
 
             if (actualQty >= productPerCarton)

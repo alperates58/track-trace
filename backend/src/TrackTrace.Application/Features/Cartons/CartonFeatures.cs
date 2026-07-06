@@ -125,7 +125,11 @@ public class CartonHandlers :
             (DateTime)x.createdat,
             (DateTime?)x.closedat,
             (DateTime?)x.printedat,
-            (string?)x.username
+            (string?)x.username,
+            (string)x.mode,
+            (Guid?)x.preprintbatchid,
+            (int)x.printcount,
+            (string?)x.voidreason
         ));
 
         return (cartonDtos, totalCount);
@@ -163,7 +167,11 @@ public class CartonHandlers :
             (DateTime)x.createdat,
             (DateTime?)x.closedat,
             (DateTime?)x.printedat,
-            (string?)x.username
+            (string?)x.username,
+            (string)x.mode,
+            (Guid?)x.preprintbatchid,
+            (int)x.printcount,
+            (string?)x.voidreason
         );
     }
 

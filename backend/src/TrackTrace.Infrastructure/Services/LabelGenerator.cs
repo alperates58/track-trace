@@ -171,6 +171,10 @@ public class LabelGenerator : ILabelGenerator
                             barcode.Item().AlignCenter().Text("SSCC BARCODE").Bold().FontSize(8).FontColor(Colors.Grey.Darken3);
                             barcode.Item().AlignCenter().Width(75).Height(75).Image(qrCodeImageBytes);
                             barcode.Item().AlignCenter().Text($"(00){carton.SSCC}").Bold().FontSize(9);
+                            if (carton.PrintCount > 0)
+                            {
+                                barcode.Item().AlignCenter().Text(carton.PrintCount > 1 ? $"Tekrar Baskı: {carton.PrintCount}" : $"Baskı: {carton.PrintCount}").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                            }
                         });
                     });
                 });
@@ -180,8 +184,129 @@ public class LabelGenerator : ILabelGenerator
         return stream.ToArray();
     }
 
+    public byte[] GenerateBatchCartonPdfLabel(System.Collections.Generic.IEnumerable<CartonDto> cartons, OrderDto order)
+    {
+        using var stream = new MemoryStream();
+        
+        Document.Create(container =>
+        {
+            foreach(var carton in cartons)
+            {
+                byte[] qrCodeImageBytes = GenerateQRCodeBytes($"{_frontendUrl}/?code={carton.SSCC}");
+                container.Page(page =>
+                {
+                    page.Size(100, 80, Unit.Millimetre);
+                    page.Margin(4, Unit.Millimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
+
+                    page.Content().Border(1).BorderColor(Colors.Black).Padding(4).Column(col =>
+                    {
+                        col.Spacing(2);
+
+                        col.Item().AlignCenter().Text("KOLİ ETİKETİ / CARTON LABEL").Bold().FontSize(11);
+                        col.Item().LineHorizontal(0.5f);
+
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem(3).Column(details =>
+                            {
+                                details.Spacing(0);
+
+                                details.Item().Column(c =>
+                                {
+                                    c.Item().Text("Müşteri / Customer:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(order.CustomerName).Bold().FontSize(9);
+                                });
+
+                                details.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("Sipariş No / Order No:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(order.OrderNo).FontSize(8);
+                                    });
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("Stok Kodu / Stock Code:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(order.StockCode ?? "-").FontSize(8);
+                                    });
+                                });
+
+                                details.Item().Column(c =>
+                                {
+                                    c.Item().Text("Ürün Adı / Product Name:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                    c.Item().Text(order.ProductName ?? "-").FontSize(8);
+                                });
+
+                                details.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("İş Emri No:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(order.GTIN).FontSize(8);
+                                    });
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("Adet / Quantity:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text($"{carton.ActualQuantity} / {carton.TargetQuantity}").Bold().FontSize(9);
+                                    });
+                                });
+
+                                details.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("Koli No / Carton No:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(carton.CartonNo).FontSize(7);
+                                    });
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("Tarih / Date:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(7);
+                                    });
+                                });
+
+                                details.Item().Row(r =>
+                                {
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("İstasyon / Station:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(carton.StationName ?? "-").FontSize(7);
+                                    });
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text("Kullanıcı / User:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
+                                        c.Item().Text(carton.UserName ?? "-").FontSize(7);
+                                    });
+                                });
+                            });
+
+                            row.ConstantItem(12);
+
+                            row.RelativeItem(2).AlignMiddle().Column(barcode =>
+                            {
+                                barcode.Spacing(4);
+                                barcode.Item().AlignCenter().Text("SSCC BARCODE").Bold().FontSize(8).FontColor(Colors.Grey.Darken3);
+                                barcode.Item().AlignCenter().Width(75).Height(75).Image(qrCodeImageBytes);
+                                barcode.Item().AlignCenter().Text($"(00){carton.SSCC}").Bold().FontSize(9);
+                                if (carton.PrintCount > 0)
+                                {
+                                    barcode.Item().AlignCenter().Text(carton.PrintCount > 1 ? $"Tekrar Baskı: {carton.PrintCount}" : $"Baskı: {carton.PrintCount}").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
+                                }
+                            });
+                        });
+                    });
+                });
+            }
+        }).GeneratePdf(stream);
+
+        return stream.ToArray();
+    }
+
     public string GenerateCartonZplLabel(CartonDto carton, OrderDto order)
     {
+        string printText = carton.PrintCount > 0 ? (carton.PrintCount > 1 ? $"Tekrar Baski: {carton.PrintCount}" : $"Baski: {carton.PrintCount}") : "";
         return $@"^XA
 ^CI28
 ^PW800
@@ -204,6 +329,7 @@ public class LabelGenerator : ILabelGenerator
 ^FO500,110^A0N,20,20^FB280,1,0,C^FDSSCC BARCODE^FS
 ^FO525,150^BQN,2,7^FDQA,{_frontendUrl}/?code={carton.SSCC}^FS
 ^FO500,390^A0N,20,20^FB280,1,0,C^FD(00){carton.SSCC}^FS
+^FO600,420^A0N,18,18^FD{printText}^FS
 ^XZ";
     }
 
@@ -257,6 +383,11 @@ public class LabelGenerator : ILabelGenerator
         AddPplbQr(sb, 585, 185, qrData, 4);
         AddPplbText(sb, 572, 445, 2, ssccLines.ElementAtOrDefault(0) ?? $"(00){ssccData}");
         if (ssccLines.Length > 1) AddPplbText(sb, 602, 472, 2, ssccLines[1]);
+        if (carton.PrintCount > 0)
+        {
+            string printText = carton.PrintCount > 1 ? $"Tekrar Baski: {carton.PrintCount}" : $"Baski: {carton.PrintCount}";
+            AddPplbText(sb, 572, 500, 2, printText);
+        }
         sb.AppendLine("P1");
         return sb.ToString();
     }

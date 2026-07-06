@@ -53,15 +53,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultPolicy", policy =>
     {
-        var defaultOrigins = builder.Environment.IsDevelopment()
-            ? new[]
-            {
-                "https://track.alperates.com.tr",
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://localhost"
-            }
-            : new[] { "https://track.alperates.com.tr" };
+        var defaultOrigins = new[]
+        {
+            "https://track.alperates.com.tr",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://localhost:3030",
+            "http://localhost",
+            "http://127.0.0.1"
+        };
 
         var allowedOrigins = defaultOrigins
             .Concat(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
@@ -247,6 +247,14 @@ catch (Exception ex)
 // Health Endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
    .AllowAnonymous();
+
+// Public Endpoints
+app.MapGet("/api/public/verify", async (string code, IMediator mediator) =>
+{
+    var result = await mediator.Send(new TrackTrace.Application.Features.Public.VerifyCodeQuery(code));
+    if (!result.IsFound) return Results.NotFound();
+    return Results.Ok(result);
+}).AllowAnonymous();
 
 // Auth Endpoints
 app.MapPost("/api/auth/login", async (LoginRequest request, IMediator mediator) =>
@@ -1202,6 +1210,79 @@ app.MapGet("/api/scan/current-carton", async ([FromQuery] Guid orderId, [FromQue
 }).RequireAuthorization("OperatorOrAdmin").RequirePermission("scan.view");
 
 // Cartons Endpoints
+app.MapPost("/api/cartons/preprint", async ([FromBody] PrePrintCartonsCommand command, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(command);
+        if (command.Format.ToLower() == "pdf")
+            return Results.File(result.FileContent!, "application/pdf", $"PrePrintedCartons_{command.BatchId}.pdf");
+        else
+            return Results.Ok(new { zplText = result.ZplText });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.create");
+
+app.MapPost("/api/cartons/mark-printed", async ([FromBody] MarkCartonsPrintedCommand command, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(command);
+        return Results.Ok(new { success = result });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.print");
+
+app.MapPost("/api/scan/preprinted/open-carton", async ([FromBody] OpenPrePrintedCartonCommand command, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(command);
+        return Results.Ok(result);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("scan.create");
+
+app.MapPost("/api/cartons/{id:guid}/void", async (Guid id, [FromBody] VoidCartonRequest request, IMediator mediator) =>
+{
+    try
+    {
+        var result = await mediator.Send(new VoidCartonCommand(id, request.Reason));
+        return Results.Ok(new { success = result });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.void");
+
+app.MapPost("/api/cartons/{id:guid}/reprint", async (Guid id, [FromBody] ReprintCartonCommand command, IMediator mediator) =>
+{
+    try
+    {
+        if (id != command.CartonId) command = command with { CartonId = id };
+        var result = await mediator.Send(command);
+        if (command.Format.ToLower() == "pdf")
+            return Results.File(result.FileContent!, "application/pdf", $"ReprintCarton_{id}.pdf");
+        else
+            return Results.Ok(new { zplText = result.ZplText });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.print");
+
+// Pallets Endpoints
 app.MapGet("/api/cartons", async (
     [FromQuery] int? pageNumber,
     [FromQuery] int? pageSize,

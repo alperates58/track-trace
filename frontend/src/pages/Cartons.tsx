@@ -35,6 +35,8 @@ interface Carton {
   closedAt: string | null;
   printedAt: string | null;
   stationName?: string;
+  printCount?: number;
+  mode?: string;
 }
 
 interface Station {
@@ -123,7 +125,19 @@ const CartonTableRow: React.FC<{
       </td>
       <td>
         <span className={`badge badge-${c.status.toLowerCase()}`}>
-          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : 'Paletlendi'}
+          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : 'Paletlendi'}
+        </span>
+      </td>
+      <td>
+        {c.mode === 'PrePrinted' ? (
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#4338ca' }}>Ön Etiketli</span>
+        ) : (
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#475569' }}>Oto Koli</span>
+        )}
+      </td>
+      <td>
+        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: c.printCount ? '#059669' : '#94a3b8' }}>
+          {c.printCount || 0}
         </span>
       </td>
       <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{sonIslemFormatted}</td>
@@ -156,7 +170,7 @@ const CartonMobileCard: React.FC<{
       <div className="mobile-card-row" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '4px' }}>
         <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>{c.cartonNo}</span>
         <span className={`badge badge-${c.status.toLowerCase()}`}>
-          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : 'Paletlendi'}
+          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : 'Paletlendi'}
         </span>
       </div>
       
@@ -178,6 +192,13 @@ const CartonMobileCard: React.FC<{
       <div className="mobile-card-row">
         <span className="mobile-card-label">SSCC:</span>
         <span className="mobile-card-value" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{c.sscc}</span>
+      </div>
+
+      <div className="mobile-card-row">
+        <span className="mobile-card-label">Mod / Yazdırma:</span>
+        <span className="mobile-card-value" style={{ fontSize: '0.8rem' }}>
+          {c.mode === 'PrePrinted' ? 'Ön Etiketli' : 'Oto'} | Çıktı: {c.printCount || 0}
+        </span>
       </div>
 
       <div className="mobile-card-row" style={{ alignItems: 'flex-start' }}>
@@ -243,6 +264,26 @@ export const Cartons: React.FC = () => {
 
   // Decompose count tracking for cancelled KPIs in this session
   const [cancelledSessionCount, setCancelledSessionCount] = useState(0);
+
+  // Pre-Print Modal State
+  const [isPrePrintModalOpen, setIsPrePrintModalOpen] = useState(false);
+  const [prePrintOrderId, setPrePrintOrderId] = useState('');
+  const [prePrintQuantity, setPrePrintQuantity] = useState(1);
+  const [prePrintFormat, setPrePrintFormat] = useState('PDF'); // PDF, ZPL, PPLB
+  const [prePrintStationId, setPrePrintStationId] = useState('');
+  const [prePrintProviderMode, setPrePrintProviderMode] = useState('browser');
+  const [prePrintSubmitting, setPrePrintSubmitting] = useState(false);
+
+  // Load print settings for pre-print default
+  useEffect(() => {
+    const localSettings = localStorage.getItem('trackTrace_printSettings');
+    if (localSettings) {
+      try {
+        const parsed = JSON.parse(localSettings);
+        if (parsed.printMode) setPrePrintProviderMode(parsed.printMode);
+      } catch (e) {}
+    }
+  }, []);
 
   // Fetch all cartons, orders, and stats in one go
   const loadAllData = async (isManual = false) => {
@@ -499,6 +540,102 @@ export const Cartons: React.FC = () => {
     }
   };
 
+  const handlePrePrintSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prePrintOrderId || prePrintQuantity < 1) {
+      alert("Lütfen sipariş ve miktar seçin.");
+      return;
+    }
+
+    setPrePrintSubmitting(true);
+    const requestId = crypto.randomUUID(); // Idempotency key
+
+    try {
+      if (prePrintFormat === 'PDF') {
+        // PDF download behavior
+        const res = await fetch(`/api/cartons/preprint`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('trackTrace_token')}`
+          },
+          body: JSON.stringify({
+            orderId: prePrintOrderId,
+            quantity: prePrintQuantity,
+            format: prePrintFormat,
+            stationId: prePrintStationId || null,
+            requestId: requestId
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || 'PDF oluşturulamadı.');
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `PrePrinted_Labels.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        // ZPL/PPLB behavior
+        const res = await api.post('/api/cartons/preprint', {
+          orderId: prePrintOrderId,
+          quantity: prePrintQuantity,
+          format: prePrintFormat,
+          stationId: prePrintStationId || null,
+          requestId: requestId
+        });
+
+        if (res.success && res.content) {
+           if (prePrintProviderMode === 'browser' || prePrintProviderMode === 'pdf') {
+             // Just show or download the text
+             const blob = new Blob([res.content], { type: 'text/plain' });
+             const url = window.URL.createObjectURL(blob);
+             const a = document.createElement('a');
+             a.href = url;
+             a.download = `PrePrinted_${prePrintFormat}.txt`;
+             document.body.appendChild(a);
+             a.click();
+             a.remove();
+             window.URL.revokeObjectURL(url);
+           } else {
+             // Kiosk / Network print
+             try {
+                const provider = getPrintProvider(prePrintProviderMode);
+                await provider.testPrint(res.content); // Send raw string to kiosk
+                alert("Etiketler yazıcıya gönderildi!");
+             } catch (printErr: any) {
+                alert("Yazıcıya gönderilirken hata oluştu: " + printErr.message + "\nLütfen çıktı dosyasını indirip manuel yazdırın.");
+                // fallback download
+                const blob = new Blob([res.content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `PrePrinted_${prePrintFormat}_fallback.txt`;
+                a.click();
+             }
+           }
+        } else {
+          throw new Error(res.message || 'Etiket üretilemedi.');
+        }
+      }
+
+      setIsPrePrintModalOpen(false);
+      setPrePrintQuantity(1);
+      await loadAllData();
+    } catch (err: any) {
+      alert("Ön Etiket Basım Hatası: " + err.message);
+    } finally {
+      setPrePrintSubmitting(false);
+    }
+  };
+
   const handleDecompose = async (cartonId: string) => {
     if (!confirm("Bu koliyi bozmak istediğinize emin misiniz? Kolideki tüm ürünler 'Okutuldu' (scanned) durumundan çıkıp 'Yüklendi' (uploaded) durumuna geri dönecek ve koli tamamen silinecektir.")) return;
     try {
@@ -582,14 +719,24 @@ export const Cartons: React.FC = () => {
         title="Koli Yönetimi"
         description="Oluşturulan kolilerin durumları, içerdikleri ürünler ve etiket yazdırma işlemleri."
         actions={
-          <TTButton 
-            variant="secondary" 
-            disabled={loading || refreshing} 
-            onClick={() => loadAllData(true)}
-            icon={<RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />}
-          >
-            {refreshing ? 'Güncelleniyor...' : 'Verileri Yenile'}
-          </TTButton>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <TTButton 
+              variant="primary" 
+              disabled={loading || refreshing} 
+              onClick={() => setIsPrePrintModalOpen(true)}
+              icon={<Printer size={16} />}
+            >
+              Ön Etiket Bas
+            </TTButton>
+            <TTButton 
+              variant="secondary" 
+              disabled={loading || refreshing} 
+              onClick={() => loadAllData(true)}
+              icon={<RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />}
+            >
+              {refreshing ? 'Güncelleniyor...' : 'Verileri Yenile'}
+            </TTButton>
+          </div>
         }
       />
 
@@ -862,6 +1009,8 @@ export const Cartons: React.FC = () => {
                                   <th>SSCC (18 Hane)</th>
                                   <th>Doluluk</th>
                                   <th>Durum</th>
+                                  <th>Mod</th>
+                                  <th>Baskı</th>
                                   <th>Son İşlem</th>
                                   <th>Aksiyonlar</th>
                                 </tr>
@@ -987,6 +1136,8 @@ export const Cartons: React.FC = () => {
                 <th>SSCC (18 Hane)</th>
                 <th>Doluluk</th>
                 <th>Durum</th>
+                <th>Mod</th>
+                <th>Baskı</th>
                 <th>Son İşlem</th>
                 <th>Aksiyonlar</th>
               </tr>
@@ -1308,6 +1459,91 @@ export const Cartons: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Pre-Print Modal */}
+      {isPrePrintModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>Ön Etiket Bas (Boş Koli)</h3>
+              <button className="btn-icon" onClick={() => setIsPrePrintModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handlePrePrintSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label>Sipariş Seçin <span style={{ color: 'red' }}>*</span></label>
+                <select 
+                  className="form-input" 
+                  value={prePrintOrderId} 
+                  onChange={(e) => setPrePrintOrderId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Seçiniz --</option>
+                  {orders.map(o => (
+                    <option key={o.id} value={o.id}>
+                      {o.orderNo} - {o.productName} ({o.stockCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Basılacak Koli Adedi <span style={{ color: 'red' }}>*</span></label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  min="1" 
+                  max="500" 
+                  value={prePrintQuantity} 
+                  onChange={(e) => setPrePrintQuantity(parseInt(e.target.value) || 1)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Çıktı Formatı</label>
+                <select 
+                  className="form-input" 
+                  value={prePrintFormat} 
+                  onChange={(e) => setPrePrintFormat(e.target.value)}
+                >
+                  <option value="PDF">PDF Dosyası (İndir)</option>
+                  <option value="ZPL">ZPL (Zebra)</option>
+                  <option value="PPLB">PPLB (Argox)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>İstasyon (Opsiyonel)</label>
+                <select 
+                  className="form-input" 
+                  value={prePrintStationId} 
+                  onChange={(e) => setPrePrintStationId(e.target.value)}
+                >
+                  <option value="">-- İstasyon Seçilmedi (Varsayılan) --</option>
+                  {stations.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
+                  Eğer seçilmezse istasyonsuz (genel) koli olarak basılır.
+                </span>
+              </div>
+
+              <div className="modal-footer" style={{ marginTop: '16px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsPrePrintModalOpen(false)} disabled={prePrintSubmitting}>
+                  İptal
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={prePrintSubmitting}>
+                  {prePrintSubmitting ? 'Üretiliyor...' : 'Oluştur ve Yazdır'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

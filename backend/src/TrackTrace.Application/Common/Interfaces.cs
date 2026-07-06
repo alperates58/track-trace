@@ -31,6 +31,7 @@ public interface IAuditLogService
 public interface ILabelGenerator
 {
     byte[] GenerateCartonPdfLabel(CartonDto carton, OrderDto order);
+    byte[] GenerateBatchCartonPdfLabel(System.Collections.Generic.IEnumerable<CartonDto> cartons, OrderDto order);
     string GenerateCartonZplLabel(CartonDto carton, OrderDto order);
     string GenerateCartonPplbLabel(CartonDto carton, OrderDto order);
     byte[] GeneratePalletPdfLabel(PalletDto pallet, OrderDto order, int cartonCount);

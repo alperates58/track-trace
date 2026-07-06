@@ -6,6 +6,7 @@ import { Orders } from './pages/Orders';
 import { Scan } from './pages/Scan';
 import { Cartons } from './pages/Cartons';
 import { Pallets } from './pages/Pallets';
+import { PrePrintedScan } from './pages/PrePrintedScan';
 import { PublicBarcodeSearch } from './pages/PublicBarcodeSearch';
 import { TraceabilityCenter } from './pages/TraceabilityCenter';
 import { DataMatrixCreator } from './pages/DataMatrixCreator';
@@ -71,6 +72,7 @@ const AppShell: React.FC = () => {
     ...(showDashboard ? ['dashboard'] : []),
     ...(showOrders ? ['orders'] : []),
     ...(showScan ? ['scan'] : []),
+    ...(showScan ? ['preprint-scan'] : []),
     ...(showCartons ? ['cartons'] : []),
     ...(showPallets ? ['pallets'] : []),
     ...(showTraceability ? ['traceability'] : []),
@@ -106,6 +108,8 @@ const AppShell: React.FC = () => {
         return showOrders ? <Orders /> : <Unauthorized />;
       case 'scan':
         return showScan ? <Scan /> : <Unauthorized />;
+      case 'preprint-scan':
+        return showScan ? <PrePrintedScan /> : <Unauthorized />;
       case 'cartons':
         return showCartons ? <Cartons /> : <Unauthorized />;
       case 'pallets':
@@ -180,14 +184,24 @@ const AppShell: React.FC = () => {
                 )}
 
                 {showScan && (
-                  <div 
-                    className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
-                    onClick={() => handleTabClick('scan')}
-                    title="Ürün Okutma (Scan)"
-                  >
-                    <Barcode size={18} style={{ flexShrink: 0 }} />
-                    <span>Ürün Okutma (Scan)</span>
-                  </div>
+                  <>
+                    <div 
+                      className={`sidebar-link ${activeTab === 'scan' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('scan')}
+                      title="Otomatik Koli Modu (Scan)"
+                    >
+                      <Barcode size={18} style={{ flexShrink: 0 }} />
+                      <span>Otomatik Koli Modu</span>
+                    </div>
+                    <div 
+                      className={`sidebar-link ${activeTab === 'preprint-scan' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('preprint-scan')}
+                      title="Ön Etiketli Koli Modu"
+                    >
+                      <Barcode size={18} style={{ flexShrink: 0 }} />
+                      <span>Ön Etiketli Koli Modu</span>
+                    </div>
+                  </>
                 )}
 
                 {showCartons && (
@@ -362,7 +376,7 @@ const AppShell: React.FC = () => {
             <div className="header-title-area">
               <span className="header-breadcrumb">TrackTrace / {activeTab === 'dashboard' ? 'Operations' : activeTab === 'users' || activeTab === 'system' ? 'Administration' : 'Module'}</span>
               <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
-                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Ürün Okutma Terminali' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'stations' ? 'İstasyon Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Otomatik Koli Modu' : activeTab === 'preprint-scan' ? 'Ön Etiketli Koli Modu' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'stations' ? 'İstasyon Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </h2>
             </div>
           </div>
