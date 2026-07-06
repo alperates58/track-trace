@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
-import { Volume2, VolumeX, Barcode, Printer } from 'lucide-react';
+import { Volume2, VolumeX, Barcode, Printer, Camera } from 'lucide-react';
+import { CameraScanner } from '../components/CameraScanner';
 
 interface Station {
   id: string;
@@ -60,6 +61,7 @@ export const PrePrintedScan: React.FC = () => {
 
   const [printMode, setPrintMode] = useState<string>('browser');
   const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(true);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -331,11 +333,8 @@ export const PrePrintedScan: React.FC = () => {
     setIsSettingsModalOpen(false);
   };
 
-  const handleScanSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = barcodeInput.trim();
+  const processBarcode = async (code: string) => {
     if (!code) return;
-    setBarcodeInput(''); // clear immediately
 
     if (!selectedStationId) {
       playSound('warning');
@@ -427,6 +426,14 @@ export const PrePrintedScan: React.FC = () => {
     } catch (err: any) {
       handleScanError(code, err.message || 'Bağlantı hatası.');
     }
+  };
+
+  const handleScanSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = barcodeInput.trim();
+    if (!code) return;
+    setBarcodeInput('');
+    await processBarcode(code);
   };
 
   const handleScanError = (code: string, errorMsg: string) => {
@@ -628,6 +635,27 @@ export const PrePrintedScan: React.FC = () => {
           >
             {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             {soundEnabled ? 'Ses Açık' : 'Ses Kapalı'}
+          </button>
+
+          {/* Camera Settings Button */}
+          <button
+            className="btn"
+            style={{ 
+              height: '42px', 
+              padding: '0 16px', 
+              borderRadius: '8px', 
+              backgroundColor: '#fef3c7',
+              border: '1px solid #fde68a',
+              color: '#d97706',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 600
+            }}
+            onClick={(e) => { e.stopPropagation(); setIsCameraOpen(true); }}
+          >
+            <Camera size={18} />
+            Kamera ile Okut
           </button>
 
           {/* Printer Settings Button */}
@@ -1109,6 +1137,12 @@ export const PrePrintedScan: React.FC = () => {
           </div>
         </div>
       )}
+
+      <CameraScanner 
+        isOpen={isCameraOpen} 
+        onClose={() => setIsCameraOpen(false)} 
+        onScan={processBarcode} 
+      />
     </div>
   );
 };
