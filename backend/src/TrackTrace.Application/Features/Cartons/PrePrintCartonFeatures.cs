@@ -112,7 +112,7 @@ public class PrePrintCartonsCommandHandler : IRequestHandler<PrePrintCartonsComm
             for (int i = 0; i < request.Quantity; i++)
             {
                 int nextCartonCount = await connection.ExecuteScalarAsync<int>(
-                    "SELECT COALESCE(MAX(CAST(SPLIT_PART(CartonNo, '-', 2) AS INTEGER)), 0) + 1 FROM Cartons WHERE OrderId = @OrderId",
+                    "SELECT COALESCE(MAX(CAST(SUBSTRING(CartonNo FROM '[0-9]+$') AS INTEGER)), 0) + 1 FROM Cartons WHERE OrderId = @OrderId AND Mode = 'PrePrinted'",
                     new { request.OrderId }, transaction);
 
                 string cartonNo = $"{order.orderno}-{nextCartonCount}";
