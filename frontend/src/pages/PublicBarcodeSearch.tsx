@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { AlertCircle, Package, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Package, ShieldCheck, Barcode, Copy, Check } from 'lucide-react';
 
 interface VerifyResponse {
   isFound: boolean;
@@ -12,12 +12,15 @@ interface VerifyResponse {
   targetQuantity: number;
   status: string | null;
   createdAt: string | null;
+  cartonItems: string[] | null;
 }
 
 export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
 
   useEffect(() => {
     const fetchPublicData = async () => {
@@ -40,6 +43,22 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
       setLoading(false);
     }
   }, [code]);
+
+  const copyToClipboard = (text: string, index: number) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }).catch(err => console.error('Kopyalama başarısız', err));
+  };
+
+  const copyAllCodes = () => {
+    if (!result?.cartonItems) return;
+    const textToCopy = result.cartonItems.join('\n');
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopiedAll(true);
+      setTimeout(() => setCopiedAll(false), 2000);
+    }).catch(err => console.error('Tümünü kopyalama başarısız', err));
+  };
 
   if (loading) {
     return (
@@ -148,6 +167,79 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
             </div>
           </div>
         </div>
+
+        {/* Content list card (Alt Alta Kodlar) */}
+        {result.cartonItems && result.cartonItems.length > 0 && (
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '16px', padding: '20px',
+            boxShadow: 'var(--shadow-md)', border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Barcode size={20} color="var(--success)" />
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  İçerik ({result.cartonItems.length} {isPallet ? 'Koli' : 'Ürün'})
+                </h3>
+              </div>
+              <button 
+                onClick={copyAllCodes}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600,
+                  color: 'var(--primary)', border: '1px solid #e2e8f0', backgroundColor: 'transparent',
+                  padding: '6px 12px', borderRadius: '8px', cursor: 'pointer'
+                }}
+              >
+                {copiedAll ? (
+                  <>
+                    <Check size={14} color="var(--success)" /> Kopyalandı
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} /> Tümünü Kopyala
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {result.cartonItems.map((item, idx) => (
+                <div key={idx} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 14px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0',
+                  borderRadius: '10px'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, marginRight: '12px' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8' }}>
+                      {isPallet ? 'Koli' : 'Ürün'} #{idx + 1}
+                    </span>
+                    <span style={{
+                      fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600,
+                      color: '#334155', wordBreak: 'break-all', lineHeight: '1.4'
+                    }}>
+                      {item}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => copyToClipboard(item, idx)}
+                    style={{
+                      border: 'none', backgroundColor: '#fff', width: '32px', height: '32px',
+                      borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', borderStyle: 'solid', borderWidth: '1px', borderColor: '#e2e8f0',
+                      flexShrink: 0
+                    }}
+                    title="Kopyala"
+                  >
+                    {copiedIndex === idx ? (
+                      <Check size={14} color="var(--success)" />
+                    ) : (
+                      <Copy size={14} color="#64748b" />
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: '16px', color: '#94a3b8', fontSize: '0.85rem' }}>
           Lider Kozmetik Track & Trace Güvenli Doğrulama Sistemi

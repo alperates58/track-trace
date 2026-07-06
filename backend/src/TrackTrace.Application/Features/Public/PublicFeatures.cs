@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -19,7 +20,8 @@ public record VerifyCodeResponse(
     int ActualQuantity,
     int TargetQuantity,
     string? Status, // Hazır, Dolduruluyor, Tamamlandı, Paletlendi, İptal vb.
-    DateTime? CreatedAt
+    DateTime? CreatedAt,
+    List<string>? CartonItems
 );
 
 public class VerifyCodeQueryHandler : IRequestHandler<VerifyCodeQuery, VerifyCodeResponse>
@@ -47,16 +49,23 @@ public class VerifyCodeQueryHandler : IRequestHandler<VerifyCodeQuery, VerifyCod
 
         if (pallet != null)
         {
+            var palletId = (Guid)pallet.id;
+            var palletCartons = await connection.QueryAsync<string>(
+                "SELECT c.SSCC FROM PalletCartons pc JOIN Cartons c ON pc.CartonId = c.Id WHERE pc.PalletId = @PalletId", 
+                new { PalletId = palletId }
+            );
+
             return new VerifyCodeResponse(
                 true,
                 "Pallet",
                 (string)pallet.palletno,
                 (string)pallet.orderno,
                 (string?)pallet.productname,
-                Convert.ToInt32(pallet.totalproductcount),
-                Convert.ToInt32(pallet.totalproductcount), // target qty for pallet is dynamic
+                Convert.ToInt32(pallet.totalproductcount ?? 0),
+                Convert.ToInt32(pallet.totalproductcount ?? 0), // target qty for pallet is dynamic
                 TranslatePalletStatus((string)pallet.status),
-                (DateTime)pallet.createdat
+                (DateTime)pallet.createdat,
+                palletCartons.AsList()
             );
         }
 
@@ -69,6 +78,12 @@ public class VerifyCodeQueryHandler : IRequestHandler<VerifyCodeQuery, VerifyCod
 
         if (carton != null)
         {
+            var cartonId = (Guid)carton.id;
+            var cartonProducts = await connection.QueryAsync<string>(
+                "SELECT RawCode FROM ProductCodes WHERE CartonId = @CartonId ORDER BY CreatedAt ASC", 
+                new { CartonId = cartonId }
+            );
+
             return new VerifyCodeResponse(
                 true,
                 "Carton",
@@ -78,11 +93,12 @@ public class VerifyCodeQueryHandler : IRequestHandler<VerifyCodeQuery, VerifyCod
                 Convert.ToInt32(carton.actualquantity),
                 Convert.ToInt32(carton.targetquantity),
                 TranslateCartonStatus((string)carton.status),
-                (DateTime)carton.createdat
+                (DateTime)carton.createdat,
+                cartonProducts.AsList()
             );
         }
 
-        return new VerifyCodeResponse(false, null, null, null, null, 0, 0, null, null);
+        return new VerifyCodeResponse(false, null, null, null, null, 0, 0, null, null, null);
     }
 
     private string TranslateCartonStatus(string status)

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
-import { X, Camera, RefreshCcw, CheckCircle2, AlertCircle, Maximize, PlayCircle } from 'lucide-react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { X, Camera, CheckCircle2, AlertCircle, Maximize, PlayCircle } from 'lucide-react';
 
 interface CameraScannerProps {
   onScan: (decodedText: string) => void;
@@ -16,8 +16,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   defaultContinuous = true
 }) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const [cameras, setCameras] = useState<any[]>([]);
-  const [activeCameraId, setActiveCameraId] = useState<string>('');
   const [isContinuous, setIsContinuous] = useState(defaultContinuous);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -30,40 +28,43 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       return;
     }
 
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length > 0) {
-        setCameras(devices);
-        // default to back camera if available, otherwise first camera
-        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('arka'));
-        setActiveCameraId(backCamera ? backCamera.id : devices[0].id);
-      } else {
-        setErrorMsg('Kamera bulunamadı veya erişim izni reddedildi.');
-      }
-    }).catch(err => {
-      setErrorMsg('Kamera izni alınamadı. Lütfen tarayıcı ayarlarından izin verin.');
-      console.error(err);
-    });
+    startScanner();
 
     return () => {
       stopScanner();
     };
   }, [isOpen]);
 
-  const startScanner = useCallback(async (cameraId: string) => {
+  const startScanner = useCallback(async () => {
     if (scannerRef.current) {
       await stopScanner();
     }
     
     setErrorMsg(null);
     try {
-      const scanner = new Html5Qrcode("reader");
+      const scanner = new Html5Qrcode("reader", {
+        verbose: false,
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.QR_CODE
+        ]
+      });
       scannerRef.current = scanner;
       await scanner.start(
-        cameraId,
+        { facingMode: "environment" },
         {
           fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            return {
+              width: viewfinderWidth * 0.9,
+              height: minEdge * 0.6
+            };
+          }
         },
         (decodedText) => {
           const now = Date.now();
@@ -77,16 +78,11 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         }
       );
     } catch (err) {
-      setErrorMsg('Kamera başlatılamadı.');
+      // Fallback if environment facingMode fails
+      setErrorMsg('Kamera başlatılamadı. Lütfen kamera izni verdiğinizden emin olun.');
       console.error(err);
     }
   }, []);
-
-  useEffect(() => {
-    if (isOpen && activeCameraId) {
-      startScanner(activeCameraId);
-    }
-  }, [isOpen, activeCameraId, startScanner]);
 
   const stopScanner = async () => {
     if (scannerRef.current) {
@@ -119,14 +115,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       }, 500);
     } else {
       setTimeout(() => setLastScanned(null), 1500); // clear visual feedback after 1.5s
-    }
-  };
-
-  const switchCamera = () => {
-    if (cameras.length > 1) {
-      const currentIndex = cameras.findIndex(c => c.id === activeCameraId);
-      const nextIndex = (currentIndex + 1) % cameras.length;
-      setActiveCameraId(cameras[nextIndex].id);
     }
   };
 
@@ -213,7 +201,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         {/* Controls */}
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#0f172a' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
             <button 
               className="btn"
               onClick={() => setIsContinuous(!isContinuous)}
@@ -234,29 +222,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               {isContinuous ? <PlayCircle size={18} /> : <Maximize size={18} />}
               {isContinuous ? 'Sürekli Mod' : 'Tek Okutma'}
             </button>
-
-            {cameras.length > 1 && (
-              <button 
-                className="btn btn-secondary"
-                onClick={switchCamera}
-                style={{ 
-                  flex: 1, 
-                  backgroundColor: '#334155',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  fontWeight: 600
-                }}
-              >
-                <RefreshCcw size={18} />
-                Kamera Değiştir
-              </button>
-            )}
           </div>
 
           <button 
