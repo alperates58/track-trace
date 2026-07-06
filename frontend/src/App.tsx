@@ -7,6 +7,7 @@ import { Scan } from './pages/Scan';
 import { Cartons } from './pages/Cartons';
 import { Pallets } from './pages/Pallets';
 import { PrePrintedScan } from './pages/PrePrintedScan';
+import { PrePrintWizard } from './pages/PrePrintWizard';
 import { PublicBarcodeSearch } from './pages/PublicBarcodeSearch';
 import { TraceabilityCenter } from './pages/TraceabilityCenter';
 import { DataMatrixCreator } from './pages/DataMatrixCreator';
@@ -73,7 +74,7 @@ const AppShell: React.FC = () => {
     ...(showOrders ? ['orders'] : []),
     ...(showScan ? ['scan'] : []),
     ...(showScan ? ['preprint-scan'] : []),
-    ...(showCartons ? ['cartons'] : []),
+    ...(showCartons ? ['cartons', 'preprint-create'] : []),
     ...(showPallets ? ['pallets'] : []),
     ...(showTraceability ? ['traceability'] : []),
     ...(showReports ? ['reports'] : []),
@@ -111,7 +112,9 @@ const AppShell: React.FC = () => {
       case 'preprint-scan':
         return showScan ? <PrePrintedScan /> : <Unauthorized />;
       case 'cartons':
-        return showCartons ? <Cartons /> : <Unauthorized />;
+        return showCartons ? <Cartons onNavigate={setActiveTab} /> : <Unauthorized />;
+      case 'preprint-create':
+        return showCartons ? <PrePrintWizard onNavigate={setActiveTab} /> : <Unauthorized />;
       case 'pallets':
         return showPallets ? <Pallets /> : <Unauthorized />;
       case 'traceability':

@@ -225,7 +225,7 @@ const CartonMobileCard: React.FC<{
   );
 };
 
-export const Cartons: React.FC = () => {
+export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const { user, hasPermission } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [cartons, setCartons] = useState<Carton[]>([]);
@@ -723,7 +723,7 @@ export const Cartons: React.FC = () => {
             <TTButton 
               variant="primary" 
               disabled={loading || refreshing} 
-              onClick={() => setIsPrePrintModalOpen(true)}
+              onClick={() => onNavigate && onNavigate('preprint-create')}
               icon={<Printer size={16} />}
             >
               Ön Etiket Bas

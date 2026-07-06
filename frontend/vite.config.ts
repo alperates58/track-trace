@@ -32,7 +32,7 @@ export default defineConfig({
     __APP_VERSION_INFO__: JSON.stringify({ version, commit, builtAt })
   },
   server: {
-    port: 5173,
+    port: 3030,
     host: true
   }
 })
