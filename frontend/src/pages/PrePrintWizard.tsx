@@ -4,7 +4,6 @@ import { getPrintProvider } from '../services/printProvider';
 import { 
   ArrowRight, 
   ArrowLeft, 
-  CheckCircle, 
   Printer, 
   Check,
   FileText
@@ -18,6 +17,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
   const [loading, setLoading] = useState(true);
 
   // Form State
+  const [selectedOrderNo, setSelectedOrderNo] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [format, setFormat] = useState('PDF'); // PDF, ZPL, PPLB
@@ -204,42 +204,48 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
             {/* STEP 1 */}
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Sipariş Seçimi</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', textAlign: 'center' }}>Sipariş Seçimi</h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                  {orders.map(o => (
-                    <div 
-                      key={o.id}
-                      onClick={() => setSelectedOrderId(o.id)}
-                      style={{
-                        padding: '16px',
-                        border: `2px solid ${selectedOrderId === o.id ? 'var(--primary)' : 'var(--border-color)'}`,
-                        borderRadius: '12px',
-                        cursor: 'pointer',
-                        backgroundColor: selectedOrderId === o.id ? 'var(--primary-light)' : '#ffffff',
-                        transition: 'all 0.2s ease',
-                        boxShadow: selectedOrderId === o.id ? '0 4px 12px rgba(37, 99, 235, 0.1)' : 'none',
-                        position: 'relative'
+                <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontWeight: 600 }}>1. Sipariş No Seçin <span style={{ color: 'red' }}>*</span></label>
+                    <select 
+                      className="form-input" 
+                      style={{ fontSize: '1.1rem', padding: '12px' }}
+                      value={selectedOrderNo} 
+                      onChange={(e) => {
+                         setSelectedOrderNo(e.target.value);
+                         setSelectedOrderId('');
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{o.orderNo}</span>
-                        {selectedOrderId === o.id && <CheckCircle size={20} color="var(--primary)" />}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {o.stockCode} - {o.productName}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                        Müşteri: {o.customerName || '-'}
-                      </div>
-                      <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Koli Kapasitesi:</span>
-                        <span style={{ fontWeight: 600 }}>{o.boxCapacity || 0} Adet</span>
-                      </div>
-                    </div>
-                  ))}
+                      <option value="">-- Sipariş Seçiniz --</option>
+                      {Array.from(new Map(orders.map(o => [o.orderNo, o])).values()).map((o: any) => (
+                        <option key={o.orderNo} value={o.orderNo}>
+                          {o.orderNo} {o.customerName ? `(${o.customerName})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group" style={{ opacity: selectedOrderNo ? 1 : 0.5, pointerEvents: selectedOrderNo ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
+                    <label className="form-label" style={{ fontWeight: 600 }}>2. Stok Kodu Seçin <span style={{ color: 'red' }}>*</span></label>
+                    <select 
+                      className="form-input" 
+                      style={{ fontSize: '1.1rem', padding: '12px' }}
+                      value={selectedOrderId} 
+                      onChange={(e) => setSelectedOrderId(e.target.value)}
+                    >
+                      <option value="">-- Stok Kodu Seçiniz --</option>
+                      {orders.filter(o => o.orderNo === selectedOrderNo).map(o => (
+                        <option key={o.id} value={o.id}>
+                          {o.stockCode} - {o.productName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   {orders.length === 0 && (
-                     <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                     <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                        Kayıtlı sipariş bulunamadı.
                      </div>
                   )}
