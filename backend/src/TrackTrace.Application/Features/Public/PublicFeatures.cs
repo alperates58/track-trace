@@ -40,7 +40,7 @@ public class VerifyCodeQueryHandler : IRequestHandler<VerifyCodeQuery, VerifyCod
 
         // Check if Pallet
         var pallet = await connection.QueryFirstOrDefaultAsync<dynamic>(@"
-            SELECT p.PalletNo, p.SSCC, p.Status, p.CreatedAt, o.OrderNo, o.ProductName,
+            SELECT p.Id, p.PalletNo, p.SSCC, p.Status, p.CreatedAt, o.OrderNo, o.ProductName,
                    (SELECT COUNT(*) FROM PalletCartons pc WHERE pc.PalletId = p.Id) as CartonCount,
                    (SELECT COALESCE(SUM(c.ActualQuantity), 0) FROM PalletCartons pc JOIN Cartons c ON pc.CartonId = c.Id WHERE pc.PalletId = p.Id) as TotalProductCount
             FROM Pallets p
@@ -71,7 +71,7 @@ public class VerifyCodeQueryHandler : IRequestHandler<VerifyCodeQuery, VerifyCod
 
         // Check if Carton
         var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(@"
-            SELECT c.CartonNo, c.SSCC, c.ActualQuantity, c.TargetQuantity, c.Status, c.CreatedAt, o.OrderNo, o.ProductName
+            SELECT c.Id, c.CartonNo, c.SSCC, c.ActualQuantity, c.TargetQuantity, c.Status, c.CreatedAt, o.OrderNo, o.ProductName
             FROM Cartons c
             JOIN Orders o ON c.OrderId = o.Id
             WHERE c.SSCC = @Code OR c.CartonNo = @Code", new { Code = code });
