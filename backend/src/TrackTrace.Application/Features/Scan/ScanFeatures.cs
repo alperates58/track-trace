@@ -230,7 +230,9 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             string cartonStatus = req.Mode == "PrePrinted" ? CartonStatus.Filling.ToString() : CartonStatus.Open.ToString();
             DateTime? closedAt = null;
 
-            if (actualQty >= productPerCarton)
+            int targetQty = carton != null ? (int)carton.targetquantity : productPerCarton;
+
+            if (actualQty >= targetQty)
             {
                 cartonStatus = CartonStatus.Closed.ToString();
                 closedAt = DateTime.UtcNow;

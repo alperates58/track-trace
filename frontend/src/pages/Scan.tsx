@@ -46,6 +46,7 @@ export const Scan: React.FC = () => {
 
   // Hidden input focus logic
   const inputRef = useRef<HTMLInputElement>(null);
+  const isProcessingRef = useRef<boolean>(false);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
 
@@ -424,6 +425,9 @@ export const Scan: React.FC = () => {
       return;
     }
 
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     try {
       const res = await api.post('/api/scan/product', { orderId: selectedOrderId, rawCode: code, stationId: selectedStationId });
       
@@ -496,6 +500,8 @@ export const Scan: React.FC = () => {
       }
     } catch (err: any) {
       handleScanError(code, err.message || 'Bağlantı hatası.');
+    } finally {
+      isProcessingRef.current = false;
     }
   };
 

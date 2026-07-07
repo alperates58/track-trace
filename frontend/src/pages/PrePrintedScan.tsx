@@ -34,6 +34,7 @@ export const PrePrintedScan: React.FC = () => {
 
   // Hidden input focus logic
   const inputRef = useRef<HTMLInputElement>(null);
+  const isProcessingRef = useRef<boolean>(false);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
 
@@ -344,6 +345,9 @@ export const PrePrintedScan: React.FC = () => {
       return;
     }
 
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     if (!cartonNo) {
       // Step 1: Open PrePrinted Carton
       try {
@@ -425,6 +429,8 @@ export const PrePrintedScan: React.FC = () => {
       }
     } catch (err: any) {
       handleScanError(code, err.message || 'Bağlantı hatası.');
+    } finally {
+      isProcessingRef.current = false;
     }
   };
 
