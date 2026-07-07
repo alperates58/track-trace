@@ -564,7 +564,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
             quantity: prePrintQuantity,
             format: prePrintFormat,
             stationId: prePrintStationId || null,
-            requestId: requestId
+            batchId: requestId
           })
         });
 
@@ -589,7 +589,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
           quantity: prePrintQuantity,
           format: prePrintFormat,
           stationId: prePrintStationId || null,
-          requestId: requestId
+          batchId: requestId
         });
 
         if (res.success && res.content) {

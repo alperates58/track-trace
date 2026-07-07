@@ -83,7 +83,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
         quantity,
         format,
         stationId: stationId || null,
-        requestId
+        batchId: requestId
       });
 
       if (res instanceof Blob) {
