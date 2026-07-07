@@ -124,9 +124,10 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
                 }
 
                 const string fillingCartonSql = @"
-                    SELECT * FROM Cartons 
-                    WHERE Id = @ActiveCartonId
-                    FOR UPDATE";
+                    SELECT c.*, s.Name as StationName FROM Cartons c
+                    LEFT JOIN Stations s ON c.StationId = s.Id
+                    WHERE c.Id = @ActiveCartonId
+                    FOR UPDATE OF c";
                 carton = await connection.QueryFirstOrDefaultAsync<dynamic>(fillingCartonSql, new { ActiveCartonId = req.ActiveCartonId }, transaction);
                 
                 if (carton == null)
@@ -146,7 +147,8 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
 
                 if ((Guid?)carton.stationid != req.StationId)
                 {
-                    return new ScanResponse(false, "Aktif koli farklı bir istasyonda okutuluyor. Lütfen doğru istasyonu seçin.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
+                    string stationName = (string?)carton.stationname ?? "farklı bir";
+                    return new ScanResponse(false, $"Aktif koli {stationName} istasyonunda okutuluyor. Lütfen doğru istasyonu seçin.", req.RawCode, pc.gtin, pc.serialno, null, null, 0, 0, "Error");
                 }
                 
                 if ((Guid)carton.orderid != req.OrderId)

@@ -393,7 +393,7 @@ public class OpenPrePrintedCartonCommandHandler : IRequestHandler<OpenPrePrinted
             }
             else 
             {
-                return new ScanResponse(false, $"Bu koli başka bir istasyonda dolduruluyor.", request.Code, null, null, null, null, 0, 0, "Error");
+                return new ScanResponse(false, $"Bu koli {(string?)carton.stationname ?? "başka bir"} istasyonunda dolduruluyor.", request.Code, null, null, null, null, 0, 0, "Error");
             }
         }
         else if (carton.status != CartonStatus.PrePrinted.ToString() && carton.status != CartonStatus.Printed.ToString())
