@@ -1218,7 +1218,7 @@ app.MapPost("/api/cartons/preprint", async ([FromBody] PrePrintCartonsCommand co
         if (command.Format.ToLower() == "pdf")
             return Results.File(result.FileContent!, "application/pdf", $"PrePrintedCartons_{command.BatchId}.pdf");
         else
-            return Results.Ok(new { zplText = result.ZplText });
+            return Results.Ok(new { success = true, content = result.ZplText });
     }
     catch (Exception ex)
     {
