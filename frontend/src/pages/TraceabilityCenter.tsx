@@ -1028,7 +1028,7 @@ export const TraceabilityCenter: React.FC = () => {
                               <td><FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} /></td>
                               <td>
                                 <span className={`badge badge-${c.status.toLowerCase()}`}>
-                                  {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : 'Paletlendi'}
+                                  {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
                                 </span>
                               </td>
                               <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(c.createdAt).toLocaleString('tr-TR')}</td>
@@ -1045,7 +1045,7 @@ export const TraceabilityCenter: React.FC = () => {
                           <div className="mobile-card-row">
                             <span style={{ fontWeight: 700 }}>{c.cartonNo}</span>
                             <span className={`badge badge-${c.status.toLowerCase()}`}>
-                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : 'Paletlendi'}
+                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
                             </span>
                           </div>
                           <div className="mobile-card-row">

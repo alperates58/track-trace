@@ -220,7 +220,7 @@ public class ReportPdfGenerator : IReportPdfGenerator
                                     int cTarget = Convert.ToInt32(c.TargetQuantity);
                                     string cStatus = (string)(c.Status ?? "-");
                                     string cPalletNo = (string)(c.PalletNo ?? "Paletlenmemiş");
-                                    DateTime cCreatedAt = (DateTime)c.CreatedAt;
+                                    DateTime cCreatedAt = ((DateTime)c.CreatedAt).AddHours(3);
 
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cCartonNo).FontSize(8);
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cSSCC).FontSize(8);
@@ -272,7 +272,7 @@ public class ReportPdfGenerator : IReportPdfGenerator
                                     string pSSCC = (string)(p.SSCC ?? "-");
                                     int pCartonCount = Convert.ToInt32(p.CartonCount);
                                     string pStatus = (string)(p.Status ?? "-");
-                                    DateTime pCreatedAt = (DateTime)p.CreatedAt;
+                                    DateTime pCreatedAt = ((DateTime)p.CreatedAt).AddHours(3);
 
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(pPalletNo).FontSize(8);
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(pSSCC).FontSize(8);

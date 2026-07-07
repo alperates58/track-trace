@@ -46,7 +46,7 @@ public class LabelGenerator : ILabelGenerator
                     col.Item().LineHorizontal(1f);
                     
                     col.Item().PaddingTop(10).AlignCenter().Text("Bağlantı: Başarılı").Bold().FontSize(12).FontColor(Colors.Green.Darken2);
-                    col.Item().AlignCenter().Text($"Tarih: {DateTime.Now:dd.MM.yyyy HH:mm:ss}").FontSize(10);
+                    col.Item().AlignCenter().Text($"Tarih: {DateTime.UtcNow.AddHours(3):dd.MM.yyyy HH:mm:ss}").FontSize(10);
                     
                     col.Item().PaddingTop(10).AlignCenter().Text("Track & Trace Termal Yazıcı Testi").FontSize(10).FontColor(Colors.Grey.Darken2);
                 });
@@ -141,7 +141,7 @@ public class LabelGenerator : ILabelGenerator
                                 r.RelativeItem().Column(c =>
                                 {
                                     c.Item().Text("Tarih / Date:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
-                                    c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(7);
+                                    c.Item().Text(carton.CreatedAt.AddHours(3).ToString("dd.MM.yyyy HH:mm")).FontSize(7);
                                 });
                             });
 
@@ -263,7 +263,7 @@ public class LabelGenerator : ILabelGenerator
                                     r.RelativeItem().Column(c =>
                                     {
                                         c.Item().Text("Tarih / Date:").Bold().FontSize(6).FontColor(Colors.Grey.Darken3);
-                                        c.Item().Text(carton.CreatedAt.ToString("dd.MM.yyyy HH:mm")).FontSize(7);
+                                        c.Item().Text(carton.CreatedAt.AddHours(3).ToString("dd.MM.yyyy HH:mm")).FontSize(7);
                                     });
                                 });
 
@@ -322,8 +322,8 @@ public class LabelGenerator : ILabelGenerator
 ^FO40,245^A0N,20,20^FB440,2,0,L^FD{order.ProductName ?? "-"}^FS
 ^FO40,295^A0N,18,18^FDiş Emri No: {order.GTIN}^FS
 ^FO40,325^A0N,22,22^FDAdet / Quantity: {carton.ActualQuantity} / {carton.TargetQuantity}^FS
-^FO40,360^A0N,18,18^FDKoli No / Carton No: {carton.CartonNo}^FS
-^FO40,390^A0N,18,18^FDTarih / Date: {carton.CreatedAt:dd.MM.yyyy HH:mm}^FS
+^FO40,355^A0N,18,18^FDKoli No / Carton No: {carton.CartonNo}^FS
+^FO40,390^A0N,18,18^FDTarih / Date: {carton.CreatedAt.AddHours(3):dd.MM.yyyy HH:mm}^FS
 ^FO40,420^A0N,18,18^FDIstasyon: {carton.StationName ?? "-"}  Kullanici: {carton.UserName ?? "-"}^FS
 ^FO490,110^GB3,310,3^FS
 ^FO500,110^A0N,20,20^FB280,1,0,C^FDSSCC BARCODE^FS
@@ -372,7 +372,7 @@ public class LabelGenerator : ILabelGenerator
         AddPplbText(sb, 48, 440, 2, "Koli No / Carton No:");
         AddPplbText(sb, 48, 465, 3, ToPplbText(carton.CartonNo));
         AddPplbText(sb, 300, 440, 2, "Tarih / Date:");
-        AddPplbText(sb, 300, 465, 2, $"{carton.CreatedAt:dd.MM.yyyy HH:mm}");
+        AddPplbText(sb, 300, 465, 2, $"{carton.CreatedAt.AddHours(3):dd.MM.yyyy HH:mm}");
 
         AddPplbText(sb, 48, 500, 2, $"Istasyon: {carton.StationName ?? "-"}  Kullanici: {carton.UserName ?? "-"}");
 
@@ -470,7 +470,7 @@ public class LabelGenerator : ILabelGenerator
                         row.RelativeItem().Column(c =>
                         {
                             c.Item().Text("Tarih / Date:").Bold().FontSize(8);
-                            c.Item().Text(pallet.CreatedAt.ToString("dd.MM.yyyy HH:mm"));
+                            c.Item().Text(pallet.CreatedAt.AddHours(3).ToString("dd.MM.yyyy HH:mm"));
                         });
                     });
 
@@ -507,7 +507,7 @@ public class LabelGenerator : ILabelGenerator
 ^FO50,285^A0N,20,20^FDis Emri No: {order.GTIN}^FS
 ^FO400,285^A0N,20,20^FDKoli Sayisi: {cartonCount} / {order.CartonPerPallet}^FS
 ^FO50,335^A0N,20,20^FDPalet No: {pallet.PalletNo}^FS
-^FO400,335^A0N,20,20^FDTarih: {pallet.CreatedAt:dd.MM.yyyy HH:mm}^FS
+^FO400,335^A0N,20,20^FDTarih: {pallet.CreatedAt.AddHours(3):dd.MM.yyyy HH:mm}^FS
         ^FO50,380^GB712,3,3^FS
         ^FO250,420^BQN,2,6^FDQA,{_frontendUrl}/?code={pallet.SSCC}^FS
         ^FO100,680^BY2^FO100,700^BCN,150,Y,N,N^FD(00){pallet.SSCC}^FS
@@ -541,7 +541,7 @@ public class LabelGenerator : ILabelGenerator
         AddPplbText(sb, 55, 460, 2, $"Is Emri No: {ToPplbText(order.GTIN)}");
         AddPplbText(sb, 405, 460, 2, $"Koli Sayisi: {cartonCount} / {order.CartonPerPallet}");
         AddPplbText(sb, 55, 530, 2, $"Palet No: {ToPplbText(pallet.PalletNo)}");
-        AddPplbText(sb, 405, 530, 2, $"Tarih: {pallet.CreatedAt:dd.MM.yyyy}");
+        AddPplbText(sb, 405, 530, 2, $"Tarih: {pallet.CreatedAt.AddHours(3):dd.MM.yyyy HH:mm}");
 
         AddPplbText(sb, 335, 700, 3, "SSCC BARCODE");
         AddPplbQr(sb, 315, 755, qrData, 6);
