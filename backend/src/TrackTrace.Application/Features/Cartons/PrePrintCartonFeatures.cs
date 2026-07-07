@@ -367,8 +367,9 @@ public class OpenPrePrintedCartonCommandHandler : IRequestHandler<OpenPrePrinted
 
         // Fetch carton with names for detailed errors
         var carton = await connection.QueryFirstOrDefaultAsync(@"
-            SELECT c.*, u.Name as UserName, s.Name as StationName 
+            SELECT c.*, u.Name as UserName, s.Name as StationName, o.OrderNo, o.ProductName 
             FROM Cartons c
+            JOIN Orders o ON c.OrderId = o.Id
             LEFT JOIN Users u ON c.AssignedUserId = u.Id
             LEFT JOIN Stations s ON c.StationId = s.Id
             WHERE (c.SSCC = @Code OR c.CartonNo = @Code) AND c.Mode = 'PrePrinted' 
@@ -384,7 +385,7 @@ public class OpenPrePrintedCartonCommandHandler : IRequestHandler<OpenPrePrinted
             {
                 // Resume existing carton
                 await transaction.CommitAsync();
-                return new ScanResponse(true, "Mevcut koliye devam ediliyor. Ürün okutmaya başlayabilirsiniz.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Success", (Guid)carton.id);
+                return new ScanResponse(true, "Mevcut koliye devam ediliyor. Ürün okutmaya başlayabilirsiniz.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Success", (Guid)carton.id, (Guid)carton.orderid, (string)carton.orderno, (string)carton.productname);
             }
             else if ((Guid?)carton.assigneduserid != _currentUserService.UserId)
             {
@@ -421,6 +422,6 @@ public class OpenPrePrintedCartonCommandHandler : IRequestHandler<OpenPrePrinted
 
         await transaction.CommitAsync();
 
-        return new ScanResponse(true, "Koli başarıyla açıldı. Ürün okutmaya başlayabilirsiniz.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Success", (Guid)carton.id);
+        return new ScanResponse(true, "Koli başarıyla açıldı. Ürün okutmaya başlayabilirsiniz.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Success", (Guid)carton.id, (Guid)carton.orderid, (string)carton.orderno, (string)carton.productname);
     }
 }

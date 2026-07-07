@@ -93,7 +93,10 @@ public record ScanResponse(
     int CartonCurrentQty,
     int CartonTargetQty,
     string Status, // "Success", "CartonClosed", "Warning", "Error"
-    Guid? CartonId = null
+    Guid? CartonId = null,
+    Guid? OrderId = null,
+    string? OrderNo = null,
+    string? ProductName = null
 );
 
 public record CartonDto(
