@@ -366,11 +366,12 @@ public class CartonHandlers :
 
             // 4. Update carton
             actualQty = Math.Max(0, actualQty - 1);
+            string targetStatus = carton.mode == "PrePrinted" ? CartonStatus.Filling.ToString() : CartonStatus.Open.ToString();
             await connection.ExecuteAsync(@"
                 UPDATE Cartons 
                 SET ActualQuantity = @ActualQuantity, Status = @Status, ClosedAt = NULL 
                 WHERE Id = @Id",
-                new { Id = request.CartonId, ActualQuantity = actualQty, Status = CartonStatus.Open.ToString() }, transaction);
+                new { Id = request.CartonId, ActualQuantity = actualQty, Status = targetStatus }, transaction);
 
             // 5. Remove carton from Pallet (since it is no longer closed/complete)
             await connection.ExecuteAsync("DELETE FROM PalletCartons WHERE CartonId = @CartonId", new { CartonId = request.CartonId }, transaction);
