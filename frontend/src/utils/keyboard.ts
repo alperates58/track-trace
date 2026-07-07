@@ -3,30 +3,43 @@ export function fixBarcodeKeyboardLayout(code: string): string {
   // Barkod tabancaları US düzeninde gönderir, ancak PC TR düzenindeyse 
   // tuş vuruşları yanlış yorumlanır. Bu fonksiyon bunu geri çevirir.
   const charMap: Record<string, string> = {
-    'ı': 'i',
-    'I': 'I',
-    'ş': ';',
-    'Ş': ':',
+    // 2. Satır (Row 2)
     'ğ': '[',
     'Ğ': '{',
     'ü': ']',
     'Ü': '}',
+
+    // 3. Satır (Row 3)
+    'ş': ';',
+    'Ş': ':',
     'i': '\'',
     'İ': '"',
-    'ç': '/',
-    'Ç': '?',
-    '\'': '@',
-    '^': '#',
-    '+': '$',
-    '&': '^',
-    '/': '&',
-    '(': '*',
-    ')': '(',
-    '=': ')',
-    '*': '-',
-    '?': '_',
-    '-': '=',
-    '_': '+'
+
+    // 4. Satır (Row 4)
+    'ö': ',',
+    'Ö': '<',
+    'ç': '.',
+    'Ç': '>',
+    '.': '/',  
+    ':': '?',  
+
+    // Sayı Satırı (Number Row Shifted)
+    '\'': '@',  
+    '^': '#',   
+    '+': '$',   
+    '&': '^',   
+    '/': '&',   
+    '(': '*',   
+    ')': '(',   
+    '=': ')',   
+    '*': '-',   
+    '?': '_',   
+    '-': '=',   
+    '_': '+',   
+
+    // Harfler
+    'ı': 'i',
+    'I': 'I'
   };
 
   let fixed = '';
