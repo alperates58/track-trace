@@ -85,7 +85,7 @@ public class PrePrintCartonsCommandHandler : IRequestHandler<PrePrintCartonsComm
                     (Guid)row.id, (Guid)row.orderid, (string)row.orderno, (string?)row.stockcode,
                     null, null, (string)row.cartonno, (string)row.sscc,
                     (int)row.targetquantity, (int)row.actualquantity,
-                    ((CartonStatus)row.status).ToString(),
+                    (string)row.status,
                     (DateTime)row.createdat, (DateTime?)row.closedat, (DateTime?)row.printedat,
                     null, (string)row.mode, (Guid?)row.preprintbatchid, (int)row.printcount, (string?)row.voidreason
                 ));
@@ -330,7 +330,7 @@ public class ReprintCartonCommandHandler : IRequestHandler<ReprintCartonCommand,
         var cartonDto = new CartonDto(
             (Guid)cartonRow.id, (Guid)cartonRow.orderid, (string)cartonRow.orderno, (string?)cartonRow.stockcode,
             (Guid?)cartonRow.stationid, (string?)cartonRow.stationname, (string)cartonRow.cartonno, (string)cartonRow.sscc,
-            (int)cartonRow.targetquantity, (int)cartonRow.actualquantity, ((CartonStatus)cartonRow.status).ToString(),
+            (int)cartonRow.targetquantity, (int)cartonRow.actualquantity, (string)cartonRow.status,
             (DateTime)cartonRow.createdat, (DateTime?)cartonRow.closedat, (DateTime?)cartonRow.printedat,
             (string?)cartonRow.username, (string)cartonRow.mode, (Guid?)cartonRow.preprintbatchid, (int)cartonRow.printcount + 1, (string?)cartonRow.voidreason
         );
@@ -397,7 +397,7 @@ public class OpenPrePrintedCartonCommandHandler : IRequestHandler<OpenPrePrinted
         }
         else if (carton.status != CartonStatus.PrePrinted.ToString())
         {
-            string statusStr = ((CartonStatus)carton.status).ToString();
+            string statusStr = (string)carton.status;
             return new ScanResponse(false, $"Koli durumu uygun değil (Mevcut Durum: {statusStr}). Sadece PrePrinted koliler açılabilir.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Error");
         }
 
