@@ -109,7 +109,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
         } else {
           try {
             const provider = getPrintProvider(printMode);
-            await provider.testPrint(res.content);
+            await provider.printRaw(res.content);
             alert("Etiketler yazıcıya gönderildi!");
           } catch (printErr: any) {
             alert("Yazıcıya gönderilirken hata oluştu: " + printErr.message + "\\nLütfen çıktı dosyasını indirip manuel yazdırın.");
@@ -416,7 +416,11 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                 <div style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '16px', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', gap: '12px', border: '1px solid #bfdbfe' }}>
                   <Printer size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div style={{ lineHeight: '1.5' }}>
-                    İşlemi onayladığınızda <strong>{quantity} adet</strong> {format} formatında boş etiket üretilecek. Etiketler <strong>{printMode === 'browser' ? 'tarayıcı üzerinden' : 'yerel servis ile'}</strong> yazdırılacaktır.
+                    İşlemi onayladığınızda <strong>{quantity} adet</strong> {format} formatında boş etiket üretilecek. Etiketler <strong>
+                      {printMode === 'browser' ? 'tarayıcı üzerinden' : 
+                       (printMode === 'local' ? (JSON.parse(localStorage.getItem('trackTrace_printSettings') || '{}').printerName ? `yerel entegre yazıcı (${JSON.parse(localStorage.getItem('trackTrace_printSettings') || '{}').printerName}) ile` : 'yerel entegre yazıcı ile') : 
+                       'PDF olarak')}
+                    </strong> yazdırılacaktır.
                   </div>
                 </div>
               </div>

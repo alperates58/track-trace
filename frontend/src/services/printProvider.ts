@@ -8,6 +8,7 @@ export interface PrintRequest {
 
 export interface IPrintProvider {
   print(request: PrintRequest): Promise<void>;
+  printRaw(data: string): Promise<void>;
   testPrint(zplData: string): Promise<void>;
 }
 
@@ -52,6 +53,10 @@ export class BrowserAutoPrintProvider implements IPrintProvider {
   async testPrint(zplData: string): Promise<void> {
     await printViaZebraBrowserPrint(zplData);
   }
+
+  async printRaw(data: string): Promise<void> {
+    await printViaZebraBrowserPrint(data);
+  }
 }
 
 export class PdfDownloadProvider implements IPrintProvider {
@@ -68,6 +73,10 @@ export class PdfDownloadProvider implements IPrintProvider {
     window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
+
+  async printRaw(_data: string): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 export class ZplDownloadProvider implements IPrintProvider {
@@ -80,6 +89,10 @@ export class ZplDownloadProvider implements IPrintProvider {
 
   async testPrint(zplData: string): Promise<void> {
     this.downloadZplFile(zplData, 'test-label.zpl');
+  }
+
+  async printRaw(data: string): Promise<void> {
+    this.downloadZplFile(data, 'raw-labels.txt');
   }
 
   private downloadZplFile(content: string, filename: string) {
@@ -171,6 +184,10 @@ export class LocalAgentProvider implements IPrintProvider {
     if (labelData) {
       await this.sendToAgent('/api/print', { data: labelData });
     }
+  }
+
+  async printRaw(data: string): Promise<void> {
+    await this.sendToAgent('/api/print', { data });
   }
 
   async testPrint(zplData: string): Promise<void> {

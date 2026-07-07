@@ -608,7 +608,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
              // Kiosk / Network print
              try {
                 const provider = getPrintProvider(prePrintProviderMode);
-                await provider.testPrint(res.content); // Send raw string to kiosk
+                await provider.printRaw(res.content); // Send raw string to kiosk
                 alert("Etiketler yazıcıya gönderildi!");
              } catch (printErr: any) {
                 alert("Yazıcıya gönderilirken hata oluştu: " + printErr.message + "\nLütfen çıktı dosyasını indirip manuel yazdırın.");
