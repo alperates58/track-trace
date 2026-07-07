@@ -256,17 +256,6 @@ app.MapGet("/api/public/verify", async (string code, IMediator mediator) =>
     return Results.Ok(result);
 }).AllowAnonymous();
 
-app.MapGet("/api/debug/dump-codes", async (string orderNo, IDbConnectionFactory dbFactory) =>
-{
-    using var connection = dbFactory.CreateConnection();
-    var codes = await connection.QueryAsync(@"
-        SELECT pc.RawCode, pc.Gtin, pc.SerialNo, pc.Status 
-        FROM ProductCodes pc 
-        JOIN Orders o ON pc.OrderId = o.Id 
-        WHERE o.OrderNo = @OrderNo LIMIT 20", new { OrderNo = orderNo });
-    return Results.Ok(codes);
-}).AllowAnonymous();
-
 // Auth Endpoints
 app.MapPost("/api/auth/login", async (LoginRequest request, IMediator mediator) =>
 {
