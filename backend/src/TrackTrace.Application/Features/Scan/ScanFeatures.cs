@@ -61,6 +61,23 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             const string pcSql = "SELECT * FROM ProductCodes WHERE RawCode = @RawCode FOR UPDATE";
             var pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = searchCode }, transaction);
             
+            if (pc == null && searchCode != req.RawCode)
+            {
+                // Fallback 1: Try exact raw scanned code
+                pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = req.RawCode }, transaction);
+            }
+
+            if (pc == null)
+            {
+                // Fallback 2: Compare codes by stripping GS (ASCII 29) characters to bypass scanner config/profile mismatches
+                const string cleanPcSql = @"
+                    SELECT * FROM ProductCodes 
+                    WHERE REPLACE(RawCode, CHR(29), '') = @CleanCode 
+                    FOR UPDATE";
+                string cleanSearchCode = req.RawCode.Replace(((char)29).ToString(), "");
+                pc = await connection.QueryFirstOrDefaultAsync<dynamic>(cleanPcSql, new { CleanCode = cleanSearchCode }, transaction);
+            }
+            
             if (pc == null)
             {
                 return new ScanResponse(false, "Sistemde kayıtlı olmayan ürün barkodu!", req.RawCode, null, null, null, null, 0, 0, "Error");
