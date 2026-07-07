@@ -53,43 +53,23 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
         using var transaction = connection.BeginTransaction();
         try
         {
-            // Map Turkish keyboard layout input back to US layout (handles barcode scanners simulating US keyboard on TR layout OS)
-            string correctedRawCode = MapTurkishKeyboardToUs(req.RawCode);
-
             // Normalize the scanned barcode first to ensure match with normalized DB codes
-            var parsed = Gs1AutoHelper.NormalizeForEncoding(correctedRawCode);
-            string searchCode = parsed.Success ? parsed.Normalized : correctedRawCode;
+            var parsed = Gs1AutoHelper.NormalizeForEncoding(req.RawCode);
+            string searchCode = parsed.Success ? parsed.Normalized : req.RawCode;
 
             // 1. SELECT PRODUCT CODE WITH ROW LOCKING FOR UPDATE (Prevents double scan race conditions)
             const string pcSql = "SELECT * FROM ProductCodes WHERE RawCode = @RawCode FOR UPDATE";
             var pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = searchCode }, transaction);
             
-            if (pc == null && searchCode != correctedRawCode)
+            if (pc == null && searchCode != req.RawCode)
             {
-                // Fallback 1: Try exact raw scanned code (corrected)
-                pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = correctedRawCode }, transaction);
-            }
-
-            if (pc == null && correctedRawCode != req.RawCode)
-            {
-                // Fallback 1b: Try exact raw scanned code (original uncorrected)
+                // Fallback 1: Try exact raw scanned code
                 pc = await connection.QueryFirstOrDefaultAsync<dynamic>(pcSql, new { RawCode = req.RawCode }, transaction);
             }
 
             if (pc == null)
             {
-                // Fallback 2: Compare codes by stripping GS (ASCII 29) characters to bypass scanner config/profile mismatches (using corrected)
-                const string cleanPcSql = @"
-                    SELECT * FROM ProductCodes 
-                    WHERE REPLACE(RawCode, CHR(29), '') = @CleanCode 
-                    FOR UPDATE";
-                string cleanSearchCode = correctedRawCode.Replace(((char)29).ToString(), "");
-                pc = await connection.QueryFirstOrDefaultAsync<dynamic>(cleanPcSql, new { CleanCode = cleanSearchCode }, transaction);
-            }
-
-            if (pc == null && correctedRawCode != req.RawCode)
-            {
-                // Fallback 2b: Compare codes by stripping GS characters using original uncorrected code
+                // Fallback 2: Compare codes by stripping GS (ASCII 29) characters to bypass scanner config/profile mismatches
                 const string cleanPcSql = @"
                     SELECT * FROM ProductCodes 
                     WHERE REPLACE(RawCode, CHR(29), '') = @CleanCode 
@@ -341,35 +321,6 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
 
             int remainder = sum % 10;
             return remainder == 0 ? 0 : 10 - remainder;
-        }
-
-        private static string MapTurkishKeyboardToUs(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-            
-            var sb = new System.Text.StringBuilder(input.Length);
-            foreach (char c in input)
-            {
-                switch (c)
-                {
-                    case 'ö': sb.Append(','); break;
-                    case 'ç': sb.Append('.'); break;
-                    case '.': sb.Append('/'); break;
-                    case 'ş': sb.Append(';'); break;
-                    case 'ğ': sb.Append('['); break;
-                    case 'ü': sb.Append(']'); break;
-                    case 'ı': sb.Append('i'); break;
-                    case 'i': sb.Append('\''); break;
-                    case 'Ö': sb.Append('<'); break;
-                    case 'Ç': sb.Append('>'); break;
-                    case 'Ş': sb.Append(':'); break;
-                    case 'Ğ': sb.Append('{'); break;
-                    case 'Ü': sb.Append('}'); break;
-                    case 'İ': sb.Append('"'); break;
-                    default: sb.Append(c); break;
-                }
-            }
-            return sb.ToString();
         }
     }
 
