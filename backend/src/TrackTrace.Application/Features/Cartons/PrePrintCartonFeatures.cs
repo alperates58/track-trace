@@ -395,10 +395,10 @@ public class OpenPrePrintedCartonCommandHandler : IRequestHandler<OpenPrePrinted
                 return new ScanResponse(false, $"Bu koli başka bir istasyonda dolduruluyor.", request.Code, null, null, null, null, 0, 0, "Error");
             }
         }
-        else if (carton.status != CartonStatus.PrePrinted.ToString())
+        else if (carton.status != CartonStatus.PrePrinted.ToString() && carton.status != CartonStatus.Printed.ToString())
         {
             string statusStr = (string)carton.status;
-            return new ScanResponse(false, $"Koli durumu uygun değil (Mevcut Durum: {statusStr}). Sadece PrePrinted koliler açılabilir.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Error");
+            return new ScanResponse(false, $"Koli durumu uygun değil (Mevcut Durum: {statusStr}). Sadece PrePrinted veya Printed durumundaki koliler açılabilir.", request.Code, null, null, (string)carton.cartonno, (string)carton.sscc, (int)carton.actualquantity, (int)carton.targetquantity, "Error");
         }
 
         await connection.ExecuteAsync(@"
