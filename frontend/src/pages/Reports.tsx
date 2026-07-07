@@ -629,7 +629,7 @@ export const Reports: React.FC = () => {
             <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Toplam Koli / Palet</div>
               <div style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '4px' }}>
-                📦 {orderSummary.totalcartons} / 🪚 {orderSummary.totalpallets}
+                Koli: {orderSummary.totalcartons} / Palet: {orderSummary.totalpallets}
               </div>
             </div>
 
@@ -765,7 +765,7 @@ export const Reports: React.FC = () => {
             <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Toplam Koli / Palet</div>
               <div style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '4px' }}>
-                📦 {stockDetail.cartoncount} / 🪚 {stockDetail.palletcount}
+                Koli: {stockDetail.cartoncount} / Palet: {stockDetail.palletcount}
               </div>
             </div>
 
@@ -1042,7 +1042,7 @@ export const Reports: React.FC = () => {
                             <div key={carton.SSCC} style={{ padding: '10px', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-sm)', backgroundColor: '#f8fafc', fontSize: '0.85rem' }}>
                               <div style={{ fontWeight: 700 }}>{carton.CartonNo}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                <span>SSCC: {carton.SSCC.substring(carton.SSCC.length - 8)}</span>
+                                <span>SSCC: {carton.SSCC ? carton.SSCC.substring(carton.SSCC.length - 8) : '-'}</span>
                                 <strong>{carton.ActualQuantity} / {carton.TargetQuantity} ürün</strong>
                               </div>
                             </div>
