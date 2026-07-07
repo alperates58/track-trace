@@ -4,7 +4,6 @@ import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
 import { Volume2, VolumeX, Barcode, Printer, Camera } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
-import { fixBarcodeKeyboardLayout } from '../utils/keyboard';
 
 interface Station {
   id: string;
@@ -334,8 +333,7 @@ export const PrePrintedScan: React.FC = () => {
     setIsSettingsModalOpen(false);
   };
 
-  const processBarcode = async (rawCode: string) => {
-    const code = fixBarcodeKeyboardLayout(rawCode);
+  const processBarcode = async (code: string) => {
     if (!code) return;
 
     if (!selectedStationId) {
