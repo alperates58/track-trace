@@ -58,6 +58,10 @@ public class LabelGenerator : ILabelGenerator
 
     public byte[] GenerateCartonPdfLabel(CartonDto carton, OrderDto order)
     {
+        string qtyText = carton.Mode == "PrePrinted" 
+            ? $"{carton.TargetQuantity} / {carton.TargetQuantity}" 
+            : $"{carton.ActualQuantity} / {carton.TargetQuantity}";
+
         // Generate QR code bytes using QRCoder pointing to frontend URL for customer scans
         byte[] qrCodeImageBytes = GenerateQRCodeBytes($"{_frontendUrl}/?code={carton.SSCC}");
 
@@ -126,7 +130,7 @@ public class LabelGenerator : ILabelGenerator
                                 r.RelativeItem().Column(c =>
                                 {
                                     c.Item().Text("Adet / Quantity:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
-                                    c.Item().Text($"{carton.ActualQuantity} / {carton.TargetQuantity}").Bold().FontSize(9);
+                                    c.Item().Text(qtyText).Bold().FontSize(9);
                                 });
                             });
 
@@ -192,6 +196,10 @@ public class LabelGenerator : ILabelGenerator
         {
             foreach(var carton in cartons)
             {
+                string qtyText = carton.Mode == "PrePrinted" 
+                    ? $"{carton.TargetQuantity} / {carton.TargetQuantity}" 
+                    : $"{carton.ActualQuantity} / {carton.TargetQuantity}";
+
                 byte[] qrCodeImageBytes = GenerateQRCodeBytes($"{_frontendUrl}/?code={carton.SSCC}");
                 container.Page(page =>
                 {
@@ -249,7 +257,7 @@ public class LabelGenerator : ILabelGenerator
                                     r.RelativeItem().Column(c =>
                                     {
                                         c.Item().Text("Adet / Quantity:").Bold().FontSize(7).FontColor(Colors.Grey.Darken3);
-                                        c.Item().Text($"{carton.ActualQuantity} / {carton.TargetQuantity}").Bold().FontSize(9);
+                                        c.Item().Text(qtyText).Bold().FontSize(9);
                                     });
                                 });
 
@@ -307,6 +315,10 @@ public class LabelGenerator : ILabelGenerator
     public string GenerateCartonZplLabel(CartonDto carton, OrderDto order)
     {
         string printText = carton.PrintCount > 0 ? (carton.PrintCount > 1 ? $"Tekrar Baski: {carton.PrintCount}" : $"Baski: {carton.PrintCount}") : "";
+        string qtyText = carton.Mode == "PrePrinted" 
+            ? $"{carton.TargetQuantity} / {carton.TargetQuantity}" 
+            : $"{carton.ActualQuantity} / {carton.TargetQuantity}";
+
         return $@"^XA
 ^CI28
 ^PW800
@@ -321,7 +333,7 @@ public class LabelGenerator : ILabelGenerator
 ^FO40,225^A0N,18,18^FDÜrün Adı / Product Name:^FS
 ^FO40,245^A0N,20,20^FB440,2,0,L^FD{order.ProductName ?? "-"}^FS
 ^FO40,295^A0N,18,18^FDiş Emri No: {order.GTIN}^FS
-^FO40,325^A0N,22,22^FDAdet / Quantity: {carton.ActualQuantity} / {carton.TargetQuantity}^FS
+^FO40,325^A0N,22,22^FDAdet / Quantity: {qtyText}^FS
 ^FO40,355^A0N,18,18^FDKoli No / Carton No: {carton.CartonNo}^FS
 ^FO40,390^A0N,18,18^FDTarih / Date: {carton.CreatedAt.AddHours(3):dd.MM.yyyy HH:mm}^FS
 ^FO40,420^A0N,18,18^FDIstasyon: {carton.StationName ?? "-"}  Kullanici: {carton.UserName ?? "-"}^FS
@@ -342,6 +354,9 @@ public class LabelGenerator : ILabelGenerator
         var ssccLines = SplitFixed($"(00){ssccData}", 16).ToArray();
         var qrData = $"{_frontendUrl}/?code={carton.SSCC}";
         var cartonSequence = GetCartonSequence(carton.CartonNo);
+        string qtyText = carton.Mode == "PrePrinted" 
+            ? $"{carton.TargetQuantity} / {carton.TargetQuantity}" 
+            : $"{carton.ActualQuantity} / {carton.TargetQuantity}";
 
         var sb = new StringBuilder();
         AppendPplbHeader(sb, 800, 640);
@@ -367,7 +382,7 @@ public class LabelGenerator : ILabelGenerator
         AddPplbText(sb, 48, 360, 2, "Is Emri No:");
         AddPplbText(sb, 48, 385, 3, ToPplbText(order.GTIN));
         AddPplbText(sb, 300, 360, 2, "Adet / Quantity:");
-        AddPplbText(sb, 300, 385, 3, $"{carton.ActualQuantity} / {carton.TargetQuantity}");
+        AddPplbText(sb, 300, 385, 3, qtyText);
 
         AddPplbText(sb, 48, 440, 2, "Koli No / Carton No:");
         AddPplbText(sb, 48, 465, 3, ToPplbText(carton.CartonNo));
