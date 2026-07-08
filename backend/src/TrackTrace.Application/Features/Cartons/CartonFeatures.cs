@@ -25,6 +25,8 @@ public record PrintCartonLabelCommand(Guid Id, string Format) : IRequest<(byte[]
 
 public record DecomposeCartonCommand(Guid Id) : IRequest<Unit>;
 
+public record EmptyCartonCommand(Guid Id) : IRequest<Unit>;
+
 public record RemoveProductFromCartonCommand(Guid CartonId, string RawCode) : IRequest<Unit>;
 
 public record AddProductToCartonCommand(Guid CartonId, string RawCode) : IRequest<Unit>;
@@ -37,6 +39,7 @@ public class CartonHandlers :
     IRequestHandler<GetCartonItemsQuery, IEnumerable<BarcodeSearchResultDto>>,
     IRequestHandler<PrintCartonLabelCommand, (byte[]? FileContent, string? ZplText)>,
     IRequestHandler<DecomposeCartonCommand, Unit>,
+    IRequestHandler<EmptyCartonCommand, Unit>,
     IRequestHandler<RemoveProductFromCartonCommand, Unit>,
     IRequestHandler<AddProductToCartonCommand, Unit>,
     IRequestHandler<TransferCartonCommand, Unit>
@@ -327,6 +330,68 @@ public class CartonHandlers :
         }
     }
 
+    public async Task<Unit> Handle(EmptyCartonCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+         {
+            // 1. Get carton info
+            var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.Id }, transaction);
+            if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+
+            string cartonNo = carton.cartonno;
+            string sscc = carton.sscc;
+            string mode = carton.mode;
+
+            // 2. Revert products back to 'Uploaded'
+            const string updateProductsSql = @"
+                UPDATE ProductCodes 
+                SET CartonId = NULL, Status = @Status, ScannedAt = NULL, ScannedBy = NULL 
+                WHERE CartonId = @CartonId";
+
+            await connection.ExecuteAsync(updateProductsSql, new
+            {
+                CartonId = request.Id,
+                Status = ProductCodeStatus.Uploaded.ToString()
+            }, transaction);
+
+            // 3. Reset carton details, keeping the record
+            string targetStatus = mode == "PrePrinted" ? CartonStatus.PrePrinted.ToString() : CartonStatus.Open.ToString();
+            
+            await connection.ExecuteAsync(@"
+                UPDATE Cartons 
+                SET ActualQuantity = 0, 
+                    Status = @Status, 
+                    ClosedAt = NULL,
+                    OpenedAt = NULL,
+                    OpenedBy = NULL,
+                    AssignedUserId = NULL,
+                    StationId = NULL
+                WHERE Id = @Id", 
+                new { 
+                    Id = request.Id, 
+                    Status = targetStatus
+                }, transaction);
+
+            // 4. Remove carton from Pallet
+            await connection.ExecuteAsync("DELETE FROM PalletCartons WHERE CartonId = @CartonId", new { CartonId = request.Id }, transaction);
+
+            transaction.Commit();
+
+            await _auditLogService.LogAsync("Cartons", request.Id, "EmptyContents", null, new { CartonNo = cartonNo, SSCC = sscc });
+            return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
     public async Task<Unit> Handle(RemoveProductFromCartonCommand request, CancellationToken cancellationToken)
     {
         using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
@@ -496,52 +561,81 @@ public class CartonHandlers :
                 "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.Id }, transaction);
             if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
             
-            if (carton.status != CartonStatus.Open.ToString())
+            if (carton.status != CartonStatus.Open.ToString() && carton.status != CartonStatus.Filling.ToString())
             {
-                throw new InvalidOperationException("Yalnızca açık koliler devredilebilir.");
+                throw new InvalidOperationException("Yalnızca açık veya dolduruluyor durumundaki koliler devredilebilir.");
             }
 
             Guid orderId = carton.orderid;
             string? stockCode = carton.stockcode;
             Guid? oldStationId = carton.stationid;
+            Guid? oldAssignedUserId = carton.assigneduserid;
             string cartonNo = carton.cartonno;
 
-            // 2. Validate Target Station exists and is active
-            var targetStation = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "SELECT * FROM Stations WHERE Id = @Id", new { Id = request.Request.TargetStationId }, transaction);
-            if (targetStation == null || targetStation.isactive == false)
+            if (request.Request.TargetStationId.HasValue)
             {
-                throw new InvalidOperationException("Hedef istasyon bulunamadı veya pasif durumda.");
-            }
-
-            // 3. Ensure no duplicate open carton on target station for same order and stock code
-            var duplicateCarton = await connection.QueryFirstOrDefaultAsync<dynamic>(@"
-                SELECT * FROM Cartons 
-                WHERE OrderId = @OrderId AND StockCode = @StockCode AND StationId = @StationId AND Status = 'Open'", 
-                new { OrderId = orderId, StockCode = stockCode, StationId = request.Request.TargetStationId }, transaction);
-            
-            if (duplicateCarton != null)
-            {
-                throw new InvalidOperationException("Hedef istasyonda bu sipariş ve stok kodu için halihazırda açık bir koli bulunmaktadır. Devir işlemi yapılamaz.");
-            }
-
-            // 4. Update Carton
-            await connection.ExecuteAsync(@"
-                UPDATE Cartons 
-                SET StationId = @StationId 
-                WHERE Id = @Id",
-                new
+                // 2. Validate Target Station exists and is active
+                var targetStation = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                    "SELECT * FROM Stations WHERE Id = @Id", new { Id = request.Request.TargetStationId.Value }, transaction);
+                if (targetStation == null || targetStation.isactive == false)
                 {
-                    Id = request.Id,
-                    StationId = request.Request.TargetStationId
-                }, transaction);
+                    throw new InvalidOperationException("Hedef istasyon bulunamadı veya pasif durumda.");
+                }
+
+                // 3. Ensure no duplicate open carton on target station for same order and stock code
+                var duplicateCarton = await connection.QueryFirstOrDefaultAsync<dynamic>(@"
+                    SELECT * FROM Cartons 
+                    WHERE OrderId = @OrderId AND StockCode = @StockCode AND StationId = @StationId AND Status = 'Open'", 
+                    new { OrderId = orderId, StockCode = stockCode, StationId = request.Request.TargetStationId.Value }, transaction);
+                
+                if (duplicateCarton != null)
+                {
+                    throw new InvalidOperationException("Hedef istasyonda bu sipariş ve stok kodu için halihazırda açık bir koli bulunmaktadır. Devir işlemi yapılamaz.");
+                }
+
+                // 4. Update Carton Station
+                await connection.ExecuteAsync(@"
+                    UPDATE Cartons 
+                    SET StationId = @StationId 
+                    WHERE Id = @Id",
+                    new
+                    {
+                        Id = request.Id,
+                        StationId = request.Request.TargetStationId.Value
+                    }, transaction);
+
+                await _auditLogService.LogAsync("Cartons", request.Id, "TransferStation", 
+                    new { OldStationId = oldStationId }, 
+                    new { NewStationId = request.Request.TargetStationId.Value, CartonNo = cartonNo });
+            }
+
+            if (request.Request.TargetUserId.HasValue)
+            {
+                // Validate Target User exists and is active
+                var targetUser = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                    "SELECT * FROM Users WHERE Id = @Id", new { Id = request.Request.TargetUserId.Value }, transaction);
+                if (targetUser == null || targetUser.isactive == false)
+                {
+                    throw new InvalidOperationException("Hedef kullanıcı bulunamadı veya pasif durumda.");
+                }
+
+                // Update Carton User assignment
+                await connection.ExecuteAsync(@"
+                    UPDATE Cartons 
+                    SET AssignedUserId = @UserId, OpenedBy = @UserId
+                    WHERE Id = @Id",
+                    new
+                    {
+                        Id = request.Id,
+                        UserId = request.Request.TargetUserId.Value
+                    }, transaction);
+
+                await _auditLogService.LogAsync("Cartons", request.Id, "TransferUser", 
+                    new { OldUserId = oldAssignedUserId }, 
+                    new { NewUserId = request.Request.TargetUserId.Value, CartonNo = cartonNo });
+            }
 
             transaction.Commit();
-
-            await _auditLogService.LogAsync("Cartons", request.Id, "Transfer", 
-                new { OldStationId = oldStationId }, 
-                new { NewStationId = request.Request.TargetStationId, CartonNo = cartonNo });
-                
             return Unit.Value;
         }
         catch (Exception)

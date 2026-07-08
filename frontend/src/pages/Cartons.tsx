@@ -44,6 +44,14 @@ interface Station {
   name: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  username: string;
+  role: string;
+  isActive: boolean;
+}
+
 interface ProductCode {
   rawCode: string;
   gtin: string;
@@ -231,6 +239,8 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
   const [cartons, setCartons] = useState<Carton[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
   const [transferStationId, setTransferStationId] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [transferUserId, setTransferUserId] = useState('');
   const [summaryData, setSummaryData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -291,16 +301,18 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
     else setLoading(true);
 
     try {
-      const [ordersRes, cartonsRes, summaryRes, stationsRes] = await Promise.all([
+      const [ordersRes, cartonsRes, summaryRes, stationsRes, usersRes] = await Promise.all([
         api.get('/api/orders?pageSize=1000'),
         api.get('/api/cartons?pageSize=10000'),
         api.get('/api/dashboard/summary').catch(() => null),
-        api.get('/api/stations?includeInactive=false').catch(() => [])
+        api.get('/api/stations?includeInactive=false').catch(() => []),
+        api.get('/api/users').catch(() => [])
       ]);
 
       setOrders(ordersRes.items || []);
       setCartons(cartonsRes.items || []);
       setStations(stationsRes || []);
+      setUsers(usersRes || []);
       if (summaryRes) setSummaryData(summaryRes);
     } catch (err) {
       console.error('Error fetching carton screen data:', err);
@@ -1281,43 +1293,105 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 )}
 
                 {/* Transfer action */}
-                {user?.role === 'Admin' && selectedCarton.status === 'Open' && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center' }}>
-                    <select
-                      className="form-input"
-                      style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
-                      value={transferStationId}
-                      onChange={(e) => setTransferStationId(e.target.value)}
-                    >
-                      <option value="">-- İstasyon Seç (Devret) --</option>
-                      {stations.map(s => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                    <button 
-                      className="btn btn-primary"
-                      style={{ padding: '8px 16px', height: '36px' }}
-                      onClick={async () => {
-                        if (!transferStationId) {
-                            alert("Lütfen devredilecek istasyonu seçin.");
-                            return;
-                        }
-                        if (!window.confirm('Bu koliyi seçilen istasyona devretmek istediğinize emin misiniz?')) return;
-                        try {
-                          await api.post(`/api/cartons/${selectedCarton.id}/transfer`, { targetStationId: transferStationId });
-                          alert("Koli başarıyla devredildi.");
-                          setTransferStationId('');
-                          setSelectedCarton(null);
-                          loadAllData(true);
-                        } catch (err: any) {
-                          alert("Devir işlemi başarısız: " + err.message);
-                        }
-                      }}
-                    >
-                      Devret
-                    </button>
+                {user?.role === 'Admin' && (selectedCarton.status === 'Open' || selectedCarton.status === 'Filling') && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                    {/* Station Transfer */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <select
+                        className="form-input"
+                        style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
+                        value={transferStationId}
+                        onChange={(e) => setTransferStationId(e.target.value)}
+                      >
+                        <option value="">-- İstasyon Seç (Devret) --</option>
+                        {stations.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <button 
+                        className="btn btn-primary"
+                        style={{ padding: '8px 16px', height: '36px' }}
+                        onClick={async () => {
+                          if (!transferStationId) {
+                              alert("Lütfen devredilecek istasyonu seçin.");
+                              return;
+                          }
+                          if (!window.confirm('Bu koliyi seçilen istasyona devretmek istediğinize emin misiniz?')) return;
+                          try {
+                            await api.post(`/api/cartons/${selectedCarton.id}/transfer`, { targetStationId: transferStationId });
+                            alert("Koli başarıyla devredildi.");
+                            setTransferStationId('');
+                            setSelectedCarton(null);
+                            loadAllData(true);
+                          } catch (err: any) {
+                            alert("Devir işlemi başarısız: " + err.message);
+                          }
+                        }}
+                      >
+                        Devret
+                      </button>
+                    </div>
+
+                    {/* User Transfer */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <select
+                        className="form-input"
+                        style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
+                        value={transferUserId}
+                        onChange={(e) => setTransferUserId(e.target.value)}
+                      >
+                        <option value="">-- Kullanıcı Seç (Devret) --</option>
+                        {users.filter(u => u.isActive && u.role === 'Operator').map(u => (
+                          <option key={u.id} value={u.id}>{u.name} ({u.username})</option>
+                        ))}
+                      </select>
+                      <button 
+                        className="btn btn-primary"
+                        style={{ padding: '8px 16px', height: '36px' }}
+                        onClick={async () => {
+                          if (!transferUserId) {
+                              alert("Lütfen devredilecek kullanıcıyı seçin.");
+                              return;
+                          }
+                          if (!window.confirm('Bu koliyi seçilen kullanıcıya devretmek istediğinize emin misiniz?')) return;
+                          try {
+                            await api.post(`/api/cartons/${selectedCarton.id}/transfer`, { targetUserId: transferUserId });
+                            alert("Koli başarıyla yeni kullanıcıya devredildi.");
+                            setTransferUserId('');
+                            setSelectedCarton(null);
+                            loadAllData(true);
+                          } catch (err: any) {
+                            alert("Kullanıcı devir işlemi başarısız: " + err.message);
+                          }
+                        }}
+                      >
+                        Devret
+                      </button>
+                    </div>
                   </div>
                 )}
+
+                {/* Empty Carton action */}
+                {hasPermission('cartons.create') && selectedCarton.actualQuantity > 0 && (
+                  <button 
+                    className="btn btn-warning" 
+                    style={{ width: '100%', padding: '10px', marginTop: '10px', color: '#fff', backgroundColor: '#f59e0b', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }} 
+                    onClick={async () => {
+                      if (!window.confirm("Bu kolinin içini boşaltmak istediğinize emin misiniz? Kolideki tüm ürünler çıkarılacak ancak koli kaydı silinmeyecektir.")) return;
+                      try {
+                        await api.post(`/api/cartons/${selectedCarton.id}/empty`);
+                        setSelectedCarton(null);
+                        await loadAllData(true);
+                        alert("Koli içi başarıyla boşaltıldı.");
+                      } catch (err: any) {
+                        alert("Koli boşaltılamadı: " + err.message);
+                      }
+                    }}
+                  >
+                    Kolinin İçini Boşalt
+                  </button>
+                )}
+
                 {/* Decompose action */}
                 {hasPermission('cartons.create') && (
                   <button 

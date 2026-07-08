@@ -1543,6 +1543,19 @@ app.MapPost("/api/cartons/{id:guid}/decompose", async (Guid id, IMediator mediat
     }
 }).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.delete");
 
+app.MapPost("/api/cartons/{id:guid}/empty", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new EmptyCartonCommand(id));
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.create");
+
 app.MapPost("/api/cartons/{id:guid}/remove-product", async (Guid id, [FromQuery] string rawCode, IMediator mediator) =>
 {
     try

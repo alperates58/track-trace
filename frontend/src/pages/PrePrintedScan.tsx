@@ -370,6 +370,8 @@ export const PrePrintedScan: React.FC = () => {
         }
       } catch (err: any) {
         handleScanError(code, err.message || 'Bağlantı hatası.');
+      } finally {
+        isProcessingRef.current = false;
       }
       return;
     }
@@ -777,8 +779,32 @@ export const PrePrintedScan: React.FC = () => {
                     <div style={{ width: '100%', height: '8px', backgroundColor: '#dbeafe', borderRadius: '4px', overflow: 'hidden', marginTop: '12px' }}>
                       <div style={{ height: '100%', width: `${Math.min(100, progressPercent)}%`, backgroundColor: '#3b82f6', transition: 'width 0.3s ease' }}></div>
                     </div>
-                    <div style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 700, color: '#1d4ed8', marginTop: '6px' }}>
-                      {Math.round(Math.min(100, progressPercent))}% Doluluk
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                      {currentQty > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-warning"
+                          style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#f59e0b', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!window.confirm("Bu aktif kolinin içindeki tüm ürünleri boşaltmak istediğinize emin misiniz?")) return;
+                            try {
+                              await api.post(`/api/cartons/${activeCartonId}/empty`);
+                              setCurrentQty(0);
+                              setStatus('ready');
+                              playSound('success');
+                              alert("Koli başarıyla boşaltıldı.");
+                            } catch (err: any) {
+                              alert("Koli boşaltılamadı: " + err.message);
+                            }
+                          }}
+                        >
+                          İçini Boşalt
+                        </button>
+                      )}
+                      <div style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 700, color: '#1d4ed8', flex: 1 }}>
+                        {Math.round(Math.min(100, progressPercent))}% Doluluk
+                      </div>
                     </div>
                   </>
                 ) : (
