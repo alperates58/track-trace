@@ -195,10 +195,18 @@ public class ImportProductCodesCommandHandler : IRequestHandler<ImportProductCod
             }
 
             var parsed = Gs1AutoHelper.NormalizeForEncoding(raw, request.Profile);
-            string finalNormalized = parsed.Success ? parsed.Normalized : raw;
-            string? finalGtin = parsed.Success ? parsed.Gtin : null;
-            string? finalSerialNo = parsed.Success ? parsed.SerialNo : null;
-            string? finalCryptoTail = parsed.Success ? parsed.CryptoTail : null;
+            
+            if (!parsed.Success)
+            {
+                invalidCount++;
+                errors.Add(new ImportErrorDto(rowNo, raw, parsed.ErrorMessage ?? "Geçersiz barkod formatı."));
+                continue;
+            }
+
+            string finalNormalized = parsed.Normalized;
+            string? finalGtin = parsed.Gtin;
+            string? finalSerialNo = parsed.SerialNo;
+            string? finalCryptoTail = parsed.CryptoTail;
 
             if (seenRawCodesInFile.Contains(finalNormalized))
             {

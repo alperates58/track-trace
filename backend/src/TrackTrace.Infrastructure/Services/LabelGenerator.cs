@@ -842,7 +842,15 @@ public class LabelGenerator : ILabelGenerator
             {
                 content = content.Substring(1);
                 options.Hints[EncodeHintType.GS1_FORMAT] = true;
-                options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
+                
+                if (content.Contains(Gs1AutoHelper.GS + "91") || content.Contains(Gs1AutoHelper.GS + "92"))
+                {
+                    options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = false;
+                }
+                else
+                {
+                    options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
+                }
             }
 
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";

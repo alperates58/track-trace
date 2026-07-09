@@ -77,16 +77,7 @@ namespace TrackTrace.Application.Common
                 };
             }
 
-            // Check if there are literal text representations of GS separator
-            if (interpreted.Contains("<GS>") || interpreted.Contains("\\GS") || 
-                (interpreted.Contains("GS") && (interpreted.Contains(" 91") || interpreted.Contains(" 92") || interpreted.Contains(" 93") || 
-                                                interpreted.Contains("<GS>91") || interpreted.Contains("<GS>92") || interpreted.Contains("<GS>93") || 
-                                                interpreted.Contains("\\GS91") || interpreted.Contains("\\GS92") || interpreted.Contains("\\GS93"))))
-            {
-                return Fail("GS grup ayırıcı eksik veya yanlış yerde. Kodda literal olarak 'GS', '<GS>', '\\GS' veya boşluk kullanılmış olabilir.", 
-                            "GS Ayırıcı Eksik", 
-                            "Kodda seri numarası ile doğrulama alanları arasında gerçek GS karakteri kullanılmalıdır.");
-            }
+
 
             // Let's check for spaces around AIs
             if (interpreted.Contains(" 91") || interpreted.Contains(" 92") || interpreted.Contains(" 93") || interpreted.Contains(" 21"))
@@ -512,6 +503,13 @@ namespace TrackTrace.Application.Common
         {
             if (string.IsNullOrEmpty(text))
                 return text;
+
+            text = text.Replace("<GS>", GS.ToString())
+                       .Replace("\\GS", GS.ToString())
+                       .Replace("\\u001D", GS.ToString())
+                       .Replace("\\u001d", GS.ToString())
+                       .Replace("\\x1D", GS.ToString())
+                       .Replace("\\x1d", GS.ToString());
 
             var sb = new StringBuilder(text.Length);
 
