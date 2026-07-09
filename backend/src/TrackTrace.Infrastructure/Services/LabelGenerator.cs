@@ -837,13 +837,10 @@ public class LabelGenerator : ILabelGenerator
             };
 
             string content = text;
-            bool isGs1 = content.Length > 0 && content[0] == Gs1AutoHelper.GS;
-            if (isGs1)
-            {
-                content = content.Substring(1);
-                options.Hints[EncodeHintType.GS1_FORMAT] = true;
-                options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
-            }
+            // isGs1 check removed since we just pass the exact text (which includes the leading GS) directly to ZXing
+            // Datamatrix Creator does not use GS1_FORMAT or modify the string.
+            // By omitting GS1_FORMAT, ZXing encodes GS as ASCII 29 (codeword 30) instead of FNC1 (codeword 232).
+            // This prevents the Honeywell/Zebra scanner firmware bug that corrupts data after internal FNC1 codewords.
 
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
             options.Hints[EncodeHintType.DISABLE_ECI] = true;
