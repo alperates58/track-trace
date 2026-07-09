@@ -840,22 +840,9 @@ public class LabelGenerator : ILabelGenerator
             bool isGs1 = content.Length > 0 && content[0] == Gs1AutoHelper.GS;
             if (isGs1)
             {
-                if (content.Contains(Gs1AutoHelper.GS + "91") || content.Contains(Gs1AutoHelper.GS + "92"))
-                {
-                    // LONG CODE: Disable compaction to prevent padding bugs.
-                    // Replace GS with char 232 (FNC1) so the ASCII encoder explicitly writes the FNC1 codeword.
-                    content = content.Replace(Gs1AutoHelper.GS, (char)232);
-                    
-                    options.Hints[EncodeHintType.GS1_FORMAT] = true;
-                    options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = false;
-                }
-                else
-                {
-                    // SHORT CODE: Maintain exact original behavior.
-                    content = content.Substring(1);
-                    options.Hints[EncodeHintType.GS1_FORMAT] = true;
-                    options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
-                }
+                content = content.Substring(1);
+                options.Hints[EncodeHintType.GS1_FORMAT] = true;
+                options.Hints[EncodeHintType.DATA_MATRIX_COMPACT] = true;
             }
 
             options.Hints[EncodeHintType.CHARACTER_SET] = "ISO-8859-1";
