@@ -119,8 +119,8 @@ public class OrderGroupHandlers :
 
         var kpiResult = await connection.QueryFirstOrDefaultAsync<dynamic>(kpiSql, parameters);
         
-        long globalScanned = kpiResult?.globalscanned ?? 0;
-        long globalExpected = kpiResult?.globalexpected ?? 0;
+        long globalScanned = Convert.ToInt64(kpiResult?.globalscanned ?? 0);
+        long globalExpected = Convert.ToInt64(kpiResult?.globalexpected ?? 0);
         decimal overallProgress = globalExpected > 0 ? Math.Round((decimal)globalScanned / globalExpected * 100, 1) : 0m;
 
         var kpis = new OrderGroupGlobalKpiDto(
