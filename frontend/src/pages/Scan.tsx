@@ -565,7 +565,7 @@ export const Scan: React.FC = () => {
       </main>
 
       {/* Hidden HTML input for keyboard scanning emulator */}
-      <form onSubmit={handleScanSubmit} className="hidden" style={{ display: 'none' }}>
+      <form onSubmit={handleScanSubmit} className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
         <input
           ref={inputRef}
           type="text"

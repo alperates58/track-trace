@@ -204,7 +204,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
         <div className="flex flex-col min-w-0 pr-4">
           {selectedProduct ? (
             <>
-              <span className="text-base font-bold text-blue-900 truncate" title={selectedProduct.productName}>
+              <span className="text-base font-bold text-blue-900 line-clamp-2 break-words whitespace-normal" title={selectedProduct.productName}>
                 {selectedProduct.productName}
               </span>
               <span className="text-xs text-blue-600 font-medium truncate" title={selectedProduct.stockCode}>
@@ -280,7 +280,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
                         }
                       `}>
                         <div className="flex justify-between items-start gap-2">
-                          <span className={`font-bold text-sm leading-tight truncate flex-1 ${isSelected ? 'text-blue-900' : 'text-gray-800'}`} title={product.productName}>
+                          <span className={`font-bold text-sm leading-tight line-clamp-2 break-words whitespace-normal flex-1 ${isSelected ? 'text-blue-900' : 'text-gray-800'}`} title={product.productName}>
                             {product.productName}
                           </span>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded shrink-0 ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
