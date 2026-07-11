@@ -41,7 +41,7 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
       const newLines = Array.isArray(linesData) ? linesData : (linesData?.items ?? []);
       setLines(newLines);
       
-      setSelectedLine(prev => {
+      setSelectedLine((prev: any) => {
         if (!prev) return null;
         return newLines.find((l: any) => l.id === prev.id) || prev;
       });
