@@ -629,6 +629,57 @@ app.MapGet("/api/audit-logs/{id:guid}", async (Guid id, IMediator mediator) =>
     return Results.Ok(log);
 }).RequireAuthorization("AdminOnly").RequirePermission("audit.view");
 
+// Order Groups Endpoints
+app.MapGet("/api/order-groups", async (
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    [FromQuery] string? status,
+    IMediator mediator) =>
+{
+    var (items, count, kpis) = await mediator.Send(new GetOrderGroupsQuery(pageNumber ?? 1, pageSize ?? 10, search, status));
+    return Results.Ok(new { items, totalCount = count, kpis });
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
+
+app.MapGet("/api/order-groups/{groupKey}", async (string groupKey, IMediator mediator) =>
+{
+    try
+    {
+        var summary = await mediator.Send(new GetOrderGroupSummaryQuery(groupKey));
+        return Results.Ok(summary);
+    }
+    catch (ArgumentException)
+    {
+        return Results.BadRequest(new { message = "Geçersiz sipariş grubu anahtarı." });
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound(new { message = "Sipariş grubu bulunamadı." });
+    }
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
+
+app.MapGet("/api/order-groups/{groupKey}/lines", async (
+    string groupKey,
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? search,
+    [FromQuery] string? status,
+    [FromQuery] string? sortBy,
+    [FromQuery] string? sortDirection,
+    IMediator mediator) =>
+{
+    try
+    {
+        var (items, count) = await mediator.Send(new GetOrderGroupLinesQuery(
+            groupKey, pageNumber ?? 1, pageSize ?? 50, search, status, sortBy, sortDirection));
+        return Results.Ok(new { items, totalCount = count });
+    }
+    catch (ArgumentException)
+    {
+        return Results.BadRequest(new { message = "Geçersiz sipariş grubu anahtarı." });
+    }
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
+
 // Orders Endpoints
 app.MapGet("/api/orders", async (
     [FromQuery] int? pageNumber,
