@@ -24,7 +24,8 @@ public enum CartonStatus
     Closed,
     Void,
     Printed,
-    Palletized
+    Palletized,
+    Shipped
 }
 
 public enum PalletStatus
@@ -33,6 +34,13 @@ public enum PalletStatus
     Closed,
     Printed,
     Shipped
+}
+
+public enum ShipmentStatus
+{
+    Draft,
+    Shipped,
+    Cancelled
 }
 
 public enum UserRole

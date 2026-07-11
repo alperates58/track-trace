@@ -82,6 +82,86 @@ try {
     }
 
     Write-Host "PASS: isolated health, authentication, order, pre-print, carton-open and product-scan flows."
+
+    # Shipment fixtures are created only in the disposable test database.
+    $standaloneCartonId = [guid]::NewGuid()
+    $palletCartonId = [guid]::NewGuid()
+    $palletId = [guid]::NewGuid()
+    $palletCartonLinkId = [guid]::NewGuid()
+    $standaloneSscc = "900000000000000001"
+    $palletCartonSscc = "900000000000000002"
+    $palletSscc = "800000000000000001"
+
+    Invoke-TestSql "INSERT INTO Cartons (Id, OrderId, CartonNo, SSCC, TargetQuantity, ActualQuantity, Status, CreatedAt, ClosedAt) VALUES ('$standaloneCartonId', '$orderId', 'E2E-SHIP-C1', '$standaloneSscc', 1, 1, 'Closed', NOW(), NOW());" | Out-Null
+    Invoke-TestSql "INSERT INTO Cartons (Id, OrderId, CartonNo, SSCC, TargetQuantity, ActualQuantity, Status, CreatedAt, ClosedAt) VALUES ('$palletCartonId', '$orderId', 'E2E-SHIP-C2', '$palletCartonSscc', 1, 1, 'Palletized', NOW(), NOW());" | Out-Null
+    Invoke-TestSql "INSERT INTO Pallets (Id, OrderId, PalletNo, SSCC, Status, CreatedAt, ClosedAt) VALUES ('$palletId', '$orderId', 'E2E-SHIP-P1', '$palletSscc', 'Closed', NOW(), NOW());" | Out-Null
+    Invoke-TestSql "INSERT INTO PalletCartons (Id, PalletId, CartonId, CreatedAt) VALUES ('$palletCartonLinkId', '$palletId', '$palletCartonId', NOW());" | Out-Null
+    Invoke-TestSql "INSERT INTO ProductCodes (Id, OrderId, RawCode, Gtin, SerialNo, Status, CartonId, CreatedAt) VALUES (gen_random_uuid(), '$orderId', 'E2E-SHIP-PRODUCT-1', '8690000000004', 'SHIP01', 'Scanned', '$standaloneCartonId', NOW()), (gen_random_uuid(), '$orderId', 'E2E-SHIP-PRODUCT-2', '8690000000004', 'SHIP02', 'Scanned', '$palletCartonId', NOW());" | Out-Null
+
+    $shipment = Invoke-RestMethod -Uri "$BaseUrl/api/shipments" -Method Post -Headers $headers
+    $shipmentId = $shipment.id
+
+    $standaloneScanBody = @{ code = $standaloneSscc } | ConvertTo-Json
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/scan" -Method Post -Body $standaloneScanBody -ContentType "application/json" -Headers $headers | Out-Null
+
+    $duplicateRejected = $false
+    try {
+        Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/scan" -Method Post -Body $standaloneScanBody -ContentType "application/json" -Headers $headers | Out-Null
+    } catch {
+        $duplicateRejected = $true
+    }
+    if (-not $duplicateRejected) {
+        throw "Duplicate shipment scan was not rejected."
+    }
+
+    $shipmentDetail = Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId" -Headers $headers
+    $standaloneItem = @($shipmentDetail.items | Where-Object { $_.itemType -eq "Carton" })[0]
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/items/$($standaloneItem.id)" -Method Delete -Headers $headers | Out-Null
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/scan" -Method Post -Body $standaloneScanBody -ContentType "application/json" -Headers $headers | Out-Null
+
+    $palletScanBody = @{ code = $palletSscc } | ConvertTo-Json
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/scan" -Method Post -Body $palletScanBody -ContentType "application/json" -Headers $headers | Out-Null
+
+    $shipmentDetail = Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId" -Headers $headers
+    if ($shipmentDetail.shipment.palletCount -ne 1 -or $shipmentDetail.shipment.cartonCount -ne 2 -or $shipmentDetail.shipment.productCount -ne 2) {
+        throw "Shipment totals are incorrect."
+    }
+
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/complete" -Method Post -Headers $headers | Out-Null
+    $shipmentState = Invoke-TestSql "SELECT s.Status || '|' || c1.Status || '|' || c2.Status || '|' || p.Status FROM Shipments s, Cartons c1, Cartons c2, Pallets p WHERE s.Id = '$shipmentId' AND c1.Id = '$standaloneCartonId' AND c2.Id = '$palletCartonId' AND p.Id = '$palletId';"
+    if ($shipmentState -ne "Shipped|Shipped|Shipped|Shipped") {
+        throw "Shipment completion did not update container states atomically: $shipmentState"
+    }
+
+    $productStates = Invoke-TestSql "SELECT string_agg(DISTINCT Status, ',') FROM ProductCodes WHERE CartonId IN ('$standaloneCartonId', '$palletCartonId');"
+    if ($productStates -ne "Scanned") {
+        throw "Shipment changed production product-code states: $productStates"
+    }
+
+    $secondShipment = Invoke-RestMethod -Uri "$BaseUrl/api/shipments" -Method Post -Headers $headers
+    $shippedItemRejected = $false
+    try {
+        Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($secondShipment.id)/scan" -Method Post -Body $standaloneScanBody -ContentType "application/json" -Headers $headers | Out-Null
+    } catch {
+        $shippedItemRejected = $true
+    }
+    if (-not $shippedItemRejected) {
+        throw "Previously shipped carton was accepted into another shipment."
+    }
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($secondShipment.id)/cancel" -Method Post -Headers $headers | Out-Null
+
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/cancel" -Method Post -Headers $headers | Out-Null
+    $reversedState = Invoke-TestSql "SELECT s.Status || '|' || c1.Status || '|' || c2.Status || '|' || p.Status || '|' || (c1.ShippedAt IS NULL) || '|' || (p.ShippedAt IS NULL) FROM Shipments s, Cartons c1, Cartons c2, Pallets p WHERE s.Id = '$shipmentId' AND c1.Id = '$standaloneCartonId' AND c2.Id = '$palletCartonId' AND p.Id = '$palletId';"
+    if ($reversedState -ne "Cancelled|Closed|Palletized|Closed|true|true") {
+        throw "Admin shipment reversal did not restore container states: $reversedState"
+    }
+
+    $retryShipment = Invoke-RestMethod -Uri "$BaseUrl/api/shipments" -Method Post -Headers $headers
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($retryShipment.id)/scan" -Method Post -Body $standaloneScanBody -ContentType "application/json" -Headers $headers | Out-Null
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($retryShipment.id)/scan" -Method Post -Body $palletScanBody -ContentType "application/json" -Headers $headers | Out-Null
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($retryShipment.id)/cancel" -Method Post -Headers $headers | Out-Null
+
+    Write-Host "PASS: isolated shipment create, scan, duplicate protection, remove/re-scan, pallet cascade, completion, admin reversal, reuse and cancellation flows."
 }
 finally {
     Pop-Location

@@ -469,6 +469,15 @@ public class PalletHandlers :
                 throw new InvalidOperationException("Yalnızca kapalı, yazdırılmış veya paletlenmiş koliler taşınabilir.");
             }
 
+            var sourcePalletStatus = await connection.QueryFirstOrDefaultAsync<string>(@"
+                SELECT p.Status FROM PalletCartons pc
+                JOIN Pallets p ON p.Id = pc.PalletId
+                WHERE pc.CartonId = @CartonId", new { CartonId = request.CartonId }, transaction);
+            if (sourcePalletStatus == PalletStatus.Shipped.ToString())
+            {
+                throw new InvalidOperationException("Sevk edilmiş paletten koli taşınamaz.");
+            }
+
             // 3. Delete existing PalletCartons mapping (removes from source pallet if any)
             await connection.ExecuteAsync(
                 "DELETE FROM PalletCartons WHERE CartonId = @CartonId",
@@ -541,6 +550,10 @@ public class DeletePalletCommandHandler : IRequestHandler<DeletePalletCommand, U
             if (pallet == null)
             {
                 throw new KeyNotFoundException("Belirtilen palet bulunamadı.");
+            }
+            if ((string)pallet.status == PalletStatus.Shipped.ToString())
+            {
+                throw new InvalidOperationException("Sevk edilmiş palet silinemez.");
             }
 
             string palletNo = pallet.palletno;

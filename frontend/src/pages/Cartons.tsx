@@ -133,7 +133,7 @@ const CartonTableRow: React.FC<{
       </td>
       <td>
         <span className={`badge badge-${c.status.toLowerCase()}`}>
-          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
+          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
         </span>
       </td>
       <td>
@@ -178,7 +178,7 @@ const CartonMobileCard: React.FC<{
       <div className="mobile-card-row" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '4px' }}>
         <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>{c.cartonNo}</span>
         <span className={`badge badge-${c.status.toLowerCase()}`}>
-          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
+          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
         </span>
       </div>
       
@@ -339,7 +339,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
   const kpis = useMemo(() => {
     const total = cartons.length;
     const open = cartons.filter(c => c.status === 'Open').length;
-    const closed = cartons.filter(c => ['Closed', 'Printed', 'Palletized'].includes(c.status)).length; // Dolan koli
+    const closed = cartons.filter(c => ['Closed', 'Printed', 'Palletized', 'Shipped'].includes(c.status)).length; // Dolan koli
     const printed = cartons.filter(c => c.status === 'Printed').length;
     
     // Decomposed/cancelled carton count from audit logs (if any in dashboard activity) plus session count
@@ -897,6 +897,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               <option value="Closed">Kapalı (Closed)</option>
               <option value="Printed">Yazdırıldı</option>
               <option value="Palletized">Paletlendi</option>
+              <option value="Shipped">Sevk Edildi</option>
             </select>
           </div>
 
@@ -1037,7 +1038,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                                     </td>
                                     <td>
                                       <span className={`badge badge-${c.status.toLowerCase()}`}>
-                                        {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
+                                        {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
                                       </span>
                                     </td>
                                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -1115,7 +1116,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                             <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.cartonNo}</span>
                             <span className={`badge badge-${c.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
-                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
+                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
                             </span>
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>SSCC: {c.sscc}</div>
@@ -1262,7 +1263,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 <div style={{ marginTop: '8px' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Durum</span>
                   <span className={`badge badge-${selectedCarton.status.toLowerCase()}`}>
-                    {selectedCarton.status === 'Open' ? 'Açık' : selectedCarton.status === 'Closed' ? 'Kapalı' : selectedCarton.status === 'Printed' ? 'Yazdırıldı' : selectedCarton.status === 'PrePrinted' ? 'Ön Etiket' : selectedCarton.status === 'Filling' ? 'Dolduruluyor' : selectedCarton.status === 'Palletized' ? 'Paletlendi' : selectedCarton.status}
+                    {selectedCarton.status === 'Open' ? 'Açık' : selectedCarton.status === 'Closed' ? 'Kapalı' : selectedCarton.status === 'Printed' ? 'Yazdırıldı' : selectedCarton.status === 'PrePrinted' ? 'Ön Etiket' : selectedCarton.status === 'Filling' ? 'Dolduruluyor' : selectedCarton.status === 'Palletized' ? 'Paletlendi' : selectedCarton.status === 'Shipped' ? 'Sevk Edildi' : selectedCarton.status}
                   </span>
                 </div>
                 <div style={{ marginTop: '8px' }}>
@@ -1372,7 +1373,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 )}
 
                 {/* Empty Carton action */}
-                {hasPermission('cartons.create') && selectedCarton.actualQuantity > 0 && (
+                {hasPermission('cartons.create') && selectedCarton.actualQuantity > 0 && selectedCarton.status !== 'Shipped' && (
                   <button 
                     className="btn btn-warning" 
                     style={{ width: '100%', padding: '10px', marginTop: '10px', color: '#fff', backgroundColor: '#f59e0b', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }} 
@@ -1393,7 +1394,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 )}
 
                 {/* Decompose action */}
-                {hasPermission('cartons.create') && (
+                {hasPermission('cartons.create') && selectedCarton.status !== 'Shipped' && (
                   <button 
                     className="btn btn-danger" 
                     style={{ width: '100%', padding: '10px', marginTop: '10px' }} 
@@ -1481,7 +1482,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                             <div style={{ fontWeight: 600, maxWidth: '85%', color: 'var(--text-main)' }}>
                               <FormattedBarcode code={item.rawCode} />
                             </div>
-                            {hasPermission('cartons.create') && (
+                            {hasPermission('cartons.create') && selectedCarton.status !== 'Shipped' && (
                               <button 
                                 onClick={() => handleRemoveProduct(selectedCarton.id, item.rawCode)}
                                 style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}

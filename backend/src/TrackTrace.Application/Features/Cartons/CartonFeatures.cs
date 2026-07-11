@@ -274,8 +274,9 @@ public class CartonHandlers :
             CreatedAt = DateTime.UtcNow
         });
 
-        // Update Carton Status to Printed if not already Palletized
-        if (cartonDto.Status != CartonStatus.Palletized.ToString())
+        // Preserve terminal logistics states while still recording the print job.
+        if (cartonDto.Status != CartonStatus.Palletized.ToString() &&
+            cartonDto.Status != CartonStatus.Shipped.ToString())
         {
             await connection.ExecuteAsync(
                 "UPDATE Cartons SET Status = @Status, PrintedAt = @PrintedAt WHERE Id = @Id",
@@ -299,6 +300,8 @@ public class CartonHandlers :
             var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
                 "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.Id }, transaction);
             if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+            if ((string)carton.status == CartonStatus.Shipped.ToString())
+                throw new InvalidOperationException("Sevk edilmiş koli parçalanamaz.");
 
             string cartonNo = carton.cartonno;
             string sscc = carton.sscc;
@@ -342,6 +345,8 @@ public class CartonHandlers :
             var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
                 "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.Id }, transaction);
             if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+            if ((string)carton.status == CartonStatus.Shipped.ToString())
+                throw new InvalidOperationException("Sevk edilmiş koli boşaltılamaz.");
 
             string cartonNo = carton.cartonno;
             string sscc = carton.sscc;
@@ -417,6 +422,8 @@ public class CartonHandlers :
             var carton = await connection.QueryFirstOrDefaultAsync<dynamic>(
                 "SELECT * FROM Cartons WHERE Id = @Id FOR UPDATE", new { Id = request.CartonId }, transaction);
             if (carton == null) throw new KeyNotFoundException("Koli bulunamadı.");
+            if ((string)carton.status == CartonStatus.Shipped.ToString())
+                throw new InvalidOperationException("Sevk edilmiş koliden ürün çıkarılamaz.");
 
             string cartonNo = carton.cartonno;
             string sscc = carton.sscc;

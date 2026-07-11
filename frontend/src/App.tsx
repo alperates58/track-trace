@@ -18,7 +18,8 @@ import {
   Shield,
   Key,
   Printer,
-  Server
+  Server,
+  Truck
 } from 'lucide-react';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -38,6 +39,7 @@ const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ def
 const AuditCenter = React.lazy(() => import('./pages/AuditCenter').then(module => ({ default: module.AuditCenter })));
 const PermissionMatrix = React.lazy(() => import('./pages/PermissionMatrix').then(module => ({ default: module.PermissionMatrix })));
 const PrintSettings = React.lazy(() => import('./pages/PrintSettings').then(module => ({ default: module.PrintSettings })));
+const Shipments = React.lazy(() => import('./pages/Shipments').then(module => ({ default: module.Shipments })));
 
 const PageLoader: React.FC = () => (
   <div className="tt-loading-state" role="status" aria-live="polite">
@@ -69,11 +71,12 @@ const AppShell: React.FC = () => {
   const showScan = hasPermission('scan.view');
   const showCartons = hasPermission('cartons.view');
   const showPallets = hasPermission('pallets.view');
+  const showShipments = hasPermission('shipments.view');
   const showTraceability = hasPermission('traceability.view');
   const showReports = hasPermission('reports.view');
   const showDmCreator = hasPermission('generator.view');
 
-  const showOpsMenu = showDashboard || showOrders || showScan || showCartons || showPallets;
+  const showOpsMenu = showDashboard || showOrders || showScan || showCartons || showPallets || showShipments;
   const showIntelMenu = showTraceability || showReports || showDmCreator;
 
   const availableTabs = [
@@ -83,6 +86,7 @@ const AppShell: React.FC = () => {
     ...(showScan ? ['preprint-scan'] : []),
     ...(showCartons ? ['cartons', 'preprint-create'] : []),
     ...(showPallets ? ['pallets'] : []),
+    ...(showShipments ? ['shipments'] : []),
     ...(showTraceability ? ['traceability'] : []),
     ...(showReports ? ['reports'] : []),
     ...(showDmCreator ? ['dm-creator'] : []),
@@ -124,6 +128,8 @@ const AppShell: React.FC = () => {
         return showCartons ? <PrePrintWizard onNavigate={setActiveTab} /> : <Unauthorized />;
       case 'pallets':
         return showPallets ? <Pallets /> : <Unauthorized />;
+      case 'shipments':
+        return showShipments ? <Shipments /> : <Unauthorized />;
       case 'traceability':
         return showTraceability ? <TraceabilityCenter /> : <Unauthorized />;
       case 'dm-creator':
@@ -233,6 +239,17 @@ const AppShell: React.FC = () => {
                   >
                     <Layers size={18} style={{ flexShrink: 0 }} />
                     <span>Palet Yönetimi</span>
+                  </div>
+                )}
+
+                {showShipments && (
+                  <div
+                    className={`sidebar-link ${activeTab === 'shipments' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('shipments')}
+                    title="Depo & Sevkiyat"
+                  >
+                    <Truck size={18} style={{ flexShrink: 0 }} />
+                    <span>Depo & Sevkiyat</span>
                   </div>
                 )}
               </div>
@@ -386,7 +403,7 @@ const AppShell: React.FC = () => {
             <div className="header-title-area">
               <span className="header-breadcrumb">TrackTrace / {activeTab === 'dashboard' ? 'Operations' : activeTab === 'users' || activeTab === 'system' ? 'Administration' : 'Module'}</span>
               <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
-                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Otomatik Koli Modu' : activeTab === 'preprint-scan' ? 'Ön Etiketli Koli Modu' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'stations' ? 'İstasyon Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Otomatik Koli Modu' : activeTab === 'preprint-scan' ? 'Ön Etiketli Koli Modu' : activeTab === 'shipments' ? 'Depo & Sevkiyat' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'stations' ? 'İstasyon Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </h2>
             </div>
           </div>

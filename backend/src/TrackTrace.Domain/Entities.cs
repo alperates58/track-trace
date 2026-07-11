@@ -84,6 +84,8 @@ public class Carton
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ClosedAt { get; set; }
     public DateTime? PrintedAt { get; set; }
+    public DateTime? ShippedAt { get; set; }
+    public Guid? ShippedBy { get; set; }
 }
 
 public class Pallet
@@ -97,6 +99,33 @@ public class Pallet
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ClosedAt { get; set; }
     public DateTime? PrintedAt { get; set; }
+    public DateTime? ShippedAt { get; set; }
+    public Guid? ShippedBy { get; set; }
+}
+
+public class Shipment
+{
+    public Guid Id { get; set; }
+    public string ShipmentNo { get; set; } = null!;
+    public ShipmentStatus Status { get; set; } = ShipmentStatus.Draft;
+    public Guid? CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Guid? CompletedBy { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public Guid? CancelledBy { get; set; }
+    public DateTime? CancelledAt { get; set; }
+}
+
+public class ShipmentItem
+{
+    public Guid Id { get; set; }
+    public Guid ShipmentId { get; set; }
+    public Guid? CartonId { get; set; }
+    public Guid? PalletId { get; set; }
+    public Guid? ScannedBy { get; set; }
+    public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
+    public Guid? RemovedBy { get; set; }
+    public DateTime? RemovedAt { get; set; }
 }
 
 public class PalletCarton

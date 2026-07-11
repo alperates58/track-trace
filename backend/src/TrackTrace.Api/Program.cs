@@ -26,6 +26,7 @@ using TrackTrace.Application.Features.Orders;
 using TrackTrace.Application.Features.Pallets;
 using TrackTrace.Application.Features.Reports;
 using TrackTrace.Application.Features.Scan;
+using TrackTrace.Application.Features.Shipments;
 using TrackTrace.Application.Features.Users;
 using TrackTrace.Domain.Enums;
 using TrackTrace.Infrastructure;
@@ -1784,6 +1785,106 @@ app.MapGet("/api/pallets/{id:guid}/label.pplb", async (Guid id, IMediator mediat
     }
 }).RequireAuthorization("ViewerOrAbove").RequirePermission("pallets.print");
 
+// Shipments Endpoints
+app.MapGet("/api/shipments", async (
+    [FromQuery] int? pageNumber,
+    [FromQuery] int? pageSize,
+    [FromQuery] string? status,
+    IMediator mediator) =>
+{
+    var (items, totalCount) = await mediator.Send(new GetShipmentsQuery(pageNumber ?? 1, pageSize ?? 50, status));
+    return Results.Ok(new { items, totalCount });
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("shipments.view");
+
+app.MapGet("/api/shipments/{id:guid}", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        return Results.Ok(await mediator.Send(new GetShipmentByIdQuery(id)));
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+}).RequireAuthorization("ViewerOrAbove").RequirePermission("shipments.view");
+
+app.MapPost("/api/shipments", async (IMediator mediator) =>
+{
+    var id = await mediator.Send(new CreateShipmentCommand());
+    return Results.Created($"/api/shipments/{id}", new { id });
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("shipments.create");
+
+app.MapPost("/api/shipments/{id:guid}/scan", async (Guid id, [FromBody] ScanShipmentRequest request, IMediator mediator) =>
+{
+    try
+    {
+        return Results.Ok(await mediator.Send(new ScanShipmentItemCommand(id, request.Code)));
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("shipments.scan");
+
+app.MapDelete("/api/shipments/{id:guid}/items/{itemId:guid}", async (Guid id, Guid itemId, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new RemoveShipmentItemCommand(id, itemId));
+        return Results.NoContent();
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("shipments.scan");
+
+app.MapPost("/api/shipments/{id:guid}/complete", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new CompleteShipmentCommand(id));
+        return Results.Ok();
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("shipments.complete");
+
+app.MapPost("/api/shipments/{id:guid}/cancel", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new CancelShipmentCommand(id));
+        return Results.Ok();
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+    catch (UnauthorizedAccessException)
+    {
+        return Results.Forbid();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("shipments.cancel");
+
 // Barcode Search
 app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator mediator) =>
 {
@@ -1892,5 +1993,6 @@ public record PrintCodesRequest(
     int SplitSize);
 
 public record PrintTestRequest(string IpAddress, int Port);
+public record ScanShipmentRequest(string Code);
 public record PrintNetworkRequest(string IpAddress, int Port);
 
