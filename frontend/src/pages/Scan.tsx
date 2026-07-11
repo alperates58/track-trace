@@ -547,7 +547,7 @@ export const Scan: React.FC = () => {
           onCloseFocusRestoration={focusInput}
         />
 
-        <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden min-h-0">
+        <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden min-h-0" style={{ position: 'relative', zIndex: 1 }}>
           <ScanProgressCard 
             productName={selectedOrder?.productName || null}
             stockCode={selectedOrder?.stockCode || null}
