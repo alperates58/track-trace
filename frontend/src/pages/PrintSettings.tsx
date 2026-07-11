@@ -170,13 +170,15 @@ export const PrintSettings: React.FC = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch('/api/settings/GlobalPrintConfig');
-        if (res.ok) {
-          const data = await res.json();
-          setGlobalConfig({ ...DEFAULT_CONFIG, ...JSON.parse(data.value) });
+        const res = await api.get('/api/settings/GlobalPrintConfig');
+        if (res && res.value) {
+          setGlobalConfig({ ...DEFAULT_CONFIG, ...JSON.parse(res.value) });
         }
-      } catch (e) {
-        console.error('Failed to fetch global print settings', e);
+      } catch (e: any) {
+        // Ignore 404 since it means no global config exists yet
+        if (e?.status !== 404 && e?.response?.status !== 404) {
+          console.error('Failed to fetch global print settings', e);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -230,14 +232,7 @@ export const PrintSettings: React.FC = () => {
   const handleSaveGlobal = async (newConfig: Partial<PrintConfig>) => {
     const updated = { ...config, ...newConfig };
     try {
-      await fetch('/api/settings/GlobalPrintConfig', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ key: 'GlobalPrintConfig', value: JSON.stringify(updated) })
-      });
+      await api.put('/api/settings/GlobalPrintConfig', { key: 'GlobalPrintConfig', value: JSON.stringify(updated) });
       setGlobalConfig(updated);
       alert('Global ayarlar başarıyla kaydedildi.');
     } catch (e) {
