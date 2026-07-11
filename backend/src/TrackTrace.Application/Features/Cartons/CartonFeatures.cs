@@ -575,9 +575,9 @@ public class CartonHandlers :
             if (request.Request.TargetStationId.HasValue)
             {
                 // 2. Validate Target Station exists and is active
-                var targetStation = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                    "SELECT * FROM Stations WHERE Id = @Id", new { Id = request.Request.TargetStationId.Value }, transaction);
-                if (targetStation == null || targetStation.isactive == false)
+                var targetStationIsActive = await connection.QueryFirstOrDefaultAsync<bool?>(
+                    "SELECT IsActive FROM Stations WHERE Id = @Id", new { Id = request.Request.TargetStationId.Value }, transaction);
+                if (targetStationIsActive != true)
                 {
                     throw new InvalidOperationException("Hedef istasyon bulunamadı veya pasif durumda.");
                 }
@@ -612,9 +612,9 @@ public class CartonHandlers :
             if (request.Request.TargetUserId.HasValue)
             {
                 // Validate Target User exists and is active
-                var targetUser = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                    "SELECT * FROM Users WHERE Id = @Id", new { Id = request.Request.TargetUserId.Value }, transaction);
-                if (targetUser == null || targetUser.isactive == false)
+                var targetUserIsActive = await connection.QueryFirstOrDefaultAsync<bool?>(
+                    "SELECT IsActive FROM Users WHERE Id = @Id", new { Id = request.Request.TargetUserId.Value }, transaction);
+                if (targetUserIsActive != true)
                 {
                     throw new InvalidOperationException("Hedef kullanıcı bulunamadı veya pasif durumda.");
                 }

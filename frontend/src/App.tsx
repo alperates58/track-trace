@@ -1,23 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
-import { Orders } from './pages/Orders';
-import { Scan } from './pages/Scan';
-import { Cartons } from './pages/Cartons';
-import { Pallets } from './pages/Pallets';
-import { PrePrintedScan } from './pages/PrePrintedScan';
-import { PrePrintWizard } from './pages/PrePrintWizard';
-import { PublicBarcodeSearch } from './pages/PublicBarcodeSearch';
-import { TraceabilityCenter } from './pages/TraceabilityCenter';
-import { DataMatrixCreator } from './pages/DataMatrixCreator';
-import { SystemInfo } from './pages/SystemInfo';
-import { Users } from './pages/Users';
-import { Stations } from './pages/Stations';
-import { Reports } from './pages/Reports';
-import { AuditCenter } from './pages/AuditCenter';
-import { PermissionMatrix } from './pages/PermissionMatrix';
-import { PrintSettings } from './pages/PrintSettings';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -37,6 +20,30 @@ import {
   Printer,
   Server
 } from 'lucide-react';
+
+const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
+const Orders = React.lazy(() => import('./pages/Orders').then(module => ({ default: module.Orders })));
+const Scan = React.lazy(() => import('./pages/Scan').then(module => ({ default: module.Scan })));
+const Cartons = React.lazy(() => import('./pages/Cartons').then(module => ({ default: module.Cartons })));
+const Pallets = React.lazy(() => import('./pages/Pallets').then(module => ({ default: module.Pallets })));
+const PrePrintedScan = React.lazy(() => import('./pages/PrePrintedScan').then(module => ({ default: module.PrePrintedScan })));
+const PrePrintWizard = React.lazy(() => import('./pages/PrePrintWizard').then(module => ({ default: module.PrePrintWizard })));
+const PublicBarcodeSearch = React.lazy(() => import('./pages/PublicBarcodeSearch').then(module => ({ default: module.PublicBarcodeSearch })));
+const TraceabilityCenter = React.lazy(() => import('./pages/TraceabilityCenter').then(module => ({ default: module.TraceabilityCenter })));
+const DataMatrixCreator = React.lazy(() => import('./pages/DataMatrixCreator').then(module => ({ default: module.DataMatrixCreator })));
+const SystemInfo = React.lazy(() => import('./pages/SystemInfo').then(module => ({ default: module.SystemInfo })));
+const Users = React.lazy(() => import('./pages/Users').then(module => ({ default: module.Users })));
+const Stations = React.lazy(() => import('./pages/Stations').then(module => ({ default: module.Stations })));
+const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
+const AuditCenter = React.lazy(() => import('./pages/AuditCenter').then(module => ({ default: module.AuditCenter })));
+const PermissionMatrix = React.lazy(() => import('./pages/PermissionMatrix').then(module => ({ default: module.PermissionMatrix })));
+const PrintSettings = React.lazy(() => import('./pages/PrintSettings').then(module => ({ default: module.PrintSettings })));
+
+const PageLoader: React.FC = () => (
+  <div className="tt-loading-state" role="status" aria-live="polite">
+    <span className="tt-loading-text">Yükleniyor...</span>
+  </div>
+);
 
 const Unauthorized: React.FC = () => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '16px', color: 'var(--text-muted)' }}>
@@ -546,7 +553,9 @@ const VersionChecker: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AuthGate />
+      <React.Suspense fallback={<PageLoader />}>
+        <AuthGate />
+      </React.Suspense>
       <VersionChecker />
     </AuthProvider>
   );

@@ -9,9 +9,9 @@ namespace TrackTrace.LocalAgent
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public class DOCINFOA
         {
-            [MarshalAs(UnmanagedType.LPStr)] public string pDocName;
-            [MarshalAs(UnmanagedType.LPStr)] public string pOutputFile;
-            [MarshalAs(UnmanagedType.LPStr)] public string pDataType;
+            [MarshalAs(UnmanagedType.LPStr)] public string pDocName = string.Empty;
+            [MarshalAs(UnmanagedType.LPStr)] public string? pOutputFile;
+            [MarshalAs(UnmanagedType.LPStr)] public string pDataType = string.Empty;
         }
 
         [DllImport("winspool.Drv", EntryPoint = "OpenPrinterA", SetLastError = true, CharSet = CharSet.Ansi, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]

@@ -2,13 +2,12 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Copy and restore as distinct layers
-COPY TrackTrace.sln ./
 COPY src/TrackTrace.Domain/TrackTrace.Domain.csproj ./src/TrackTrace.Domain/
 COPY src/TrackTrace.Application/TrackTrace.Application.csproj ./src/TrackTrace.Application/
 COPY src/TrackTrace.Infrastructure/TrackTrace.Infrastructure.csproj ./src/TrackTrace.Infrastructure/
 COPY src/TrackTrace.Api/TrackTrace.Api.csproj ./src/TrackTrace.Api/
 
-RUN dotnet restore TrackTrace.sln
+RUN dotnet restore src/TrackTrace.Api/TrackTrace.Api.csproj
 
 # Copy everything else and build
 COPY src/ ./src/

@@ -86,7 +86,7 @@ public class ExportCsvZipCommandHandler : IRequestHandler<ExportCsvZipCommand>
                 if (currentCount % updateFrequency == 0)
                 {
                     // Fire and forget progress update in separate connection to avoid blocking the streaming connection
-                    _ = Task.Run(async () => {
+                    _ = Task.Run(() => {
                         try
                         {
                             using var progressConn = _dbConnectionFactory.CreateConnection();

@@ -12,7 +12,7 @@ namespace TrackTrace.LocalAgent
 
     public interface IPrintService
     {
-        PrintResult PrintRawZpl(string zplData, string printerName = null, bool enableDummyMode = false);
+        PrintResult PrintRawZpl(string zplData, string? printerName = null, bool enableDummyMode = false);
     }
 
     public class RawPrintService : IPrintService
@@ -24,7 +24,7 @@ namespace TrackTrace.LocalAgent
             _logger = logger;
         }
 
-        public PrintResult PrintRawZpl(string zplData, string printerName = null, bool enableDummyMode = false)
+        public PrintResult PrintRawZpl(string zplData, string? printerName = null, bool enableDummyMode = false)
         {
             var printer = string.IsNullOrWhiteSpace(printerName) ? "Default Printer" : printerName;
             

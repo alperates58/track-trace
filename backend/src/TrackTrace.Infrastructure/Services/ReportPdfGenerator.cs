@@ -51,7 +51,7 @@ public class ReportPdfGenerator : IReportPdfGenerator
                 page.Size(PageSizes.A4);
                 page.Margin(1.5f, Unit.Centimetre);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(9));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").FontSize(9));
 
                 page.Header().Column(col =>
                 {

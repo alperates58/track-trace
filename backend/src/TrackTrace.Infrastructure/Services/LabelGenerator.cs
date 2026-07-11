@@ -37,7 +37,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(100, 80, Unit.Millimetre);
                 page.Margin(4, Unit.Millimetre);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").FontSize(10));
 
                 page.Content().Border(1).BorderColor(Colors.Black).Padding(6).Column(col =>
                 {
@@ -74,7 +74,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(100, 80, Unit.Millimetre);
                 page.Margin(4, Unit.Millimetre);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").FontSize(10));
 
                 page.Content().Border(1).BorderColor(Colors.Black).Padding(4).Column(col =>
                 {
@@ -206,7 +206,7 @@ public class LabelGenerator : ILabelGenerator
                     page.Size(100, 80, Unit.Millimetre);
                     page.Margin(4, Unit.Millimetre);
                     page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
+                    page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").FontSize(10));
 
                     page.Content().Border(1).BorderColor(Colors.Black).Padding(4).Column(col =>
                     {
@@ -420,7 +420,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(4, 6, Unit.Inch);
                 page.Margin(0.2f, Unit.Inch);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(10));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").FontSize(10));
 
                 page.Content().Border(1).BorderColor(Colors.Black).Padding(10).Column(col =>
                 {
@@ -742,7 +742,7 @@ public class LabelGenerator : ILabelGenerator
                 page.Size(pageSize, pageSize, Unit.Point);
                 page.Margin(pageMargin, Unit.Point);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").Size(9));
+                page.DefaultTextStyle(x => x.FontFamily("DejaVu Sans").FontSize(9));
 
                 page.Content().Column(mainCol =>
                 {
@@ -757,32 +757,42 @@ public class LabelGenerator : ILabelGenerator
                         int firstIdx = startIndex + pageIdx * itemsPerPage;
                         int lastIdx = Math.Min(startIndex + (pageIdx + 1) * itemsPerPage - 1, startIndex + currentCodesCount - 1);
 
-                        mainCol.Item().Height(gridHeight).Grid(grid =>
+                        mainCol.Item().Height(gridHeight).Column(gridColumn =>
                         {
-                            grid.Columns(cols);
-                            grid.Spacing(gridSpacing);
+                            gridColumn.Spacing(gridSpacing);
 
-                            foreach (var code in pageCodes)
+                            foreach (var codeRow in pageCodes.Chunk(cols))
                             {
-                                grid.Item().Height(cellHeight).AlignCenter().AlignMiddle().Column(c =>
+                                gridColumn.Item().Height(cellHeight).Row(gridRow =>
                                 {
-                                    c.Spacing(3);
+                                    gridRow.Spacing(gridSpacing);
 
-                                    // If label is above
-                                    if (!labelBelow && addText)
+                                    foreach (var code in codeRow)
                                     {
-                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(fontSize).Bold();
-                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(fontSize);
+                                        gridRow.RelativeItem().AlignCenter().AlignMiddle().Column(c =>
+                                        {
+                                            c.Spacing(3);
+
+                                            if (!labelBelow && addText)
+                                            {
+                                                if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(fontSize).Bold();
+                                                if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(fontSize);
+                                            }
+
+                                            byte[] imgBytes = GenerateDataMatrixImageBytes(code, size);
+                                            c.Item().AlignCenter().Width(barcodeSize).Height(barcodeSize).Image(imgBytes);
+
+                                            if (labelBelow && addText)
+                                            {
+                                                if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(fontSize).Bold();
+                                                if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(fontSize);
+                                            }
+                                        });
                                     }
 
-                                    byte[] imgBytes = GenerateDataMatrixImageBytes(code, size);
-                                    c.Item().AlignCenter().Width(barcodeSize).Height(barcodeSize).Image(imgBytes);
-
-                                    // If label is below
-                                    if (labelBelow && addText)
+                                    for (int emptyCell = codeRow.Length; emptyCell < cols; emptyCell++)
                                     {
-                                        if (!string.IsNullOrWhiteSpace(line1)) c.Item().AlignCenter().Text(line1).FontSize(fontSize).Bold();
-                                        if (!string.IsNullOrWhiteSpace(line2)) c.Item().AlignCenter().Text(line2).FontSize(fontSize);
+                                        gridRow.RelativeItem();
                                     }
                                 });
                             }

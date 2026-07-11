@@ -214,15 +214,18 @@ public class PalletHandlers :
             Guid orderId = pallet.orderid;
 
             // Load Order parameters
-            var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            var cartonPerPallet = await connection.QueryFirstOrDefaultAsync<int?>(
                 "SELECT CartonPerPallet FROM Orders WHERE Id = @OrderId", new { OrderId = orderId }, transaction);
-            int cartonPerPallet = order.cartonperpallet;
+            if (!cartonPerPallet.HasValue)
+            {
+                throw new KeyNotFoundException("Sipariş bulunamadı.");
+            }
 
             // Check current carton count
             int currentCartonCount = await connection.ExecuteScalarAsync<int>(
                 "SELECT COUNT(*) FROM PalletCartons WHERE PalletId = @PalletId", new { PalletId = request.PalletId }, transaction);
 
-            if (currentCartonCount >= cartonPerPallet)
+            if (currentCartonCount >= cartonPerPallet.Value)
             {
                 throw new InvalidOperationException("Palet kapasitesi dolu.");
             }
@@ -434,15 +437,18 @@ public class PalletHandlers :
             Guid orderId = targetPallet.orderid;
 
             // Get Order CartonPerPallet
-            var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            var cartonPerPallet = await connection.QueryFirstOrDefaultAsync<int?>(
                 "SELECT CartonPerPallet FROM Orders WHERE Id = @OrderId", new { OrderId = orderId }, transaction);
-            int cartonPerPallet = order.cartonperpallet;
+            if (!cartonPerPallet.HasValue)
+            {
+                throw new KeyNotFoundException("Sipariş bulunamadı.");
+            }
 
             // Count current cartons in target pallet
             int currentCartonCount = await connection.ExecuteScalarAsync<int>(
                 "SELECT COUNT(*) FROM PalletCartons WHERE PalletId = @PalletId", new { PalletId = request.TargetPalletId }, transaction);
 
-            if (currentCartonCount >= cartonPerPallet)
+            if (currentCartonCount >= cartonPerPallet.Value)
             {
                 throw new InvalidOperationException("Hedef palet kapasitesi dolu.");
             }

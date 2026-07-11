@@ -11,6 +11,9 @@ using System.IO;
 using System;
 using System.Security.Cryptography;
 using System.Management;
+using System.Runtime.Versioning;
+
+[assembly: SupportedOSPlatform("windows")]
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -59,7 +62,8 @@ if (!File.Exists(configPath))
 }
 else
 {
-    agentConfig = JsonSerializer.Deserialize<AgentConfig>(File.ReadAllText(configPath));
+    agentConfig = JsonSerializer.Deserialize<AgentConfig>(File.ReadAllText(configPath))
+        ?? throw new InvalidDataException($"Invalid agent configuration: {configPath}");
     if (string.IsNullOrEmpty(agentConfig.PairingToken))
     {
         agentConfig.PairingToken = Guid.NewGuid().ToString();
@@ -186,5 +190,5 @@ public class AgentConfig
 public class PrintRequest
 {
     [JsonPropertyName("data")]
-    public string Data { get; set; }
+    public string Data { get; set; } = string.Empty;
 }

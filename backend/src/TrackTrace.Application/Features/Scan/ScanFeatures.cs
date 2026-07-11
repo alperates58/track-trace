@@ -115,7 +115,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             string? orderStockCode = order.stockcode;
 
             // 3. SELECT OPEN/FILLING CARTON WITH LOCK
-            dynamic carton = null;
+            dynamic? carton = null;
             if (req.Mode == "PrePrinted")
             {
                 if (req.ActiveCartonId == null)
@@ -170,8 +170,6 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             string cartonNo;
             string sscc;
             int actualQty;
-            bool newlyCreated = false;
-
             if (carton == null && req.Mode != "PrePrinted")
             {
                 // Create a new Carton
@@ -207,7 +205,7 @@ public class ScanProductCommandHandler : IRequestHandler<ScanProductCommand, Sca
             }
             else
             {
-                cartonId = carton.id;
+                cartonId = carton!.id;
                 cartonNo = carton.cartonno;
                 sscc = carton.sscc;
                 actualQty = carton.actualquantity;
