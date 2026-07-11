@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Upload, Search, ChevronLeft, ChevronRight, Loader2, Eye } from 'lucide-react';
+import { Plus, Upload, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { OrderGroupDetail } from './OrderGroupDetail';
 
 interface OrderGroup {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { ArrowLeft, Loader2, Package, Layers, Hash } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, Layers } from 'lucide-react';
 import { OrderLineDetailModal } from '../components/OrderLineDetailModal';
 
 interface OrderGroupDetailProps {

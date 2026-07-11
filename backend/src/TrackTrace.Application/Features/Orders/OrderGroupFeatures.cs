@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Dapper;
 using MediatR;
 using TrackTrace.Application.Common.Interfaces;
+using TrackTrace.Application.Common;
 using TrackTrace.Domain.Enums;
 
 namespace TrackTrace.Application.Features.Orders;
