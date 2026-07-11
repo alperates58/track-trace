@@ -209,6 +209,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
     try {
       const result = await api.post(`/api/orders/${selectedOrder.id}/import-codes`, formData);
       setImportResult(result);
+      alert(`Kodlar başarıyla çözümlendi ve yüklendi!\nİçe Aktarılan: ${result.importedCount || 0}\nHatalı: ${result.invalidCount || 0}`);
       fetchImportBatches();
       onOrderUpdated();
     } catch (err: any) {
