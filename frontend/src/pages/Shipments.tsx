@@ -68,11 +68,13 @@ export const Shipments: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
 
-  const loadShipments = useCallback(async (preferredId?: string) => {
+  const loadShipments = useCallback(async (preferredId?: string | null) => {
     const response = await api.get('/api/shipments?pageSize=100');
     const nextShipments: ShipmentSummary[] = response.items || [];
     setShipments(nextShipments);
-    const nextId = preferredId || selectedId || nextShipments.find(item => item.status === 'Draft')?.id || nextShipments[0]?.id || null;
+    const nextId = preferredId === null
+      ? nextShipments.find(item => item.status === 'Draft')?.id || nextShipments[0]?.id || null
+      : preferredId || selectedId || nextShipments.find(item => item.status === 'Draft')?.id || nextShipments[0]?.id || null;
     setSelectedId(nextId);
     if (nextId) {
       setDetail(await api.get(`/api/shipments/${nextId}`));
@@ -186,6 +188,22 @@ export const Shipments: React.FC = () => {
     }
   };
 
+  const deleteShipment = async () => {
+    if (!detail || !window.confirm(`${detail.shipment.shipmentNo} kaydı kalıcı olarak silinsin mi?`)) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      await api.delete(`/api/shipments/${detail.shipment.id}`);
+      setSelectedId(null);
+      await loadShipments(null);
+      setMessage({ type: 'success', text: 'İptal edilmiş sevkiyat kaydı silindi.' });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return <div className="tt-loading-state"><span className="tt-loading-text">Sevkiyatlar yükleniyor...</span></div>;
   }
@@ -195,6 +213,12 @@ export const Shipments: React.FC = () => {
     detail &&
     hasPermission('shipments.cancel') &&
     (detail.shipment.status === 'Draft' || (detail.shipment.status === 'Shipped' && user?.role === 'Admin'))
+  );
+  const canDelete = Boolean(
+    detail &&
+    detail.shipment.status === 'Cancelled' &&
+    user?.role === 'Admin' &&
+    hasPermission('shipments.delete')
   );
 
   return (
@@ -315,8 +339,13 @@ export const Shipments: React.FC = () => {
                 </div>
               </TTCard>
 
-              {(isDraft || canCancel) && (
+              {(isDraft || canCancel || canDelete) && (
                 <div className="shipment-actions">
+                  {canDelete && (
+                    <TTButton variant="danger" icon={<Trash2 size={17} />} onClick={deleteShipment} disabled={busy}>
+                      Kaydı Sil
+                    </TTButton>
+                  )}
                   {canCancel && (
                     <TTButton variant="danger" onClick={cancelShipment} disabled={busy}>
                       {detail.shipment.status === 'Shipped' ? 'Sevkiyatı Geri Al' : 'Sevkiyatı İptal Et'}

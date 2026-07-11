@@ -41,6 +41,7 @@ public record ScanShipmentItemCommand(Guid ShipmentId, string Code) : IRequest<S
 public record RemoveShipmentItemCommand(Guid ShipmentId, Guid ItemId) : IRequest<Unit>;
 public record CompleteShipmentCommand(Guid Id) : IRequest<Unit>;
 public record CancelShipmentCommand(Guid Id) : IRequest<Unit>;
+public record DeleteShipmentCommand(Guid Id) : IRequest<Unit>;
 
 public class ShipmentHandlers :
     IRequestHandler<GetShipmentsQuery, (IReadOnlyList<ShipmentSummaryDto> Items, int TotalCount)>,
@@ -49,7 +50,8 @@ public class ShipmentHandlers :
     IRequestHandler<ScanShipmentItemCommand, ShipmentScanResult>,
     IRequestHandler<RemoveShipmentItemCommand, Unit>,
     IRequestHandler<CompleteShipmentCommand, Unit>,
-    IRequestHandler<CancelShipmentCommand, Unit>
+    IRequestHandler<CancelShipmentCommand, Unit>,
+    IRequestHandler<DeleteShipmentCommand, Unit>
 {
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly ICurrentUserService _currentUserService;
@@ -544,6 +546,35 @@ public class ShipmentHandlers :
             isCompletedShipment ? "ReverseShipment" : "Cancel",
             new { Status = shipmentStatus },
             new { ShipmentNo = (string)shipment.shipmentno, Status = ShipmentStatus.Cancelled.ToString() });
+        return Unit.Value;
+    }
+
+    public async Task<Unit> Handle(DeleteShipmentCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        var shipment = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT Id, ShipmentNo, Status FROM Shipments WHERE Id = @Id FOR UPDATE", new { request.Id }, transaction);
+        if (shipment == null)
+        {
+            throw new KeyNotFoundException("Sevkiyat bulunamadı.");
+        }
+        if ((string)shipment.status != ShipmentStatus.Cancelled.ToString())
+        {
+            throw new InvalidOperationException("Yalnızca iptal edilmiş sevkiyatlar silinebilir.");
+        }
+
+        var shipmentNo = (string)shipment.shipmentno;
+        await connection.ExecuteAsync("DELETE FROM Shipments WHERE Id = @Id", new { request.Id }, transaction);
+        await transaction.CommitAsync(cancellationToken);
+
+        await _auditLogService.LogAsync("Shipments", request.Id, "DeleteCancelled", new
+        {
+            ShipmentNo = shipmentNo,
+            Status = ShipmentStatus.Cancelled.ToString()
+        }, null);
         return Unit.Value;
     }
 

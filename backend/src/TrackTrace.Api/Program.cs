@@ -1885,6 +1885,23 @@ app.MapPost("/api/shipments/{id:guid}/cancel", async (Guid id, IMediator mediato
     }
 }).RequireAuthorization("OperatorOrAdmin").RequirePermission("shipments.cancel");
 
+app.MapDelete("/api/shipments/{id:guid}", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new DeleteShipmentCommand(id));
+        return Results.NoContent();
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("AdminOnly").RequirePermission("shipments.delete");
+
 // Barcode Search
 app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator mediator) =>
 {

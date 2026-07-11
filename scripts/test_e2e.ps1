@@ -148,6 +148,16 @@ try {
     if (-not $shippedItemRejected) {
         throw "Previously shipped carton was accepted into another shipment."
     }
+
+    $draftDeleteRejected = $false
+    try {
+        Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($secondShipment.id)" -Method Delete -Headers $headers | Out-Null
+    } catch {
+        $draftDeleteRejected = $true
+    }
+    if (-not $draftDeleteRejected) {
+        throw "Draft shipment was deleted without cancellation."
+    }
     Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($secondShipment.id)/cancel" -Method Post -Headers $headers | Out-Null
 
     Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId/cancel" -Method Post -Headers $headers | Out-Null
@@ -161,7 +171,15 @@ try {
     Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($retryShipment.id)/scan" -Method Post -Body $palletScanBody -ContentType "application/json" -Headers $headers | Out-Null
     Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($retryShipment.id)/cancel" -Method Post -Headers $headers | Out-Null
 
-    Write-Host "PASS: isolated shipment create, scan, duplicate protection, remove/re-scan, pallet cascade, completion, admin reversal, reuse and cancellation flows."
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$shipmentId" -Method Delete -Headers $headers | Out-Null
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($secondShipment.id)" -Method Delete -Headers $headers | Out-Null
+    Invoke-RestMethod -Uri "$BaseUrl/api/shipments/$($retryShipment.id)" -Method Delete -Headers $headers | Out-Null
+    $remainingShipments = Invoke-TestSql "SELECT COUNT(*) FROM Shipments;"
+    if ($remainingShipments -ne "0") {
+        throw "Cancelled shipment records were not deleted: $remainingShipments remain."
+    }
+
+    Write-Host "PASS: isolated shipment create, scan, duplicate protection, remove/re-scan, pallet cascade, completion, admin reversal, reuse, cancellation and admin deletion flows."
 }
 finally {
     Pop-Location
