@@ -66,6 +66,7 @@ public class OrderGroupHandlers :
     {
         using var connection = _dbConnectionFactory.CreateConnection();
         var builder = new SqlBuilder();
+        var parameters = new DynamicParameters();
 
         // Phase 1: Determine matching groups based on search
         string groupFilter = "";
@@ -81,7 +82,7 @@ public class OrderGroupHandlers :
                          OR match_o.StockCode ILIKE @Search 
                          OR match_o.GTIN ILIKE @Search)
                 )";
-            builder.AddParameters(new { Search = $"%{request.Search}%" });
+            parameters.Add("Search", $"%{request.Search}%");
         }
 
         // We apply group level status filtering after aggregation if needed, or by checking line statuses.
@@ -95,7 +96,7 @@ public class OrderGroupHandlers :
                     WHERE stat_o.OrderNo = o.OrderNo AND stat_o.CustomerName = o.CustomerName
                     AND stat_o.Status = @Status
                 )";
-            builder.AddParameters(new { Status = request.Status });
+            parameters.Add("Status", request.Status);
         }
 
         // Global KPIs - computed on the filtered groups
@@ -116,7 +117,7 @@ public class OrderGroupHandlers :
                 COALESCE(SUM(TotalExpected), 0) as GlobalExpected
             FROM FilteredGroups";
 
-        var kpiResult = await connection.QueryFirstOrDefaultAsync<dynamic>(kpiSql, builder.Parameters);
+        var kpiResult = await connection.QueryFirstOrDefaultAsync<dynamic>(kpiSql, parameters);
         
         long globalScanned = kpiResult?.globalscanned ?? 0;
         long globalExpected = kpiResult?.globalexpected ?? 0;
@@ -146,9 +147,10 @@ public class OrderGroupHandlers :
             ORDER BY MAX(o.CreatedAt) DESC
             LIMIT @Limit OFFSET @Offset";
 
-        builder.AddParameters(new { Limit = request.PageSize, Offset = (request.PageNumber - 1) * request.PageSize });
+        parameters.Add("Limit", request.PageSize);
+        parameters.Add("Offset", (request.PageNumber - 1) * request.PageSize);
 
-        var items = await connection.QueryAsync<dynamic>(selectorSql, builder.Parameters);
+        var items = await connection.QueryAsync<dynamic>(selectorSql, parameters);
 
         var dtos = items.Select(x => {
             string orderNo = x.orderno;
