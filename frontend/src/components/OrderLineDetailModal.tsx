@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Upload, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2, Eye, Trash2, RotateCcw, Archive } from 'lucide-react';
+import { Upload, Play, CheckCircle2, XCircle, Printer, X, FileText, Barcode, ChevronLeft, ChevronRight, Loader2, Eye, Trash2, RotateCcw, Archive, Layers } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -43,9 +43,14 @@ interface OrderLineDetailModalProps {
 export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ selectedOrder, onClose, onOrderUpdated }) => {
   const { user, hasPermission } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'summary' | 'cartons' | 'codes' | 'imports'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'cartons' | 'pallets' | 'codes' | 'imports'>('summary');
   const [showImportModal, setShowImportModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pallets State
+  const [pallets, setPallets] = useState<any[]>([]);
+  const [palletsTotal, setPalletsTotal] = useState(0);
+  const [palletsLoading, setPalletsLoading] = useState(false);
 
   // Cartons State
   const [cartons, setCartons] = useState<any[]>([]);
@@ -123,15 +128,23 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
       .finally(() => setCartonItemsLoading(false));
   };
 
+  const fetchPallets = () => {
+    setPalletsLoading(true);
+    api.get(`/api/pallets?orderId=${selectedOrder.id}&pageSize=1000`)
+      .then((res: any) => {
+        setPallets(res.items || []);
+        setPalletsTotal(res.totalCount || res.items?.length || 0);
+      })
+      .catch(console.error)
+      .finally(() => setPalletsLoading(false));
+  };
+
   useEffect(() => {
-    if (activeTab === 'summary') {
-      fetchOrderCartons(selectedOrder.id);
-    } else if (activeTab === 'codes') {
-      fetchProductCodes();
-    } else if (activeTab === 'imports') {
-      fetchImportBatches();
-    }
-  }, [activeTab]);
+    fetchOrderCartons(selectedOrder.id);
+    fetchProductCodes();
+    fetchImportBatches();
+    fetchPallets();
+  }, [selectedOrder.id]);
 
   useEffect(() => {
     if (activeTab === 'codes') {
@@ -352,6 +365,13 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
             Koliler ({cartons.length})
           </button>
+          <button
+            style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'pallets' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'pallets' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+            onClick={() => setActiveTab('pallets')}
+          >
+            <Layers size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+            Paletler ({palletsTotal})
+          </button>
           <button 
             style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'codes' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'codes' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
             onClick={() => setActiveTab('codes')}
@@ -468,17 +488,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
           )}
 
           {activeTab === 'cartons' && (
-            <div style={{ minHeight: '400px' }}>
+            <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '500px' }}>
               {cartonsLoading ? (
-                <div style={{ textAlign: 'center', padding: '50px' }}><Loader2 className="spinner" size={32} style={{ margin: '0 auto' }} /></div>
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader2 className="spinner" size={40} /></div>
               ) : cartons.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Bu siparişe ait henüz koli oluşturulmadı.</div>
+                <div style={{ color: '#64748b', textAlign: 'center', padding: '100px', fontSize: '1.1rem' }}>Bu siparişe ait henüz koli bulunmuyor.</div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                   {cartons.map((c: any) => (
-                    <div key={c.id} className="card" style={{
-                      backgroundColor: '#fff',
-                      borderRadius: '12px',
+                    <div key={c.id} style={{ 
+                      backgroundColor: '#fff', 
+                      borderRadius: '12px', 
                       border: '1px solid #e2e8f0',
                       padding: '16px',
                       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -500,9 +520,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                           <span style={{ color: '#0f172a' }}>{c.actualQuantity} / {c.targetQuantity}</span>
                         </div>
                         <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
-                          <div style={{
-                            height: '100%',
-                            width: `${Math.min(100, Math.round((c.actualQuantity / c.targetQuantity) * 100))}%`,
+                          <div style={{ 
+                            height: '100%', 
+                            width: `${Math.min(100, Math.round((c.actualQuantity / c.targetQuantity) * 100))}%`, 
                             backgroundColor: c.status === 'Closed' || c.status === 'Printed' || c.status === 'Palletized' ? '#10b981' : '#3b82f6',
                             transition: 'width 0.3s'
                           }}></div>
@@ -518,6 +538,52 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                         <button className="btn btn-secondary" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => downloadCartonPdf(c.id, c.cartonNo)}>
                           <Printer size={14} /> PDF
                         </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'pallets' && (
+            <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '500px' }}>
+              {palletsLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader2 className="spinner" size={40} /></div>
+              ) : pallets.length === 0 ? (
+                <div style={{ color: '#64748b', textAlign: 'center', padding: '100px', fontSize: '1.1rem' }}>Bu siparişe ait henüz palet bulunmuyor.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                  {pallets.map((p: any) => (
+                    <div key={p.id} style={{ 
+                      backgroundColor: '#fff', 
+                      borderRadius: '12px', 
+                      border: '1px solid #e2e8f0',
+                      padding: '16px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '160px'
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{p.palletNo}</span>
+                          <span className="badge" style={{ 
+                            backgroundColor: p.status === 'Closed' ? '#dcfce3' : p.status === 'Printed' ? '#dbeafe' : '#fef3c7', 
+                            color: p.status === 'Closed' ? '#166534' : p.status === 'Printed' ? '#1e40af' : '#92400e' 
+                          }}>{p.status}</span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', fontFamily: 'monospace', marginBottom: '12px', wordBreak: 'break-all' }}>
+                          SSCC: {p.sscc}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '12px', fontWeight: 600 }}>
+                          <span style={{ color: '#64748b' }}>Koli Sayısı</span>
+                          <span style={{ color: '#0f172a' }}>{p.cartonCount} Koli</span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '12px' }}>
+                          Tarih: {new Date(p.createdAt).toLocaleString('tr-TR')}
+                        </div>
                       </div>
                     </div>
                   ))}

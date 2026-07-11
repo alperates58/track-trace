@@ -248,7 +248,7 @@ public class OrderGroupHandlers :
             (string)x.status,
             (DateTime)x.createdat,
             (DateTime)x.updatedat,
-            Convert.ToInt32(x.ScannedCount)
+            Convert.ToInt32(x.scannedcount ?? 0)
         ));
 
         return (orderDtos, totalCount);
