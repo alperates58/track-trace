@@ -4,6 +4,10 @@ import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
 import { Volume2, VolumeX, Barcode, Printer, Camera } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
+import { SessionHeader } from '../components/Scan/SessionHeader';
+import { ScanToolbar } from '../components/Scan/ScanToolbar';
+import { ScanProgressCard } from '../components/Scan/ScanProgressCard';
+import { RecentScanPanel } from '../components/Scan/RecentScanPanel';
 
 interface Station {
   id: string;
@@ -319,8 +323,6 @@ export const Scan: React.FC = () => {
     }
   };
 
-
-
   const printPDFDirectly = async (cartonId: string) => {
     try {
       const blob = await api.get(`/api/cartons/${cartonId}/label.pdf`) as Blob;
@@ -564,495 +566,63 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const getStatusColors = (statusStr: string) => {
-    switch (statusStr) {
-      case 'success':
-        return {
-          bg: '#f0fdf4',
-          border: '#16a34a',
-          text: '#15803d',
-          title: 'BAŞARILI OKUMA'
-        };
-      case 'error':
-        return {
-          bg: '#fef2f2',
-          border: '#ef4444',
-          text: '#b91c1c',
-          title: 'HATALI OKUMA'
-        };
-      case 'cartonClosed':
-        return {
-          bg: '#faf5ff',
-          border: '#7c3aed',
-          text: '#6b21a8',
-          title: 'KOLİ TAMAMLANDI'
-        };
-      case 'ready':
-      default:
-        return {
-          bg: '#eff6ff',
-          border: '#3b82f6',
-          text: '#1d4ed8',
-          title: 'OKUTMAYA HAZIR'
-        };
-    }
-  };
-
-  const colors = getStatusColors(status);
-  const progressPercent = targetQty > 0 ? (currentQty / targetQty) * 100 : 0;
-
   return (
-    <div className="scan-layout" onClick={focusInput} style={{ minHeight: 'calc(100vh - 80px)', paddingBottom: '30px' }}>
-      
-      {/* Top Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: '#0f172a', margin: 0 }}>Ürün Okutma Terminali</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Barkod tabancasıyla ürün okutma, koli oluşturma ve anlık ilerleme takibi.</p>
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50" onClick={focusInput}>
+      <SessionHeader isOnline={isOnline} operatorName={user?.name} />
+
+      <main className="flex-1 flex flex-col p-2 md:p-4 gap-2 md:gap-4 overflow-hidden relative" style={{ minHeight: 0 }}>
+        <ScanToolbar 
+          stations={stations}
+          selectedStationId={selectedStationId}
+          onStationChange={setSelectedStationId}
+          activeOrders={activeOrders}
+          selectedOrderNo={selectedOrderNo}
+          onOrderNoChange={(orderNo) => {
+            setSelectedOrderNo(orderNo);
+            setSelectedOrderId('');
+            setSelectedOrder(null);
+          }}
+          selectedProductId={selectedOrderId}
+          onProductChange={setSelectedOrderId}
+          isInputFocused={isInputFocused}
+          onFocusRequest={focusInput}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => setSoundEnabled(!soundEnabled)}
+          onOpenPrinterSettings={() => setIsSettingsModalOpen(true)}
+          onOpenCamera={() => setIsCameraOpen(true)}
+          onCloseFocusRestoration={focusInput}
+        />
+
+        <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden min-h-0">
+          <ScanProgressCard 
+            productName={selectedOrder?.productName || null}
+            stockCode={selectedOrder?.stockCode || null}
+            gtin={selectedOrder?.gtin || null}
+            currentQty={currentQty}
+            targetQty={targetQty}
+            isInputFocused={isInputFocused}
+            onFocusRequest={focusInput}
+          />
+          <RecentScanPanel 
+            history={scanHistory}
+            errorMsg={status === 'error' ? errorMsg : undefined}
+            lastScannedBarcode={lastScannedBarcode}
+          />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* Connection Status Indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', backgroundColor: isOnline ? '#ecfdf5' : '#fef2f2', border: `1px solid ${isOnline ? '#a7f3d0' : '#fca5a5'}` }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isOnline ? '#10b981' : '#ef4444', display: 'inline-block' }}></span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isOnline ? '#065f46' : '#991b1b' }}>
-              {isOnline ? 'Çevrimiçi' : 'Çevrimdışı'}
-            </span>
-          </div>
-          {/* Operator Name Info */}
-          {user?.name && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>
-                Operatör: <strong>{user.name}</strong>
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      </main>
 
-      {/* Configuration & Controls Panel */}
-      <div className="card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '12px', flex: 1, minWidth: '320px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '150px' }}>
-            <select
-              className="form-input"
-              style={{ width: '100%', height: '42px', fontWeight: 600, borderRadius: '8px', border: '1px solid #cbd5e1' }}
-              value={selectedStationId}
-              onChange={(e) => {
-                const newId = e.target.value;
-                setSelectedStationId(newId);
-                if (newId) localStorage.setItem('trackTrace_selectedStation', newId);
-                else localStorage.removeItem('trackTrace_selectedStation');
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <option value="">-- İSTASYON SEÇİN --</option>
-              {stations.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ flex: 1, minWidth: '150px' }}>
-            <select
-              className="form-input"
-              style={{ width: '100%', height: '42px', fontWeight: 600, borderRadius: '8px', border: '1px solid #cbd5e1' }}
-              value={selectedOrderNo}
-              onChange={(e) => {
-                setSelectedOrderNo(e.target.value);
-                setSelectedOrderId('');
-                setSelectedOrder(null);
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <option value="">-- SİPARİŞ NO SEÇİN --</option>
-              {Array.from(new Set(activeOrders.map(o => o.orderNo))).map(orderNo => {
-                const customerName = activeOrders.find(o => o.orderNo === orderNo)?.customerName || '';
-                return (
-                  <option key={orderNo} value={orderNo}>
-                    {orderNo} - {customerName}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          <div style={{ flex: 1.5, minWidth: '200px' }}>
-            <select
-              className="form-input"
-              style={{ width: '100%', height: '42px', fontWeight: 600, borderRadius: '8px', border: '1px solid #cbd5e1' }}
-              value={selectedOrderId}
-              disabled={!selectedOrderNo}
-              onChange={(e) => setSelectedOrderId(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <option value="">-- ÜRÜN / STOK KODU SEÇİN --</option>
-              {activeOrders
-                .filter(o => o.orderNo === selectedOrderNo)
-                .map(o => (
-                  <option key={o.id} value={o.id}>
-                    {o.stockCode} - {o.productName} - {o.gtin} - ({o.scannedCount}/{o.expectedQuantity})
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* Focus State Indicator */}
-          <div 
-            onClick={focusInput}
-            style={{ 
-              cursor: 'pointer',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px', 
-              padding: '8px 14px', 
-              borderRadius: '8px', 
-              fontSize: '0.85rem', 
-              fontWeight: 600,
-              backgroundColor: isInputFocused ? '#eff6ff' : '#fff7ed', 
-              border: `1px solid ${isInputFocused ? '#bfdbfe' : '#fed7aa'}`,
-              color: isInputFocused ? '#1d4ed8' : '#c2410c'
-            }}
-          >
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isInputFocused ? '#3b82f6' : '#f97316', display: 'inline-block' }}></span>
-            {isInputFocused ? 'Odak Aktif' : 'Odak Kayboldu / Tıkla veya F8 ile odakla'}
-          </div>
-
-          {/* Sound State Toggle Button */}
-          <button
-            className="btn"
-            style={{ 
-              height: '42px', 
-              padding: '0 16px', 
-              borderRadius: '8px', 
-              backgroundColor: soundEnabled ? '#ecfdf5' : '#f1f5f9',
-              border: `1px solid ${soundEnabled ? '#a7f3d0' : '#cbd5e1'}`,
-              color: soundEnabled ? '#047857' : '#475569',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
-            }}
-            onClick={(e) => { e.stopPropagation(); setSoundEnabled(!soundEnabled); }}
-          >
-            {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            {soundEnabled ? 'Ses Açık' : 'Ses Kapalı'}
-          </button>
-
-          {/* Camera Settings Button */}
-          <button
-            className="btn"
-            style={{ 
-              height: '42px', 
-              padding: '0 16px', 
-              borderRadius: '8px', 
-              backgroundColor: '#fef3c7',
-              border: '1px solid #fde68a',
-              color: '#d97706',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
-            }}
-            onClick={(e) => { e.stopPropagation(); setIsCameraOpen(true); }}
-          >
-            <Camera size={18} />
-            Kamera ile Okut
-          </button>
-
-          {/* Printer Settings Button */}
-          <button
-            className="btn"
-            style={{ 
-              height: '42px', 
-              padding: '0 16px', 
-              borderRadius: '8px', 
-              backgroundColor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              color: '#1d4ed8',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
-            }}
-            onClick={(e) => { e.stopPropagation(); setIsSettingsModalOpen(true); }}
-          >
-            <Printer size={18} />
-            Yazıcı Ayarları
-          </button>
-        </div>
-      </div>
-
-      {/* Main Terminal Layout Grid */}
-      <div className="scan-body" style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '24px' }}>
-        
-        {/* Left Section: Central Indicator Card & Detail Info & Progress */}
-        <div className="scan-left" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          {/* Central Terminal Status Banner Card */}
-          <div 
-            onClick={focusInput}
-            style={{
-              flex: 1,
-              minHeight: '260px',
-              borderRadius: '16px',
-              backgroundColor: colors.bg,
-              border: `3px solid ${colors.border}`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '30px',
-              textAlign: 'center',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-              position: 'relative',
-              cursor: 'pointer'
-            }}
-          >
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: colors.text, margin: 0, letterSpacing: '1px' }}>
-              {colors.title}
-            </h1>
-            
-            {status === 'error' && errorMsg && (
-              <p style={{ fontSize: '1.25rem', fontWeight: 600, color: '#dc2626', marginTop: '16px', maxWidth: '80%' }}>
-                {errorMsg}
-              </p>
-            )}
-
-            {lastScannedBarcode && (
-              <div style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 600 }}>Son Okunan Barkod:</span>
-                <code style={{ fontSize: '1.35rem', fontFamily: 'monospace', fontWeight: 700, color: '#0f172a', letterSpacing: '0.5px' }}>
-                  {lastScannedBarcode}
-                </code>
-              </div>
-            )}
-
-            <span style={{ position: 'absolute', bottom: '16px', fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>
-              Barkod tabancasıyla okutun veya kodu yazıp Enter'a basın.
-            </span>
-          </div>
-
-          {/* Hidden HTML input for keyboard scanning emulator */}
-          <form onSubmit={handleScanSubmit}>
-            <input
-              ref={inputRef}
-              type="text"
-              className="hidden-input"
-              value={barcodeInput}
-              onChange={(e) => setBarcodeInput(e.target.value)}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
-            />
-          </form>
-
-          {/* Progress Tracking Cards */}
-          {selectedOrder && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', width: '100%' }}>
-              
-              {/* Order Goal Progress Card */}
-              <div className="card" style={{ padding: '18px', borderLeft: '4px solid #8b5cf6', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                <h4 style={{ fontSize: '0.9rem', color: '#6b21a8', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Genel İlerleme</h4>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '12px' }}>
-                  <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>{totalScanned}</span>
-                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>/ {selectedOrder.expectedQuantity} Adet</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748b', marginTop: '8px', fontWeight: 600 }}>
-                  <span>Kalan: {Math.max(0, selectedOrder.expectedQuantity - totalScanned)}</span>
-                  <span>Koli: {completedCartons} adet</span>
-                </div>
-                <div style={{ width: '100%', height: '8px', backgroundColor: '#f3e8ff', borderRadius: '4px', overflow: 'hidden', marginTop: '12px' }}>
-                  <div style={{ height: '100%', width: `${selectedOrder.expectedQuantity ? Math.min(100, (totalScanned / selectedOrder.expectedQuantity) * 100) : 0}%`, backgroundColor: '#8b5cf6', transition: 'width 0.3s ease' }}></div>
-                </div>
-                <div style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 700, color: '#6b21a8', marginTop: '6px' }}>
-                  {selectedOrder.expectedQuantity ? Math.round(Math.min(100, (totalScanned / selectedOrder.expectedQuantity) * 100)) : 0}% Sipariş Tamamlandı
-                </div>
-              </div>
-
-              {/* Active Carton Progress Card */}
-              <div className="card" style={{ padding: '18px', borderLeft: '4px solid #3b82f6', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                <h4 style={{ fontSize: '0.9rem', color: '#1d4ed8', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center' }}>
-                  Aktif Koli Durumu
-                  {currentQty > 0 && (
-                    <span style={{ marginLeft: '8px', fontSize: '0.7rem', backgroundColor: '#fff7ed', color: '#c2410c', border: '1px solid #ffd8a8', padding: '2px 6px', borderRadius: '4px', textTransform: 'none', fontWeight: 600 }}>
-                      Yarım Kalan Koli
-                    </span>
-                  )}
-                </h4>
-                {cartonNo ? (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '12px' }}>
-                      <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>{currentQty}</span>
-                      <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>/ {targetQty} Adet</span>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cartonSSCC || ''}>
-                      No: <strong>{cartonNo}</strong> | SSCC: <code>{cartonSSCC}</code>
-                    </div>
-                    <div style={{ width: '100%', height: '8px', backgroundColor: '#dbeafe', borderRadius: '4px', overflow: 'hidden', marginTop: '12px' }}>
-                      <div style={{ height: '100%', width: `${Math.min(100, progressPercent)}%`, backgroundColor: '#3b82f6', transition: 'width 0.3s ease' }}></div>
-                    </div>
-                    <div style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 700, color: '#1d4ed8', marginTop: '6px' }}>
-                      {Math.round(Math.min(100, progressPercent))}% Doluluk
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.85rem', textAlign: 'center' }}>
-                    Okutma başlatılınca otomatik koli açılacaktır.
-                  </div>
-                )}
-              </div>
-
-              {/* Last Closed Carton Actions Card */}
-              <div className="card" style={{ padding: '18px', borderLeft: '4px solid #10b981', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <h4 style={{ fontSize: '0.9rem', color: '#047857', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Son Kapatılan Koli</h4>
-                  {lastClosedCartonNo ? (
-                    <div style={{ marginTop: '10px' }}>
-                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{lastClosedCartonNo}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={lastClosedCartonSSCC || ''}>
-                        SSCC: <code>{lastClosedCartonSSCC}</code>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-                      Kapatılan koli bulunmuyor.
-                    </div>
-                  )}
-                </div>
-                
-                {lastClosedCartonId && hasPermission('cartons.print') && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                    <button 
-                      className="btn btn-primary" 
-                      disabled={isReprinting}
-                      style={{ flex: '1 1 100%', padding: '6px 8px', fontSize: '0.75rem', backgroundColor: '#3b82f6', fontWeight: 700, borderRadius: '6px' }}
-                      onClick={handleNetworkPrint}
-                    >
-                      {isReprinting ? 'Yazdırılıyor...' : 'Doğrudan Yazdır'}
-                    </button>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ flex: 1, padding: '6px 8px', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px' }}
-                      onClick={handleDownloadPDF}
-                    >
-                      PDF İndir
-                    </button>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ flex: 1, padding: '6px 8px', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px' }}
-                      onClick={handleCopyZPL}
-                    >
-                      ZPL Kopyala
-                    </button>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          )}
-
-          {/* Selected Order Metadata panel */}
-          {selectedOrder && (
-            <div className="card" style={{ padding: '16px' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', marginBottom: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                Sipariş & Ürün Detayları
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', fontSize: '0.85rem' }}>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Sipariş No</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.orderNo}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Müşteri</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.customerName}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Stok Kodu</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.stockCode}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Ürün Adı</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.productName}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>İş Emri No</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.gtin}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Koli İçi Adet</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.productPerCarton}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Beklenen Adet</span>
-                  <strong style={{ color: '#0f172a' }}>{selectedOrder.expectedQuantity}</strong>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* Right Section: Real-time Scan History List */}
-        <div className="scan-right" style={{ backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', margin: 0 }}>
-            Okutma Geçmişi (Son 10)
-          </h3>
-          
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginTop: '16px', overflowY: 'auto' }}>
-            {scanHistory.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, color: '#64748b', gap: '10px' }}>
-                <Barcode size={32} />
-                <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>Bu oturumda henüz okuma yapılmadı.</p>
-              </div>
-            ) : (
-              scanHistory.map((item, idx) => (
-                <div key={idx} style={{
-                  borderLeft: `4px solid ${item.status === 'Başarılı' ? '#10b981' : '#ef4444'}`,
-                  backgroundColor: item.status === 'Başarılı' ? '#f8fafc' : '#fef2f2',
-                  marginBottom: '10px',
-                  borderRadius: '6px',
-                  padding: '12px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  border: '1px solid #e2e8f0',
-                  borderLeftWidth: '4px'
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxWidth: '70%' }}>
-                    <code style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.rawCode}>
-                      {item.rawCode}
-                    </code>
-                    {item.serialNo && (
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
-                        Seri No: {item.serialNo}
-                      </span>
-                    )}
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                      Koli: <strong>{item.cartonNo}</strong>
-                    </span>
-                  </div>
-                  
-                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: item.status === 'Başarılı' ? '#047857' : '#b91c1c',
-                      backgroundColor: item.status === 'Başarılı' ? '#d1fae5' : '#fee2e2',
-                      padding: '2px 8px',
-                      borderRadius: '4px'
-                    }}>
-                      {item.status}
-                    </span>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>{item.timestamp}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-      </div>
+      {/* Hidden HTML input for keyboard scanning emulator */}
+      <form onSubmit={handleScanSubmit} className="hidden" style={{ display: 'none' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          className="hidden-input opacity-0 absolute w-0 h-0"
+          value={barcodeInput}
+          onChange={(e) => setBarcodeInput(e.target.value)}
+          onFocus={() => setIsInputFocused(true)}
+          onBlur={() => setIsInputFocused(false)}
+        />
+      </form>
 
       {/* Yazıcı Ayarları Modalı */}
       {isSettingsModalOpen && (
