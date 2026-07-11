@@ -181,7 +181,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-1 flex-1 min-w-[300px] relative" ref={containerRef} onKeyDown={handleKeyDown}>
+    <div className="flex flex-col gap-1 flex-1 min-w-[300px] relative" ref={containerRef} onKeyDown={handleKeyDown} style={{ zIndex: 10000 }}>
       <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider ml-1 flex items-center gap-1">
         <span>Aktif Ürün</span>
         <div className="group relative flex items-center justify-center">
@@ -223,7 +223,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       {isOpen && (
         <div 
           className="absolute left-0 w-full bg-white border border-blue-200 rounded-xl shadow-xl z-50 flex flex-col"
-          style={dropdownStyle}
+          style={{ ...dropdownStyle, zIndex: 10001 }}
         >
           <div className="p-2 border-b border-gray-100 shrink-0">
             <div className="relative">
