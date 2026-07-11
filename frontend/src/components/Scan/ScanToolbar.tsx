@@ -67,7 +67,6 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
     return activeOrders.filter(o => o.orderNo === selectedOrderNo);
   }, [activeOrders, selectedOrderNo]);
 
-  const selectedOrderDetails = uniqueOrderNos.find(o => o.orderNo === selectedOrderNo);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex gap-4 shrink-0 items-end overflow-visible">

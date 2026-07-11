@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
-import { Volume2, VolumeX, Barcode, Printer, Camera } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
 import { SessionHeader } from '../components/Scan/SessionHeader';
 import { ScanToolbar } from '../components/Scan/ScanToolbar';
@@ -36,7 +36,7 @@ interface ScanHistory {
 }
 
 export const Scan: React.FC = () => {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
 
   // Stations
   const [stations, setStations] = useState<Station[]>([]);
@@ -60,17 +60,17 @@ export const Scan: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   // Active carton details
-  const [cartonNo, setCartonNo] = useState<string | null>(null);
-  const [cartonSSCC, setCartonSSCC] = useState<string | null>(null);
+  const [, setCartonNo] = useState<string | null>(null);
+  const [, setCartonSSCC] = useState<string | null>(null);
   const [currentQty, setCurrentQty] = useState(0);
   const [targetQty, setTargetQty] = useState(0);
-  const [completedCartons, setCompletedCartons] = useState(0);
-  const [totalScanned, setTotalScanned] = useState(0);
+  const [, setCompletedCartons] = useState(0);
+  const [, setTotalScanned] = useState(0);
 
   // Last closed carton details (for label reprint & ZPL)
   const [lastClosedCartonId, setLastClosedCartonId] = useState<string | null>(null);
-  const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
-  const [lastClosedCartonSSCC, setLastClosedCartonSSCC] = useState<string | null>(null);
+  const [, setLastClosedCartonNo] = useState<string | null>(null);
+  const [, setLastClosedCartonSSCC] = useState<string | null>(null);
 
   // History & settings
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
@@ -112,7 +112,6 @@ export const Scan: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [isReprinting, setIsReprinting] = useState(false);
 
   // Check API health status
   useEffect(() => {
@@ -368,19 +367,6 @@ export const Scan: React.FC = () => {
     }
   };
 
-  const handleNetworkPrint = async () => {
-    if (!lastClosedCartonId) return;
-    setIsReprinting(true);
-    try {
-      const provider = getPrintProvider(printMode);
-      await provider.print({ id: lastClosedCartonId, type: 'carton' });
-    } catch (err: any) {
-      alert("Yazdırma hatası: " + err.message);
-    } finally {
-      setIsReprinting(false);
-    }
-  };
-
   const handleSaveSettings = (mode: string, auto: boolean) => {
     // Legacy support
     localStorage.setItem('tt_print_mode', mode);
@@ -532,38 +518,6 @@ export const Scan: React.FC = () => {
       },
       ...prev.slice(0, 9)
     ]);
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!lastClosedCartonId) return;
-    try {
-      const blob = await api.get(`/api/cartons/${lastClosedCartonId}/label.pdf`);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `carton_label_${lastClosedCartonNo}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      alert("PDF indirme hatası: " + err.message);
-    }
-  };
-
-  const handleCopyZPL = async () => {
-    if (!lastClosedCartonId) return;
-    try {
-      const res = await api.post(`/api/cartons/${lastClosedCartonId}/print?format=ZPL`);
-      if (res && res.zpl) {
-        await navigator.clipboard.writeText(res.zpl);
-        alert("ZPL barkod kodu başarıyla panoya kopyalandı!");
-      } else {
-        alert("ZPL kodu alınamadı.");
-      }
-    } catch (err: any) {
-      alert("ZPL alma hatası: " + err.message);
-    }
   };
 
   return (

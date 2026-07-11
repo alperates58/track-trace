@@ -13,10 +13,9 @@ export interface ScanHistoryItem {
 interface RecentScanPanelProps {
   history: ScanHistoryItem[];
   errorMsg?: string;
-  lastScannedBarcode?: string;
 }
 
-export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({ history, errorMsg, lastScannedBarcode }) => {
+export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({ history, errorMsg }) => {
   return (
     <div className="w-full lg:w-[350px] 2xl:w-[450px] bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden shrink-0 h-full">
       <div className="p-3 md:p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 shrink-0">
