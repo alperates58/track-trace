@@ -560,7 +560,6 @@ export const Scan: React.FC = () => {
           <RecentScanPanel 
             history={scanHistory}
             errorMsg={status === 'error' ? errorMsg : undefined}
-            lastScannedBarcode={lastScannedBarcode}
           />
         </div>
       </main>
