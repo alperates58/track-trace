@@ -69,7 +69,7 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
 
 
   return (
-    <div className="relative z-20 bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex gap-4 shrink-0 items-end overflow-visible" style={{ position: 'relative', zIndex: 30000, overflow: 'visible' }}>
+    <div className="relative z-20 bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap lg:flex-nowrap gap-4 shrink-0 items-end overflow-visible" style={{ position: 'relative', zIndex: 30000, overflow: 'visible' }}>
       {/* İstasyon */}
       <div className="flex flex-col gap-1 shrink-0 w-32 md:w-40 relative">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">İstasyon</label>
