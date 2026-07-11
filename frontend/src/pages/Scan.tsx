@@ -56,7 +56,7 @@ export const Scan: React.FC = () => {
 
   // Scan state
   const [status, setStatus] = useState<'ready' | 'success' | 'error' | 'cartonClosed'>('ready');
-  const [lastScannedBarcode, setLastScannedBarcode] = useState<string>('');
+  const [, setLastScannedBarcode] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   // Active carton details
