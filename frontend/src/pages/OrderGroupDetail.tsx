@@ -38,7 +38,7 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
       setSummary(summaryData);
 
       const linesData = await api.get(`/api/order-groups/${encodeURIComponent(groupKey)}/lines`);
-      setLines(linesData || []);
+      setLines(Array.isArray(linesData) ? linesData : (linesData?.items ?? []));
     } catch (err: any) {
       setError(err.message || 'Grup detayları yüklenirken hata oluştu.');
     } finally {
