@@ -521,10 +521,10 @@ export const Scan: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50" onClick={focusInput}>
+    <div className="min-h-full flex flex-col overflow-x-hidden overflow-y-auto bg-gray-50" onClick={focusInput}>
       <SessionHeader isOnline={isOnline} operatorName={user?.name} />
 
-      <main className="flex-1 flex flex-col p-2 md:p-4 gap-2 md:gap-4 overflow-hidden relative" style={{ minHeight: 0 }}>
+      <main className="flex-1 flex flex-col p-2 md:p-4 gap-2 md:gap-4 relative">
         <ScanToolbar 
           stations={stations}
           selectedStationId={selectedStationId}
