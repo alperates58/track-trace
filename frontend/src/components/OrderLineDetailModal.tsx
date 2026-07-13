@@ -312,7 +312,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
   };
 
   return (
-    <div style={{
+    <div className="order-line-modal-overlay" style={{
       position: 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
       backgroundColor: 'rgba(15, 23, 42, 0.6)',
@@ -323,7 +323,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
       justifyContent: 'center',
       padding: '24px'
     }} onClick={onClose}>
-      <div style={{
+      <div className="order-line-modal" style={{
         width: '100%',
         maxWidth: '1200px',
         height: '85vh',
@@ -336,7 +336,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         animation: 'fadeIn 0.2s ease-out'
       }} onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
-        <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#f8fafc' }}>
+        <div className="order-line-modal-header" style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#f8fafc' }}>
           <div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               Sipariş Satırı Detayı 
@@ -350,7 +350,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 24px', backgroundColor: '#fff' }}>
+        <div className="order-line-modal-tabs" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 24px', backgroundColor: '#fff' }}>
           <button
             style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'summary' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'summary' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
             onClick={() => setActiveTab('summary')}
@@ -747,7 +747,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
         {/* Modal Footer Actions */}
         {activeTab === 'summary' && (
-          <div style={{ padding: '20px 24px', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <div className="order-line-modal-footer" style={{ padding: '20px 24px', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
             {selectedOrder.status === 'Draft' && (
               <>
                 {hasPermission('orders.edit') && (

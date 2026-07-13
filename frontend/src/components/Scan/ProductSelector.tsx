@@ -181,7 +181,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-1 flex-1 min-w-[200px] md:min-w-[300px] relative" ref={containerRef} onKeyDown={handleKeyDown} style={{ zIndex: 10000 }}>
+    <div className="scan-product-selector flex flex-col gap-1 flex-1 min-w-[200px] md:min-w-[300px] relative" ref={containerRef} onKeyDown={handleKeyDown} style={{ zIndex: 10000 }}>
       <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider ml-1 flex items-center gap-1">
         <span>Aktif Ürün</span>
         <div className="group relative flex items-center justify-center">

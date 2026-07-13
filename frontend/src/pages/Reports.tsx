@@ -1127,7 +1127,7 @@ export const Reports: React.FC = () => {
 
       {/* --- BACKGROUND JOBS DRAWER/PANEL --- */}
       {showJobsPanel && (
-        <div style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '350px', backgroundColor: 'var(--bg-card)', boxShadow: '-2px 0 10px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+        <div className="report-jobs-panel" style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '350px', backgroundColor: 'var(--bg-card)', boxShadow: '-2px 0 10px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-main)' }}>Arka Plan Görevleri</h3>
             <button className="btn btn-secondary" onClick={() => setShowJobsPanel(false)}>Kapat</button>

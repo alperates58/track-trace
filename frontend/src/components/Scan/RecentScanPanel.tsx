@@ -17,7 +17,7 @@ interface RecentScanPanelProps {
 
 export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({ history, errorMsg }) => {
   return (
-    <div className="w-full lg:w-[350px] 2xl:w-[450px] bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden shrink-0 h-full">
+    <div className="scan-history-panel w-full lg:w-[350px] 2xl:w-[450px] bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden shrink-0 h-full">
       <div className="p-3 md:p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 shrink-0">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />

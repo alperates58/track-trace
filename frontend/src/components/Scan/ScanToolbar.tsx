@@ -69,9 +69,9 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
 
 
   return (
-    <div className="relative z-20 bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap lg:flex-nowrap gap-4 shrink-0 items-end overflow-visible" style={{ position: 'relative', zIndex: 30000, overflow: 'visible' }}>
+    <div className="scan-toolbar relative z-20 bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap lg:flex-nowrap gap-4 shrink-0 items-end overflow-visible" style={{ position: 'relative', zIndex: 30000, overflow: 'visible' }}>
       {/* İstasyon */}
-      <div className="flex flex-col gap-1 shrink-0 w-32 md:w-40 relative">
+      <div className="scan-toolbar-field scan-toolbar-station flex flex-col gap-1 shrink-0 w-32 md:w-40 relative">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">İstasyon</label>
         <div className="relative">
           <select 
@@ -92,7 +92,7 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
       </div>
 
       {/* Sipariş */}
-      <div className="flex flex-col gap-1 shrink-0 w-40 md:w-56 relative">
+      <div className="scan-toolbar-field scan-toolbar-order flex flex-col gap-1 shrink-0 w-40 md:w-56 relative">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">İş Emri / Sipariş</label>
         <div className="relative">
           <select 
@@ -127,7 +127,7 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
 
       {/* Odak Info */}
       <div 
-        className="group relative flex items-center justify-center mb-1 mr-1 md:mr-2 cursor-pointer"
+        className="scan-focus-control group relative flex items-center justify-center mb-1 mr-1 md:mr-2 cursor-pointer"
         onClick={onFocusRequest}
         title="Odağı geri almak için tıklayın veya F8'e basın"
       >
@@ -138,13 +138,16 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
         }`}>
           {isInputFocused ? <Keyboard className="w-4 h-4" /> : <MousePointerClick className="w-4 h-4" />}
         </div>
+        <span className="scan-focus-label">
+          {isInputFocused ? 'Okutma odağı aktif' : 'Okutma odağı kayıp — dokunarak geri al'}
+        </span>
         <div className="absolute top-10 w-max bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
           {isInputFocused ? 'Odak Aktif (F8)' : 'Odak Kayboldu (Tıklayın / F8)'}
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 shrink-0 mb-1">
+      <div className="scan-toolbar-actions flex items-center gap-2 shrink-0 mb-1">
         <button 
           onClick={() => { onOpenCamera(); if (onCloseFocusRestoration) onCloseFocusRestoration(); }}
           className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors"

@@ -112,6 +112,32 @@ const AppShell: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  const pageTitles: Record<string, string> = {
+    dashboard: 'Dashboard',
+    orders: 'Sipariş Yönetimi',
+    scan: 'Otomatik Koli Modu',
+    'preprint-scan': 'Ön Etiketli Koli Modu',
+    cartons: 'Koli Yönetimi',
+    'preprint-create': 'Ön Etiket Oluştur',
+    pallets: 'Palet Yönetimi',
+    shipments: 'Depo & Sevkiyat',
+    traceability: 'İzlenebilirlik Merkezi',
+    reports: 'Sipariş Bazlı Raporlama',
+    'dm-creator': 'DataMatrix Üretici',
+    users: 'Kullanıcı Yönetimi',
+    stations: 'İstasyon Yönetimi',
+    audit: 'Audit Center',
+    'permission-matrix': 'Yetki Matrisi',
+    'print-settings': 'Yazdırma Ayarları',
+    system: 'Sistem Bilgisi'
+  };
+  const activePageTitle = pageTitles[activeTab] || activeTab;
+  const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'cartons', 'preprint-create', 'pallets', 'shipments'].includes(activeTab)
+    ? 'Operations'
+    : ['users', 'stations', 'audit', 'permission-matrix', 'print-settings', 'system'].includes(activeTab)
+      ? 'Administration'
+      : 'Intelligence';
+
   const renderActivePage = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -401,16 +427,16 @@ const AppShell: React.FC = () => {
               <Menu size={20} />
             </button>
             <div className="header-title-area">
-              <span className="header-breadcrumb">TrackTrace / {activeTab === 'dashboard' ? 'Operations' : activeTab === 'users' || activeTab === 'system' ? 'Administration' : 'Module'}</span>
-              <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
-                {activeTab === 'traceability' ? 'İzlenebilirlik Merkezi' : activeTab === 'scan' ? 'Otomatik Koli Modu' : activeTab === 'preprint-scan' ? 'Ön Etiketli Koli Modu' : activeTab === 'shipments' ? 'Depo & Sevkiyat' : activeTab === 'users' ? 'Kullanıcı Yönetimi' : activeTab === 'stations' ? 'İstasyon Yönetimi' : activeTab === 'dm-creator' ? 'DataMatrix Üretici' : activeTab === 'reports' ? 'Sipariş Bazlı Raporlama' : activeTab === 'permission-matrix' ? 'Yetki Matrisi' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              <span className="header-breadcrumb">TrackTrace / {activePageSection}</span>
+              <h2 className="header-page-title">
+                {activePageTitle}
               </h2>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div className="system-status-badge">
+            <div className="system-status-badge" aria-label="API Online" title="API Online">
               <span className="status-dot-pulse"></span>
-              API Online
+              <span className="system-status-label">API Online</span>
             </div>
           </div>
         </header>
@@ -471,7 +497,7 @@ const VersionChecker: React.FC = () => {
   if (!showBanner) return null;
 
   return (
-    <div style={{
+    <div className="version-update-banner" style={{
       position: 'fixed',
       bottom: '24px',
       right: '24px',

@@ -69,14 +69,14 @@ export const SystemInfo: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="system-info-page">
       <TTPageHeader
         title="Sistem Bilgisi"
         description="Uygulama sürümü, sunucu kaynakları, ve veritabanı bağlantı durumları."
       />
 
       {info && health && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+        <div className="system-info-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
           <TTStatCard
             title="API Durumu"
             value={health.status === 'Healthy' ? 'Online' : health.status}
@@ -104,7 +104,7 @@ export const SystemInfo: React.FC = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+      <div className="system-info-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
         
         {/* Application details */}
         <TTSection title="Uygulama Sürüm Bilgisi" icon={<LayoutTemplate size={20} />}>

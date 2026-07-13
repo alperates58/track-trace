@@ -86,7 +86,7 @@ export const PermissionMatrix: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="permission-matrix-page">
       <TTPageHeader
         title="Yetki Matrisi"
         description="Sistemdeki tüm modüller için rol bazlı yetkilerin genel görünümü."
@@ -128,7 +128,7 @@ export const PermissionMatrix: React.FC = () => {
       </div>
 
       <TTCard padding="none">
-        <div style={{ overflowX: 'auto' }}>
+        <div className="permission-matrix-scroll" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
           <thead>
             <tr>

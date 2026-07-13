@@ -268,13 +268,13 @@ export const PrintSettings: React.FC = () => {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container print-settings-page">
       <TTPageHeader 
         title="Yazdırma Ayarları" 
         description="Sistem genelinde kullanılacak çoklu yazdırma modu ve etiket yapılandırmaları" 
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div className="print-settings-summary" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <TTCard>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Ayar Kaynağı</div>
@@ -329,7 +329,7 @@ export const PrintSettings: React.FC = () => {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
+        <div className="print-settings-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
           {[
             { id: 'general', label: 'Genel Ayarlar', icon: <Settings size={16} /> },
             { id: 'browser', label: 'Browser Auto Print', icon: <MonitorPlay size={16} /> },
@@ -359,7 +359,7 @@ export const PrintSettings: React.FC = () => {
           ))}
         </div>
 
-        <div style={{ padding: '24px' }}>
+        <div className="print-settings-content" style={{ padding: '24px' }}>
           {activeTab === 'general' && (
             <div style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="form-group">
@@ -445,7 +445,7 @@ export const PrintSettings: React.FC = () => {
                 </label>
               </div>
 
-              <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+              <div className="print-settings-actions" style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
                 <TTButton 
                   variant="primary" 
                   onClick={() => handleSaveGlobal(config)}

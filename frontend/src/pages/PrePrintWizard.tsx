@@ -135,8 +135,8 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
   };
 
   const renderStepIndicator = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px', paddingTop: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+    <div className="preprint-step-scroll" style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px', paddingTop: '20px' }}>
+      <div className="preprint-step-indicator" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {[
           { num: 1, label: 'Sipariş Seç' },
           { num: 2, label: 'Baskı Ayarları' },
@@ -180,7 +180,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
   );
 
   return (
-    <div style={{ paddingBottom: '60px' }}>
+    <div className="preprint-wizard-page" style={{ paddingBottom: '60px' }}>
       <TTPageHeader
         title="Ön Etiket Oluştur"
         description="Bu işlem siparişe ait boş koli etiketleri oluşturur. Operatörler daha sonra bu etiketleri kullanarak ürün okutma işlemini gerçekleştirir."
@@ -191,7 +191,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
         }
       />
 
-      <div className="card" style={{ maxWidth: '900px', margin: '20px auto 0 auto', minHeight: '500px', position: 'relative', overflow: 'hidden' }}>
+      <div className="card preprint-wizard-card" style={{ maxWidth: '900px', margin: '20px auto 0 auto', minHeight: '500px', position: 'relative', overflow: 'hidden' }}>
         {renderStepIndicator()}
 
         {loading ? (
@@ -199,7 +199,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
             Yükleniyor...
           </div>
         ) : (
-          <div style={{ padding: '0 20px 80px 20px', animation: 'fadeIn 0.3s ease-out' }}>
+          <div className="preprint-step-content" style={{ padding: '0 20px 80px 20px', animation: 'fadeIn 0.3s ease-out' }}>
             
             {/* STEP 1 */}
             {step === 1 && (
@@ -321,7 +321,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                   <span style={{ fontSize: '1.2rem' }}>⚠️</span> Temsili Önizleme (Sadece Bilgi Amaçlıdır)
                 </div>
                 
-                <div style={{
+                <div className="preprint-label-preview" style={{
                   width: '350px',
                   height: '250px',
                   backgroundColor: '#ffffff',
@@ -360,7 +360,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '32px', marginTop: '16px', backgroundColor: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 32px', borderRadius: '12px' }}>
+                <div className="preprint-preview-summary" style={{ display: 'flex', gap: '32px', marginTop: '16px', backgroundColor: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 32px', borderRadius: '12px' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>İlk Koli</div>
                     <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>1</div>
@@ -393,7 +393,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                     </div>
                   </div>
                   
-                  <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div className="preprint-confirm-grid" style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Stok Kodu</div>
                       <div style={{ fontWeight: 600 }}>{selectedOrder?.stockCode}</div>
@@ -429,7 +429,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
         )}
 
         {/* Footer Actions */}
-        <div style={{ 
+        <div className="preprint-footer" style={{
           position: 'absolute', bottom: '0', left: '0', right: '0', 
           padding: '16px 24px', borderTop: '1px solid var(--border-color)',
           display: 'flex', justifyContent: 'space-between', backgroundColor: '#f8fafc',

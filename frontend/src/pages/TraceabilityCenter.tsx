@@ -500,9 +500,9 @@ export const TraceabilityCenter: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="traceability-page">
       {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="traceability-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>İzlenebilirlik Merkezi</h2>
           <p style={{ color: 'var(--text-muted)' }}>Ürün, koli, palet ve sipariş ilişkilerini sorgulayın ve baskı geçmişini denetleyin.</p>
@@ -520,7 +520,7 @@ export const TraceabilityCenter: React.FC = () => {
 
       {/* Giant Search Block */}
       <div className="card" style={{ padding: '32px', marginBottom: '28px', background: 'radial-gradient(circle at top right, #eff6ff 0%, #ffffff 100%)' }}>
-        <form onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '12px', maxWidth: '800px', margin: '0 auto' }}>
+        <form className="traceability-search-form" onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '12px', maxWidth: '800px', margin: '0 auto' }}>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <Search size={22} style={{ position: 'absolute', left: '16px', color: 'var(--text-muted)' }} />

@@ -28,11 +28,11 @@ export const ScanProgressCard: React.FC<ScanProgressCardProps> = ({
   if (!productName) {
     return (
       <div 
-        className={`flex-1 bg-white rounded-2xl shadow-sm border p-6 xl:p-10 flex flex-col justify-center items-center relative overflow-hidden transition-colors ${!isInputFocused ? 'border-amber-400 border-4' : 'border-gray-200'}`}
+        className={`scan-progress-card flex-1 bg-white rounded-2xl shadow-sm border p-6 xl:p-10 flex flex-col justify-center items-center relative overflow-hidden transition-colors ${!isInputFocused ? 'border-amber-400 border-4' : 'border-gray-200'}`}
         onClick={onFocusRequest}
       >
         {!isInputFocused && (
-          <div className="absolute top-0 left-0 w-full bg-amber-100 text-amber-800 py-2 flex items-center justify-center gap-2 font-bold z-20">
+          <div className="scan-focus-warning absolute top-0 left-0 w-full bg-amber-100 text-amber-800 py-2 flex items-center justify-center gap-2 font-bold z-20">
             <AlertTriangle className="w-5 h-5" />
             <span>OKUTMA ODAĞI KAYBOLDU — Tıklayın veya F8'e basın</span>
           </div>
@@ -47,7 +47,7 @@ export const ScanProgressCard: React.FC<ScanProgressCardProps> = ({
 
   return (
     <div 
-      className={`flex-1 bg-white rounded-2xl shadow-sm transition-all duration-300 p-6 xl:p-10 flex flex-col relative overflow-hidden cursor-default ${
+      className={`scan-progress-card flex-1 bg-white rounded-2xl shadow-sm transition-all duration-300 p-6 xl:p-10 flex flex-col relative overflow-hidden cursor-default ${
         !isInputFocused 
           ? 'border-4 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.3)]' 
           : isTargetReached
@@ -58,7 +58,7 @@ export const ScanProgressCard: React.FC<ScanProgressCardProps> = ({
     >
       {/* Odak Kaybı Uyarı Bandı */}
       {!isInputFocused && (
-        <div className="absolute top-0 left-0 w-full bg-amber-500 text-white py-1.5 flex items-center justify-center gap-2 font-bold z-20 shadow-sm animate-pulse">
+        <div className="scan-focus-warning absolute top-0 left-0 w-full bg-amber-500 text-white py-1.5 flex items-center justify-center gap-2 font-bold z-20 shadow-sm animate-pulse">
           <AlertTriangle className="w-5 h-5" />
           <span className="text-sm md:text-base tracking-wide">OKUTMA ODAĞI KAYBOLDU — Tıklayın veya F8'e basın</span>
         </div>
@@ -91,7 +91,7 @@ export const ScanProgressCard: React.FC<ScanProgressCardProps> = ({
       <div className="flex-1 min-h-[20px] md:min-h-[40px]"></div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-12 z-10">
+      <div className="scan-stats-grid grid grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-12 z-10">
         
         <div className="flex flex-col gap-1 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100">
           <span className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-wide">Beklenen</span>

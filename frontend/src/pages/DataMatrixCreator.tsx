@@ -942,7 +942,7 @@ export const DataMatrixCreator: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="datamatrix-creator-page" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Top Header Card */}
       <TTPageHeader
@@ -957,14 +957,14 @@ export const DataMatrixCreator: React.FC = () => {
       )}
 
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="datamatrix-creator-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
         
         {/* Left Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* File Upload Box */}
           <div className="card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div className="datamatrix-upload-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FileText size={18} color="var(--primary)" />
                 Girdi Dosyası Seçimi
