@@ -15,7 +15,11 @@ import {
   AlertTriangle, 
   RefreshCw,
   Eye,
-  Percent
+  Percent,
+  SlidersHorizontal,
+  Plus,
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 import { TTPageHeader, TTButton } from '../components/common';
 
@@ -74,6 +78,76 @@ export const Reports: React.FC = () => {
   const [showJobsPanel, setShowJobsPanel] = useState(false);
   const [backgroundJobs, setBackgroundJobs] = useState<any[]>([]);
   const [exportPrompt, setExportPrompt] = useState<any>(null); // { orderNo, stockCode, advice }
+
+  // --- COLUMN SETTINGS STATES ---
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [columnSettings, setColumnSettings] = useState<any>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'used' | 'missing' | 'carton' | 'pallet'>('used');
+  const [customColInput, setCustomColInput] = useState('');
+
+  const getDefaultColumnSettings = () => ({
+    usedCodes: [
+      { key: 'RawCode', label: 'QR / RawCode', enabled: true, isCustom: false },
+      { key: 'Gtin', label: 'GTIN', enabled: true, isCustom: false },
+      { key: 'SerialNo', label: 'Seri No', enabled: true, isCustom: false },
+      { key: 'CartonNo', label: 'Koli No', enabled: true, isCustom: false },
+      { key: 'PalletNo', label: 'Palet No', enabled: true, isCustom: false },
+      { key: 'ScannedByName', label: 'Okutan Kullanıcı', enabled: true, isCustom: false },
+      { key: 'ScannedAt', label: 'Okutma Tarihi', enabled: true, isCustom: false },
+      { key: 'Status', label: 'Durum', enabled: true, isCustom: false }
+    ],
+    missingCodes: [
+      { key: 'RawCode', label: 'QR / RawCode', enabled: true, isCustom: false },
+      { key: 'Gtin', label: 'GTIN', enabled: true, isCustom: false },
+      { key: 'SerialNo', label: 'Seri No', enabled: true, isCustom: false },
+      { key: 'Status', label: 'Durum', enabled: true, isCustom: false },
+      { key: 'Description', label: 'Açıklama', enabled: true, isCustom: false }
+    ],
+    cartonDist: [
+      { key: 'CartonNo', label: 'Koli No', enabled: true, isCustom: false },
+      { key: 'SSCC', label: 'SSCC', enabled: true, isCustom: false },
+      { key: 'RawCode', label: 'QR / RawCode', enabled: true, isCustom: false },
+      { key: 'SerialNo', label: 'Seri No', enabled: true, isCustom: false },
+      { key: 'PalletNo', label: 'Palet No', enabled: true, isCustom: false },
+      { key: 'ScannedAt', label: 'Okutma Tarihi', enabled: true, isCustom: false }
+    ],
+    palletDist: [
+      { key: 'PalletNo', label: 'Palet No', enabled: true, isCustom: false },
+      { key: 'CartonNo', label: 'Koli No', enabled: true, isCustom: false },
+      { key: 'SSCC', label: 'SSCC', enabled: true, isCustom: false },
+      { key: 'QrCount', label: 'QR Sayısı', enabled: true, isCustom: false }
+    ]
+  });
+
+  const fetchColumnSettings = async () => {
+    try {
+      const res = await api.get('/api/settings/report_column_settings');
+      if (res && res.value) {
+        setColumnSettings(typeof res.value === 'string' ? JSON.parse(res.value) : res.value);
+      } else {
+        setColumnSettings(getDefaultColumnSettings());
+      }
+    } catch {
+      setColumnSettings(getDefaultColumnSettings());
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await api.put('/api/settings/report_column_settings', {
+        key: 'report_column_settings',
+        value: JSON.stringify(columnSettings)
+      });
+      alert('Rapor kolon ayarları başarıyla kaydedildi! Tüm raporlar bu tercihlere göre üretilecektir.');
+      setShowSettingsModal(false);
+    } catch (err: any) {
+      alert('Ayarlar kaydedilirken hata oluştu: ' + err.message);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   // -------------------------------------------------------------
   // EFFECT: Fetch Main Order Reports
@@ -365,9 +439,21 @@ export const Reports: React.FC = () => {
             title="Sipariş Bazlı Raporlama"
             description="Sipariş bazında yükleme, okutma, koli, palet ve tamamlanma oranları takibi."
             actions={
-              <TTButton variant="secondary" onClick={fetchOrderReports} icon={<RefreshCw size={14} className={loading ? 'spin-anim' : ''} />}>
-                Yenile
-              </TTButton>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <TTButton 
+                  variant="secondary" 
+                  onClick={() => {
+                    fetchColumnSettings();
+                    setShowSettingsModal(true);
+                  }} 
+                  icon={<SlidersHorizontal size={14} />}
+                >
+                  Rapor Kolon Ayarları
+                </TTButton>
+                <TTButton variant="secondary" onClick={fetchOrderReports} icon={<RefreshCw size={14} className={loading ? 'spin-anim' : ''} />}>
+                  Yenile
+                </TTButton>
+              </div>
             }
           />
 
@@ -1218,6 +1304,167 @@ export const Reports: React.FC = () => {
         >
           <RefreshCw size={24} className={backgroundJobs.some(j => j.status === 'Processing') ? 'spin' : ''} />
         </button>
+      )}
+
+      {/* --- REPORT COLUMN SETTINGS MODAL --- */}
+      {showSettingsModal && columnSettings && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', maxWidth: '780px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+            {/* Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <SlidersHorizontal size={20} color="var(--primary)" /> Rapor Kolon Ayarları (Dışarı Aktarım)
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  Raporda istemediğiniz gereksiz kolonları çıkarabilir, başlıklarını değiştirebilir veya sistemde olmayan yeni kolonlar ekleyebilirsiniz.
+                </p>
+              </div>
+              <button className="btn btn-secondary" onClick={() => setShowSettingsModal(false)}>Kapat</button>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', backgroundColor: '#f8fafc', padding: '0 16px', overflowX: 'auto' }}>
+              <button 
+                style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.85rem', borderBottom: settingsTab === 'used' ? '2px solid var(--primary)' : '2px solid transparent', color: settingsTab === 'used' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer' }}
+                onClick={() => setSettingsTab('used')}
+              >
+                (B) Kullanılan QR Kodlar
+              </button>
+              <button 
+                style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.85rem', borderBottom: settingsTab === 'missing' ? '2px solid var(--primary)' : '2px solid transparent', color: settingsTab === 'missing' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer' }}
+                onClick={() => setSettingsTab('missing')}
+              >
+                (C) Eksik QR Kodlar
+              </button>
+              <button 
+                style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.85rem', borderBottom: settingsTab === 'carton' ? '2px solid var(--primary)' : '2px solid transparent', color: settingsTab === 'carton' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer' }}
+                onClick={() => setSettingsTab('carton')}
+              >
+                (D) Koli Dağılımı
+              </button>
+              <button 
+                style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.85rem', borderBottom: settingsTab === 'pallet' ? '2px solid var(--primary)' : '2px solid transparent', color: settingsTab === 'pallet' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer' }}
+                onClick={() => setSettingsTab('pallet')}
+              >
+                (E) Palet Dağılımı
+              </button>
+            </div>
+
+            {/* Content List */}
+            <div style={{ padding: '20px 24px', flex: 1, overflowY: 'auto' }}>
+              {(() => {
+                const sectionKey = settingsTab === 'used' ? 'usedCodes' : settingsTab === 'missing' ? 'missingCodes' : settingsTab === 'carton' ? 'cartonDist' : 'palletDist';
+                const cols = columnSettings[sectionKey] || [];
+
+                const toggleEnable = (idx: number) => {
+                  const updated = JSON.parse(JSON.stringify(columnSettings));
+                  updated[sectionKey][idx].enabled = !updated[sectionKey][idx].enabled;
+                  setColumnSettings(updated);
+                };
+
+                const updateLabel = (idx: number, newLabel: string) => {
+                  const updated = JSON.parse(JSON.stringify(columnSettings));
+                  updated[sectionKey][idx].label = newLabel;
+                  setColumnSettings(updated);
+                };
+
+                const removeColumn = (idx: number) => {
+                  const updated = JSON.parse(JSON.stringify(columnSettings));
+                  updated[sectionKey].splice(idx, 1);
+                  setColumnSettings(updated);
+                };
+
+                const addCustomColumn = () => {
+                  if (!customColInput.trim()) return;
+                  const updated = JSON.parse(JSON.stringify(columnSettings));
+                  updated[sectionKey].push({
+                    key: `Custom_${Date.now()}`,
+                    label: customColInput.trim(),
+                    enabled: true,
+                    isCustom: true,
+                    defaultValue: ''
+                  });
+                  setColumnSettings(updated);
+                  setCustomColInput('');
+                };
+
+                return (
+                  <div>
+                    <div style={{ marginBottom: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      Raporda görüntülenmesini istediğiniz kolonları işaretleyin. İşareti kaldırılan kolonlar dışarı aktarılan rapordan çıkarılacaktır.
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                      {cols.map((col: any, idx: number) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: col.enabled ? '#ffffff' : '#f8fafc', opacity: col.enabled ? 1 : 0.6 }}>
+                          <input 
+                            type="checkbox" 
+                            checked={col.enabled} 
+                            onChange={() => toggleEnable(idx)} 
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
+                          />
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input 
+                              type="text" 
+                              className="input-field" 
+                              value={col.label} 
+                              onChange={(e) => updateLabel(idx, e.target.value)} 
+                              style={{ padding: '6px 10px', fontSize: '0.85rem', fontWeight: 600, flex: 1, maxWidth: '300px' }} 
+                            />
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {col.isCustom ? '(Özel Eklenen Kolon)' : `[Sistem: ${col.key}]`}
+                            </span>
+                          </div>
+                          {col.isCustom && (
+                            <button className="btn btn-danger" onClick={() => removeColumn(idx)} style={{ padding: '4px 8px' }} title="Sil">
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add Custom Column Form */}
+                    <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Sistemde Olmayan Özel Kolon Ekle</h4>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          placeholder="Örn: Kontrol Eden Operator, Özel Notlar..." 
+                          value={customColInput} 
+                          onChange={(e) => setCustomColInput(e.target.value)} 
+                          style={{ flex: 1, padding: '8px 12px' }} 
+                        />
+                        <button type="button" className="btn btn-primary" onClick={addCustomColumn} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Plus size={16} /> Kolon Ekle
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setColumnSettings(getDefaultColumnSettings())}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <RotateCcw size={14} /> Varsayılana Sıfırla
+              </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button className="btn btn-secondary" onClick={() => setShowSettingsModal(false)}>İptal</button>
+                <button className="btn btn-primary" onClick={handleSaveSettings} disabled={savingSettings}>
+                  {savingSettings ? 'Kaydediliyor...' : 'Kaydet & Uygula'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

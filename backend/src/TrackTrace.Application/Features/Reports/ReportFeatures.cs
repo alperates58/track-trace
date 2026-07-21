@@ -79,6 +79,62 @@ public record GetOrderExportAdviceQuery(string OrderNo, string? StockCode = null
 
 public record ReportExportFileResult(byte[] Bytes, string ContentType, string FileName, string Kind);
 
+public class ReportColumnItemConfig
+{
+    public string Key { get; set; } = "";
+    public string Label { get; set; } = "";
+    public bool Enabled { get; set; } = true;
+    public bool IsCustom { get; set; } = false;
+    public string? DefaultValue { get; set; }
+}
+
+public class ReportColumnSettingsDto
+{
+    public List<ReportColumnItemConfig> UsedCodes { get; set; } = GetDefaultUsedCodes();
+    public List<ReportColumnItemConfig> MissingCodes { get; set; } = GetDefaultMissingCodes();
+    public List<ReportColumnItemConfig> CartonDist { get; set; } = GetDefaultCartonDist();
+    public List<ReportColumnItemConfig> PalletDist { get; set; } = GetDefaultPalletDist();
+
+    public static List<ReportColumnItemConfig> GetDefaultUsedCodes() => new()
+    {
+        new() { Key = "RawCode", Label = "QR / RawCode", Enabled = true },
+        new() { Key = "Gtin", Label = "GTIN", Enabled = true },
+        new() { Key = "SerialNo", Label = "Seri No", Enabled = true },
+        new() { Key = "CartonNo", Label = "Koli No", Enabled = true },
+        new() { Key = "PalletNo", Label = "Palet No", Enabled = true },
+        new() { Key = "ScannedByName", Label = "Okutan Kullanıcı", Enabled = true },
+        new() { Key = "ScannedAt", Label = "Okutma Tarihi", Enabled = true },
+        new() { Key = "Status", Label = "Durum", Enabled = true },
+    };
+
+    public static List<ReportColumnItemConfig> GetDefaultMissingCodes() => new()
+    {
+        new() { Key = "RawCode", Label = "QR / RawCode", Enabled = true },
+        new() { Key = "Gtin", Label = "GTIN", Enabled = true },
+        new() { Key = "SerialNo", Label = "Seri No", Enabled = true },
+        new() { Key = "Status", Label = "Durum", Enabled = true },
+        new() { Key = "Description", Label = "Açıklama", Enabled = true },
+    };
+
+    public static List<ReportColumnItemConfig> GetDefaultCartonDist() => new()
+    {
+        new() { Key = "CartonNo", Label = "Koli No", Enabled = true },
+        new() { Key = "SSCC", Label = "SSCC", Enabled = true },
+        new() { Key = "RawCode", Label = "QR / RawCode", Enabled = true },
+        new() { Key = "SerialNo", Label = "Seri No", Enabled = true },
+        new() { Key = "PalletNo", Label = "Palet No", Enabled = true },
+        new() { Key = "ScannedAt", Label = "Okutma Tarihi", Enabled = true },
+    };
+
+    public static List<ReportColumnItemConfig> GetDefaultPalletDist() => new()
+    {
+        new() { Key = "PalletNo", Label = "Palet No", Enabled = true },
+        new() { Key = "CartonNo", Label = "Koli No", Enabled = true },
+        new() { Key = "SSCC", Label = "SSCC", Enabled = true },
+        new() { Key = "QrCount", Label = "QR Sayısı", Enabled = true },
+    };
+}
+
 public class StockExportSizeDto
 {
     public Guid OrderId { get; set; }
@@ -938,6 +994,33 @@ public class ReportHandlers :
             request.SafeOnly ? "safe-excel-zip" : "split-excel-zip");
     }
 
+    private static async Task<ReportColumnSettingsDto> GetReportColumnSettingsAsync(IDbConnection connection)
+    {
+        try
+        {
+            var rawJson = await connection.QueryFirstOrDefaultAsync<string>(
+                "SELECT Value::text FROM SystemSettings WHERE Key = 'report_column_settings'"
+            );
+            if (!string.IsNullOrWhiteSpace(rawJson))
+            {
+                var parsed = global::System.Text.Json.JsonSerializer.Deserialize<ReportColumnSettingsDto>(rawJson, new global::System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (parsed != null)
+                {
+                    if (parsed.UsedCodes == null || !parsed.UsedCodes.Any()) parsed.UsedCodes = ReportColumnSettingsDto.GetDefaultUsedCodes();
+                    if (parsed.MissingCodes == null || !parsed.MissingCodes.Any()) parsed.MissingCodes = ReportColumnSettingsDto.GetDefaultMissingCodes();
+                    if (parsed.CartonDist == null || !parsed.CartonDist.Any()) parsed.CartonDist = ReportColumnSettingsDto.GetDefaultCartonDist();
+                    if (parsed.PalletDist == null || !parsed.PalletDist.Any()) parsed.PalletDist = ReportColumnSettingsDto.GetDefaultPalletDist();
+                    return parsed;
+                }
+            }
+        }
+        catch
+        {
+            // Fallback
+        }
+        return new ReportColumnSettingsDto();
+    }
+
     private async Task<byte[]> GenerateOrderReportExcelBytesAsync(string orderNo, string? stockCode, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -1129,22 +1212,24 @@ public class ReportHandlers :
             wsSc.Cell("A10").Value = "Palet Sayısı:";
             wsSc.Cell("B10").Value = Convert.ToInt32(sc.PalletCount);
 
+            // Load Column Settings from SystemSettings
+            var columnSettings = await GetReportColumnSettingsAsync(connection);
+
             // B) Kullanılan QR Kodlar
+            var activeUsedCols = columnSettings.UsedCodes.Where(c => c.Enabled).ToList();
+            if (!activeUsedCols.Any()) activeUsedCols = ReportColumnSettingsDto.GetDefaultUsedCodes();
+
             int rowIdx = 12;
             wsSc.Cell(rowIdx, 1).Value = "B) KULLANILAN QR KODLAR";
             wsSc.Cell(rowIdx, 1).Style.Font.Bold = true;
             
             rowIdx++;
-            wsSc.Cell(rowIdx, 1).Value = "QR / RawCode";
-            wsSc.Cell(rowIdx, 2).Value = "GTIN";
-            wsSc.Cell(rowIdx, 3).Value = "Seri No";
-            wsSc.Cell(rowIdx, 4).Value = "Koli No";
-            wsSc.Cell(rowIdx, 5).Value = "Palet No";
-            wsSc.Cell(rowIdx, 6).Value = "Okutan Kullanıcı";
-            wsSc.Cell(rowIdx, 7).Value = "Okutma Tarihi";
-            wsSc.Cell(rowIdx, 8).Value = "Durum";
-            wsSc.Range(rowIdx, 1, rowIdx, 8).Style.Font.Bold = true;
-            wsSc.Range(rowIdx, 1, rowIdx, 8).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+            for (int i = 0; i < activeUsedCols.Count; i++)
+            {
+                wsSc.Cell(rowIdx, i + 1).Value = activeUsedCols[i].Label;
+            }
+            wsSc.Range(rowIdx, 1, rowIdx, activeUsedCols.Count).Style.Font.Bold = true;
+            wsSc.Range(rowIdx, 1, rowIdx, activeUsedCols.Count).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
 
             const string usedCodesSql = @"
                 SELECT 
@@ -1170,29 +1255,46 @@ public class ReportHandlers :
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = (string)code.RawCode;
-                wsSc.Cell(rowIdx, 2).Value = (string)code.Gtin;
-                wsSc.Cell(rowIdx, 3).Value = (string)code.SerialNo;
-                wsSc.Cell(rowIdx, 4).Value = (string)code.CartonNo ?? "-";
-                wsSc.Cell(rowIdx, 5).Value = (string)code.PalletNo ?? "-";
-                wsSc.Cell(rowIdx, 6).Value = (string)code.ScannedByName ?? "-";
-                wsSc.Cell(rowIdx, 7).Value = code.ScannedAt != null ? ((DateTime)code.ScannedAt).ToString("dd.MM.yyyy HH:mm") : "-";
-                wsSc.Cell(rowIdx, 8).Value = (string)code.Status;
+                for (int colIdx = 0; colIdx < activeUsedCols.Count; colIdx++)
+                {
+                    var col = activeUsedCols[colIdx];
+                    if (col.IsCustom)
+                    {
+                        wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? "";
+                    }
+                    else
+                    {
+                        switch (col.Key)
+                        {
+                            case "RawCode": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.RawCode; break;
+                            case "Gtin": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.Gtin; break;
+                            case "SerialNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.SerialNo; break;
+                            case "CartonNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.CartonNo ?? "-"; break;
+                            case "PalletNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.PalletNo ?? "-"; break;
+                            case "ScannedByName": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.ScannedByName ?? "-"; break;
+                            case "ScannedAt": wsSc.Cell(rowIdx, colIdx + 1).Value = code.ScannedAt != null ? ((DateTime)code.ScannedAt).ToString("dd.MM.yyyy HH:mm") : "-"; break;
+                            case "Status": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.Status; break;
+                            default: wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? ""; break;
+                        }
+                    }
+                }
             }
 
             // C) Eksik / Kullanılmayan QR Kodlar
+            var activeMissingCols = columnSettings.MissingCodes.Where(c => c.Enabled).ToList();
+            if (!activeMissingCols.Any()) activeMissingCols = ReportColumnSettingsDto.GetDefaultMissingCodes();
+
             rowIdx += 2;
             wsSc.Cell(rowIdx, 1).Value = "C) EKSİK / KULLANILMAYAN QR KODLAR";
             wsSc.Cell(rowIdx, 1).Style.Font.Bold = true;
 
             rowIdx++;
-            wsSc.Cell(rowIdx, 1).Value = "QR / RawCode";
-            wsSc.Cell(rowIdx, 2).Value = "GTIN";
-            wsSc.Cell(rowIdx, 3).Value = "Seri No";
-            wsSc.Cell(rowIdx, 4).Value = "Durum";
-            wsSc.Cell(rowIdx, 5).Value = "Açıklama";
-            wsSc.Range(rowIdx, 1, rowIdx, 5).Style.Font.Bold = true;
-            wsSc.Range(rowIdx, 1, rowIdx, 5).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+            for (int i = 0; i < activeMissingCols.Count; i++)
+            {
+                wsSc.Cell(rowIdx, i + 1).Value = activeMissingCols[i].Label;
+            }
+            wsSc.Range(rowIdx, 1, rowIdx, activeMissingCols.Count).Style.Font.Bold = true;
+            wsSc.Range(rowIdx, 1, rowIdx, activeMissingCols.Count).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
 
             const string missingCodesSql = @"
                 SELECT 
@@ -1210,27 +1312,43 @@ public class ReportHandlers :
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = (string)code.RawCode;
-                wsSc.Cell(rowIdx, 2).Value = (string)code.Gtin;
-                wsSc.Cell(rowIdx, 3).Value = (string)code.SerialNo;
-                wsSc.Cell(rowIdx, 4).Value = (string)code.Status;
-                wsSc.Cell(rowIdx, 5).Value = "Kullanılmadı (Beklemede)";
+                for (int colIdx = 0; colIdx < activeMissingCols.Count; colIdx++)
+                {
+                    var col = activeMissingCols[colIdx];
+                    if (col.IsCustom)
+                    {
+                        wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? "";
+                    }
+                    else
+                    {
+                        switch (col.Key)
+                        {
+                            case "RawCode": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.RawCode; break;
+                            case "Gtin": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.Gtin; break;
+                            case "SerialNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.SerialNo; break;
+                            case "Status": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)code.Status; break;
+                            case "Description": wsSc.Cell(rowIdx, colIdx + 1).Value = "Kullanılmadı (Beklemede)"; break;
+                            default: wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? ""; break;
+                        }
+                    }
+                }
             }
 
             // D) Koli Bazlı Dağılım
+            var activeCartonCols = columnSettings.CartonDist.Where(c => c.Enabled).ToList();
+            if (!activeCartonCols.Any()) activeCartonCols = ReportColumnSettingsDto.GetDefaultCartonDist();
+
             rowIdx += 2;
             wsSc.Cell(rowIdx, 1).Value = "D) KOLİ BAZLI DAĞILIM";
             wsSc.Cell(rowIdx, 1).Style.Font.Bold = true;
 
             rowIdx++;
-            wsSc.Cell(rowIdx, 1).Value = "Koli No";
-            wsSc.Cell(rowIdx, 2).Value = "SSCC";
-            wsSc.Cell(rowIdx, 3).Value = "QR / RawCode";
-            wsSc.Cell(rowIdx, 4).Value = "Seri No";
-            wsSc.Cell(rowIdx, 5).Value = "Palet No";
-            wsSc.Cell(rowIdx, 6).Value = "Okutma Tarihi";
-            wsSc.Range(rowIdx, 1, rowIdx, 6).Style.Font.Bold = true;
-            wsSc.Range(rowIdx, 1, rowIdx, 6).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+            for (int i = 0; i < activeCartonCols.Count; i++)
+            {
+                wsSc.Cell(rowIdx, i + 1).Value = activeCartonCols[i].Label;
+            }
+            wsSc.Range(rowIdx, 1, rowIdx, activeCartonCols.Count).Style.Font.Bold = true;
+            wsSc.Range(rowIdx, 1, rowIdx, activeCartonCols.Count).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
 
             const string cartonDistSql = @"
                 SELECT 
@@ -1253,26 +1371,44 @@ public class ReportHandlers :
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = (string)dist.CartonNo;
-                wsSc.Cell(rowIdx, 2).Value = (string)dist.SSCC;
-                wsSc.Cell(rowIdx, 3).Value = (string)dist.RawCode;
-                wsSc.Cell(rowIdx, 4).Value = (string)dist.SerialNo;
-                wsSc.Cell(rowIdx, 5).Value = (string)dist.PalletNo ?? "-";
-                wsSc.Cell(rowIdx, 6).Value = dist.ScannedAt != null ? ((DateTime)dist.ScannedAt).ToString("dd.MM.yyyy HH:mm") : "-";
+                for (int colIdx = 0; colIdx < activeCartonCols.Count; colIdx++)
+                {
+                    var col = activeCartonCols[colIdx];
+                    if (col.IsCustom)
+                    {
+                        wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? "";
+                    }
+                    else
+                    {
+                        switch (col.Key)
+                        {
+                            case "CartonNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.CartonNo; break;
+                            case "SSCC": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.SSCC; break;
+                            case "RawCode": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.RawCode; break;
+                            case "SerialNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.SerialNo; break;
+                            case "PalletNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.PalletNo ?? "-"; break;
+                            case "ScannedAt": wsSc.Cell(rowIdx, colIdx + 1).Value = dist.ScannedAt != null ? ((DateTime)dist.ScannedAt).ToString("dd.MM.yyyy HH:mm") : "-"; break;
+                            default: wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? ""; break;
+                        }
+                    }
+                }
             }
 
             // E) Palet Bazlı Dağılım
+            var activePalletCols = columnSettings.PalletDist.Where(c => c.Enabled).ToList();
+            if (!activePalletCols.Any()) activePalletCols = ReportColumnSettingsDto.GetDefaultPalletDist();
+
             rowIdx += 2;
             wsSc.Cell(rowIdx, 1).Value = "E) PALET BAZLI DAĞILIM";
             wsSc.Cell(rowIdx, 1).Style.Font.Bold = true;
 
             rowIdx++;
-            wsSc.Cell(rowIdx, 1).Value = "Palet No";
-            wsSc.Cell(rowIdx, 2).Value = "Koli No";
-            wsSc.Cell(rowIdx, 3).Value = "SSCC";
-            wsSc.Cell(rowIdx, 4).Value = "QR Sayısı";
-            wsSc.Range(rowIdx, 1, rowIdx, 4).Style.Font.Bold = true;
-            wsSc.Range(rowIdx, 1, rowIdx, 4).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+            for (int i = 0; i < activePalletCols.Count; i++)
+            {
+                wsSc.Cell(rowIdx, i + 1).Value = activePalletCols[i].Label;
+            }
+            wsSc.Range(rowIdx, 1, rowIdx, activePalletCols.Count).Style.Font.Bold = true;
+            wsSc.Range(rowIdx, 1, rowIdx, activePalletCols.Count).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
 
             const string palletDistSql = @"
                 SELECT 
@@ -1292,10 +1428,25 @@ public class ReportHandlers :
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 rowIdx++;
-                wsSc.Cell(rowIdx, 1).Value = (string)dist.PalletNo;
-                wsSc.Cell(rowIdx, 2).Value = (string)dist.CartonNo;
-                wsSc.Cell(rowIdx, 3).Value = (string)dist.SSCC;
-                wsSc.Cell(rowIdx, 4).Value = Convert.ToInt32(dist.QrCount);
+                for (int colIdx = 0; colIdx < activePalletCols.Count; colIdx++)
+                {
+                    var col = activePalletCols[colIdx];
+                    if (col.IsCustom)
+                    {
+                        wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? "";
+                    }
+                    else
+                    {
+                        switch (col.Key)
+                        {
+                            case "PalletNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.PalletNo; break;
+                            case "CartonNo": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.CartonNo; break;
+                            case "SSCC": wsSc.Cell(rowIdx, colIdx + 1).Value = (string)dist.SSCC; break;
+                            case "QrCount": wsSc.Cell(rowIdx, colIdx + 1).Value = Convert.ToInt32(dist.QrCount); break;
+                            default: wsSc.Cell(rowIdx, colIdx + 1).Value = col.DefaultValue ?? ""; break;
+                        }
+                    }
+                }
             }
 
             wsSc.Columns().AdjustToContents();
