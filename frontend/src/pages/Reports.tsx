@@ -1259,12 +1259,15 @@ export const Reports: React.FC = () => {
                     <button 
                       className="btn btn-primary" 
                       style={{ width: '100%', marginTop: '12px' }}
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = `/api/reports/download/${job.downloadToken}`;
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
+                      onClick={async () => {
+                        try {
+                          const blob = await api.get(`/api/reports/download/${job.downloadToken}`);
+                          const ext = job.format === 'CSV' ? '.zip' : job.format === 'SingleExcel' ? '.xlsx' : '.zip';
+                          const fileName = `${job.orderNo}_Raporu${ext}`;
+                          downloadBlob(blob, fileName);
+                        } catch (err: any) {
+                          alert('Rapor dosyası indirilemedi: ' + err.message);
+                        }
                       }}
                     >
                       İndir
