@@ -271,14 +271,19 @@ export const Reports: React.FC = () => {
   // -------------------------------------------------------------
   // EFFECT: Fetch Background Jobs
   // -------------------------------------------------------------
+  const fetchJobs = () => {
+    api.get('/api/reports/jobs')
+      .then(res => setBackgroundJobs(res || []))
+      .catch(err => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
   useEffect(() => {
     let interval: any;
     if (showJobsPanel) {
-      const fetchJobs = () => {
-        api.get('/api/reports/jobs')
-          .then(res => setBackgroundJobs(res || []))
-          .catch(err => console.error(err));
-      };
       fetchJobs();
       interval = setInterval(fetchJobs, 5000);
     }
@@ -449,6 +454,16 @@ export const Reports: React.FC = () => {
                   icon={<SlidersHorizontal size={14} />}
                 >
                   Rapor Kolon Ayarları
+                </TTButton>
+                <TTButton 
+                  variant="secondary" 
+                  onClick={() => {
+                    fetchJobs();
+                    setShowJobsPanel(true);
+                  }} 
+                  icon={<Clock size={14} className={backgroundJobs.some(j => j.status === 'Processing' || j.status === 'Pending') ? 'spin-anim' : ''} />}
+                >
+                  Arka Plan Görevleri {backgroundJobs.filter(j => j.status === 'Processing' || j.status === 'Pending').length > 0 && `(${backgroundJobs.filter(j => j.status === 'Processing' || j.status === 'Pending').length})`}
                 </TTButton>
                 <TTButton variant="secondary" onClick={fetchOrderReports} icon={<RefreshCw size={14} className={loading ? 'spin-anim' : ''} />}>
                   Yenile
@@ -1156,51 +1171,77 @@ export const Reports: React.FC = () => {
 
       {/* --- EXPORT PROMPT MODAL --- */}
       {exportPrompt && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', maxWidth: '520px', width: '90%' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', color: 'var(--text-main)' }}>Rapor Hazırlama Seçenekleri</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>{exportPrompt.advice.message || 'Bu rapor oldukça büyük.'}</p>
-            {exportPrompt.advice.strategy === 'mixed' && (
-              <p style={{ color: 'var(--text-main)', marginBottom: '16px', fontSize: '0.9rem', backgroundColor: '#fff3cd', padding: '10px', borderRadius: '4px' }}>
-                Riskli Stoklar: {(exportPrompt.advice.riskyStocks || []).map((s:any) => s.stockCode).join(', ')}
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', padding: '28px', borderRadius: 'var(--radius-lg)', maxWidth: '540px', width: '100%', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '14px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileSpreadsheet size={22} color="var(--primary)" /> Rapor Hazırlama Seçenekleri
+              </h3>
+              <p style={{ margin: '6px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {exportPrompt.advice.message || 'Sipariş raporunuzu tek bir Excel dosyasında çoklu sayfa olarak veya stok bazlı ZIP arşivi şeklinde hazırlayabilirsiniz.'}
               </p>
-            )}
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'CSV')}
-                style={{ padding: '12px' }}
-              >
-                Arka Planda Hazırla (CSV ZIP - Önerilen)
-              </button>
+            </div>
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* OPTION 1: Single Excel Background (Green Featured) */}
               <button 
-                className="btn btn-primary" 
+                type="button"
+                className="btn" 
                 onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'SingleExcel')}
-                style={{ padding: '12px', backgroundColor: '#16a34a', borderColor: '#16a34a' }}
+                style={{ 
+                  padding: '14px 18px', 
+                  backgroundColor: '#16a34a', 
+                  color: '#ffffff', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  textAlign: 'left', 
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(22,163,74,0.2)',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                Arka Planda Hazırla (Hepsi Tek Excel'de - Çoklu Sayfa)
+                <div style={{ fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>📊 Hepsi Tek Excel'de Hazırla (.xlsx)</span>
+                  <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '10px' }}>Önerilen</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '4px' }}>
+                  Tüm stok kodları tek bir Excel dosyasında ayrı sekmeler olarak arka planda hazırlanır.
+                </div>
               </button>
 
-              {exportPrompt.advice.strategy !== 'risky-stock' && (
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'Excel')}
-                  style={{ padding: '12px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
-                >
-                  Arka Planda Hazırla (Excel ZIP - Ayrı Dosyalar)
-                </button>
-              )}
-
+              {/* OPTION 2: Separate Excel Files ZIP Background */}
               <button 
-                className="btn btn-secondary" 
+                type="button"
+                className="btn" 
+                onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'Excel')}
+                style={{ 
+                  padding: '14px 18px', 
+                  backgroundColor: '#f8fafc', 
+                  color: 'var(--text-main)', 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: '8px', 
+                  textAlign: 'left', 
+                  cursor: 'pointer' 
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                  📦 Stok Bazlı Ayrı Excel Dosyaları (.zip)
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Her stok kodu için ayrı Excel dosyası içeren ZIP arşivi olarak arka planda hazırlanır.
+                </div>
+              </button>
+
+              {/* OPTION 3: Direct Download Single Excel */}
+              <button 
+                type="button"
+                className="btn" 
                 onClick={async () => {
                   const orderNo = exportPrompt.orderNo;
                   const stockCode = exportPrompt.stockCode;
                   setExportPrompt(null);
                   setExportingKey(`excel-${orderNo}-${stockCode || 'all'}`);
-                  setExportMessage('Tek Excel raporu hazırlanıyor...');
+                  setExportMessage('Tek Excel raporu hazırlanıyor ve indiriliyor...');
                   try {
                     const params = new URLSearchParams();
                     if (stockCode) params.set('stockCode', stockCode);
@@ -1214,12 +1255,30 @@ export const Reports: React.FC = () => {
                     setExportMessage(null);
                   }
                 }}
-                style={{ padding: '12px' }}
+                style={{ 
+                  padding: '12px 18px', 
+                  backgroundColor: '#ffffff', 
+                  color: '#0284c7', 
+                  border: '1px solid #7dd3fc', 
+                  borderRadius: '8px', 
+                  textAlign: 'left', 
+                  cursor: 'pointer' 
+                }}
               >
-                Hepsi Tek Excel'de İndir (Uzun Sürebilir)
+                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                  ⚡ Canlı Tek Excel İndir (.xlsx)
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Arka plana almadan doğrudan tarayıcıda canlı indirir.
+                </div>
               </button>
 
-              <button className="btn btn-secondary" onClick={() => setExportPrompt(null)} style={{ padding: '12px' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary" 
+                onClick={() => setExportPrompt(null)} 
+                style={{ padding: '10px', marginTop: '6px' }}
+              >
                 İptal
               </button>
             </div>
@@ -1262,8 +1321,11 @@ export const Reports: React.FC = () => {
                       onClick={async () => {
                         try {
                           const blob = await api.get(`/api/reports/download/${job.downloadToken}`);
-                          const ext = job.format === 'CSV' ? '.zip' : job.format === 'SingleExcel' ? '.xlsx' : '.zip';
-                          const fileName = `${job.orderNo}_Raporu${ext}`;
+                          const isSingleExcel = job.exportFormat === 'SingleExcel' || job.format === 'SingleExcel' || (job.filePath && job.filePath.endsWith('.xlsx'));
+                          const ext = isSingleExcel ? '.xlsx' : '.zip';
+                          const fileName = job.stockCode 
+                            ? `${job.orderNo}_${job.stockCode}_TrackTrace_Raporu${ext}`
+                            : `${job.orderNo}_TrackTrace_Raporu${ext}`;
                           downloadBlob(blob, fileName);
                         } catch (err: any) {
                           alert('Rapor dosyası indirilemedi: ' + err.message);

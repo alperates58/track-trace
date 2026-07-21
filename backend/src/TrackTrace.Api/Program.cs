@@ -599,13 +599,16 @@ app.MapGet("/api/reports/download/{token:guid}", async (Guid token, IDbConnectio
     if (!System.IO.File.Exists(job.FilePath))
         return Results.NotFound(new { message = "Fiziksel dosya sunucuda yok." });
 
-    var contentType = job.ExportFormat == "Excel" 
+    var isExcel = job.ExportFormat == "SingleExcel" || job.FilePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase);
+
+    var contentType = isExcel 
         ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
         : "application/zip";
     
-    var fileName = Path.GetFileName(job.FilePath);
+    var rawFileName = Path.GetFileName(job.FilePath);
+    var cleanFileName = rawFileName.Contains("_") ? rawFileName.Substring(rawFileName.IndexOf('_') + 1) : rawFileName;
     
-    return Results.File(job.FilePath, contentType, fileName);
+    return Results.File(job.FilePath, contentType, cleanFileName);
 });
 // Audit Logs Endpoints
 app.MapGet("/api/audit-logs", async (
