@@ -71,7 +71,7 @@ public record GetStockCodePalletsQuery(
     string? Search = null
 ) : IRequest<(IEnumerable<object> Items, int TotalCount)>;
 
-public record GetOrderReportExcelQuery(string OrderNo, string? StockCode = null, bool SafeOnly = false) : IRequest<ReportExportFileResult>;
+public record GetOrderReportExcelQuery(string OrderNo, string? StockCode = null, bool SafeOnly = false, bool ForceSingleExcel = false) : IRequest<ReportExportFileResult>;
 
 public record GetOrderReportPdfQuery(string OrderNo) : IRequest<byte[]>;
 
@@ -859,6 +859,20 @@ public class ReportHandlers :
     public async Task<ReportExportFileResult> Handle(GetOrderReportExcelQuery request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
+        if (request.ForceSingleExcel)
+        {
+            var bytes = await GenerateOrderReportExcelBytesAsync(request.OrderNo, request.StockCode, cancellationToken);
+            var fileName = !string.IsNullOrWhiteSpace(request.StockCode)
+                ? $"{request.OrderNo}_{request.StockCode}_TrackTrace_Raporu.xlsx"
+                : $"{request.OrderNo}_Tek_Excel_Raporu.xlsx";
+
+            return new ReportExportFileResult(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName,
+                "excel");
+        }
+
         var advice = await BuildOrderExportAdviceAsync(connection, request.OrderNo, request.StockCode, cancellationToken);
 
         if (!string.IsNullOrWhiteSpace(request.StockCode))

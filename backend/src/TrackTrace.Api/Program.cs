@@ -515,11 +515,11 @@ app.MapGet("/api/reports/orders/{orderNo}/export-advice", async (string orderNo,
     }
 }).RequireAuthorization("ViewerOrAbove").RequirePermission("reports.export");
 
-app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string? stockCode, bool? safeOnly, IMediator mediator, CancellationToken cancellationToken) =>
+app.MapGet("/api/reports/orders/{orderNo}/excel", async (string orderNo, string? stockCode, bool? safeOnly, bool? forceSingleExcel, IMediator mediator, CancellationToken cancellationToken) =>
 {
     try
     {
-        var result = await mediator.Send(new GetOrderReportExcelQuery(orderNo, stockCode, safeOnly == true), cancellationToken);
+        var result = await mediator.Send(new GetOrderReportExcelQuery(orderNo, stockCode, safeOnly == true, forceSingleExcel == true), cancellationToken);
         return Results.File(result.Bytes, result.ContentType, result.FileName);
     }
     catch (KeyNotFoundException)

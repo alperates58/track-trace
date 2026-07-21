@@ -98,7 +98,8 @@ public class ExportJobBackgroundService : BackgroundService
                 await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 10 WHERE Id = @Id", new { Id = job.Id });
 
                 // Generate report using existing query
-                var result = await mediator.Send(new GetOrderReportExcelQuery(job.OrderNo, job.StockCode, false), cancellationToken);
+                var forceSingle = job.ExportFormat == "SingleExcel";
+                var result = await mediator.Send(new GetOrderReportExcelQuery(job.OrderNo, job.StockCode, false, ForceSingleExcel: forceSingle), cancellationToken);
 
                 await connection.ExecuteAsync("UPDATE ExportJobs SET Progress = 90 WHERE Id = @Id", new { Id = job.Id });
 

@@ -1071,7 +1071,7 @@ export const Reports: React.FC = () => {
       {/* --- EXPORT PROMPT MODAL --- */}
       {exportPrompt && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', maxWidth: '500px', width: '90%' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', maxWidth: '520px', width: '90%' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', color: 'var(--text-main)' }}>Rapor Hazırlama Seçenekleri</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>{exportPrompt.advice.message || 'Bu rapor oldukça büyük.'}</p>
             {exportPrompt.advice.strategy === 'mixed' && (
@@ -1088,35 +1088,51 @@ export const Reports: React.FC = () => {
               >
                 Arka Planda Hazırla (CSV ZIP - Önerilen)
               </button>
+
+              <button 
+                className="btn btn-primary" 
+                onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'SingleExcel')}
+                style={{ padding: '12px', backgroundColor: '#16a34a', borderColor: '#16a34a' }}
+              >
+                Arka Planda Hazırla (Hepsi Tek Excel'de - Çoklu Sayfa)
+              </button>
+
               {exportPrompt.advice.strategy !== 'risky-stock' && (
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'Excel')}
                   style={{ padding: '12px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
                 >
-                  Arka Planda Hazırla (Excel ZIP)
+                  Arka Planda Hazırla (Excel ZIP - Ayrı Dosyalar)
                 </button>
               )}
-              {exportPrompt.advice.strategy !== 'risky-stock' && (
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => {
-                    const safeOnly = exportPrompt.advice.strategy === 'mixed';
+
+              <button 
+                className="btn btn-secondary" 
+                onClick={async () => {
+                  const orderNo = exportPrompt.orderNo;
+                  const stockCode = exportPrompt.stockCode;
+                  setExportPrompt(null);
+                  setExportingKey(`excel-${orderNo}-${stockCode || 'all'}`);
+                  setExportMessage('Tek Excel raporu hazırlanıyor...');
+                  try {
                     const params = new URLSearchParams();
-                    if (exportPrompt.stockCode) params.set('stockCode', exportPrompt.stockCode);
-                    if (safeOnly) params.set('safeOnly', 'true');
-                    const query = params.toString() ? `?${params.toString()}` : '';
-                    api.get(`/api/reports/orders/${encodeURIComponent(exportPrompt.orderNo)}/excel${query}`)
-                      .then(blob => downloadBlob(blob, `${exportPrompt.orderNo}_Rapor.zip`))
-                      .catch(err => alert(err.message))
-                      .finally(() => setExportPrompt(null));
-                    setExportPrompt(null);
-                  }}
-                  style={{ padding: '12px' }}
-                >
-                  Normal İndir (Uzun Sürebilir)
-                </button>
-              )}
+                    if (stockCode) params.set('stockCode', stockCode);
+                    params.set('forceSingleExcel', 'true');
+                    const blob = await api.get(`/api/reports/orders/${encodeURIComponent(orderNo)}/excel?${params.toString()}`);
+                    downloadBlob(blob, `${orderNo}_Tek_Excel_Raporu.xlsx`);
+                  } catch (err: any) {
+                    alert('Excel raporu üretilirken hata oluştu: ' + err.message);
+                  } finally {
+                    setExportingKey(null);
+                    setExportMessage(null);
+                  }
+                }}
+                style={{ padding: '12px' }}
+              >
+                Hepsi Tek Excel'de İndir (Uzun Sürebilir)
+              </button>
+
               <button className="btn btn-secondary" onClick={() => setExportPrompt(null)} style={{ padding: '12px' }}>
                 İptal
               </button>
@@ -1158,7 +1174,11 @@ export const Reports: React.FC = () => {
                       className="btn btn-primary" 
                       style={{ width: '100%', marginTop: '12px' }}
                       onClick={() => {
-                        window.location.href = `/api/reports/download/${job.downloadToken}`;
+                        const link = document.createElement('a');
+                        link.href = `/api/reports/download/${job.downloadToken}`;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
                       }}
                     >
                       İndir
