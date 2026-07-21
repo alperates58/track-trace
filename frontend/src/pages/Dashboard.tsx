@@ -63,6 +63,7 @@ interface LiveFeedData {
   todayTotalItems: number;
   todayTotalCartons: number;
   currentPaceItemsPerMin: number;
+  currentPaceSecondsPerItem: number;
   activeStations: LiveStation[];
   recentScansFeed: LiveScanItem[];
 }
@@ -457,7 +458,7 @@ export const Dashboard: React.FC = () => {
             <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '24px' }}>
               <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>Anlık Okutma Hızı</span>
               <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f43f5e', marginTop: '6px' }}>
-                {liveFeed?.currentPaceItemsPerMin || 0} <span style={{ fontSize: '1.2rem', fontWeight: 500, color: '#94a3b8' }}>ürün/dk</span>
+                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1.2rem', fontWeight: 500, color: '#94a3b8' }}>sn / ürün</span>
               </div>
             </div>
           </div>

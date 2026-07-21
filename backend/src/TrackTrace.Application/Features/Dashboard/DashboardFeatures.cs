@@ -45,6 +45,7 @@ public class DashboardLiveFeedDto
     public int TodayTotalItems { get; set; }
     public int TodayTotalCartons { get; set; }
     public double CurrentPaceItemsPerMin { get; set; }
+    public double CurrentPaceSecondsPerItem { get; set; }
     public List<LiveStationDto> ActiveStations { get; set; } = new();
     public List<LiveScanItemDto> RecentScansFeed { get; set; } = new();
 }
@@ -202,6 +203,38 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
         int todayCartons = todayStats != null ? Convert.ToInt32(todayStats.todaycartons) : 0;
         int recent5Min = todayStats != null ? Convert.ToInt32(todayStats.recent5minitems) : 0;
         double currentPace = Math.Round(recent5Min / 5.0, 1);
+        
+        double currentPaceSecPerItem = 0;
+        if (recent5Min > 0)
+        {
+            currentPaceSecPerItem = Math.Round(300.0 / recent5Min, 1);
+        }
+        else
+        {
+            // Fallback: Check average interval between last 20 scans in the system
+            const string paceSql = @"
+                SELECT 
+                    EXTRACT(EPOCH FROM (MAX(ScannedAt) - MIN(ScannedAt))) AS TotalSec,
+                    COUNT(Id) AS ScannedCount
+                FROM (
+                    SELECT Id, ScannedAt 
+                    FROM ProductCodes 
+                    WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL 
+                    ORDER BY ScannedAt DESC 
+                    LIMIT 20
+                ) sub;";
+            var paceRes = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                new CommandDefinition(paceSql, cancellationToken: cancellationToken));
+            if (paceRes != null && paceRes.scannedcount != null && Convert.ToInt32(paceRes.scannedcount) > 1)
+            {
+                double totalSec = Convert.ToDouble(paceRes.totalsec);
+                int cnt = Convert.ToInt32(paceRes.scannedcount) - 1;
+                if (totalSec > 0 && cnt > 0)
+                {
+                    currentPaceSecPerItem = Math.Round(totalSec / cnt, 1);
+                }
+            }
+        }
 
         return new DashboardLiveFeedDto
         {
@@ -209,6 +242,7 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
             TodayTotalItems = todayItems,
             TodayTotalCartons = todayCartons,
             CurrentPaceItemsPerMin = currentPace,
+            CurrentPaceSecondsPerItem = currentPaceSecPerItem,
             ActiveStations = stationList,
             RecentScansFeed = feedItems
         };

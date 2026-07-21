@@ -60,6 +60,9 @@ public class OperatorPerformanceDto
     public int TotalScannedItems { get; set; }
     public double AvgSecondsPerCarton { get; set; }
     public double ItemsPerMinute { get; set; }
+    public double Score { get; set; } // 100-point benchmark score
+    public bool IsBenchmarkLeader { get; set; }
+    public string ScoreGrade { get; set; } = "Standart";
 }
 
 // Queries
@@ -288,7 +291,7 @@ public class PerformanceHandlers :
         var rawItems = await connection.QueryAsync<dynamic>(
             new CommandDefinition(sql, cancellationToken: cancellationToken));
 
-        var list = new List<OperatorPerformanceDto>();
+        var tempList = new List<(string Name, int Cartons, int Items, double TotalSec, double AvgCartonSec, double ItemsPerMin)>();
         foreach (var x in rawItems)
         {
             double totalSec = x.totalactiveseconds != null ? Convert.ToDouble(x.totalactiveseconds) : 0;
@@ -298,16 +301,47 @@ public class PerformanceHandlers :
             double itemsPerMin = totalSec > 0 ? Math.Round((items / totalSec) * 60.0, 1) : 0;
             double avgCartonSec = cartons > 0 && totalSec > 0 ? Math.Round(totalSec / cartons, 1) : 0;
 
+            tempList.Add(((string)x.operatorname, cartons, items, totalSec, avgCartonSec, itemsPerMin));
+        }
+
+        // Benchmark score calculation: Lowest avg carton seconds gets 100 Points
+        double minAvgCartonSec = tempList.Where(t => t.AvgCartonSec > 0).Select(t => t.AvgCartonSec).DefaultIfEmpty(0).Min();
+
+        var list = new List<OperatorPerformanceDto>();
+        foreach (var t in tempList)
+        {
+            double score = 0;
+            bool isLeader = false;
+            string grade = "Standart";
+
+            if (t.AvgCartonSec > 0 && minAvgCartonSec > 0)
+            {
+                score = Math.Min(100.0, Math.Round((minAvgCartonSec / t.AvgCartonSec) * 100.0, 1));
+                if (Math.Abs(t.AvgCartonSec - minAvgCartonSec) < 0.01)
+                {
+                    score = 100.0;
+                    isLeader = true;
+                    grade = "🏆 100 Puan (Lider)";
+                }
+                else if (score >= 80) grade = "🟢 Üstün Performans";
+                else if (score >= 60) grade = "🔵 İyi Performans";
+                else if (score >= 40) grade = "🟡 Standart Performans";
+                else grade = "🔴 Geliştirilmeli";
+            }
+
             list.Add(new OperatorPerformanceDto
             {
-                OperatorName = (string)x.operatorname,
-                TotalCartons = cartons,
-                TotalScannedItems = items,
-                AvgSecondsPerCarton = avgCartonSec,
-                ItemsPerMinute = itemsPerMin
+                OperatorName = t.Name,
+                TotalCartons = t.Cartons,
+                TotalScannedItems = t.Items,
+                AvgSecondsPerCarton = t.AvgCartonSec,
+                ItemsPerMinute = t.ItemsPerMin,
+                Score = score,
+                IsBenchmarkLeader = isLeader,
+                ScoreGrade = grade
             });
         }
 
-        return list;
+        return list.OrderByDescending(x => x.Score).ThenByDescending(x => x.TotalScannedItems);
     }
 }

@@ -568,56 +568,99 @@ export const PerformanceAnalytics: React.FC = () => {
       {/* TAB 3: OPERATORS PERFORMANCE MATRIX */}
       {activeTab === 'operators' && (
         <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-          <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)' }}>Operatör Okutma Hız & Verimlilik Matrisi</h4>
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+              Operatör Performans & 100 Puan Skor Matrisi
+            </h4>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              Sistemdeki en hızlı ortalama koli okutma süresini gerçekleştiren operatör <strong>100 Puan (Benchmark Lideri)</strong> kabul edilir ve diğer operatörler bu sürece oranlanarak 100 üzerinden puanlanır.
+            </p>
+          </div>
 
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
                   <th style={{ padding: '12px 16px' }}>Operatör Adı</th>
-                  <th style={{ padding: '12px 16px' }}>Toplam Okutulan Koli</th>
-                  <th style={{ padding: '12px 16px' }}>Toplam Okutulan QR</th>
-                  <th style={{ padding: '12px 16px' }}>Dakikadaki Ürün Hızı</th>
-                  <th style={{ padding: '12px 16px' }}>Ortalama Koli Dolum Süresi</th>
-                  <th style={{ padding: '12px 16px' }}>Verimlilik Durumu</th>
+                  <th style={{ padding: '12px 16px', minWidth: '180px' }}>Performans Skoru (100 Puan)</th>
+                  <th style={{ padding: '12px 16px' }}>Okutulan Koli</th>
+                  <th style={{ padding: '12px 16px' }}>Okutulan QR</th>
+                  <th style={{ padding: '12px 16px' }}>Dakikadaki Hız</th>
+                  <th style={{ padding: '12px 16px' }}>Ortalama Koli Süresi</th>
+                  <th style={{ padding: '12px 16px' }}>Performans Derecesi</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingOperators ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                       Operatör verileri yükleniyor...
                     </td>
                   </tr>
                 ) : operators.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                       Operatör verisi bulunamadı.
                     </td>
                   </tr>
                 ) : (
-                  operators.map((op, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td data-label="Operatör Adı" style={{ padding: '14px 16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <User size={16} color="var(--primary)" /> {op.operatorName}
-                      </td>
-                      <td data-label="Toplam Okutulan Koli" style={{ padding: '14px 16px', fontWeight: 600 }}>
-                        {op.totalCartons} Koli
-                      </td>
-                      <td data-label="Toplam Okutulan QR" style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--primary)' }}>
-                        {op.totalScannedItems.toLocaleString()} QR
-                      </td>
-                      <td data-label="Dakikadaki Ürün Hızı" style={{ padding: '14px 16px', fontWeight: 700, color: '#16a34a' }}>
-                        {op.itemsPerMinute} Ürün / dk
-                      </td>
-                      <td data-label="Ort. Koli Dolum Süresi" style={{ padding: '14px 16px', fontWeight: 600 }}>
-                        {formatDuration(op.avgSecondsPerCarton)} / koli
-                      </td>
-                      <td data-label="Verimlilik Durumu" style={{ padding: '14px 16px' }}>
-                        <span className="badge badge-success">Yüksek Performans</span>
-                      </td>
-                    </tr>
-                  ))
+                  operators.map((op, idx) => {
+                    const isLeader = op.isBenchmarkLeader || op.score === 100;
+                    const scoreColor = isLeader ? '#d97706' : op.score >= 80 ? '#16a34a' : op.score >= 60 ? '#0284c7' : op.score >= 40 ? '#eab308' : '#dc2626';
+
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: isLeader ? '#fefce8' : 'transparent' }}>
+                        <td data-label="Operatör Adı" style={{ padding: '14px 16px', fontWeight: 700 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {isLeader ? (
+                              <span style={{ fontSize: '1.2rem' }} title="Benchmark Lideri">🏆</span>
+                            ) : (
+                              <User size={16} color="var(--primary)" />
+                            )}
+                            <span style={{ color: isLeader ? '#854d0e' : 'var(--text-main)' }}>{op.operatorName}</span>
+                          </span>
+                        </td>
+
+                        {/* 100-POINT SCORE & PROGRESS BAR */}
+                        <td data-label="Performans Skoru" style={{ padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <strong style={{ fontSize: '1rem', color: scoreColor, width: '65px' }}>
+                              {op.score ? `${op.score.toFixed(1)}` : '0'} / 100
+                            </strong>
+                            <div style={{ flex: 1, height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${Math.min(100, op.score || 0)}%`, backgroundColor: scoreColor, borderRadius: '4px', transition: 'width 0.4s ease' }} />
+                            </div>
+                          </div>
+                        </td>
+
+                        <td data-label="Okutulan Koli" style={{ padding: '14px 16px', fontWeight: 600 }}>
+                          {op.totalCartons} Koli
+                        </td>
+                        <td data-label="Okutulan QR" style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--primary)' }}>
+                          {op.totalScannedItems.toLocaleString()} QR
+                        </td>
+                        <td data-label="Dakikadaki Hız" style={{ padding: '14px 16px', fontWeight: 700, color: '#16a34a' }}>
+                          {op.itemsPerMinute} Ürün / dk
+                        </td>
+                        <td data-label="Ort. Koli Süresi" style={{ padding: '14px 16px', fontWeight: 600 }}>
+                          {formatDuration(op.avgSecondsPerCarton)} / koli
+                        </td>
+                        <td data-label="Performans Derecesi" style={{ padding: '14px 16px' }}>
+                          <span style={{
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            backgroundColor: `${scoreColor}15`,
+                            color: scoreColor,
+                            border: `1px solid ${scoreColor}30`
+                          }}>
+                            {op.scoreGrade || 'Standart'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
