@@ -384,11 +384,17 @@ app.MapPost("/api/users/{id:guid}/toggle", async (Guid id, IMediator mediator) =
     }
 }).RequireAuthorization("AdminOnly").RequirePermission("users.edit");
 
-// Dashboard Summary
+// Dashboard Summary & Live Feed
 app.MapGet("/api/dashboard/summary", async (IMediator mediator) =>
 {
     var summary = await mediator.Send(new GetDashboardSummaryQuery());
     return Results.Ok(summary);
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/dashboard/live-feed", async (IMediator mediator, CancellationToken cancellationToken) =>
+{
+    var liveFeed = await mediator.Send(new TrackTrace.Application.Features.Dashboard.GetDashboardLiveFeedQuery(), cancellationToken);
+    return Results.Ok(liveFeed);
 }).RequireAuthorization("ViewerOrAbove");
 
 // Reporting Endpoints
