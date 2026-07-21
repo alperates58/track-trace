@@ -80,7 +80,9 @@ h1, h2, h3, h4, h5, h6 {
 .app-container {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  position: relative;
 }
 
 .sidebar {
@@ -234,6 +236,9 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .header {
@@ -324,6 +329,8 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* UI Cards and Statistics */
@@ -988,6 +995,19 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
   }
 
   .sidebar {
@@ -1018,6 +1038,7 @@ h1, h2, h3, h4, h5, h6 {
   .header {
     padding: 0 16px;
     height: 60px;
+    flex-shrink: 0;
   }
 
   .page-wrapper {
