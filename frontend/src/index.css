@@ -3256,4 +3256,125 @@ main,
     width: 100% !important;
     max-width: 100vw;
   }
+
+  /* --- HIDE UGLY SCROLLBARS ON MOBILE VIEWPORTS --- */
+  ::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    display: none !important;
+  }
+
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  /* --- MOBILE NATIVE CARD VIEW FOR DATA TABLES (NO HORIZONTAL SCROLLING) --- */
+  .data-table,
+  .ac-table,
+  .shipment-items-table,
+  .page-wrapper table {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .data-table thead,
+  .ac-table thead {
+    display: none !important;
+  }
+
+  .data-table tbody,
+  .ac-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .data-table tbody tr,
+  .ac-table tbody tr {
+    display: flex !important;
+    flex-direction: column !important;
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 14px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .data-table tbody td,
+  .ac-table tbody td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px dashed var(--border-color) !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 0.88rem !important;
+  }
+
+  .data-table tbody td:last-child,
+  .ac-table tbody td:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-top: 6px !important;
+  }
+
+  .data-table td[data-label]::before,
+  .ac-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .orders-filter-form {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .orders-filter-form > div,
+  .orders-filter-form > button,
+  .orders-filter-form input,
+  .orders-filter-form select {
+    width: 100% !important;
+  }
 }
+
+/* --- SLEEK MINIMALIST SCROLLBAR FOR DESKTOP & TABLET --- */
+@media (min-width: 769px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  }
+}
+

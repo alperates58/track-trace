@@ -129,7 +129,7 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <table className="data-table" style={{ margin: 0, minWidth: '850px' }}>
+          <table className="data-table" style={{ margin: 0 }}>
             <thead style={{ backgroundColor: '#f8fafc' }}>
               <tr>
                 <th style={{ padding: '16px', color: '#475569' }}>Stok / Ürün</th>
@@ -146,23 +146,25 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
               ) : (
                 lines.map((line) => (
                   <tr key={line.id} className="hover-row" onClick={() => setSelectedLine(line)} style={{ cursor: 'pointer' }}>
-                    <td style={{ padding: '16px' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{line.productName || '-'}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{line.stockCode || '-'}</div>
+                    <td data-label="Stok / Ürün" style={{ padding: '16px' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{line.productName || '-'}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{line.stockCode || '-'}</div>
+                      </div>
                     </td>
-                    <td style={{ padding: '16px' }}>
+                    <td data-label="İş Emri No" style={{ padding: '16px' }}>
                       <span style={{ fontFamily: 'monospace', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.9rem' }}>
                         {line.gtin}
                       </span>
                     </td>
-                    <td style={{ padding: '16px' }}>
+                    <td data-label="Koli İçi / Palet İçi" style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Package size={14} color="#64748b" /> {line.productPerCarton}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Layers size={14} color="#64748b" /> {line.cartonPerPallet}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '16px', minWidth: '180px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                    <td data-label="Miktar" style={{ padding: '16px', minWidth: '150px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
                         <span style={{ color: '#0284c7' }}>{line.scannedCount?.toLocaleString() || 0}</span>
                         <span style={{ color: '#64748b' }}>{line.expectedQuantity?.toLocaleString() || 0}</span>
                       </div>
@@ -174,10 +176,10 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
                         }}></div>
                       </div>
                     </td>
-                    <td style={{ padding: '16px' }}>
+                    <td data-label="Durum" style={{ padding: '16px' }}>
                       {getStatusBadge(line.status)}
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                    <td data-label="Aksiyon" style={{ padding: '16px', textAlign: 'right' }}>
                       <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setSelectedLine(line); }}>
                         Satır Detayı
                       </button>

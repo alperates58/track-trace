@@ -204,7 +204,7 @@ export const Orders: React.FC = () => {
 
       {/* Filter Bar */}
       <div className="card" style={{ padding: '16px', marginBottom: '24px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <form onSubmit={handleSearchSubmit} className="orders-filter-form" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="form-group" style={{ flex: 2, minWidth: '250px', marginBottom: 0 }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '6px', display: 'block' }}>Arama</label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -242,7 +242,7 @@ export const Orders: React.FC = () => {
       {/* Main DataGrid */}
       <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ minWidth: '1000px', margin: 0 }}>
+          <table className="data-table" style={{ margin: 0 }}>
             <thead style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
               <tr>
                 <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Sipariş No</th>
@@ -262,16 +262,16 @@ export const Orders: React.FC = () => {
               ) : (
                 groups.map((g) => (
                   <tr key={g.groupKey} style={{ cursor: 'pointer', transition: 'background-color 0.2s' }} onClick={() => setSelectedGroupKey(g.groupKey)} className="hover-row">
-                    <td style={{ padding: '16px', fontWeight: 700, color: '#0f172a' }}>{g.orderNo}</td>
-                    <td style={{ padding: '16px', color: '#334155' }}>{g.customerName}</td>
-                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                    <td data-label="Sipariş No" style={{ padding: '16px', fontWeight: 700, color: '#0f172a' }}>{g.orderNo}</td>
+                    <td data-label="Müşteri" style={{ padding: '16px', color: '#334155' }}>{g.customerName}</td>
+                    <td data-label="Ürün Satırı" style={{ padding: '16px', textAlign: 'center' }}>
                       <span style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.lineCount}</span>
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                    <td data-label="Farklı İş Emri" style={{ padding: '16px', textAlign: 'center' }}>
                       <span style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.distinctWorkOrderCount}</span>
                     </td>
-                    <td style={{ padding: '16px', minWidth: '150px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                    <td data-label="Okutulan / Hedef" style={{ padding: '16px', minWidth: '150px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
                         <span style={{ color: '#0284c7' }}>{g.totalScannedQuantity.toLocaleString()}</span>
                         <span style={{ color: '#64748b' }}>{g.totalExpectedQuantity.toLocaleString()}</span>
                       </div>
@@ -279,8 +279,8 @@ export const Orders: React.FC = () => {
                         <div style={{ height: '100%', width: `${g.progressPercentage}%`, backgroundColor: g.progressPercentage === 100 ? '#10b981' : '#3b82f6', transition: 'width 0.3s ease' }}></div>
                       </div>
                     </td>
-                    <td style={{ padding: '16px' }}>{getStatusBadge(g.statusSummary)}</td>
-                    <td style={{ padding: '16px' }}>
+                    <td data-label="Durum" style={{ padding: '16px' }}>{getStatusBadge(g.statusSummary)}</td>
+                    <td data-label="Aksiyon" style={{ padding: '16px' }}>
                       <button className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#fff', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: 600, borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupKey(g.groupKey); }}>
                         İncele
                       </button>
