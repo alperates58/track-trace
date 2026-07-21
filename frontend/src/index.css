@@ -3337,6 +3337,19 @@ main,
     flex-shrink: 0;
   }
 
+  .progress-cell-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 140px !important;
+    max-width: 60% !important;
+    align-items: stretch !important;
+  }
+
+  .progress-cell-wrapper > div {
+    width: 100% !important;
+  }
+
   .orders-filter-form {
     flex-direction: column !important;
     align-items: stretch !important;

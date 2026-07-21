@@ -270,13 +270,15 @@ export const Orders: React.FC = () => {
                     <td data-label="Farklı İş Emri" style={{ padding: '16px', textAlign: 'center' }}>
                       <span style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.distinctWorkOrderCount}</span>
                     </td>
-                    <td data-label="Okutulan / Hedef" style={{ padding: '16px', minWidth: '150px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
-                        <span style={{ color: '#0284c7' }}>{g.totalScannedQuantity.toLocaleString()}</span>
-                        <span style={{ color: '#64748b' }}>{g.totalExpectedQuantity.toLocaleString()}</span>
-                      </div>
-                      <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${g.progressPercentage}%`, backgroundColor: g.progressPercentage === 100 ? '#10b981' : '#3b82f6', transition: 'width 0.3s ease' }}></div>
+                    <td data-label="Okutulan / Hedef" style={{ padding: '16px' }}>
+                      <div className="progress-cell-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
+                          <span style={{ color: '#0284c7' }}>{g.totalScannedQuantity.toLocaleString()}</span>
+                          <span style={{ color: '#64748b' }}>{g.totalExpectedQuantity.toLocaleString()}</span>
+                        </div>
+                        <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${g.progressPercentage}%`, backgroundColor: g.progressPercentage === 100 ? '#10b981' : '#3b82f6', transition: 'width 0.3s ease' }}></div>
+                        </div>
                       </div>
                     </td>
                     <td data-label="Durum" style={{ padding: '16px' }}>{getStatusBadge(g.statusSummary)}</td>

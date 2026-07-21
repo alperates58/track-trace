@@ -163,17 +163,19 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Layers size={14} color="#64748b" /> {line.cartonPerPallet}</span>
                       </div>
                     </td>
-                    <td data-label="Miktar" style={{ padding: '16px', minWidth: '150px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
-                        <span style={{ color: '#0284c7' }}>{line.scannedCount?.toLocaleString() || 0}</span>
-                        <span style={{ color: '#64748b' }}>{line.expectedQuantity?.toLocaleString() || 0}</span>
-                      </div>
-                      <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ 
-                          height: '100%', 
-                          width: `${Math.min(100, Math.round(((line.scannedCount || 0) / (line.expectedQuantity || 1)) * 100))}%`, 
-                          backgroundColor: line.status === 'Completed' ? '#10b981' : '#3b82f6' 
-                        }}></div>
+                    <td data-label="Miktar" style={{ padding: '16px' }}>
+                      <div className="progress-cell-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
+                          <span style={{ color: '#0284c7' }}>{line.scannedCount?.toLocaleString() || 0}</span>
+                          <span style={{ color: '#64748b' }}>{line.expectedQuantity?.toLocaleString() || 0}</span>
+                        </div>
+                        <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ 
+                            height: '100%', 
+                            width: `${Math.min(100, Math.round(((line.scannedCount || 0) / (line.expectedQuantity || 1)) * 100))}%`, 
+                            backgroundColor: line.status === 'Completed' ? '#10b981' : '#3b82f6' 
+                          }}></div>
+                        </div>
                       </div>
                     </td>
                     <td data-label="Durum" style={{ padding: '16px' }}>
