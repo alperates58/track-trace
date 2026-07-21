@@ -6,7 +6,10 @@ import {
   ArrowLeft, 
   Printer, 
   Check,
-  FileText
+  FileText,
+  Info,
+  Zap,
+  Download
 } from 'lucide-react';
 import { TTPageHeader, TTButton } from '../components/common';
 
@@ -25,6 +28,10 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
   
   const [submitting, setSubmitting] = useState(false);
   const [printMode, setPrintMode] = useState('browser');
+
+  // Existing Cartons Calculation States
+  const [existingCartonsCount, setExistingCartonsCount] = useState<number>(0);
+  const [loadingCartons, setLoadingCartons] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,12 +60,45 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
     }
   }, []);
 
+  // Effect: Fetch existing cartons count when selectedOrderId changes
+  useEffect(() => {
+    if (!selectedOrderId) {
+      setExistingCartonsCount(0);
+      return;
+    }
+    const fetchCartonCount = async () => {
+      setLoadingCartons(true);
+      try {
+        const res = await api.get(`/api/cartons?orderId=${selectedOrderId}&pageSize=1`);
+        setExistingCartonsCount(res.totalCount || 0);
+      } catch {
+        setExistingCartonsCount(0);
+      } finally {
+        setLoadingCartons(false);
+      }
+    };
+    fetchCartonCount();
+  }, [selectedOrderId]);
+
   const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
+  // Calculated Stats
+  const expectedQty = selectedOrder?.expectedQuantity || 0;
+  const perCarton = selectedOrder?.productPerCarton || selectedOrder?.boxCapacity || 1;
+  const totalCartonsNeeded = expectedQty > 0 ? Math.ceil(expectedQty / perCarton) : 0;
+  const printedCartons = existingCartonsCount;
+  const remainingCartons = Math.max(0, totalCartonsNeeded - printedCartons);
+
   const handleNext = () => {
-    if (step === 1 && !selectedOrderId) {
-      alert("Lütfen bir sipariş seçin.");
-      return;
+    if (step === 1) {
+      if (!selectedOrderId) {
+        alert("Lütfen bir sipariş seçin.");
+        return;
+      }
+      // Auto-suggest remaining cartons when advancing to step 2
+      if (remainingCartons > 0) {
+        setQuantity(remainingCartons);
+      }
     }
     if (step === 2 && quantity < 1) {
       alert("Lütfen geçerli bir koli adedi girin.");
@@ -112,7 +152,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
             await provider.printRaw(res.content);
             alert("Etiketler yazıcıya gönderildi!");
           } catch (printErr: any) {
-            alert("Yazıcıya gönderilirken hata oluştu: " + printErr.message + "\\nLütfen çıktı dosyasını indirip manuel yazdırın.");
+            alert("Yazıcıya gönderilirken hata oluştu: " + printErr.message + "\nLütfen çıktı dosyasını indirip manuel yazdırın.");
             const blob = new Blob([res.content], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -135,7 +175,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
   };
 
   const renderStepIndicator = () => (
-    <div className="preprint-step-scroll" style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px', paddingTop: '20px' }}>
+    <div className="preprint-step-scroll" style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px', paddingTop: '10px' }}>
       <div className="preprint-step-indicator" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {[
           { num: 1, label: 'Sipariş Seç' },
@@ -195,7 +235,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
         {renderStepIndicator()}
 
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px', color: 'var(--text-muted)' }}>
             Yükleniyor...
           </div>
         ) : (
@@ -255,17 +295,120 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
 
             {/* STEP 2 */}
             {step === 2 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '500px', margin: '0 auto' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', textAlign: 'center' }}>Baskı Ayarları</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '600px', margin: '0 auto' }}>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '4px', textAlign: 'center' }}>Baskı Ayarları</h3>
                 
+                {/* PROMINENT SELECTED ORDER & STOCK BANNER */}
+                {selectedOrder && (
+                  <div style={{ backgroundColor: 'var(--primary-light)', border: '1px solid #cbd5e1', borderRadius: 'var(--radius-md)', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>SEÇİLEN SİPARİŞ & MÜŞTERİ</span>
+                        <h4 style={{ margin: '2px 0 0 0', fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 800 }}>
+                          {selectedOrder.orderNo} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({selectedOrder.customerName || 'Müşteri Belirtilmedi'})</span>
+                        </h4>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>İŞ EMRİ NO</span>
+                        <div style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.92rem', color: '#0f172a', backgroundColor: '#ffffff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', marginTop: '2px' }}>
+                          {selectedOrder.gtin || '-'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Stok Kodu & Adı</span>
+                        <strong style={{ color: 'var(--primary)' }}>{selectedOrder.stockCode}</strong>
+                        <div style={{ fontSize: '0.8rem', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}>{selectedOrder.productName}</div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Koli İçi Adet</span>
+                        <strong>{perCarton} Ürün / Koli</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Toplam Hedef Miktar</span>
+                        <strong>{expectedQty.toLocaleString()} Adet</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* KOLİ HESAPLAMA & KOPYA BİLGİ KARTI */}
+                {selectedOrder && (
+                  <div style={{ backgroundColor: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Info size={16} color="var(--primary)" /> Sipariş Koli Hesaplaması & Durum
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', backgroundColor: '#e2e8f0', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                        Hesaplanan Bilgi
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '12px' }}>
+                      <div style={{ backgroundColor: '#ffffff', padding: '10px 6px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Toplam Hedef Koli</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>{totalCartonsNeeded} Koli</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>({expectedQty.toLocaleString()} / {perCarton})</div>
+                      </div>
+
+                      <div style={{ backgroundColor: '#ffffff', padding: '10px 6px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Mevcut / Basılan Koli</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0284c7' }}>
+                          {loadingCartons ? '...' : `${printedCartons} Koli`}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Sistemde kayıtlı</div>
+                      </div>
+
+                      <div style={{ backgroundColor: '#ffffff', padding: '10px 6px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#0369a1', marginBottom: '2px' }}>Kalan Basılabilir</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: remainingCartons > 0 ? '#16a34a' : 'var(--text-muted)' }}>
+                          {loadingCartons ? '...' : `${remainingCartons} Koli`}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Eksik koli sayısı</div>
+                      </div>
+                    </div>
+
+                    {remainingCartons > 0 ? (
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => setQuantity(remainingCartons)}
+                        style={{ 
+                          width: '100%', 
+                          fontSize: '0.85rem', 
+                          fontWeight: 700, 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '6px', 
+                          padding: '10px 14px', 
+                          backgroundColor: '#e0f2fe', 
+                          color: '#0369a1', 
+                          border: '1px solid #7dd3fc',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Zap size={16} /> Kalan {remainingCartons} Koli İçin Otomatik Doldur ({remainingCartons} Adet)
+                      </button>
+                    ) : (
+                      <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 600, textAlign: 'center', padding: '6px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                        ✓ Tüm hedef koli adedi ({totalCartonsNeeded} koli) sistemde zaten oluşturulmuş.
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="form-group">
-                  <label className="form-label">Basılacak Koli Adedi <span style={{ color: 'red' }}>*</span></label>
+                  <label className="form-label" style={{ fontWeight: 700 }}>Basılacak Koli Adedi <span style={{ color: 'red' }}>*</span></label>
                   <input 
                     type="number" 
                     className="form-input" 
-                    style={{ fontSize: '1.2rem', padding: '12px', textAlign: 'center', fontWeight: 600 }}
+                    style={{ fontSize: '1.3rem', padding: '12px', textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}
                     min="1" 
-                    max="1000" 
+                    max="5000" 
                     value={quantity} 
                     onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                   />
@@ -347,7 +490,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                     <strong>Sipariş:</strong> <span>{selectedOrder?.orderNo || 'ORD-XXX'}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '8px' }}>
-                    <strong>Miktar:</strong> <span>{selectedOrder?.boxCapacity || 0} Adet</span>
+                    <strong>Miktar:</strong> <span>{perCarton} Adet</span>
                   </div>
                   
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'auto' }}>
@@ -362,16 +505,16 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
 
                 <div className="preprint-preview-summary" style={{ display: 'flex', gap: '32px', marginTop: '16px', backgroundColor: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 32px', borderRadius: '12px' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>İlk Koli</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>1</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mevcut Koli</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{printedCartons}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Son Koli</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{quantity}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Basılacak Koli</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary)' }}>{quantity}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Toplam</div>
-                    <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.1rem' }}>{quantity} Etiket</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>İşlem Sonrası Toplam</div>
+                    <div style={{ fontWeight: 700, color: 'var(--success)', fontSize: '1.1rem' }}>{printedCartons + quantity} Koli</div>
                   </div>
                 </div>
               </div>
@@ -399,90 +542,83 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                       <div style={{ fontWeight: 600 }}>{selectedOrder?.stockCode}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Toplam Etiket</div>
-                      <div style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '1.2rem' }}>{quantity} Adet</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Müşteri</div>
+                      <div style={{ fontWeight: 600 }}>{selectedOrder?.customerName || '-'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>İş Emri No</div>
+                      <div style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedOrder?.gtin}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Koli İçi Ürün Adedi</div>
+                      <div style={{ fontWeight: 600 }}>{perCarton} Adet</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Basılacak Koli Adedi</div>
+                      <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.1rem' }}>{quantity} Adet</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Çıktı Formatı</div>
-                      <div style={{ fontWeight: 600, display: 'inline-block', backgroundColor: '#e2e8f0', padding: '2px 8px', borderRadius: '4px' }}>{format}</div>
+                      <div style={{ fontWeight: 600 }}>{format}</div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>İstasyon</div>
-                      <div style={{ fontWeight: 600 }}>{stations.find(s => s.id === stationId)?.name || 'Genel (İstasyon Seçilmedi)'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '16px', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', gap: '12px', border: '1px solid #bfdbfe' }}>
-                  <Printer size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <div style={{ lineHeight: '1.5' }}>
-                    İşlemi onayladığınızda <strong>{quantity} adet</strong> {format} formatında boş etiket üretilecek. Etiketler <strong>
-                      {printMode === 'browser' ? 'tarayıcı üzerinden' : 
-                       (printMode === 'local' ? (JSON.parse(localStorage.getItem('trackTrace_printSettings') || '{}').printerName ? `yerel entegre yazıcı (${JSON.parse(localStorage.getItem('trackTrace_printSettings') || '{}').printerName}) ile` : 'yerel entegre yazıcı ile') : 
-                       'PDF olarak')}
-                    </strong> yazdırılacaktır.
                   </div>
                 </div>
               </div>
             )}
+
           </div>
         )}
 
-        {/* Footer Actions */}
-        <div className="preprint-footer" style={{
-          position: 'absolute', bottom: '0', left: '0', right: '0', 
-          padding: '16px 24px', borderTop: '1px solid var(--border-color)',
-          display: 'flex', justifyContent: 'space-between', backgroundColor: '#f8fafc',
-          borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px'
+        {/* Wizard Footer Controls */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: '#ffffff',
+          borderTop: '1px solid var(--border-color)',
+          padding: '16px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.05)'
         }}>
-          <button 
-            className="btn btn-secondary" 
-            style={{ padding: '8px 16px' }}
-            onClick={step === 1 ? handleCancel : handleBack} 
-            disabled={submitting}
-          >
-            {step === 1 ? 'İptal' : <><ArrowLeft size={16} /> Geri</>}
-          </button>
-          
-          <div style={{ display: 'flex', gap: '12px' }}>
-            {step < 4 ? (
-              <button 
-                className="btn btn-primary" 
-                style={{ padding: '8px 24px' }}
-                onClick={handleNext} 
-                disabled={loading || (step === 1 && !selectedOrderId)}
+          {step > 1 ? (
+            <TTButton variant="secondary" onClick={handleBack} icon={<ArrowLeft size={16} />}>
+              Geri
+            </TTButton>
+          ) : (
+            <TTButton variant="secondary" onClick={handleCancel}>
+              İptal
+            </TTButton>
+          )}
+
+          {step < 4 ? (
+            <TTButton variant="primary" onClick={handleNext} icon={<ArrowRight size={16} />}>
+              İleri
+            </TTButton>
+          ) : (
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <TTButton 
+                variant="secondary" 
+                onClick={() => handleSubmit(true)} 
+                disabled={submitting}
+                icon={<Download size={16} />}
               >
-                İleri <ArrowRight size={16} />
-              </button>
-            ) : (
-              <>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ padding: '8px 16px' }}
-                  onClick={() => handleSubmit(true)} 
-                  disabled={submitting}
-                >
-                  Sadece PDF Önizle
-                </button>
-                <button 
-                  className="btn btn-primary" 
-                  style={{ padding: '8px 24px' }}
-                  onClick={() => handleSubmit(false)} 
-                  disabled={submitting}
-                >
-                  {submitting ? 'Oluşturuluyor...' : 'Oluştur ve Yazdır'} <Printer size={16} />
-                </button>
-              </>
-            )}
-          </div>
+                Sadece Dosya İndir
+              </TTButton>
+              <TTButton 
+                variant="primary" 
+                onClick={() => handleSubmit(false)} 
+                disabled={submitting}
+                icon={<Printer size={16} />}
+              >
+                {submitting ? 'Gönderiliyor...' : 'Baskıyı Başlat'}
+              </TTButton>
+            </div>
+          )}
         </div>
       </div>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };
