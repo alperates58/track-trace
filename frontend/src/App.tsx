@@ -92,22 +92,57 @@ const AppShell: React.FC = () => {
     ...(showDmCreator ? ['dm-creator'] : []),
     ...(showUsers ? ['users'] : []),
     ...(showStations ? ['stations'] : []),
+    ...(showTraceability ? ['traceability'] : []),
+    ...(showReports ? ['reports'] : []),
+    ...(showDmCreator ? ['dm-creator'] : []),
+    ...(showUsers ? ['users'] : []),
+    ...(showStations ? ['stations'] : []),
     ...(showAudit ? ['audit'] : []),
     ...(showPermissions ? ['permission-matrix'] : []),
     ...(showPrintSettings ? ['print-settings'] : []),
     ...(showSystemInfo ? ['system'] : [])
   ];
 
+  // Persistent activeTab using Hash + LocalStorage
   const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '').trim();
+    if (hash && availableTabs.includes(hash)) {
+      return hash;
+    }
+    const saved = localStorage.getItem('activeTab');
+    if (saved && availableTabs.includes(saved)) {
+      return saved;
+    }
     return availableTabs.length > 0 ? availableTabs[0] : 'dashboard';
   });
 
   const availableTabsStr = availableTabs.join(',');
+
   useEffect(() => {
     if (!availableTabs.includes(activeTab) && availableTabs.length > 0) {
       setActiveTab(availableTabs[0]);
     }
-  }, [availableTabsStr, activeTab]);
+  }, [availableTabsStr]);
+
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('activeTab', activeTab);
+      if (window.location.hash.replace('#', '').trim() !== activeTab) {
+        window.location.hash = activeTab;
+      }
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (hash && availableTabs.includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [availableTabsStr]);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
