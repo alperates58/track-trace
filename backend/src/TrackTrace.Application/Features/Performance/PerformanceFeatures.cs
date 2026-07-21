@@ -15,7 +15,8 @@ public class OrderPerformanceDto
     public Guid OrderId { get; set; }
     public string OrderNo { get; set; } = "";
     public string CustomerName { get; set; } = "";
-    public int StockCodeCount { get; set; }
+    public string StockCode { get; set; } = "";
+    public string ProductName { get; set; } = "";
     public int ExpectedQuantity { get; set; }
     public int TotalCartons { get; set; }
     public int TotalScanned { get; set; }
@@ -93,9 +94,9 @@ public class PerformanceHandlers :
                     COUNT(pc.Id) AS ItemCount
                 FROM Cartons c
                 INNER JOIN ProductCodes pc ON c.Id = pc.CartonId
-                WHERE pc.Status != 'Uploaded'
+                WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL
                 GROUP BY c.Id
-                HAVING COUNT(pc.Id) > 1
+                HAVING COUNT(pc.Id) > 1 AND MAX(pc.ScannedAt) > MIN(pc.ScannedAt)
             ),
             OrderDurations AS (
                 SELECT 
@@ -104,9 +105,9 @@ public class PerformanceHandlers :
                     COUNT(pc.Id) AS ItemCount
                 FROM Orders o
                 INNER JOIN ProductCodes pc ON o.Id = pc.OrderId
-                WHERE pc.Status != 'Uploaded'
+                WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL
                 GROUP BY o.Id, o.OrderNo
-                HAVING COUNT(pc.Id) > 1
+                HAVING COUNT(pc.Id) > 1 AND MAX(pc.ScannedAt) > MIN(pc.ScannedAt)
             )
             SELECT 
                 COALESCE(AVG(cd.DurationSec), 0) AS OverallAvgSecondsPerCarton,
@@ -132,28 +133,40 @@ public class PerformanceHandlers :
                 o.Id AS OrderId,
                 o.OrderNo,
                 o.CustomerName,
-                COUNT(DISTINCT o.StockCode) AS StockCodeCount,
-                SUM(o.ExpectedQuantity) AS ExpectedQuantity,
-                COALESCE(COUNT(DISTINCT c.Id), 0) AS TotalCartons,
-                COALESCE(COUNT(pc.Id), 0) AS TotalScanned,
-                MIN(pc.ScannedAt) AS FirstScannedAt,
-                MAX(pc.ScannedAt) AS LastScannedAt,
-                GREATEST(0, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt)))) AS TotalDurationSeconds,
+                o.StockCode,
+                o.ProductName,
+                o.ExpectedQuantity,
+                COALESCE(c.TotalCartons, 0) AS TotalCartons,
+                COALESCE(pc.TotalScanned, 0) AS TotalScanned,
+                pc.FirstScannedAt,
+                pc.LastScannedAt,
+                CASE 
+                    WHEN pc.FirstScannedAt IS NOT NULL AND pc.LastScannedAt IS NOT NULL 
+                    THEN GREATEST(0, EXTRACT(EPOCH FROM (pc.LastScannedAt - pc.FirstScannedAt)))
+                    ELSE 0 
+                END AS TotalDurationSeconds,
                 o.Status
             FROM Orders o
-            LEFT JOIN Cartons c ON o.Id = c.OrderId
-            LEFT JOIN ProductCodes pc ON o.Id = pc.OrderId AND pc.Status != 'Uploaded'
+            LEFT JOIN (
+                SELECT OrderId, COUNT(DISTINCT Id) AS TotalCartons
+                FROM Cartons
+                GROUP BY OrderId
+            ) c ON o.Id = c.OrderId
+            LEFT JOIN (
+                SELECT OrderId, COUNT(Id) AS TotalScanned, MIN(ScannedAt) AS FirstScannedAt, MAX(ScannedAt) AS LastScannedAt
+                FROM ProductCodes
+                WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL
+                GROUP BY OrderId
+            ) pc ON o.Id = pc.OrderId
             WHERE 1=1 ";
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            sql += " AND (o.OrderNo ILIKE @Search OR o.CustomerName ILIKE @Search OR o.StockCode ILIKE @Search) ";
+            sql += " AND (o.OrderNo ILIKE @Search OR o.CustomerName ILIKE @Search OR o.StockCode ILIKE @Search OR o.ProductName ILIKE @Search) ";
         }
 
         sql += @"
-            GROUP BY o.Id, o.OrderNo, o.CustomerName, o.Status
-            HAVING COUNT(pc.Id) > 0
-            ORDER BY MAX(pc.ScannedAt) DESC NULLS LAST;";
+            ORDER BY pc.LastScannedAt DESC NULLS LAST, o.CreatedAt DESC;";
 
         var searchParam = string.IsNullOrWhiteSpace(request.Search) ? "" : $"%{request.Search}%";
         var rawItems = await connection.QueryAsync<dynamic>(
@@ -162,16 +175,17 @@ public class PerformanceHandlers :
         var list = new List<OrderPerformanceDto>();
         foreach (var x in rawItems)
         {
-            double durationSec = x.TotalDurationSeconds != null ? Convert.ToDouble(x.TotalDurationSeconds) : 0;
-            int totalScanned = Convert.ToInt32(x.TotalScanned);
-            int totalCartons = Convert.ToInt32(x.TotalCartons);
+            double durationSec = x.totaldurationseconds != null ? Convert.ToDouble(x.totaldurationseconds) : 0;
+            int totalScanned = Convert.ToInt32(x.totalscanned);
+            int totalCartons = Convert.ToInt32(x.totalcartons);
 
             list.Add(new OrderPerformanceDto
             {
                 OrderId = (Guid)x.orderid,
                 OrderNo = (string)x.orderno,
                 CustomerName = (string)x.customername,
-                StockCodeCount = Convert.ToInt32(x.stockcodecount),
+                StockCode = (string)x.stockcode,
+                ProductName = (string)x.productname ?? "",
                 ExpectedQuantity = Convert.ToInt32(x.expectedquantity),
                 TotalCartons = totalCartons,
                 TotalScanned = totalScanned,
@@ -259,13 +273,15 @@ public class PerformanceHandlers :
 
         const string sql = @"
             SELECT 
-                COALESCE(u.Name, 'Sistem Operatörü') AS OperatorName,
+                COALESCE(u.Name, 'Operatör') AS OperatorName,
                 COUNT(DISTINCT pc.CartonId) AS TotalCartons,
                 COUNT(pc.Id) AS TotalScannedItems,
-                AVG(EXTRACT(EPOCH FROM (pc.ScannedAt - pc.CreatedAt))) AS RawAvgSec
+                MIN(pc.ScannedAt) AS FirstScan,
+                MAX(pc.ScannedAt) AS LastScan,
+                GREATEST(1, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt)))) AS TotalActiveSeconds
             FROM ProductCodes pc
             LEFT JOIN Users u ON pc.ScannedBy = u.Id
-            WHERE pc.Status != 'Uploaded' AND pc.ScannedBy IS NOT NULL
+            WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL AND pc.ScannedBy IS NOT NULL
             GROUP BY u.Name
             ORDER BY COUNT(pc.Id) DESC;";
 
@@ -275,10 +291,12 @@ public class PerformanceHandlers :
         var list = new List<OperatorPerformanceDto>();
         foreach (var x in rawItems)
         {
+            double totalSec = x.totalactiveseconds != null ? Convert.ToDouble(x.totalactiveseconds) : 0;
             int items = Convert.ToInt32(x.totalscanneditems);
             int cartons = Convert.ToInt32(x.totalcartons);
-            double avgCartonSec = cartons > 0 ? Math.Round(120.0 / Math.Max(1, cartons), 1) : 0; // Estimated normalized speed
-            double itemsPerMin = items > 0 ? Math.Round((items / 10.0), 1) : 0;
+
+            double itemsPerMin = totalSec > 0 ? Math.Round((items / totalSec) * 60.0, 1) : 0;
+            double avgCartonSec = cartons > 0 && totalSec > 0 ? Math.Round(totalSec / cartons, 1) : 0;
 
             list.Add(new OperatorPerformanceDto
             {

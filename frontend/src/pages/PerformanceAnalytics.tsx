@@ -14,6 +14,7 @@ import { TTPageHeader, TTButton } from '../components/common';
 
 export const PerformanceAnalytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'cartons' | 'operators'>('orders');
+  const [groupMode, setGroupMode] = useState<'stock' | 'order'>('stock');
   
   // Loading & Error States
   const [loading, setLoading] = useState(false);
@@ -118,6 +119,62 @@ export const PerformanceAnalytics: React.FC = () => {
     setActiveTab('cartons');
   };
 
+  // Grouped by OrderNo helper for Order-level aggregate view
+  const getAggregatedOrders = () => {
+    if (groupMode === 'stock') return orders;
+
+    const map = new Map<string, any>();
+    orders.forEach(o => {
+      if (!map.has(o.orderNo)) {
+        map.set(o.orderNo, {
+          orderId: o.orderId,
+          orderNo: o.orderNo,
+          customerName: o.customerName,
+          stockLinesCount: 1,
+          stockCodes: [o.stockCode],
+          expectedQuantity: o.expectedQuantity,
+          totalCartons: o.totalCartons,
+          totalScanned: o.totalScanned,
+          firstScannedAt: o.firstScannedAt ? new Date(o.firstScannedAt) : null,
+          lastScannedAt: o.lastScannedAt ? new Date(o.lastScannedAt) : null,
+          status: o.status
+        });
+      } else {
+        const item = map.get(o.orderNo);
+        item.stockLinesCount += 1;
+        item.stockCodes.push(o.stockCode);
+        item.expectedQuantity += o.expectedQuantity;
+        item.totalCartons += o.totalCartons;
+        item.totalScanned += o.totalScanned;
+        
+        if (o.firstScannedAt) {
+          const d = new Date(o.firstScannedAt);
+          if (!item.firstScannedAt || d < item.firstScannedAt) item.firstScannedAt = d;
+        }
+        if (o.lastScannedAt) {
+          const d = new Date(o.lastScannedAt);
+          if (!item.lastScannedAt || d > item.lastScannedAt) item.lastScannedAt = d;
+        }
+      }
+    });
+
+    return Array.from(map.values()).map(item => {
+      let durationSec = 0;
+      if (item.firstScannedAt && item.lastScannedAt) {
+        durationSec = Math.max(0, Math.floor((item.lastScannedAt.getTime() - item.firstScannedAt.getTime()) / 1000));
+      }
+      return {
+        ...item,
+        firstScannedAt: item.firstScannedAt ? item.firstScannedAt.toISOString() : null,
+        lastScannedAt: item.lastScannedAt ? item.lastScannedAt.toISOString() : null,
+        totalDurationSeconds: durationSec,
+        avgSecondsPerCarton: item.totalCartons > 0 ? Math.round(durationSec / item.totalCartons) : 0
+      };
+    });
+  };
+
+  const displayedOrders = getAggregatedOrders();
+
   return (
     <div style={{ padding: '4px' }}>
       {/* Header */}
@@ -213,7 +270,7 @@ export const PerformanceAnalytics: React.FC = () => {
           }}
           onClick={() => setActiveTab('orders')}
         >
-          ⏱️ Sipariş Tamamlanma Süreleri
+          ⏱️ Sipariş & Ürün Tamamlanma Süreleri
         </button>
         <button
           style={{
@@ -250,19 +307,58 @@ export const PerformanceAnalytics: React.FC = () => {
       {/* TAB 1: ORDERS PERFORMANCE */}
       {activeTab === 'orders' && (
         <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-          {/* Search Filter Bar */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          {/* Search Filter & View Mode Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
               <input
                 type="text"
                 className="input-field"
-                placeholder="Sipariş No, Müşteri veya Stok No ara..."
+                placeholder="Sipariş No, Müşteri, Stok Kodu veya Ürün Adı ara..."
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
                 style={{ padding: '10px 12px 10px 36px', width: '100%' }}
               />
               <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
+
+            {/* View Mode Toggle: Stock Code Level vs Order Combined Level */}
+            <div style={{ display: 'flex', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <button
+                type="button"
+                onClick={() => setGroupMode('stock')}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '0.82rem',
+                  fontWeight: groupMode === 'stock' ? 700 : 500,
+                  backgroundColor: groupMode === 'stock' ? '#ffffff' : 'transparent',
+                  color: groupMode === 'stock' ? 'var(--primary)' : 'var(--text-muted)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  boxShadow: groupMode === 'stock' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                📦 Stok Kodu / Ürün Bazlı
+              </button>
+              <button
+                type="button"
+                onClick={() => setGroupMode('order')}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '0.82rem',
+                  fontWeight: groupMode === 'order' ? 700 : 500,
+                  backgroundColor: groupMode === 'order' ? '#ffffff' : 'transparent',
+                  color: groupMode === 'order' ? 'var(--primary)' : 'var(--text-muted)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  boxShadow: groupMode === 'order' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                📋 Sipariş Toplam Bazlı
+              </button>
+            </div>
+
             <button className="btn btn-primary" onClick={fetchOrders}>Filtrele</button>
           </div>
 
@@ -273,6 +369,11 @@ export const PerformanceAnalytics: React.FC = () => {
                 <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
                   <th style={{ padding: '12px 16px' }}>Sipariş No</th>
                   <th style={{ padding: '12px 16px' }}>Müşteri</th>
+                  {groupMode === 'stock' ? (
+                    <th style={{ padding: '12px 16px' }}>Stok Kodu & Ürün Adı</th>
+                  ) : (
+                    <th style={{ padding: '12px 16px' }}>Stok Kalemi</th>
+                  )}
                   <th style={{ padding: '12px 16px' }}>Okutulan / Hedef</th>
                   <th style={{ padding: '12px 16px' }}>Koli Adedi</th>
                   <th style={{ padding: '12px 16px' }}>İlk Okutma</th>
@@ -284,25 +385,39 @@ export const PerformanceAnalytics: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.length === 0 ? (
+                {displayedOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={11} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                       Performans verisi bulunan sipariş bulunamadı.
                     </td>
                   </tr>
                 ) : (
-                  orders.map((o) => {
-                    const paceColor = o.AvgSecondsPerCarton <= 45 ? '#16a34a' : o.AvgSecondsPerCarton <= 120 ? '#0284c7' : '#eab308';
-                    const paceLabel = o.AvgSecondsPerCarton <= 45 ? 'Yüksek Tempo' : o.AvgSecondsPerCarton <= 120 ? 'Normal Tempo' : 'Orta Tempo';
+                  displayedOrders.map((o: any, idx: number) => {
+                    const paceColor = o.avgSecondsPerCarton <= 45 ? '#16a34a' : o.avgSecondsPerCarton <= 120 ? '#0284c7' : '#eab308';
+                    const paceLabel = o.avgSecondsPerCarton <= 45 ? 'Yüksek Tempo' : o.avgSecondsPerCarton <= 120 ? 'Normal Tempo' : 'Orta Tempo';
 
                     return (
-                      <tr key={o.orderId} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <tr key={o.orderId || `${o.orderNo}-${idx}`} style={{ borderBottom: '1px solid var(--border-color)' }}>
                         <td data-label="Sipariş No" style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--primary)' }}>
                           {o.orderNo}
                         </td>
                         <td data-label="Müşteri" style={{ padding: '14px 16px' }}>
                           {o.customerName}
                         </td>
+
+                        {groupMode === 'stock' ? (
+                          <td data-label="Stok Kodu & Ürün Adı" style={{ padding: '14px 16px' }}>
+                            <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '0.88rem' }}>{o.stockCode}</strong>
+                            <span style={{ fontSize: '0.8rem', color: '#475569', display: 'inline-block', maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={o.productName}>
+                              {o.productName || 'Ürün Adı Belirtilmedi'}
+                            </span>
+                          </td>
+                        ) : (
+                          <td data-label="Stok Kalemi" style={{ padding: '14px 16px', fontWeight: 600 }}>
+                            <span className="badge badge-primary">{o.stockLinesCount} Farklı Stok Kodu</span>
+                          </td>
+                        )}
+
                         <td data-label="Okutulan / Hedef" style={{ padding: '14px 16px', fontWeight: 600 }}>
                           <span style={{ color: 'var(--primary)' }}>{o.totalScanned.toLocaleString()}</span> / {o.expectedQuantity.toLocaleString()}
                         </td>
