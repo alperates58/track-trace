@@ -109,12 +109,12 @@ public class PrePrintCartonsCommandHandler : IRequestHandler<PrePrintCartonsComm
             var generatedCartons = new List<dynamic>();
             var now = DateTime.UtcNow;
 
+            int nextCartonCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COALESCE(MAX(CAST(SUBSTRING(CartonNo FROM '-([0-9]+)$') AS INTEGER)), 0) + 1 FROM Cartons WHERE CartonNo LIKE @OrderNoPrefix AND Mode = 'PrePrinted'",
+                new { OrderNoPrefix = $"{order.orderno}-%" }, transaction);
+
             for (int i = 0; i < request.Quantity; i++)
             {
-                int nextCartonCount = await connection.ExecuteScalarAsync<int>(
-                    "SELECT COALESCE(MAX(CAST(SUBSTRING(CartonNo FROM '[0-9]+$') AS INTEGER)), 0) + 1 FROM Cartons WHERE OrderId = @OrderId AND Mode = 'PrePrinted'",
-                    new { request.OrderId }, transaction);
-
                 string cartonNo = $"{order.orderno}-{nextCartonCount}";
                 string sscc = await GenerateSSCC18Async(connection, transaction);
 
@@ -144,6 +144,8 @@ public class PrePrintCartonsCommandHandler : IRequestHandler<PrePrintCartonsComm
                 generatedCartons.Add(new {
                     Id = cartonId, CartonNo = cartonNo, SSCC = sscc, TargetQuantity = order.productpercarton
                 });
+                
+                nextCartonCount++;
             }
 
             await transaction.CommitAsync();
