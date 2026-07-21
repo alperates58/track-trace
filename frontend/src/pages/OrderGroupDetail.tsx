@@ -92,100 +92,102 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-        <button className="btn" onClick={onBack} style={{ marginRight: '16px', padding: '8px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <button className="btn" onClick={onBack} style={{ padding: '8px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
           <ArrowLeft size={18} />
         </button>
         <div>
-          <h2 style={{ fontSize: '1.75rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>Sipariş Genel Detayı</h2>
-          <p style={{ margin: 0, color: '#64748b' }}>{summary.orderNo} / {summary.customerName}</p>
+          <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>Sipariş Genel Detayı</h2>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>{summary.orderNo} / {summary.customerName}</p>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Toplam Hedef</span>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>{summary.totalExpectedQuantity.toLocaleString()}</div>
+      <div className="stats-grid" style={{ marginBottom: '24px' }}>
+        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Toplam Hedef</span>
+          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a' }}>{summary.totalExpectedQuantity.toLocaleString()}</div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Okutulan</span>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284c7' }}>{summary.totalScannedQuantity.toLocaleString()}</div>
+        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Okutulan</span>
+          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0284c7' }}>{summary.totalScannedQuantity.toLocaleString()}</div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>İlerleme</span>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: summary.progressPercentage === 100 ? '#10b981' : '#3b82f6' }}>%{summary.progressPercentage}</div>
-          <div style={{ width: '100%', height: '4px', backgroundColor: '#e2e8f0', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
+        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>İlerleme</span>
+          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: summary.progressPercentage === 100 ? '#10b981' : '#3b82f6' }}>%{summary.progressPercentage}</div>
+          <div style={{ width: '100%', height: '4px', backgroundColor: '#e2e8f0', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${summary.progressPercentage}%`, backgroundColor: summary.progressPercentage === 100 ? '#10b981' : '#3b82f6' }}></div>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Ürün Satırları</span>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>{summary.lineCount}</div>
+        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Ürün Satırları</span>
+          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a' }}>{summary.lineCount}</div>
         </div>
       </div>
 
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a' }}>Ürün Satırları (İş Emirleri)</h3>
+      <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a' }}>Ürün Satırları (İş Emirleri)</h3>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="data-table" style={{ margin: 0, minWidth: '1000px' }}>
-          <thead style={{ backgroundColor: '#f8fafc' }}>
-            <tr>
-              <th style={{ padding: '16px', color: '#475569' }}>Stok / Ürün</th>
-              <th style={{ padding: '16px', color: '#475569' }}>İş Emri No</th>
-              <th style={{ padding: '16px', color: '#475569' }}>Koli İçi / Palet İçi</th>
-              <th style={{ padding: '16px', color: '#475569' }}>Miktar (Okutulan / Hedef)</th>
-              <th style={{ padding: '16px', color: '#475569' }}>Durum</th>
-              <th style={{ padding: '16px', textAlign: 'right', color: '#475569' }}>Aksiyon</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lines.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Bu grupta ürün satırı bulunmuyor.</td></tr>
-            ) : (
-              lines.map((line) => (
-                <tr key={line.id} className="hover-row" onClick={() => setSelectedLine(line)} style={{ cursor: 'pointer' }}>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{line.productName || '-'}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{line.stockCode || '-'}</div>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <span style={{ fontFamily: 'monospace', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.9rem' }}>
-                      {line.gtin}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Package size={14} color="#64748b" /> {line.productPerCarton}</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Layers size={14} color="#64748b" /> {line.cartonPerPallet}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', minWidth: '180px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
-                      <span style={{ color: '#0284c7' }}>{line.scannedCount?.toLocaleString() || 0}</span>
-                      <span style={{ color: '#64748b' }}>{line.expectedQuantity?.toLocaleString() || 0}</span>
-                    </div>
-                    <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ 
-                        height: '100%', 
-                        width: `${Math.min(100, Math.round(((line.scannedCount || 0) / (line.expectedQuantity || 1)) * 100))}%`, 
-                        backgroundColor: line.status === 'Completed' ? '#10b981' : '#3b82f6' 
-                      }}></div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    {getStatusBadge(line.status)}
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setSelectedLine(line); }}>
-                      Satır Detayı
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="data-table" style={{ margin: 0, minWidth: '850px' }}>
+            <thead style={{ backgroundColor: '#f8fafc' }}>
+              <tr>
+                <th style={{ padding: '16px', color: '#475569' }}>Stok / Ürün</th>
+                <th style={{ padding: '16px', color: '#475569' }}>İş Emri No</th>
+                <th style={{ padding: '16px', color: '#475569' }}>Koli İçi / Palet İçi</th>
+                <th style={{ padding: '16px', color: '#475569' }}>Miktar (Okutulan / Hedef)</th>
+                <th style={{ padding: '16px', color: '#475569' }}>Durum</th>
+                <th style={{ padding: '16px', textAlign: 'right', color: '#475569' }}>Aksiyon</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.length === 0 ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Bu grupta ürün satırı bulunmuyor.</td></tr>
+              ) : (
+                lines.map((line) => (
+                  <tr key={line.id} className="hover-row" onClick={() => setSelectedLine(line)} style={{ cursor: 'pointer' }}>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{line.productName || '-'}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{line.stockCode || '-'}</div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <span style={{ fontFamily: 'monospace', backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.9rem' }}>
+                        {line.gtin}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Package size={14} color="#64748b" /> {line.productPerCarton}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Layers size={14} color="#64748b" /> {line.cartonPerPallet}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', minWidth: '180px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                        <span style={{ color: '#0284c7' }}>{line.scannedCount?.toLocaleString() || 0}</span>
+                        <span style={{ color: '#64748b' }}>{line.expectedQuantity?.toLocaleString() || 0}</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          height: '100%', 
+                          width: `${Math.min(100, Math.round(((line.scannedCount || 0) / (line.expectedQuantity || 1)) * 100))}%`, 
+                          backgroundColor: line.status === 'Completed' ? '#10b981' : '#3b82f6' 
+                        }}></div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      {getStatusBadge(line.status)}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setSelectedLine(line); }}>
+                        Satır Detayı
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selectedLine && (
