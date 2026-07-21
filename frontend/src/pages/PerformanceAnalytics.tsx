@@ -393,8 +393,9 @@ export const PerformanceAnalytics: React.FC = () => {
                   </tr>
                 ) : (
                   displayedOrders.map((o: any, idx: number) => {
-                    const paceColor = o.avgSecondsPerCarton <= 45 ? '#16a34a' : o.avgSecondsPerCarton <= 120 ? '#0284c7' : '#eab308';
-                    const paceLabel = o.avgSecondsPerCarton <= 45 ? 'Yüksek Tempo' : o.avgSecondsPerCarton <= 120 ? 'Normal Tempo' : 'Orta Tempo';
+                    const hasScanned = o.totalScanned > 0 && o.totalCartons > 0 && o.avgSecondsPerCarton > 0;
+                    const paceColor = !hasScanned ? '#64748b' : o.avgSecondsPerCarton <= 45 ? '#16a34a' : o.avgSecondsPerCarton <= 120 ? '#0284c7' : '#eab308';
+                    const paceLabel = !hasScanned ? 'Henüz Başlamadı' : o.avgSecondsPerCarton <= 45 ? 'Yüksek Tempo' : o.avgSecondsPerCarton <= 120 ? 'Normal Tempo' : 'Orta Tempo';
 
                     return (
                       <tr key={o.orderId || `${o.orderNo}-${idx}`} style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -489,7 +490,12 @@ export const PerformanceAnalytics: React.FC = () => {
 
           {/* Cartons Table */}
           <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)' }}>Koli Dolum & Bekleme Süreleri</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>Koli Dolum & Bekleme Süreleri</h4>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>En hızlı koli dolum süresine <strong>100 Puan</strong> verilir, diğer koliler bu benchmark süresine oranlanır.</span>
+              </div>
+            </div>
 
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -498,65 +504,106 @@ export const PerformanceAnalytics: React.FC = () => {
                     <th style={{ padding: '12px 16px' }}>Koli No</th>
                     <th style={{ padding: '12px 16px' }}>SSCC</th>
                     <th style={{ padding: '12px 16px' }}>Ürün Adedi</th>
+                    <th style={{ padding: '12px 16px', minWidth: '170px' }}>Koli Puanı (100 Puan)</th>
                     <th style={{ padding: '12px 16px' }}>İlk QR Okutma</th>
                     <th style={{ padding: '12px 16px' }}>Son QR Okutma</th>
                     <th style={{ padding: '12px 16px' }}>Dolum Süresi</th>
                     <th style={{ padding: '12px 16px' }}>Koli Arası Bekleme</th>
                     <th style={{ padding: '12px 16px' }}>Operatör</th>
-                    <th style={{ padding: '12px 16px' }}>Dolum Hızı</th>
+                    <th style={{ padding: '12px 16px' }}>Hız Derecesi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loadingCartons ? (
                     <tr>
-                      <td colSpan={9} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         Koli süreleri yükleniyor...
                       </td>
                     </tr>
                   ) : cartonDetails.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         Bu sipariş için koli detay verisi bulunamadı.
                       </td>
                     </tr>
                   ) : (
-                    cartonDetails.map((c) => {
-                      const paceColor = c.PaceCategory === 'Hızlı' ? '#16a34a' : c.PaceCategory === 'Normal' ? '#0284c7' : '#dc2626';
+                    (() => {
+                      const validCartonSecs = cartonDetails
+                        .filter(c => c.actualQuantity > 0 && c.fillDurationSeconds > 0)
+                        .map(c => c.fillDurationSeconds);
+                      const minFillSec = validCartonSecs.length > 0 ? Math.min(...validCartonSecs) : 0;
 
-                      return (
-                        <tr key={c.cartonId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                          <td data-label="Koli No" style={{ padding: '14px 16px', fontWeight: 700 }}>
-                            {c.cartonNo}
-                          </td>
-                          <td data-label="SSCC" style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                            {c.sscc}
-                          </td>
-                          <td data-label="Ürün Adedi" style={{ padding: '14px 16px', fontWeight: 600 }}>
-                            {c.actualQuantity} Ürün
-                          </td>
-                          <td data-label="İlk QR Okutma" style={{ padding: '14px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                            {c.firstScannedAt ? new Date(c.firstScannedAt).toLocaleTimeString() : '-'}
-                          </td>
-                          <td data-label="Son QR Okutma" style={{ padding: '14px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                            {c.lastScannedAt ? new Date(c.lastScannedAt).toLocaleTimeString() : '-'}
-                          </td>
-                          <td data-label="Dolum Süresi" style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--primary)' }}>
-                            {formatDuration(c.fillDurationSeconds)}
-                          </td>
-                          <td data-label="Koli Arası Bekleme" style={{ padding: '14px 16px', color: c.idleSecondsFromPrevious > 60 ? '#dc2626' : 'var(--text-muted)' }}>
-                            {c.idleSecondsFromPrevious > 0 ? formatDuration(c.idleSecondsFromPrevious) : '-'}
-                          </td>
-                          <td data-label="Operatör" style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
-                            {c.operatorName || 'Operatör'}
-                          </td>
-                          <td data-label="Dolum Hızı" style={{ padding: '14px 16px' }}>
-                            <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, backgroundColor: `${paceColor}15`, color: paceColor, border: `1px solid ${paceColor}30` }}>
-                              {c.paceCategory} ({formatDuration(c.fillDurationSeconds)})
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
+                      return cartonDetails.map((c) => {
+                        let score = 0;
+                        let isBest = false;
+                        if (c.fillDurationSeconds > 0 && c.actualQuantity > 0 && minFillSec > 0) {
+                          score = Math.min(100, Math.round((minFillSec / c.fillDurationSeconds) * 1000) / 10);
+                          if (Math.abs(c.fillDurationSeconds - minFillSec) < 0.1) {
+                            score = 100;
+                            isBest = true;
+                          }
+                        }
+
+                        const scoreColor = isBest ? '#d97706' : score >= 80 ? '#16a34a' : score >= 60 ? '#0284c7' : score >= 40 ? '#eab308' : score > 0 ? '#dc2626' : '#64748b';
+                        const paceColor = c.PaceCategory === 'Hızlı' ? '#16a34a' : c.PaceCategory === 'Normal' ? '#0284c7' : '#dc2626';
+
+                        return (
+                          <tr key={c.cartonId} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: isBest ? '#fefce8' : 'transparent' }}>
+                            <td data-label="Koli No" style={{ padding: '14px 16px', fontWeight: 700 }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {isBest && <span title="En Hızlı Koli Benchmark Lideri">🏆</span>}
+                                {c.cartonNo}
+                              </span>
+                            </td>
+                            <td data-label="SSCC" style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                              {c.sscc}
+                            </td>
+                            <td data-label="Ürün Adedi" style={{ padding: '14px 16px', fontWeight: 600 }}>
+                              {c.actualQuantity} Ürün
+                            </td>
+
+                            {/* 100-POINT CARTON SCORE */}
+                            <td data-label="Koli Puanı" style={{ padding: '14px 16px' }}>
+                              {score > 0 ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <strong style={{ fontSize: '0.9rem', color: scoreColor, width: '60px' }}>
+                                    {score.toFixed(1)} / 100
+                                  </strong>
+                                  <div style={{ flex: 1, height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${score}%`, backgroundColor: scoreColor, borderRadius: '3px' }} />
+                                  </div>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.78rem', color: '#64748b', backgroundColor: '#f1f5f9', padding: '3px 8px', borderRadius: '10px' }}>
+                                  Henüz İşlem Yok
+                                </span>
+                              )}
+                            </td>
+
+                            <td data-label="İlk QR Okutma" style={{ padding: '14px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                              {c.firstScannedAt ? new Date(c.firstScannedAt).toLocaleTimeString() : '-'}
+                            </td>
+                            <td data-label="Son QR Okutma" style={{ padding: '14px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                              {c.lastScannedAt ? new Date(c.lastScannedAt).toLocaleTimeString() : '-'}
+                            </td>
+                            <td data-label="Dolum Süresi" style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--primary)' }}>
+                              {formatDuration(c.fillDurationSeconds)}
+                            </td>
+                            <td data-label="Koli Arası Bekleme" style={{ padding: '14px 16px', color: c.idleSecondsFromPrevious > 60 ? '#dc2626' : 'var(--text-muted)' }}>
+                              {c.idleSecondsFromPrevious > 0 ? formatDuration(c.idleSecondsFromPrevious) : '-'}
+                            </td>
+                            <td data-label="Operatör" style={{ padding: '14px 16px', fontSize: '0.85rem' }}>
+                              {c.operatorName || 'Operatör'}
+                            </td>
+                            <td data-label="Hız Derecesi" style={{ padding: '14px 16px' }}>
+                              <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, backgroundColor: `${paceColor}15`, color: paceColor, border: `1px solid ${paceColor}30` }}>
+                                {isBest ? '🏆 En Hızlı Koli' : c.paceCategory} ({formatDuration(c.fillDurationSeconds)})
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()
                   )}
                 </tbody>
               </table>

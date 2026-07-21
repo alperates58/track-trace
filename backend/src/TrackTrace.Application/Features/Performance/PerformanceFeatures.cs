@@ -304,17 +304,17 @@ public class PerformanceHandlers :
             tempList.Add(((string)x.operatorname, cartons, items, totalSec, avgCartonSec, itemsPerMin));
         }
 
-        // Benchmark score calculation: Lowest avg carton seconds gets 100 Points
-        double minAvgCartonSec = tempList.Where(t => t.AvgCartonSec > 0).Select(t => t.AvgCartonSec).DefaultIfEmpty(0).Min();
+        // Benchmark score calculation: Lowest avg carton seconds among operators with at least 1 scanned carton
+        double minAvgCartonSec = tempList.Where(t => t.Cartons > 0 && t.Items > 0 && t.AvgCartonSec > 0).Select(t => t.AvgCartonSec).DefaultIfEmpty(0).Min();
 
         var list = new List<OperatorPerformanceDto>();
         foreach (var t in tempList)
         {
             double score = 0;
             bool isLeader = false;
-            string grade = "Standart";
+            string grade = "Henüz İşlem Yok";
 
-            if (t.AvgCartonSec > 0 && minAvgCartonSec > 0)
+            if (t.Cartons > 0 && t.Items > 0 && t.AvgCartonSec > 0 && minAvgCartonSec > 0)
             {
                 score = Math.Min(100.0, Math.Round((minAvgCartonSec / t.AvgCartonSec) * 100.0, 1));
                 if (Math.Abs(t.AvgCartonSec - minAvgCartonSec) < 0.01)
