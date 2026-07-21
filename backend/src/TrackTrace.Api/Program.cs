@@ -1092,6 +1092,19 @@ app.MapPost("/api/orders/import-excel", async (IFormFile file, IMediator mediato
     }
 }).RequireAuthorization("OperatorOrAdmin").DisableAntiforgery().RequirePermission("orders.create");
 
+app.MapGet("/api/orders/excel-template", async (IMediator mediator, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var result = await mediator.Send(new TrackTrace.Application.Features.Orders.GetOrderExcelTemplateQuery(), cancellationToken);
+        return Results.File(result.Bytes, result.ContentType, result.FileName);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin");
+
 app.MapPost("/api/datamatrix/analyze", async (HttpRequest request) =>
 {
     try

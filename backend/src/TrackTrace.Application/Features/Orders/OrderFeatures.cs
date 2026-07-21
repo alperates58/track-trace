@@ -54,6 +54,8 @@ public record OrderImportResultDto(
 
 public record ImportOrdersExcelCommand(global::System.IO.Stream FileStream, string FileName) : IRequest<OrderImportResultDto>;
 
+public record GetOrderExcelTemplateQuery : IRequest<TrackTrace.Application.Features.Reports.ReportExportFileResult>;
+
 public class OrderKeyDto
 {
     public string OrderNo { get; set; } = "";
@@ -637,6 +639,71 @@ public class OrderHandlers :
         }
 
         return false;
+    }
+}
+
+public class GetOrderExcelTemplateQueryHandler : IRequestHandler<GetOrderExcelTemplateQuery, TrackTrace.Application.Features.Reports.ReportExportFileResult>
+{
+    public Task<TrackTrace.Application.Features.Reports.ReportExportFileResult> Handle(GetOrderExcelTemplateQuery request, CancellationToken cancellationToken)
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var ws = workbook.Worksheets.Add("Siparişler");
+
+        string[] headers = new string[] {
+            "Sipariş No",
+            "Müşteri Adı",
+            "İş Emri No",
+            "Stok Kodu",
+            "Stok İsmi",
+            "Miktar",
+            "Koli İçi",
+            "Palet İçi"
+        };
+
+        var headerRow = ws.Row(1);
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = headerRow.Cell(i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+            cell.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#2563eb");
+            cell.Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
+        }
+
+        // Sample Data Row 1
+        ws.Cell(2, 1).Value = "ORD-2026-001";
+        ws.Cell(2, 2).Value = "ABC Kozmetik A.Ş.";
+        ws.Cell(2, 3).Value = "IE-1001";
+        ws.Cell(2, 4).Value = "STK-1001";
+        ws.Cell(2, 5).Value = "Vücut Losyonu 250ml";
+        ws.Cell(2, 6).Value = 12000;
+        ws.Cell(2, 7).Value = 48;
+        ws.Cell(2, 8).Value = 20;
+
+        // Sample Data Row 2
+        ws.Cell(3, 1).Value = "ORD-2026-001";
+        ws.Cell(3, 2).Value = "ABC Kozmetik A.Ş.";
+        ws.Cell(3, 3).Value = "IE-1002";
+        ws.Cell(3, 4).Value = "STK-1002";
+        ws.Cell(3, 5).Value = "El Şampuanı 500ml";
+        ws.Cell(3, 6).Value = 8400;
+        ws.Cell(3, 7).Value = 24;
+        ws.Cell(3, 8).Value = 20;
+
+        ws.Columns().AdjustToContents();
+
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+
+        var result = new TrackTrace.Application.Features.Reports.ReportExportFileResult(
+            ms.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "TrackTrace_Siparis_Aktarim_Sablonu.xlsx",
+            "template"
+        );
+
+        return Task.FromResult(result);
     }
 }
 

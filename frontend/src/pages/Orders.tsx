@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Upload, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, Upload, Search, ChevronLeft, ChevronRight, Loader2, FileSpreadsheet } from 'lucide-react';
 import { OrderGroupDetail } from './OrderGroupDetail';
 
 interface OrderGroup {
@@ -361,6 +361,36 @@ export const Orders: React.FC = () => {
           <div className="card" style={{ width: '100%', maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ fontSize: '1.25rem', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>Excel'den Toplu Sipariş Aktarımı</h3>
             {excelError && <div style={{ color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>{excelError}</div>}
+            
+            {/* Download Sample Template Callout */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', backgroundColor: '#eff6ff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+              <div>
+                <div style={{ fontWeight: 700, color: '#1e40af', fontSize: '0.9rem' }}>Örnek Şablon Hazır</div>
+                <div style={{ fontSize: '0.8rem', color: '#1d4ed8' }}>Kolon başlıkları tanımlı hazır Excel dosyasını indirebilirsiniz.</div>
+              </div>
+              <button 
+                type="button" 
+                className="btn" 
+                onClick={async () => {
+                  try {
+                    const blob = await api.get('/api/orders/excel-template');
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'TrackTrace_Siparis_Aktarim_Sablonu.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                  } catch (err: any) {
+                    alert('Şablon indirilirken hata oluştu: ' + err.message);
+                  }
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 14px', backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <FileSpreadsheet size={16} /> Şablon İndir (.xlsx)
+              </button>
+            </div>
             <form onSubmit={handleExcelImportSubmit}>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
                 <p style={{ marginBottom: '8px' }}>Yükleyeceğiniz Excel dosyasında aşağıdaki kolonların bulunması gerekmektedir:</p>
