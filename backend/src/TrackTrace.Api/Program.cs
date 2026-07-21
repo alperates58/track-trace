@@ -610,6 +610,32 @@ app.MapGet("/api/reports/download/{token:guid}", async (Guid token, IDbConnectio
     
     return Results.File(job.FilePath, contentType, cleanFileName);
 });
+
+// Performance & Efficiency Analytics Endpoints
+app.MapGet("/api/performance/summary", async (IMediator mediator, CancellationToken cancellationToken) =>
+{
+    var summary = await mediator.Send(new TrackTrace.Application.Features.Performance.GetPerformanceSummaryQuery(), cancellationToken);
+    return Results.Ok(summary);
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/performance/orders", async (string? search, IMediator mediator, CancellationToken cancellationToken) =>
+{
+    var orders = await mediator.Send(new TrackTrace.Application.Features.Performance.GetOrderPerformanceQuery(search), cancellationToken);
+    return Results.Ok(orders);
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/performance/orders/{orderNo}/cartons", async (string orderNo, IMediator mediator, CancellationToken cancellationToken) =>
+{
+    var cartons = await mediator.Send(new TrackTrace.Application.Features.Performance.GetCartonPerformanceDetailQuery(orderNo), cancellationToken);
+    return Results.Ok(cartons);
+}).RequireAuthorization("ViewerOrAbove");
+
+app.MapGet("/api/performance/operators", async (IMediator mediator, CancellationToken cancellationToken) =>
+{
+    var operators = await mediator.Send(new TrackTrace.Application.Features.Performance.GetOperatorPerformanceQuery(), cancellationToken);
+    return Results.Ok(operators);
+}).RequireAuthorization("ViewerOrAbove");
+
 // Audit Logs Endpoints
 app.MapGet("/api/audit-logs", async (
     [FromQuery] int? pageNumber,

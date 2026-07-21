@@ -19,7 +19,8 @@ import {
   Key,
   Printer,
   Server,
-  Truck
+  Truck,
+  TrendingUp
 } from 'lucide-react';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -31,6 +32,7 @@ const PrePrintedScan = React.lazy(() => import('./pages/PrePrintedScan').then(mo
 const PrePrintWizard = React.lazy(() => import('./pages/PrePrintWizard').then(module => ({ default: module.PrePrintWizard })));
 const PublicBarcodeSearch = React.lazy(() => import('./pages/PublicBarcodeSearch').then(module => ({ default: module.PublicBarcodeSearch })));
 const TraceabilityCenter = React.lazy(() => import('./pages/TraceabilityCenter').then(module => ({ default: module.TraceabilityCenter })));
+const PerformanceAnalytics = React.lazy(() => import('./pages/PerformanceAnalytics').then(module => ({ default: module.PerformanceAnalytics })));
 const DataMatrixCreator = React.lazy(() => import('./pages/DataMatrixCreator').then(module => ({ default: module.DataMatrixCreator })));
 const SystemInfo = React.lazy(() => import('./pages/SystemInfo').then(module => ({ default: module.SystemInfo })));
 const Users = React.lazy(() => import('./pages/Users').then(module => ({ default: module.Users })));
@@ -75,9 +77,10 @@ const AppShell: React.FC = () => {
   const showTraceability = hasPermission('traceability.view');
   const showReports = hasPermission('reports.view');
   const showDmCreator = hasPermission('generator.view');
+  const showPerformance = hasPermission('reports.view') || hasPermission('orders.view') || hasPermission('traceability.view');
 
   const showOpsMenu = showDashboard || showOrders || showScan || showCartons || showPallets || showShipments;
-  const showIntelMenu = showTraceability || showReports || showDmCreator;
+  const showIntelMenu = showTraceability || showReports || showDmCreator || showPerformance;
 
   const availableTabs = [
     ...(showDashboard ? ['dashboard'] : []),
@@ -88,11 +91,7 @@ const AppShell: React.FC = () => {
     ...(showPallets ? ['pallets'] : []),
     ...(showShipments ? ['shipments'] : []),
     ...(showTraceability ? ['traceability'] : []),
-    ...(showReports ? ['reports'] : []),
-    ...(showDmCreator ? ['dm-creator'] : []),
-    ...(showUsers ? ['users'] : []),
-    ...(showStations ? ['stations'] : []),
-    ...(showTraceability ? ['traceability'] : []),
+    ...(showPerformance ? ['performance'] : []),
     ...(showReports ? ['reports'] : []),
     ...(showDmCreator ? ['dm-creator'] : []),
     ...(showUsers ? ['users'] : []),
@@ -157,6 +156,7 @@ const AppShell: React.FC = () => {
     pallets: 'Palet Yönetimi',
     shipments: 'Depo & Sevkiyat',
     traceability: 'İzlenebilirlik Merkezi',
+    performance: 'Performans & Verimlilik',
     reports: 'Sipariş Bazlı Raporlama',
     'dm-creator': 'DataMatrix Üretici',
     users: 'Kullanıcı Yönetimi',
@@ -193,10 +193,12 @@ const AppShell: React.FC = () => {
         return showShipments ? <Shipments /> : <Unauthorized />;
       case 'traceability':
         return showTraceability ? <TraceabilityCenter /> : <Unauthorized />;
-      case 'dm-creator':
-        return showDmCreator ? <DataMatrixCreator /> : <Unauthorized />;
+      case 'performance':
+        return showPerformance ? <PerformanceAnalytics /> : <Unauthorized />;
       case 'reports':
         return showReports ? <Reports /> : <Unauthorized />;
+      case 'dm-creator':
+        return showDmCreator ? <DataMatrixCreator /> : <Unauthorized />;
       case 'users':
         return showUsers ? <Users /> : <Unauthorized />;
       case 'stations':
@@ -232,7 +234,7 @@ const AppShell: React.FC = () => {
           <Package size={28} color="var(--primary)" style={{ flexShrink: 0 }} />
           <span>TrackTrace</span>
         </div>
-        
+
         <div className="sidebar-scrollable" style={{ flex: 1, overflowY: 'auto' }}>
           <nav className="sidebar-nav">
             {showOpsMenu && (
@@ -327,6 +329,17 @@ const AppShell: React.FC = () => {
                   >
                     <Search size={18} style={{ flexShrink: 0 }} />
                     <span>İzlenebilirlik Merkezi</span>
+                  </div>
+                )}
+
+                {showPerformance && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'performance' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('performance')}
+                    title="Performans Analizi"
+                  >
+                    <TrendingUp size={18} style={{ flexShrink: 0 }} />
+                    <span>Performans Analizi</span>
                   </div>
                 )}
 
