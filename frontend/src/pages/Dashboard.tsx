@@ -427,7 +427,7 @@ export const Dashboard: React.FC = () => {
               </div>
               <div>
                 <h1 className="tv-title-h1">
-                  TRACKTRACE DEPO CANLI KONTROL EKRANI
+                  TRACKTRACE CANLI KONTROL EKRANI
                 </h1>
                 <span style={{ fontSize: '0.95rem', color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
                   <Server size={16} color="#38bdf8" /> Fabrika & Paketleme Bandı Anlık İzleme Monitörü
