@@ -112,6 +112,7 @@ public class DbConnectionFactory : IDbConnectionFactory
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_ImportBatchId ON ProductCodes(ImportBatchId);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_CartonId ON ProductCodes(CartonId);
         CREATE INDEX IF NOT EXISTS IX_ProductCodes_OrderId_Status_ScannedAt ON ProductCodes(OrderId, Status, ScannedAt DESC);
+        CREATE INDEX IF NOT EXISTS IX_Cartons_StationId ON Cartons(StationId);
         CREATE INDEX IF NOT EXISTS IX_Orders_OrderNo ON Orders(OrderNo);
         CREATE INDEX IF NOT EXISTS IX_PalletCartons_PalletId ON PalletCartons(PalletId);
         CREATE INDEX IF NOT EXISTS IX_ImportErrors_ImportBatchId ON ImportErrors(ImportBatchId);

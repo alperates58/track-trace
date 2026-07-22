@@ -95,72 +95,40 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
                 s.Id AS StationId,
                 s.Name AS StationName,
                 s.Name AS StationCode,
-                (
-                    SELECT MAX(pc.ScannedAt) 
-                    FROM ProductCodes pc 
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                ) AS LastScannedAt,
-                (
-                    SELECT COUNT(pc.Id) 
-                    FROM ProductCodes pc 
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE c.StationId = s.Id AND pc.ScannedAt >= (NOW() - INTERVAL '1 HOUR')
-                ) AS ItemsScannedLastHour,
-                (
-                    SELECT u.Name
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    LEFT JOIN Users u ON pc.ScannedBy = u.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS OperatorName,
-                (
-                    SELECT o.OrderNo
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    LEFT JOIN Orders o ON pc.OrderId = o.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS CurrentOrderNo,
-                (
-                    SELECT o.StockCode
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    LEFT JOIN Orders o ON pc.OrderId = o.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS CurrentStockCode,
-                (
-                    SELECT c.CartonNo
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS CurrentCartonNo,
-                (
-                    SELECT c.SSCC
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS CurrentCartonSscc,
-                (
-                    SELECT c.ActualQuantity
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS CartonCurrentQty,
-                (
-                    SELECT COALESCE(o.ProductPerCarton, 1)
-                    FROM ProductCodes pc
-                    INNER JOIN Cartons c ON pc.CartonId = c.Id
-                    LEFT JOIN Orders o ON pc.OrderId = o.Id
-                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
-                    ORDER BY pc.ScannedAt DESC LIMIT 1
-                ) AS CartonTargetQty
+                last_scan.ScannedAt AS LastScannedAt,
+                COALESCE(hour_scans.ItemCount, 0) AS ItemsScannedLastHour,
+                COALESCE(last_scan.OperatorName, 'Operatör') AS OperatorName,
+                COALESCE(last_scan.OrderNo, '-') AS CurrentOrderNo,
+                COALESCE(last_scan.StockCode, '-') AS CurrentStockCode,
+                COALESCE(last_scan.CartonNo, '-') AS CurrentCartonNo,
+                COALESCE(last_scan.SSCC, '-') AS CurrentCartonSscc,
+                COALESCE(last_scan.ActualQuantity, 0) AS CartonCurrentQty,
+                COALESCE(last_scan.ProductPerCarton, 1) AS CartonTargetQty
             FROM Stations s
+            LEFT JOIN LATERAL (
+                SELECT 
+                    pc.ScannedAt,
+                    u.Name AS OperatorName,
+                    o.OrderNo,
+                    o.StockCode,
+                    c.CartonNo,
+                    c.SSCC,
+                    c.ActualQuantity,
+                    o.ProductPerCarton
+                FROM Cartons c
+                INNER JOIN ProductCodes pc ON pc.CartonId = c.Id
+                LEFT JOIN Users u ON pc.ScannedBy = u.Id
+                LEFT JOIN Orders o ON pc.OrderId = o.Id
+                WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
+                ORDER BY pc.ScannedAt DESC
+                LIMIT 1
+            ) last_scan ON true
+            LEFT JOIN LATERAL (
+                SELECT COUNT(pc.Id) AS ItemCount
+                FROM Cartons c
+                INNER JOIN ProductCodes pc ON pc.CartonId = c.Id
+                WHERE c.StationId = s.Id AND pc.ScannedAt >= (NOW() - INTERVAL '1 HOUR')
+            ) hour_scans ON true
             WHERE s.IsActive = true
             ORDER BY s.Name ASC;";
 
