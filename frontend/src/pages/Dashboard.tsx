@@ -64,6 +64,7 @@ interface LiveFeedData {
   todayTotalCartons: number;
   currentPaceItemsPerMin: number;
   currentPaceSecondsPerItem: number;
+  avgPace30MinSecondsPerItem: number;
   activeStations: LiveStation[];
   recentScansFeed: LiveScanItem[];
 }
@@ -453,32 +454,39 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {/* TV TOP GIANT STATS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>Bugün Okutulan Ürün</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#4ade80', marginTop: '6px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '30px' }}>
+            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Bugün Okutulan Ürün</span>
+              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#4ade80', marginTop: '6px' }}>
                 {liveFeed?.todayTotalItems || data?.scannedTodayCount || 0}
               </div>
             </div>
 
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>Bugün Kapanan Koli</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#38bdf8', marginTop: '6px' }}>
+            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Bugün Kapanan Koli</span>
+              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#38bdf8', marginTop: '6px' }}>
                 {liveFeed?.todayTotalCartons || data?.cartonsCreatedTodayCount || 0}
               </div>
             </div>
 
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>Aktif İstasyon Sayısı</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#facc15', marginTop: '6px' }}>
+            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Aktif İstasyon Sayısı</span>
+              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#facc15', marginTop: '6px' }}>
                 {liveFeed?.activeStationCount || 0} İstasyon
               </div>
             </div>
 
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>Anlık Okutma Hızı</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f43f5e', marginTop: '6px' }}>
-                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1.2rem', fontWeight: 500, color: '#94a3b8' }}>sn / ürün</span>
+            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Anlık Okutma Hızı</span>
+              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#f43f5e', marginTop: '6px' }}>
+                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1rem', fontWeight: 500, color: '#94a3b8' }}>sn / ürün</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Ort. Hız (Son 30 Dk)</span>
+              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#a855f7', marginTop: '6px' }}>
+                {liveFeed?.avgPace30MinSecondsPerItem ? `${liveFeed.avgPace30MinSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1rem', fontWeight: 500, color: '#94a3b8' }}>sn / ürün</span>
               </div>
             </div>
           </div>

@@ -46,6 +46,7 @@ public class DashboardLiveFeedDto
     public int TodayTotalCartons { get; set; }
     public double CurrentPaceItemsPerMin { get; set; }
     public double CurrentPaceSecondsPerItem { get; set; }
+    public double AvgPace30MinSecondsPerItem { get; set; }
     public List<LiveStationDto> ActiveStations { get; set; } = new();
     public List<LiveScanItemDto> RecentScansFeed { get; set; } = new();
 }
@@ -199,56 +200,76 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
         const string todaySql = @"
             SELECT 
                 (SELECT COUNT(*) FROM ProductCodes WHERE Status != 'Uploaded' AND ScannedAt >= CURRENT_DATE) AS TodayItems,
-                (SELECT COUNT(*) FROM Cartons WHERE CreatedAt >= CURRENT_DATE) AS TodayCartons,
-                (SELECT COUNT(*) FROM ProductCodes WHERE Status != 'Uploaded' AND ScannedAt >= (NOW() - INTERVAL '5 MINUTES')) AS Recent5MinItems;";
+                (SELECT COUNT(*) FROM Cartons WHERE CreatedAt >= CURRENT_DATE) AS TodayCartons;";
 
         var todayStats = await connection.QueryFirstOrDefaultAsync<dynamic>(
             new CommandDefinition(todaySql, cancellationToken: cancellationToken));
 
         int todayItems = todayStats != null ? Convert.ToInt32(todayStats.todayitems) : 0;
         int todayCartons = todayStats != null ? Convert.ToInt32(todayStats.todaycartons) : 0;
-        int recent5Min = todayStats != null ? Convert.ToInt32(todayStats.recent5minitems) : 0;
-        double currentPace = Math.Round(recent5Min / 5.0, 1);
-        
-        double currentPaceSecPerItem = 0;
-        if (recent5Min > 0)
+
+        // 4. Truly Instant Pace (Difference between last 2 scans)
+        double instantPaceSec = 0;
+        const string instantSql = @"
+            SELECT ScannedAt 
+            FROM ProductCodes 
+            WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL 
+            ORDER BY ScannedAt DESC 
+            LIMIT 2;";
+
+        var recentTimes = (await connection.QueryAsync<DateTime>(
+            new CommandDefinition(instantSql, cancellationToken: cancellationToken))).ToList();
+
+        if (recentTimes.Count >= 2)
         {
-            currentPaceSecPerItem = Math.Round(300.0 / recent5Min, 1);
-        }
-        else
-        {
-            // Fallback: Check average interval between last 20 scans in the system
-            const string paceSql = @"
-                SELECT 
-                    EXTRACT(EPOCH FROM (MAX(ScannedAt) - MIN(ScannedAt))) AS TotalSec,
-                    COUNT(Id) AS ScannedCount
-                FROM (
-                    SELECT Id, ScannedAt 
-                    FROM ProductCodes 
-                    WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL 
-                    ORDER BY ScannedAt DESC 
-                    LIMIT 20
-                ) sub;";
-            var paceRes = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                new CommandDefinition(paceSql, cancellationToken: cancellationToken));
-            if (paceRes != null && paceRes.scannedcount != null && Convert.ToInt32(paceRes.scannedcount) > 1)
+            var latest = recentTimes[0];
+            var previous = recentTimes[1];
+            // Only count as active instant scan if latest scan was within the last 3 minutes
+            if (latest >= DateTime.UtcNow.AddMinutes(-3))
             {
-                double totalSec = Convert.ToDouble(paceRes.totalsec);
-                int cnt = Convert.ToInt32(paceRes.scannedcount) - 1;
-                if (totalSec > 0 && cnt > 0)
+                double diffSec = (latest - previous).TotalSeconds;
+                if (diffSec >= 0)
                 {
-                    currentPaceSecPerItem = Math.Round(totalSec / cnt, 1);
+                    instantPaceSec = Math.Round(diffSec, 1);
                 }
             }
         }
+
+        // 5. Average Pace over the last 30 minutes
+        double avg30MinSec = 0;
+        const string pace30Sql = @"
+            SELECT 
+                COUNT(Id) AS ScannedCount,
+                EXTRACT(EPOCH FROM (MAX(ScannedAt) - MIN(ScannedAt))) AS TotalSec
+            FROM ProductCodes 
+            WHERE Status != 'Uploaded' AND ScannedAt >= (NOW() - INTERVAL '30 MINUTES');";
+
+        var pace30Res = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            new CommandDefinition(pace30Sql, cancellationToken: cancellationToken));
+
+        if (pace30Res != null && pace30Res.scannedcount != null)
+        {
+            int cnt = Convert.ToInt32(pace30Res.scannedcount);
+            if (cnt > 1 && pace30Res.totalsec != null)
+            {
+                double totalSec = Convert.ToDouble(pace30Res.totalsec);
+                if (totalSec > 0)
+                {
+                    avg30MinSec = Math.Round(totalSec / (cnt - 1), 1);
+                }
+            }
+        }
+
+        double itemsPerMin = instantPaceSec > 0 ? Math.Round(60.0 / instantPaceSec, 1) : 0;
 
         return new DashboardLiveFeedDto
         {
             ActiveStationCount = activeStationCount,
             TodayTotalItems = todayItems,
             TodayTotalCartons = todayCartons,
-            CurrentPaceItemsPerMin = currentPace,
-            CurrentPaceSecondsPerItem = currentPaceSecPerItem,
+            CurrentPaceItemsPerMin = itemsPerMin,
+            CurrentPaceSecondsPerItem = instantPaceSec,
+            AvgPace30MinSecondsPerItem = avg30MinSec,
             ActiveStations = stationList,
             RecentScansFeed = feedItems
         };
