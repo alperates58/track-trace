@@ -404,129 +404,341 @@ export const Dashboard: React.FC = () => {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: '#0f172a',
+          backgroundColor: '#090d16',
           color: '#f8fafc',
           zIndex: 9999,
-          padding: '30px',
+          padding: '28px 36px',
           display: 'flex',
           flexDirection: 'column',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
         }}>
           {/* TV HEADER */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #334155', paddingBottom: '20px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ backgroundColor: '#2563eb', padding: '12px', borderRadius: '12px' }}>
-                <Tv size={32} color="#ffffff" />
+          <div style={{ 
+            display: 'flex', 
+            justify: 'space-between', 
+            alignItems: 'center', 
+            borderBottom: '1px solid #1e293b', 
+            paddingBottom: '20px', 
+            marginBottom: '28px',
+            backgroundColor: '#0f172a',
+            padding: '20px 28px',
+            borderRadius: '16px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            border: '1px solid #1e293b'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              <div style={{ 
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', 
+                padding: '14px', 
+                borderRadius: '14px',
+                boxShadow: '0 0 20px rgba(37, 99, 235, 0.4)'
+              }}>
+                <Tv size={34} color="#ffffff" />
               </div>
               <div>
-                <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 900, letterSpacing: '1px' }}>TRACKTRACE DEPO CANLI KONTROL EKRANI</h1>
-                <span style={{ fontSize: '1rem', color: '#94a3b8' }}>Fabrika & Paketleme Bandı Anlık İzleme Monitörü</span>
+                <h1 style={{ margin: 0, fontSize: '2.1rem', fontWeight: 900, letterSpacing: '0.5px', color: '#ffffff' }}>
+                  TRACKTRACE DEPO CANLI KONTROL EKRANI
+                </h1>
+                <span style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  <Server size={16} color="#38bdf8" /> Fabrika & Paketleme Bandı Anlık İzleme Monitörü
+                </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <div style={{ textAlign: 'right', backgroundColor: '#090d16', padding: '10px 20px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+                <div style={{ fontSize: '1.8rem', fontWeight: 900, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '1px' }}>
                   {currentTime.toLocaleTimeString('tr-TR')}
                 </div>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>CANLI YAYIN 🟢 (Veri: {lastUpdated.toLocaleTimeString('tr-TR')})</span>
+                <div style={{ fontSize: '0.8rem', color: '#4ade80', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '2px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#4ade80', boxShadow: '0 0 10px #4ade80', display: 'inline-block' }} />
+                  CANLI AKIŞ <span style={{ color: '#94a3b8', fontWeight: 400 }}>(Veri: {lastUpdated.toLocaleTimeString('tr-TR')})</span>
+                </div>
               </div>
 
               <button 
                 onClick={() => setIsTvMode(false)}
                 style={{
-                  backgroundColor: '#334155',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '10px',
+                  backgroundColor: '#1e293b',
+                  color: '#f8fafc',
+                  border: '1px solid #334155',
+                  padding: '14px 24px',
+                  borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '1rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '10px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <Minimize2 size={18} /> Çıkış Yap (ESC)
+                <Minimize2 size={20} color="#94a3b8" /> Çıkış Yap (ESC)
               </button>
             </div>
           </div>
 
           {/* TV TOP GIANT STATS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '30px' }}>
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Bugün Okutulan Ürün</span>
-              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#4ade80', marginTop: '6px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '18px', marginBottom: '32px' }}>
+            {/* CARD 1: OKUTULAN ÜRÜN */}
+            <div style={{ 
+              backgroundColor: '#0f172a', 
+              border: '1px solid #1e293b', 
+              borderRadius: '16px', 
+              padding: '22px 24px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Bugün Okutulan Ürün
+                </span>
+                <CheckCircle size={22} color="#10b981" />
+              </div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#10b981', marginTop: '8px', letterSpacing: '-0.5px' }}>
                 {liveFeed?.todayTotalItems || data?.scannedTodayCount || 0}
               </div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                Veri Matrix Başarılı Okutma
+              </div>
             </div>
 
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Bugün Kapanan Koli</span>
-              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#38bdf8', marginTop: '6px' }}>
+            {/* CARD 2: KAPANAN KOLİ */}
+            <div style={{ 
+              backgroundColor: '#0f172a', 
+              border: '1px solid #1e293b', 
+              borderRadius: '16px', 
+              padding: '22px 24px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Bugün Kapanan Koli
+                </span>
+                <Inbox size={22} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#38bdf8', marginTop: '8px', letterSpacing: '-0.5px' }}>
                 {liveFeed?.todayTotalCartons || data?.cartonsCreatedTodayCount || 0}
               </div>
-            </div>
-
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Aktif İstasyon Sayısı</span>
-              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#facc15', marginTop: '6px' }}>
-                {liveFeed?.activeStationCount || 0} İstasyon
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                Tamamlanan Sevkiyat Kolileri
               </div>
             </div>
 
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Anlık Okutma Hızı</span>
-              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#f43f5e', marginTop: '6px' }}>
-                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1rem', fontWeight: 500, color: '#94a3b8' }}>sn / ürün</span>
+            {/* CARD 3: AKTİF İSTASYON */}
+            <div style={{ 
+              backgroundColor: '#0f172a', 
+              border: '1px solid #1e293b', 
+              borderRadius: '16px', 
+              padding: '22px 24px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Aktif İstasyon Sayısı
+                </span>
+                <Server size={22} color="#60a5fa" />
+              </div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#60a5fa', marginTop: '8px', letterSpacing: '-0.5px' }}>
+                {liveFeed?.activeStationCount || 0} <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#94a3b8' }}>İstasyon</span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                Çalışan Paketleme Hatları
               </div>
             </div>
 
-            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '16px', padding: '20px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' }}>Ort. Hız (Son 30 Dk)</span>
-              <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#a855f7', marginTop: '6px' }}>
-                {liveFeed?.avgPace30MinSecondsPerItem ? `${liveFeed.avgPace30MinSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1rem', fontWeight: 500, color: '#94a3b8' }}>sn / ürün</span>
+            {/* CARD 4: ANLIK OKUTMA HIZI */}
+            <div style={{ 
+              backgroundColor: '#0f172a', 
+              border: '1px solid #1e293b', 
+              borderRadius: '16px', 
+              padding: '22px 24px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Anlık Okutma Hızı
+                </span>
+                <Zap size={22} color="#f43f5e" />
+              </div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f43f5e', marginTop: '8px', letterSpacing: '-0.5px' }}>
+                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                Son 2 Okutma Arası Süre
+              </div>
+            </div>
+
+            {/* CARD 5: ORTALAMA HIZ (SON 30 DK) */}
+            <div style={{ 
+              backgroundColor: '#0f172a', 
+              border: '1px solid #1e293b', 
+              borderRadius: '16px', 
+              padding: '22px 24px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Ort. Hız (Son 30 Dk)
+                </span>
+                <Activity size={22} color="#c084fc" />
+              </div>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#c084fc', marginTop: '8px', letterSpacing: '-0.5px' }}>
+                {liveFeed?.avgPace30MinSecondsPerItem ? `${liveFeed.avgPace30MinSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                30 Dk Genel Ortalama
               </div>
             </div>
           </div>
 
           {/* TV STATIONS GRID */}
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Server size={22} color="#38bdf8" /> İSTASYON CANLI PERFORMANS MONİTÖRÜ
+            </h2>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
+              Toplam {liveFeed?.activeStations?.length || 0} İstasyon Tanımlı
+            </span>
+          </div>
+
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '22px' }}>
             {(liveFeed?.activeStations || []).map(st => {
               const isActive = st.status === 'Active';
               const progressPct = Math.min(100, Math.round((st.cartonCurrentQty / Math.max(1, st.cartonTargetQty)) * 100));
 
               return (
-                <div key={st.stationId} style={{ backgroundColor: '#1e293b', border: `2px solid ${isActive ? '#22c55e' : '#475569'}`, borderRadius: '16px', padding: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>{st.stationName}</h2>
-                    <span style={{ backgroundColor: isActive ? '#15803d' : '#334155', color: '#ffffff', padding: '4px 12px', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem' }}>
-                      {isActive ? '🟢 PAKETLENİYOR' : '⚪ BEKLEMEDE'}
-                    </span>
-                  </div>
+                <div 
+                  key={st.stationId} 
+                  style={{ 
+                    backgroundColor: '#0f172a', 
+                    border: isActive ? '2px solid #10b981' : '1px solid #1e293b', 
+                    boxShadow: isActive ? '0 0 24px rgba(16, 185, 129, 0.25)' : '0 4px 16px rgba(0,0,0,0.3)',
+                    borderRadius: '20px', 
+                    padding: '26px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justify: 'space-between',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {/* STATION CARD HEADER */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: '#ffffff' }}>
+                          {st.stationName}
+                        </h2>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b', fontFamily: 'monospace', fontWeight: 600 }}>
+                          KOD: {st.stationCode}
+                        </span>
+                      </div>
+                      <span style={{ 
+                        backgroundColor: isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(51, 65, 85, 0.5)', 
+                        color: isActive ? '#4ade80' : '#94a3b8', 
+                        border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.4)' : '#334155'}`,
+                        padding: '6px 16px', 
+                        borderRadius: '30px', 
+                        fontWeight: 800, 
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isActive ? '#4ade80' : '#64748b', boxShadow: isActive ? '0 0 8px #4ade80' : 'none' }} />
+                        {isActive ? 'PAKETLENİYOR' : 'BEKLEMEDE'}
+                      </span>
+                    </div>
 
-                  {isActive ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div style={{ fontSize: '1.1rem' }}>Sipariş: <strong style={{ color: '#38bdf8' }}>{st.currentOrderNo}</strong></div>
-                      <div style={{ fontSize: '1.1rem' }}>Stok: <strong>{st.currentStockCode}</strong></div>
-                      <div style={{ fontSize: '1rem', color: '#94a3b8' }}>Operatör: {st.operatorName}</div>
-                      
-                      <div style={{ backgroundColor: '#0f172a', padding: '14px', borderRadius: '12px', marginTop: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', marginBottom: '8px' }}>
-                          <span>Aktif Koli: {st.currentCartonNo}</span>
-                          <strong style={{ color: '#4ade80' }}>{st.cartonCurrentQty} / {st.cartonTargetQty} ({progressPct}%)</strong>
+                    {/* ACTIVE STATION CONTENT */}
+                    {isActive ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div style={{ backgroundColor: '#090d16', padding: '14px 18px', borderRadius: '12px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ fontSize: '1.05rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#94a3b8', fontWeight: 600 }}>Aktif Sipariş:</span>
+                            <strong style={{ color: '#38bdf8', fontSize: '1.2rem', fontFamily: 'monospace' }}>{st.currentOrderNo}</strong>
+                          </div>
+                          <div style={{ fontSize: '1.05rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#94a3b8', fontWeight: 600 }}>Stok Kodu:</span>
+                            <strong style={{ color: '#ffffff', fontSize: '1.1rem' }}>{st.currentStockCode}</strong>
+                          </div>
+                          <div style={{ fontSize: '1.05rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#94a3b8', fontWeight: 600 }}>Operatör:</span>
+                            <span style={{ color: '#cbd5e1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <User size={16} color="#38bdf8" /> {st.operatorName || 'Operatör'}
+                            </span>
+                          </div>
                         </div>
-                        <div style={{ height: '14px', backgroundColor: '#334155', borderRadius: '7px', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${progressPct}%`, backgroundColor: '#22c55e', borderRadius: '7px', transition: 'width 0.4s ease' }} />
+
+                        {/* LIVE CARTON THICK PROGRESS BAR */}
+                        <div style={{ backgroundColor: '#090d16', padding: '16px', borderRadius: '14px', border: '1px solid #1e293b', marginTop: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', marginBottom: '10px', alignItems: 'center' }}>
+                            <span style={{ color: '#cbd5e1', fontWeight: 700 }}>
+                              Aktif Koli: <span style={{ color: '#38bdf8', fontFamily: 'monospace' }}>{st.currentCartonNo}</span>
+                            </span>
+                            <strong style={{ color: progressPct === 100 ? '#4ade80' : '#38bdf8', fontSize: '1.2rem', fontWeight: 900 }}>
+                              {st.cartonCurrentQty} / {st.cartonTargetQty} Ürün ({progressPct}%)
+                            </strong>
+                          </div>
+
+                          <div style={{ height: '16px', backgroundColor: '#1e293b', borderRadius: '8px', overflow: 'hidden', padding: '2px' }}>
+                            <div style={{ 
+                              height: '100%', 
+                              width: `${progressPct}%`, 
+                              background: progressPct === 100 ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)' : 'linear-gradient(90deg, #0284c7 0%, #38bdf8 100%)', 
+                              borderRadius: '6px', 
+                              transition: 'width 0.4s ease',
+                              boxShadow: progressPct === 100 ? '0 0 12px rgba(16, 185, 129, 0.5)' : '0 0 12px rgba(56, 189, 248, 0.5)'
+                            }} />
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.8rem', color: '#64748b' }}>
+                            <span>SSCC: {st.currentCartonSscc || '-'}</span>
+                            <span style={{ color: '#4ade80', fontWeight: 600 }}>● Son Okutma: {getRelativeSeconds(st.lastScannedAt)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div style={{ padding: '40px 0', textAlign: 'center', color: '#64748b', fontSize: '1.1rem' }}>
-                      Bu istasyonda işlem yapılmıyor.
-                    </div>
-                  )}
+                    ) : (
+                      /* IDLE / WAITING STATION SLEEK EMPTY STATE */
+                      <div style={{ 
+                        backgroundColor: '#090d16', 
+                        padding: '20px', 
+                        borderRadius: '14px', 
+                        border: '1px dashed #334155',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        marginTop: '8px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
+                          <span style={{ color: '#64748b' }}>Operatör:</span>
+                          <span style={{ color: '#94a3b8', fontWeight: 600 }}>{st.operatorName || 'Atanmadı'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
+                          <span style={{ color: '#64748b' }}>Son İşlem:</span>
+                          <span style={{ color: '#94a3b8', fontWeight: 600 }}>{getRelativeSeconds(st.lastScannedAt) || 'Henüz İşlem Yok'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
+                          <span style={{ color: '#64748b' }}>Son 1 Saatlik Okutma:</span>
+                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>{st.itemsScannedLastHour || 0} Ürün</span>
+                        </div>
+                        <div style={{ borderTop: '1px solid #1e293b', paddingTop: '10px', marginTop: '4px', textAlign: 'center', color: '#475569', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                          ⓘ Bu hat şu an bekleme modunda. Paketleme başladığında otomatik aktifleşecektir.
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
