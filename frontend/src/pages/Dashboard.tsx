@@ -401,57 +401,35 @@ export const Dashboard: React.FC = () => {
 
       {/* FULL-SCREEN CANLI TV / DEPO EKRANI MODAL */}
       {isTvMode && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: '#090d16',
-          color: '#f8fafc',
-          zIndex: 9999,
-          padding: '28px 36px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflowY: 'auto',
-          fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-        }}>
+        <div className="tv-modal-overlay">
           {/* TV HEADER */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            borderBottom: '1px solid #1e293b', 
-            paddingBottom: '20px', 
-            marginBottom: '28px',
-            backgroundColor: '#0f172a',
-            padding: '20px 28px',
-            borderRadius: '16px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-            border: '1px solid #1e293b'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <div className="tv-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
               <div style={{ 
                 background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', 
                 padding: '14px', 
                 borderRadius: '14px',
-                boxShadow: '0 0 20px rgba(37, 99, 235, 0.4)'
+                boxShadow: '0 0 20px rgba(37, 99, 235, 0.4)',
+                flexShrink: 0
               }}>
                 <Tv size={34} color="#ffffff" />
               </div>
               <div>
-                <h1 style={{ margin: 0, fontSize: '2.1rem', fontWeight: 900, letterSpacing: '0.5px', color: '#ffffff' }}>
+                <h1 className="tv-title-h1">
                   TRACKTRACE DEPO CANLI KONTROL EKRANI
                 </h1>
-                <span style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.95rem', color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
                   <Server size={16} color="#38bdf8" /> Fabrika & Paketleme Bandı Anlık İzleme Monitörü
                 </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <div style={{ textAlign: 'right', backgroundColor: '#090d16', padding: '10px 20px', borderRadius: '12px', border: '1px solid #1e293b' }}>
-                <div style={{ fontSize: '1.8rem', fontWeight: 900, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '1px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              <div style={{ textAlign: 'right', backgroundColor: '#090d16', padding: '10px 18px', borderRadius: '12px', border: '1px solid #1e293b' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '1px' }}>
                   {currentTime.toLocaleTimeString('tr-TR')}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#4ade80', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.78rem', color: '#4ade80', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '2px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#4ade80', boxShadow: '0 0 10px #4ade80', display: 'inline-block' }} />
                   CANLI AKIŞ <span style={{ color: '#94a3b8', fontWeight: 400 }}>(Veri: {lastUpdated.toLocaleTimeString('tr-TR')})</span>
                 </div>
@@ -463,45 +441,46 @@ export const Dashboard: React.FC = () => {
                   backgroundColor: '#1e293b',
                   color: '#f8fafc',
                   border: '1px solid #334155',
-                  padding: '14px 24px',
+                  padding: '12px 20px',
                   borderRadius: '12px',
                   fontWeight: 700,
-                  fontSize: '1rem',
+                  fontSize: '0.95rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '8px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0
                 }}
               >
-                <Minimize2 size={20} color="#94a3b8" /> Çıkış Yap (ESC)
+                <Minimize2 size={18} color="#94a3b8" /> Çıkış Yap (ESC)
               </button>
             </div>
           </div>
 
           {/* TV TOP GIANT STATS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '18px', marginBottom: '32px' }}>
+          <div className="tv-stats-grid">
             {/* CARD 1: OKUTULAN ÜRÜN */}
             <div style={{ 
               backgroundColor: '#0f172a', 
               border: '1px solid #1e293b', 
               borderRadius: '16px', 
-              padding: '22px 24px',
+              padding: '20px',
               position: 'relative',
               overflow: 'hidden',
               boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Bugün Okutulan Ürün
                 </span>
-                <CheckCircle size={22} color="#10b981" />
+                <CheckCircle size={20} color="#10b981" />
               </div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#10b981', marginTop: '8px', letterSpacing: '-0.5px' }}>
+              <div className="tv-stat-number" style={{ color: '#10b981' }}>
                 {liveFeed?.todayTotalItems || data?.scannedTodayCount || 0}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
                 Veri Matrix Başarılı Okutma
               </div>
             </div>
@@ -511,21 +490,21 @@ export const Dashboard: React.FC = () => {
               backgroundColor: '#0f172a', 
               border: '1px solid #1e293b', 
               borderRadius: '16px', 
-              padding: '22px 24px',
+              padding: '20px',
               position: 'relative',
               overflow: 'hidden',
               boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Bugün Kapanan Koli
                 </span>
-                <Inbox size={22} color="#38bdf8" />
+                <Inbox size={20} color="#38bdf8" />
               </div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#38bdf8', marginTop: '8px', letterSpacing: '-0.5px' }}>
+              <div className="tv-stat-number" style={{ color: '#38bdf8' }}>
                 {liveFeed?.todayTotalCartons || data?.cartonsCreatedTodayCount || 0}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
                 Tamamlanan Sevkiyat Kolileri
               </div>
             </div>
@@ -535,21 +514,21 @@ export const Dashboard: React.FC = () => {
               backgroundColor: '#0f172a', 
               border: '1px solid #1e293b', 
               borderRadius: '16px', 
-              padding: '22px 24px',
+              padding: '20px',
               position: 'relative',
               overflow: 'hidden',
               boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Aktif İstasyon Sayısı
                 </span>
-                <Server size={22} color="#60a5fa" />
+                <Server size={20} color="#60a5fa" />
               </div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#60a5fa', marginTop: '8px', letterSpacing: '-0.5px' }}>
-                {liveFeed?.activeStationCount || 0} <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#94a3b8' }}>İstasyon</span>
+              <div className="tv-stat-number" style={{ color: '#60a5fa' }}>
+                {liveFeed?.activeStationCount || 0} <span style={{ fontSize: '1rem', fontWeight: 700, color: '#94a3b8' }}>İstasyon</span>
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
                 Çalışan Paketleme Hatları
               </div>
             </div>
@@ -559,21 +538,21 @@ export const Dashboard: React.FC = () => {
               backgroundColor: '#0f172a', 
               border: '1px solid #1e293b', 
               borderRadius: '16px', 
-              padding: '22px 24px',
+              padding: '20px',
               position: 'relative',
               overflow: 'hidden',
               boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Anlık Okutma Hızı
                 </span>
-                <Zap size={22} color="#f43f5e" />
+                <Zap size={20} color="#f43f5e" />
               </div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f43f5e', marginTop: '8px', letterSpacing: '-0.5px' }}>
-                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
+              <div className="tv-stat-number" style={{ color: '#f43f5e' }}>
+                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
                 Son 2 Okutma Arası Süre
               </div>
             </div>
@@ -583,37 +562,37 @@ export const Dashboard: React.FC = () => {
               backgroundColor: '#0f172a', 
               border: '1px solid #1e293b', 
               borderRadius: '16px', 
-              padding: '22px 24px',
+              padding: '20px',
               position: 'relative',
               overflow: 'hidden',
               boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Ort. Hız (Son 30 Dk)
                 </span>
-                <Activity size={22} color="#c084fc" />
+                <Activity size={20} color="#c084fc" />
               </div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#c084fc', marginTop: '8px', letterSpacing: '-0.5px' }}>
-                {liveFeed?.avgPace30MinSecondsPerItem ? `${liveFeed.avgPace30MinSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
+              <div className="tv-stat-number" style={{ color: '#c084fc' }}>
+                {liveFeed?.avgPace30MinSecondsPerItem ? `${liveFeed.avgPace30MinSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
                 30 Dk Genel Ortalama
               </div>
             </div>
           </div>
 
           {/* TV STATIONS GRID */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Server size={22} color="#38bdf8" /> İSTASYON CANLI PERFORMANS MONİTÖRÜ
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Server size={20} color="#38bdf8" /> İSTASYON CANLI PERFORMANS MONİTÖRÜ
             </h2>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>
               Toplam {liveFeed?.activeStations?.length || 0} İstasyon Tanımlı
             </span>
           </div>
 
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '22px' }}>
+          <div className="tv-stations-grid">
             {(liveFeed?.activeStations || []).map(st => {
               const isActive = st.status === 'Active';
               const progressPct = Math.min(100, Math.round((st.cartonCurrentQty / Math.max(1, st.cartonTargetQty)) * 100));
