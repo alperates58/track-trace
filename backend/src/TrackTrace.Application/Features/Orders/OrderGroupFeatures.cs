@@ -317,12 +317,11 @@ public class DeleteOrderGroupHandler : IRequestHandler<DeleteOrderGroupCommand, 
 
     public async Task<Unit> Handle(DeleteOrderGroupCommand request, CancellationToken cancellationToken)
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
-        var parts = request.GroupKey.Split("::");
-        if (parts.Length < 2) throw new ArgumentException("Geçersiz sipariş grubu.");
-        string orderNo = parts[0];
-        string customerName = parts[1];
+        var payload = OrderGroupKeyHelper.DecodeGroupKey(request.GroupKey);
+        string orderNo = payload.OrderNo;
+        string customerName = payload.CustomerName;
 
+        using var connection = _dbConnectionFactory.CreateConnection();
         var orderIds = (await connection.QueryAsync<Guid>(
             "SELECT Id FROM Orders WHERE OrderNo = @OrderNo AND CustomerName = @CustomerName",
             new { OrderNo = orderNo, CustomerName = customerName })).ToList();
