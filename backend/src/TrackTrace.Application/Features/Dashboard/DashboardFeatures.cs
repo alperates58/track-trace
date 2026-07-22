@@ -162,12 +162,16 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
                     LIMIT 2
                 ) times
                 WHERE times.t2 IS NOT NULL AND times.t1 >= (NOW() - INTERVAL '5 MINUTES')
+                LIMIT 1
             ) st_pace ON true
             WHERE s.IsActive = true
             ORDER BY s.Name ASC;";
 
         var stationsRaw = (await connection.QueryAsync<dynamic>(
-            new CommandDefinition(stationsSql, cancellationToken: cancellationToken))).ToList();
+            new CommandDefinition(stationsSql, cancellationToken: cancellationToken)))
+            .GroupBy(x => (Guid)x.stationid)
+            .Select(g => g.First())
+            .ToList();
 
         var stationList = new List<LiveStationDto>();
         int activeStationCount = 0;
