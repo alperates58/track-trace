@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { ArrowLeft, Loader2, Package, Layers } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ArrowLeft, Loader2, Package, Layers, Trash2 } from 'lucide-react';
 import { OrderLineDetailModal } from '../components/OrderLineDetailModal';
 
 interface OrderGroupDetailProps {
@@ -22,6 +23,7 @@ interface OrderGroupSummary {
 }
 
 export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, onBack }) => {
+  const { hasPermission } = useAuth();
   const [summary, setSummary] = useState<OrderGroupSummary | null>(null);
   const [lines, setLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,14 +94,33 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <button className="btn" onClick={onBack} style={{ padding: '8px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
-          <ArrowLeft size={18} />
-        </button>
-        <div>
-          <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>Sipariş Genel Detayı</h2>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>{summary.orderNo} / {summary.customerName}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="btn" onClick={onBack} style={{ padding: '8px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', fontWeight: 700 }}>Sipariş Genel Detayı</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>{summary.orderNo} / {summary.customerName}</p>
+          </div>
         </div>
+        {hasPermission('orders.delete') && (
+          <button
+            className="btn"
+            style={{ padding: '8px 16px', backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fca5a5', fontWeight: 700, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            onClick={async () => {
+              if (!window.confirm(`${summary.orderNo} (${summary.customerName}) sipariş grubunu ve ait tüm sipariş satırlarını silmek istediğinize emin misiniz?`)) return;
+              try {
+                await api.delete(`/api/order-groups/${encodeURIComponent(groupKey)}`);
+                onBack();
+              } catch (err: any) {
+                alert(err.message || 'Sipariş grubu silinemedi.');
+              }
+            }}
+          >
+            <Trash2 size={16} /> Tüm Grubu Sil
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}

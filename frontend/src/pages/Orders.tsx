@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Upload, Search, ChevronLeft, ChevronRight, Loader2, FileSpreadsheet } from 'lucide-react';
+import { Plus, Upload, Search, ChevronLeft, ChevronRight, Loader2, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { OrderGroupDetail } from './OrderGroupDetail';
 
 interface OrderGroup {
@@ -283,9 +283,22 @@ export const Orders: React.FC = () => {
                     </td>
                     <td data-label="Durum" style={{ padding: '16px' }}>{getStatusBadge(g.statusSummary)}</td>
                     <td data-label="Aksiyon" style={{ padding: '16px' }}>
-                      <button className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#fff', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: 600, borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupKey(g.groupKey); }}>
-                        İncele
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#fff', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: 600, borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupKey(g.groupKey); }}>
+                          İncele
+                        </button>
+                        {hasPermission('orders.delete') && (
+                          <button className="btn" style={{ padding: '6px 10px', fontSize: '0.85rem', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', fontWeight: 600, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Sipariş Grubunu Komple Sil" onClick={(e) => {
+                            e.stopPropagation();
+                            if (!window.confirm(`${g.orderNo} (${g.customerName}) sipariş grubu ve bağlı sipariş satırları silinsin mi?`)) return;
+                            api.delete(`/api/order-groups/${encodeURIComponent(g.groupKey)}`)
+                              .then(() => fetchGroups())
+                              .catch(err => alert(err.message || 'Sipariş grubu silinemedi.'));
+                          }}>
+                            <Trash2 size={15} /> Sil
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

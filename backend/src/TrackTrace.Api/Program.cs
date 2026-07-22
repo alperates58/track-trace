@@ -716,6 +716,27 @@ app.MapGet("/api/order-groups/{groupKey}/lines", async (
     }
 }).RequireAuthorization("ViewerOrAbove").RequirePermission("orders.view");
 
+app.MapDelete("/api/order-groups/{groupKey}", async (string groupKey, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new TrackTrace.Application.Features.Orders.DeleteOrderGroupCommand(groupKey));
+        return Results.NoContent();
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.delete");
+
 // Orders Endpoints
 app.MapGet("/api/orders", async (
     [FromQuery] int? pageNumber,

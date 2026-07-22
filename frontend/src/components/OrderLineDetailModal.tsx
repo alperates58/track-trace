@@ -209,6 +209,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
     }
   };
 
+  const handleDeleteOrder = async () => {
+    if (!confirm(`${selectedOrder.orderNo} (${selectedOrder.stockCode}) sipariş satırı sistemden tamamen silinsin mi?`)) return;
+    try {
+      await api.delete(`/api/orders/${selectedOrder.id}`);
+      onClose();
+      onOrderUpdated();
+    } catch (err: any) {
+      alert(err.message || 'Sipariş silinemedi.');
+    }
+  };
+
   const handleImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
@@ -344,9 +355,21 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             </h3>
             <p style={{ color: '#475569', fontSize: '0.95rem', margin: 0, fontWeight: 600 }}>{selectedOrder.orderNo} / {selectedOrder.customerName} — <span style={{ color: '#0f172a' }}>{selectedOrder.productName || '-'}</span></p>
           </div>
-          <button className="btn" style={{ padding: '8px', borderRadius: '50%', backgroundColor: '#e2e8f0', color: '#475569', border: 'none' }} onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {hasPermission('orders.delete') && (
+              <button 
+                className="btn" 
+                style={{ padding: '8px 16px', backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fca5a5', fontWeight: 700, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}
+                onClick={handleDeleteOrder}
+                title="Bu Sipariş Satırını Sil"
+              >
+                <Trash2 size={16} /> Sipariş Satırını Sil
+              </button>
+            )}
+            <button className="btn" style={{ padding: '8px', borderRadius: '50%', backgroundColor: '#e2e8f0', color: '#475569', border: 'none' }} onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

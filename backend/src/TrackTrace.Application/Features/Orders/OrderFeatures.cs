@@ -328,10 +328,18 @@ public class OrderHandlers :
         var existing = await connection.QueryFirstOrDefaultAsync<dynamic>("SELECT Status FROM Orders WHERE Id = @Id", new { Id = request.Id });
         if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
 
-        if (existing.status != OrderStatus.Draft.ToString() && existing.status != OrderStatus.Cancelled.ToString())
+        int scannedCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @Id AND Status != 'Uploaded'", new { Id = request.Id });
+
+        if (scannedCount > 0)
         {
-            throw new InvalidOperationException("Yalnızca taslak veya iptal durumundaki siparişler silinebilir.");
+            throw new InvalidOperationException($"Bu siparişten {scannedCount} adet ürün okutulmuş. Okutması başlayan siparişler tamamen silinemez, ancak İptal durumuna getirilebilir.");
         }
+
+        // Cascade delete child tables
+        await connection.ExecuteAsync("DELETE FROM ProductCodes WHERE OrderId = @Id", new { Id = request.Id });
+        await connection.ExecuteAsync("DELETE FROM Cartons WHERE OrderId = @Id", new { Id = request.Id });
+        await connection.ExecuteAsync("DELETE FROM ImportBatches WHERE OrderId = @Id", new { Id = request.Id });
 
         const string sql = "DELETE FROM Orders WHERE Id = @Id";
         await connection.ExecuteAsync(sql, new { Id = request.Id });

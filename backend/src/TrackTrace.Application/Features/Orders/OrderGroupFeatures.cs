@@ -301,3 +301,49 @@ public class OrderGroupHandlers :
         );
     }
 }
+
+public record DeleteOrderGroupCommand(string GroupKey) : IRequest<Unit>;
+
+public class DeleteOrderGroupHandler : IRequestHandler<DeleteOrderGroupCommand, Unit>
+{
+    private readonly IDbConnectionFactory _dbConnectionFactory;
+    private readonly IAuditLogService _auditLogService;
+
+    public DeleteOrderGroupHandler(IDbConnectionFactory dbConnectionFactory, IAuditLogService auditLogService)
+    {
+        _dbConnectionFactory = dbConnectionFactory;
+        _auditLogService = auditLogService;
+    }
+
+    public async Task<Unit> Handle(DeleteOrderGroupCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = _dbConnectionFactory.CreateConnection();
+        var parts = request.GroupKey.Split("::");
+        if (parts.Length < 2) throw new ArgumentException("Geçersiz sipariş grubu.");
+        string orderNo = parts[0];
+        string customerName = parts[1];
+
+        var orderIds = (await connection.QueryAsync<Guid>(
+            "SELECT Id FROM Orders WHERE OrderNo = @OrderNo AND CustomerName = @CustomerName",
+            new { OrderNo = orderNo, CustomerName = customerName })).ToList();
+
+        if (orderIds.Count == 0) throw new KeyNotFoundException("Sipariş grubu bulunamadı.");
+
+        int scannedCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = ANY(@OrderIds) AND Status != 'Uploaded'",
+            new { OrderIds = orderIds.ToArray() });
+
+        if (scannedCount > 0)
+        {
+            throw new InvalidOperationException($"Bu grupta okutulmuş {scannedCount} adet ürün bulunmaktadır. Okutması başlayan sipariş grupları tamamen silinemez.");
+        }
+
+        await connection.ExecuteAsync("DELETE FROM ProductCodes WHERE OrderId = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
+        await connection.ExecuteAsync("DELETE FROM Cartons WHERE OrderId = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
+        await connection.ExecuteAsync("DELETE FROM ImportBatches WHERE OrderId = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
+        await connection.ExecuteAsync("DELETE FROM Orders WHERE Id = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
+
+        await _auditLogService.LogAsync("OrderGroups", Guid.Empty, "DeleteGroup", null, new { GroupKey = request.GroupKey, OrderNo = orderNo, CustomerName = customerName });
+        return Unit.Value;
+    }
+}
