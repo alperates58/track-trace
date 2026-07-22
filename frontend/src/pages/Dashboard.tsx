@@ -74,6 +74,26 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isTvMode, setIsTvMode] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  // Ticking digital clock for live display
+  useEffect(() => {
+    const clockInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(clockInterval);
+  }, []);
+
+  // Listen for ESC key to exit TV mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isTvMode) {
+        setIsTvMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isTvMode]);
 
   const fetchDashboardData = async () => {
     try {
@@ -405,10 +425,10 @@ export const Dashboard: React.FC = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8' }}>
-                  {lastUpdated.toLocaleTimeString('tr-TR')}
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8' }}>
+                  {currentTime.toLocaleTimeString('tr-TR')}
                 </div>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>CANLI YAYIN 🟢</span>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>CANLI YAYIN 🟢 (Veri: {lastUpdated.toLocaleTimeString('tr-TR')})</span>
               </div>
 
               <button 
