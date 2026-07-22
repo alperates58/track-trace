@@ -39,12 +39,15 @@ interface LiveStation {
   operatorName?: string;
   currentOrderNo?: string;
   currentStockCode?: string;
+  currentProductName?: string;
   currentCartonNo?: string;
   currentCartonSscc?: string;
   cartonCurrentQty: number;
   cartonTargetQty: number;
   lastScannedAt?: string;
   itemsScannedLastHour: number;
+  itemsScannedToday: number;
+  stationPaceSecondsPerItem?: number;
 }
 
 interface LiveScanItem {
@@ -65,6 +68,7 @@ interface LiveFeedData {
   currentPaceItemsPerMin: number;
   currentPaceSecondsPerItem: number;
   avgPace30MinSecondsPerItem: number;
+  productionEfficiencyPct?: number;
   activeStations: LiveStation[];
   recentScansFeed: LiveScanItem[];
 }
@@ -276,6 +280,11 @@ export const Dashboard: React.FC = () => {
                       </div>
 
                       <div style={{ fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Ürün İsmi:</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{st.currentProductName || '-'}</span>
+                      </div>
+
+                      <div style={{ fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Operatör:</span>
                         <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <User size={12} /> {st.operatorName}
@@ -301,13 +310,15 @@ export const Dashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '2px' }}>
-                        Son Okutma: {getRelativeSeconds(st.lastScannedAt)}
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+                        <span>Bugün: <strong>{st.itemsScannedToday || 0} Ürün</strong></span>
+                        <span>Son Okutma: {getRelativeSeconds(st.lastScannedAt)} | ⚡ {st.stationPaceSecondsPerItem ? `${st.stationPaceSecondsPerItem.toFixed(1)} sn/ürün` : '0 sn/ürün'}</span>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      Şu an bu istasyonda aktif paketleme yapılmıyor.
+                    <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <span>Şu an bu istasyonda aktif paketleme yapılmıyor.</span>
+                      <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 600 }}>Bugün Okutulan: {st.itemsScannedToday || 0} Ürün</span>
                     </div>
                   )}
                 </div>
@@ -533,7 +544,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* CARD 4: ANLIK OKUTMA HIZI */}
+            {/* CARD 4: GENEL ÜRETİM VERİMLİLİĞİ */}
             <div style={{ 
               backgroundColor: '#0f172a', 
               border: '1px solid #1e293b', 
@@ -545,15 +556,15 @@ export const Dashboard: React.FC = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Anlık Okutma Hızı
+                  Üretim Verimliliği
                 </span>
-                <Zap size={20} color="#f43f5e" />
+                <Activity size={20} color="#f43f5e" />
               </div>
               <div className="tv-stat-number" style={{ color: '#f43f5e' }}>
-                {liveFeed?.currentPaceSecondsPerItem ? `${liveFeed.currentPaceSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
+                %{liveFeed?.productionEfficiencyPct ? liveFeed.productionEfficiencyPct.toFixed(1) : '100'}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
-                Son 2 Okutma Arası Süre
+                Aktif Tarama Verimlilik Oranı
               </div>
             </div>
 
@@ -571,7 +582,7 @@ export const Dashboard: React.FC = () => {
                 <span style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Ort. Hız (Son 30 Dk)
                 </span>
-                <Activity size={20} color="#c084fc" />
+                <Zap size={20} color="#c084fc" />
               </div>
               <div className="tv-stat-number" style={{ color: '#c084fc' }}>
                 {liveFeed?.avgPace30MinSecondsPerItem ? `${liveFeed.avgPace30MinSecondsPerItem.toFixed(1)}` : '0'} <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#94a3b8' }}>sn / ürün</span>
@@ -653,6 +664,10 @@ export const Dashboard: React.FC = () => {
                             <strong style={{ color: '#ffffff', fontSize: '1.1rem' }}>{st.currentStockCode}</strong>
                           </div>
                           <div style={{ fontSize: '1.05rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#94a3b8', fontWeight: 600 }}>Ürün İsmi:</span>
+                            <span style={{ color: '#f8fafc', fontWeight: 700, fontSize: '1rem' }}>{st.currentProductName || '-'}</span>
+                          </div>
+                          <div style={{ fontSize: '1.05rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: '#94a3b8', fontWeight: 600 }}>Operatör:</span>
                             <span style={{ color: '#cbd5e1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <User size={16} color="#38bdf8" /> {st.operatorName || 'Operatör'}
@@ -682,9 +697,9 @@ export const Dashboard: React.FC = () => {
                             }} />
                           </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.8rem', color: '#64748b' }}>
-                            <span>SSCC: {st.currentCartonSscc || '-'}</span>
-                            <span style={{ color: '#4ade80', fontWeight: 600 }}>● Son Okutma: {getRelativeSeconds(st.lastScannedAt)}</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.82rem', color: '#64748b' }}>
+                            <span>Bugün: <strong style={{ color: '#38bdf8' }}>{st.itemsScannedToday || 0} Ürün</strong></span>
+                            <span style={{ color: '#4ade80', fontWeight: 600 }}>● Son Okutma: {getRelativeSeconds(st.lastScannedAt)} (⚡ {st.stationPaceSecondsPerItem ? `${st.stationPaceSecondsPerItem.toFixed(1)} sn/ürün` : '0 sn/ürün'})</span>
                           </div>
                         </div>
                       </div>
@@ -709,8 +724,8 @@ export const Dashboard: React.FC = () => {
                           <span style={{ color: '#94a3b8', fontWeight: 600 }}>{getRelativeSeconds(st.lastScannedAt) || 'Henüz İşlem Yok'}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem' }}>
-                          <span style={{ color: '#64748b' }}>Son 1 Saatlik Okutma:</span>
-                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>{st.itemsScannedLastHour || 0} Ürün</span>
+                          <span style={{ color: '#64748b' }}>Bugün Okutulan:</span>
+                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>{st.itemsScannedToday || 0} Ürün</span>
                         </div>
                         <div style={{ borderTop: '1px solid #1e293b', paddingTop: '10px', marginTop: '4px', textAlign: 'center', color: '#475569', fontSize: '0.85rem', fontStyle: 'italic' }}>
                           ⓘ Bu hat şu an bekleme modunda. Paketleme başladığında otomatik aktifleşecektir.
