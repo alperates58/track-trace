@@ -329,18 +329,24 @@ public class DeleteOrderGroupHandler : IRequestHandler<DeleteOrderGroupCommand, 
 
         if (orderIds.Count == 0) throw new KeyNotFoundException("Sipariş grubu bulunamadı.");
 
-        int scannedCount = await connection.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = ANY(@OrderIds) AND Status != 'Uploaded'",
+        int cartonCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM Cartons WHERE OrderId = ANY(@OrderIds)",
             new { OrderIds = orderIds.ToArray() });
 
-        if (scannedCount > 0)
+        if (cartonCount > 0)
         {
-            throw new InvalidOperationException($"Bu grupta okutulmuş {scannedCount} adet ürün bulunmaktadır. Okutması başlayan sipariş grupları tamamen silinemez.");
+            throw new InvalidOperationException($"Bu sipariş grubunda {cartonCount} adet koli kaydı bulunmaktadır! Grubu silebilmek için önce Koli Yönetimi sayfasından kolileri bozmalı/silmelisiniz.");
         }
 
-        await connection.ExecuteAsync("DELETE FROM ProductCodes WHERE OrderId = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
-        await connection.ExecuteAsync("DELETE FROM Cartons WHERE OrderId = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
-        await connection.ExecuteAsync("DELETE FROM ImportBatches WHERE OrderId = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
+        int codeCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = ANY(@OrderIds)",
+            new { OrderIds = orderIds.ToArray() });
+
+        if (codeCount > 0)
+        {
+            throw new InvalidOperationException($"Bu sipariş grubuna yüklenmiş {codeCount} adet QR/Barkod bulunmaktadır! Grubu silebilmek için önce sipariş detaylarındaki Kodlar sekmesinden 'Tüm Kodları Temizle' işlemini yapmalısınız.");
+        }
+
         await connection.ExecuteAsync("DELETE FROM Orders WHERE Id = ANY(@OrderIds)", new { OrderIds = orderIds.ToArray() });
 
         await _auditLogService.LogAsync("OrderGroups", Guid.Empty, "DeleteGroup", null, new { GroupKey = request.GroupKey, OrderNo = orderNo, CustomerName = customerName });

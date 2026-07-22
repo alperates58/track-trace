@@ -328,18 +328,21 @@ public class OrderHandlers :
         var existing = await connection.QueryFirstOrDefaultAsync<dynamic>("SELECT Status FROM Orders WHERE Id = @Id", new { Id = request.Id });
         if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
 
-        int scannedCount = await connection.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @Id AND Status != 'Uploaded'", new { Id = request.Id });
+        int cartonCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM Cartons WHERE OrderId = @Id", new { Id = request.Id });
 
-        if (scannedCount > 0)
+        if (cartonCount > 0)
         {
-            throw new InvalidOperationException($"Bu siparişten {scannedCount} adet ürün okutulmuş. Okutması başlayan siparişler tamamen silinemez, ancak İptal durumuna getirilebilir.");
+            throw new InvalidOperationException($"Bu siparişe tanımlı {cartonCount} adet koli bulunmaktadır! Siparişi silebilmek için önce Koli Yönetimi sayfasından kolileri bozmalı/silmelisiniz.");
         }
 
-        // Cascade delete child tables
-        await connection.ExecuteAsync("DELETE FROM ProductCodes WHERE OrderId = @Id", new { Id = request.Id });
-        await connection.ExecuteAsync("DELETE FROM Cartons WHERE OrderId = @Id", new { Id = request.Id });
-        await connection.ExecuteAsync("DELETE FROM ImportBatches WHERE OrderId = @Id", new { Id = request.Id });
+        int codeCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @Id", new { Id = request.Id });
+
+        if (codeCount > 0)
+        {
+            throw new InvalidOperationException($"Bu siparişe yüklenmiş {codeCount} adet QR/Barkod bulunmaktadır! Siparişi silebilmek için önce sipariş detayındaki Kodlar sekmesinden 'Tüm Kodları Temizle' işlemini yapmalısınız.");
+        }
 
         const string sql = "DELETE FROM Orders WHERE Id = @Id";
         await connection.ExecuteAsync(sql, new { Id = request.Id });
