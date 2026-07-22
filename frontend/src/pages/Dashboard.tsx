@@ -114,7 +114,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    // Auto-refresh live feed every 3 seconds
+    // Auto-refresh live feed every 1 second
     const interval = setInterval(() => {
       api.get('/api/dashboard/live-feed')
         .then(res => {
@@ -122,7 +122,7 @@ export const Dashboard: React.FC = () => {
           setLastUpdated(new Date());
         })
         .catch(() => {});
-    }, 3000);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -149,7 +149,7 @@ export const Dashboard: React.FC = () => {
         actions={
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700 }}>
-              <Radio size={14} className="spin-anim" /> CANLI AKIŞ (3s)
+              <Radio size={14} className="spin-anim" /> CANLI AKIŞ (1s)
             </div>
             <TTButton 
               variant="primary" 
