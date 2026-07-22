@@ -200,7 +200,7 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
         const string todaySql = @"
             SELECT 
                 (SELECT COUNT(*) FROM ProductCodes WHERE Status != 'Uploaded' AND ScannedAt >= CURRENT_DATE) AS TodayItems,
-                (SELECT COUNT(*) FROM Cartons WHERE CreatedAt >= CURRENT_DATE) AS TodayCartons;";
+                (SELECT COUNT(*) FROM Cartons WHERE ClosedAt >= CURRENT_DATE OR (Status IN ('Closed', 'Printed', 'Palletized', 'Shipped') AND CreatedAt >= CURRENT_DATE)) AS TodayCartons;";
 
         var todayStats = await connection.QueryFirstOrDefaultAsync<dynamic>(
             new CommandDefinition(todaySql, cancellationToken: cancellationToken));

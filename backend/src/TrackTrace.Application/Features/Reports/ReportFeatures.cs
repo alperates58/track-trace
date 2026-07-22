@@ -194,8 +194,8 @@ public class ReportHandlers :
                 (SELECT COUNT(*) FROM Cartons WHERE Status = 'Open') as OpenCartons,
                 (SELECT COUNT(*) FROM Pallets WHERE Status = 'Open') as OpenPallets,
                 (SELECT COUNT(*) FROM ProductCodes WHERE Status = 'Scanned' AND ScannedAt >= CURRENT_DATE) as ScannedToday,
-                (SELECT COUNT(*) FROM Cartons WHERE CreatedAt >= CURRENT_DATE) as CartonsToday,
-                (SELECT COUNT(*) FROM Pallets WHERE CreatedAt >= CURRENT_DATE) as PalletsToday";
+                (SELECT COUNT(*) FROM Cartons WHERE ClosedAt >= CURRENT_DATE OR (Status IN ('Closed', 'Printed', 'Palletized', 'Shipped') AND CreatedAt >= CURRENT_DATE)) as CartonsToday,
+                (SELECT COUNT(*) FROM Pallets WHERE ClosedAt >= CURRENT_DATE OR (Status IN ('Closed', 'Printed', 'Shipped') AND CreatedAt >= CURRENT_DATE)) as PalletsToday";
 
         var stats = await connection.QueryFirstOrDefaultAsync<dynamic>(sql);
 
