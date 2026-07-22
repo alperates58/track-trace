@@ -22,7 +22,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: track_trace_api
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=track_trace;Username=${DB_USER:-postgres};Password=${DB_PASSWORD}
       - Jwt__Secret=${JWT_SECRET}
@@ -49,6 +48,8 @@ services:
       - "traefik.http.routers.track-trace-api.tls=true"
       - "traefik.http.routers.track-trace-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.track-trace-api.loadbalancer.server.port=8080"
+      - "traefik.http.services.track-trace-api.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.track-trace-api.loadbalancer.healthcheck.interval=3s"
       # API HTTP Router & Redirect Middleware
       - "traefik.http.routers.track-trace-api-http.entrypoints=http"
       - "traefik.http.routers.track-trace-api-http.rule=Host(`track-api.alperates.com.tr`)"
@@ -57,7 +58,7 @@ services:
       - "traefik.http.middlewares.track-trace-api-https-redirect.redirectscheme.scheme=https"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
       retries: 3
 
@@ -67,7 +68,6 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=https://track-api.alperates.com.tr
-    container_name: track_trace_frontend
     networks:
       - coolify
     depends_on:
