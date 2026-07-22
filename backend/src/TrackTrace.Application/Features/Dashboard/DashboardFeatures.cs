@@ -93,7 +93,7 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
             SELECT 
                 s.Id AS StationId,
                 s.Name AS StationName,
-                s.Code AS StationCode,
+                s.Name AS StationCode,
                 (
                     SELECT MAX(pc.ScannedAt) 
                     FROM ProductCodes pc 
@@ -147,7 +147,7 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CartonCurrentQty,
                 (
-                    SELECT COALESCE(o.ProductPerCarton, o.BoxCapacity, 1)
+                    SELECT COALESCE(o.ProductPerCarton, 1)
                     FROM ProductCodes pc
                     LEFT JOIN Orders o ON pc.OrderId = o.Id
                     WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
