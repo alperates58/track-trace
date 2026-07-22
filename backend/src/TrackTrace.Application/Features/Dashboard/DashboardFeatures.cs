@@ -79,7 +79,7 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
             FROM ProductCodes pc
             LEFT JOIN Orders o ON pc.OrderId = o.Id
             LEFT JOIN Cartons c ON pc.CartonId = c.Id
-            LEFT JOIN Stations s ON pc.StationId = s.Id
+            LEFT JOIN Stations s ON c.StationId = s.Id
             LEFT JOIN Users u ON pc.ScannedBy = u.Id
             WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL
             ORDER BY pc.ScannedAt DESC
@@ -97,60 +97,66 @@ public class DashboardLiveFeedHandler : IRequestHandler<GetDashboardLiveFeedQuer
                 (
                     SELECT MAX(pc.ScannedAt) 
                     FROM ProductCodes pc 
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                 ) AS LastScannedAt,
                 (
                     SELECT COUNT(pc.Id) 
                     FROM ProductCodes pc 
-                    WHERE pc.StationId = s.Id AND pc.ScannedAt >= (NOW() - INTERVAL '1 HOUR')
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
+                    WHERE c.StationId = s.Id AND pc.ScannedAt >= (NOW() - INTERVAL '1 HOUR')
                 ) AS ItemsScannedLastHour,
                 (
                     SELECT u.Name
                     FROM ProductCodes pc
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
                     LEFT JOIN Users u ON pc.ScannedBy = u.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS OperatorName,
                 (
                     SELECT o.OrderNo
                     FROM ProductCodes pc
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
                     LEFT JOIN Orders o ON pc.OrderId = o.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CurrentOrderNo,
                 (
                     SELECT o.StockCode
                     FROM ProductCodes pc
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
                     LEFT JOIN Orders o ON pc.OrderId = o.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CurrentStockCode,
                 (
                     SELECT c.CartonNo
                     FROM ProductCodes pc
-                    LEFT JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CurrentCartonNo,
                 (
                     SELECT c.SSCC
                     FROM ProductCodes pc
-                    LEFT JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CurrentCartonSscc,
                 (
                     SELECT c.ActualQuantity
                     FROM ProductCodes pc
-                    LEFT JOIN Cartons c ON pc.CartonId = c.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CartonCurrentQty,
                 (
                     SELECT COALESCE(o.ProductPerCarton, 1)
                     FROM ProductCodes pc
+                    INNER JOIN Cartons c ON pc.CartonId = c.Id
                     LEFT JOIN Orders o ON pc.OrderId = o.Id
-                    WHERE pc.StationId = s.Id AND pc.Status != 'Uploaded'
+                    WHERE c.StationId = s.Id AND pc.Status != 'Uploaded'
                     ORDER BY pc.ScannedAt DESC LIMIT 1
                 ) AS CartonTargetQty
             FROM Stations s
