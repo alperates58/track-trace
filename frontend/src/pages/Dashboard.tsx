@@ -416,7 +416,7 @@ export const Dashboard: React.FC = () => {
           {/* TV HEADER */}
           <div style={{ 
             display: 'flex', 
-            justify: 'space-between', 
+            justifyContent: 'space-between', 
             alignItems: 'center', 
             borderBottom: '1px solid #1e293b', 
             paddingBottom: '20px', 
@@ -629,7 +629,7 @@ export const Dashboard: React.FC = () => {
                     padding: '26px',
                     display: 'flex',
                     flexDirection: 'column',
-                    justify: 'space-between',
+                    justifyContent: 'space-between',
                     transition: 'all 0.3s ease'
                   }}
                 >
