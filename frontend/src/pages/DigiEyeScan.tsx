@@ -11,9 +11,10 @@ import {
   ExternalLink,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Eye
 } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 interface Station {
   id: string;
@@ -729,7 +730,7 @@ export const DigiEyeScan: React.FC = () => {
             <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden', height: '260px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img
                 id="digieye-live-frame"
-                src={`${api.defaults.baseURL || ''}/api/digieye/latest-image?ip=${encodeURIComponent(digiEyeIp)}&t=${cameraStreamKey}`}
+                src={`${API_BASE_URL}/api/digieye/latest-image?ip=${encodeURIComponent(digiEyeIp)}&t=${cameraStreamKey}`}
                 alt="DigiEye Live Stream"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 onError={(e) => {
