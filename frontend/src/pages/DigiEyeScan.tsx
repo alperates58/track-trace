@@ -737,15 +737,11 @@ export const DigiEyeScan: React.FC = () => {
             <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden', height: '260px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img
                 id="digieye-live-frame"
-                src={`${API_BASE_URL}/api/digieye/latest-image?ip=${encodeURIComponent(digiEyeIp)}&t=${cameraStreamKey}`}
+                src={`http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`}
                 alt="DigiEye Live Stream"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  const directUrl = `http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`;
-                  if (!target.src.includes(`http://${digiEyeIp.split(':')[0]}`)) {
-                    target.src = directUrl;
-                  }
+                  (e.target as HTMLElement).style.display = 'none';
                 }}
               />
 
