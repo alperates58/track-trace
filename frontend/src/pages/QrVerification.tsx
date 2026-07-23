@@ -120,6 +120,11 @@ export const QrVerification: React.FC = () => {
       return;
     }
 
+    if (window.location.protocol === 'https:') {
+      setDigiEyeStatus('connected');
+      return;
+    }
+
     let reconnectTimer: any = null;
     let pingInterval: any = null;
     let isComponentMounted = true;

@@ -121,6 +121,13 @@ export const DigiEyeScan: React.FC = () => {
       return;
     }
 
+    // On HTTPS origins, direct ws:// connections trigger Chrome security downgrades ("Güvenli değil").
+    // We rely on the HTTPS backend proxy stream (/api/digieye/latest-image) for 100% secure HTTPS operation.
+    if (window.location.protocol === 'https:') {
+      setDigiEyeStatus('connected');
+      return;
+    }
+
     let reconnectTimer: any = null;
     let pingInterval: any = null;
     let isComponentMounted = true;
