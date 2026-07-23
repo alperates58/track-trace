@@ -48,6 +48,7 @@ QuestPDF.Settings.License = LicenseType.Community;
 // Add services
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHttpClient();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -248,6 +249,28 @@ catch (Exception ex)
 // Health Endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
    .AllowAnonymous();
+
+// DigiEye Industrial Camera HTTPS Proxy Endpoint
+app.MapGet("/api/digieye/latest-image", async (string? ip, IHttpClientFactory httpClientFactory) =>
+{
+    try
+    {
+        var targetIp = string.IsNullOrWhiteSpace(ip) ? "10.0.0.160:5173" : ip.Trim();
+        var client = httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(3);
+        var response = await client.GetAsync($"http://{targetIp}/latest-image");
+        if (response.IsSuccessStatusCode)
+        {
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            return Results.Bytes(bytes, "image/jpeg");
+        }
+        return Results.NotFound();
+    }
+    catch
+    {
+        return Results.NotFound();
+    }
+}).AllowAnonymous();
 
 // Public Endpoints
 app.MapGet("/api/public/verify", async (string code, IMediator mediator) =>
