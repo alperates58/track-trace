@@ -120,6 +120,7 @@ export const DigiEyeScan: React.FC = () => {
     }
 
     let reconnectTimer: any = null;
+    let pingInterval: any = null;
     let isComponentMounted = true;
 
     const connectWebSocket = () => {
@@ -134,6 +135,15 @@ export const DigiEyeScan: React.FC = () => {
         socket.onopen = () => {
           if (!isComponentMounted) return;
           setDigiEyeStatus('connected');
+          
+          // Send periodic ping heartbeat every 10s to keep connection alive & prevent idle timeout
+          pingInterval = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+              try {
+                socket.send(JSON.stringify({ type: 'ping' }));
+              } catch {}
+            }
+          }, 10000);
         };
 
         socket.onmessage = (event) => {
@@ -169,17 +179,17 @@ export const DigiEyeScan: React.FC = () => {
 
         socket.onerror = () => {
           if (!isComponentMounted) return;
-          setDigiEyeStatus('disconnected');
         };
 
         socket.onclose = () => {
+          if (pingInterval) clearInterval(pingInterval);
           if (!isComponentMounted) return;
           setDigiEyeStatus('disconnected');
           reconnectTimer = setTimeout(() => {
             if (isComponentMounted && digiEyeEnabled) {
               connectWebSocket();
             }
-          }, 4000);
+          }, 2000);
         };
       } catch {
         if (isComponentMounted) setDigiEyeStatus('disconnected');
@@ -190,6 +200,7 @@ export const DigiEyeScan: React.FC = () => {
 
     return () => {
       isComponentMounted = false;
+      if (pingInterval) clearInterval(pingInterval);
       if (reconnectTimer) clearTimeout(reconnectTimer);
       if (wsRef.current) {
         wsRef.current.close();

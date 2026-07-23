@@ -121,6 +121,7 @@ export const QrVerification: React.FC = () => {
     }
 
     let reconnectTimer: any = null;
+    let pingInterval: any = null;
     let isComponentMounted = true;
 
     const connectWebSocket = () => {
@@ -135,6 +136,14 @@ export const QrVerification: React.FC = () => {
         socket.onopen = () => {
           if (!isComponentMounted) return;
           setDigiEyeStatus('connected');
+          
+          pingInterval = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+              try {
+                socket.send(JSON.stringify({ type: 'ping' }));
+              } catch {}
+            }
+          }, 10000);
         };
 
         socket.onmessage = (event) => {
@@ -184,18 +193,18 @@ export const QrVerification: React.FC = () => {
 
         socket.onerror = () => {
           if (!isComponentMounted) return;
-          setDigiEyeStatus('disconnected');
         };
 
         socket.onclose = () => {
+          if (pingInterval) clearInterval(pingInterval);
           if (!isComponentMounted) return;
           setDigiEyeStatus('disconnected');
-          // Auto-reconnect every 4 seconds
+          // Auto-reconnect every 2 seconds
           reconnectTimer = setTimeout(() => {
             if (isComponentMounted && digiEyeEnabled) {
               connectWebSocket();
             }
-          }, 4000);
+          }, 2000);
         };
       } catch {
         if (isComponentMounted) setDigiEyeStatus('disconnected');
@@ -206,6 +215,7 @@ export const QrVerification: React.FC = () => {
 
     return () => {
       isComponentMounted = false;
+      if (pingInterval) clearInterval(pingInterval);
       if (reconnectTimer) clearTimeout(reconnectTimer);
       if (wsRef.current) {
         wsRef.current.close();
