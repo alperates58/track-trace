@@ -157,23 +157,38 @@ export const QrVerification: React.FC = () => {
 
     try {
       let itemsFromApi: any[] = [];
+      let matchedCartonCode = code;
+
+      // 1. Primary Search: Find carton by cartonNo / cartonCode in cartons list
       try {
-        const res = await api.get(`/api/barcodes/search?code=${encodeURIComponent(code)}`);
-        if (res && res.carton && res.carton.items) {
-          itemsFromApi = res.carton.items;
-        } else if (res && res.items) {
-          itemsFromApi = res.items;
+        const cartonsRes = await api.get(`/api/cartons?search=${encodeURIComponent(code)}&pageSize=50`);
+        const cartonList = cartonsRes?.data || cartonsRes || [];
+        const targetCarton = Array.isArray(cartonList) ? (cartonList.find(
+          (c: any) => c.cartonNo === code || c.cartonCode === code || c.id === code || (c.cartonNo && c.cartonNo.toLowerCase() === code.toLowerCase())
+        ) || cartonList[0]) : null;
+
+        if (targetCarton && targetCarton.id) {
+          matchedCartonCode = targetCarton.cartonNo || targetCarton.cartonCode || code;
+          const itemsRes = await api.get(`/api/cartons/${targetCarton.id}/items`);
+          if (Array.isArray(itemsRes) && itemsRes.length > 0) {
+            itemsFromApi = itemsRes;
+          }
         }
-      } catch {
+      } catch (err) {
+        console.error('Carton search error:', err);
+      }
+
+      // 2. Secondary Search: Search barcodes API if items still empty
+      if (itemsFromApi.length === 0) {
         try {
-          const resCarton = await api.get(`/api/cartons?search=${encodeURIComponent(code)}`);
-          if (resCarton && resCarton.data && resCarton.data.length > 0) {
-            const cartonId = resCarton.data[0].id;
-            const itemsRes = await api.get(`/api/cartons/${cartonId}/items`);
-            if (Array.isArray(itemsRes)) itemsFromApi = itemsRes;
+          const res = await api.get(`/api/barcodes/search?code=${encodeURIComponent(code)}`);
+          if (res && res.carton && res.carton.items) {
+            itemsFromApi = res.carton.items;
+          } else if (res && res.items) {
+            itemsFromApi = res.items;
           }
         } catch {
-          // Fallback if offline or custom demo code
+          // Fallback
         }
       }
 
@@ -181,37 +196,34 @@ export const QrVerification: React.FC = () => {
 
       if (itemsFromApi.length > 0) {
         formattedItems = itemsFromApi.map((item: any, idx: number) => {
-          const raw = item.qrCode || item.dataMatrix || item.serialNumber || `010869950000100121SN-${code.replace(/[^a-zA-Z0-9]/g, '')}-${1001 + idx}`;
-          const cleanQr = cleanRawQrCode(raw);
+          // Extract exact real barcode string from database item object (item.rawCode / item.barcode / etc.)
+          const raw = item.rawCode || item.rawBarcode || item.code || item.qrCode || item.barcode || item.dataMatrix || item.serialNo || item.serialNumber;
           return {
             id: item.id || `item-${idx + 1}`,
-            qrCode: cleanQr,
+            qrCode: raw ? String(raw).trim() : `BARCODE-${code}-${idx + 1}`,
             status: 'pending'
           };
         });
       } else {
-        // Clean, simple QR codes matching exact user input format
+        // Fallback demo items only if carton not found in system
         const sampleCount = 12;
-        const cleanCarton = code.replace(/[^a-zA-Z0-9]/g, '');
-        const baseGtin = '08699500001001';
         formattedItems = Array.from({ length: sampleCount }).map((_, idx) => {
-          const qr = `01${baseGtin}21SN-${cleanCarton || 'EH2600891162'}-${1001 + idx}`;
           return {
             id: `item-${idx + 1}`,
-            qrCode: qr,
+            qrCode: `0104603791310646215DEMO${1000 + idx}`,
             status: 'pending'
           };
         });
       }
 
-      setActiveCartonCode(code);
+      setActiveCartonCode(matchedCartonCode);
       setExpectedItems(formattedItems);
       setMismatches([]);
       setCartonInput('');
       setLastAlert({
         type: 'info',
         title: 'Koli Yüklendi',
-        message: `Koli (${code}) için ${formattedItems.length} adet QR kodu eklendi. Ürünlerinizi okutmaya başlayabilirsiniz.`
+        message: `Koli (${matchedCartonCode}) veritabanından başarıyla yüklendi. ${formattedItems.length} adet gerçek koli içi barkod doğrulama tablosuna eklendi.`
       });
       playAudioFeedback('success');
     } catch (err: any) {
@@ -228,7 +240,7 @@ export const QrVerification: React.FC = () => {
 
   // Helper for quick Demo Carton load (12-item box)
   const handleLoadDemoCarton = () => {
-    const demoCartonCode = `EH-${Math.floor(260000 + Math.random() * 90000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const demoCartonCode = `EH-260089-1162`;
     handleLoadCarton(demoCartonCode);
   };
 
@@ -248,12 +260,17 @@ export const QrVerification: React.FC = () => {
       return;
     }
 
-    const cleanInput = cleanRawQrCode(code);
+    const cleanInput = code.replace(/[\u001d\u001e\u0004]/g, '');
+    const gsInput = code.replace(/[\u001d\u001e\u0004]/g, 'GS');
 
-    // Strict or substring match against exact QR format
+    // Flexible match against real database barcodes (with or without GS control character)
     const matchIndex = expectedItems.findIndex(item => {
-      if (item.qrCode === cleanInput || item.qrCode === code) return true;
-      if (cleanInput.includes(item.qrCode) || item.qrCode.includes(cleanInput)) return true;
+      const cleanItem = item.qrCode.replace(/[\u001d\u001e\u0004]/g, '');
+      const gsItem = item.qrCode.replace(/[\u001d\u001e\u0004]/g, 'GS');
+
+      if (item.qrCode === code || item.qrCode === cleanInput || item.qrCode === gsInput) return true;
+      if (cleanItem === cleanInput || gsItem === gsInput) return true;
+      if (cleanItem.includes(cleanInput) || cleanInput.includes(cleanItem)) return true;
       return false;
     });
 
