@@ -2,6 +2,11 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      if (window.location.protocol === 'http:' && window.location.hostname === 'track.alperates.com.tr') {
+        window.location.href = window.location.href.replace('http:', 'https:');
+      }
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
