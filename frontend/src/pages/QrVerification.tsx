@@ -130,16 +130,6 @@ export const QrVerification: React.FC = () => {
     }
   };
 
-  // Helper to sanitize QR codes (removes any 10 (Lot) or 17 (Expiry) segments)
-  const cleanRawQrCode = (rawStr: string): string => {
-    if (!rawStr) return '';
-    let str = rawStr.trim().replace(/[\u001d\u001e\u0004]/g, '');
-    str = str.replace(/10LOT[a-zA-Z0-9_-]*/gi, '');
-    str = str.replace(/10[a-zA-Z0-9_-]{3,15}/g, '');
-    str = str.replace(/17\d{6}/g, '');
-    return str;
-  };
-
   // Handle Step 1: Scan Carton Label
   const handleLoadCarton = async (cartonCodeToFetch?: string) => {
     const code = (cartonCodeToFetch || cartonInput).trim();
