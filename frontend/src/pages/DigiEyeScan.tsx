@@ -55,7 +55,6 @@ export const DigiEyeScan: React.FC = () => {
   const [targetQty, setTargetQty] = useState(0);
 
   // Last closed carton details
-  const [lastClosedCartonId, setLastClosedCartonId] = useState<string | null>(null);
   const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
 
   // History & settings
@@ -261,32 +260,6 @@ export const DigiEyeScan: React.FC = () => {
     } catch (e) {}
   };
 
-  const printPDFDirectly = async (cartonId: string) => {
-    try {
-      const blob = await api.get(`/api/cartons/${cartonId}/label.pdf`) as Blob;
-      const url = window.URL.createObjectURL(blob);
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      iframe.onload = () => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          window.URL.revokeObjectURL(url);
-        }, 5000);
-      };
-    } catch (err: any) {
-      alert("PDF yazdırma hatası: " + err.message);
-    }
-  };
-
   const processBarcodeScan = async (code: string) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -336,7 +309,6 @@ export const DigiEyeScan: React.FC = () => {
 
         if (res.status === 'CartonClosed') {
           setStatus('cartonClosed');
-          setLastClosedCartonId(res.cartonId || null);
           setLastClosedCartonNo(res.cartonNo || null);
           
           setCartonNo(null);
@@ -523,7 +495,7 @@ export const DigiEyeScan: React.FC = () => {
                     className="form-control"
                     placeholder={cartonNo ? "Ürün QR kodunu okutun veya kameraya tutun..." : "Ön etiketli koli barkodunu okutun veya kameraya tutun..."}
                     value={barcodeInput}
-                    onChange={(e) => setCartonInput(e.target.value)}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
                     style={{ 
                       width: '100%',
                       paddingLeft: '48px', 
