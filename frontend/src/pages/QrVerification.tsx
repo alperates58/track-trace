@@ -131,7 +131,7 @@ export const QrVerification: React.FC = () => {
   };
 
   // Handle Step 1: Scan Carton Label
-  const handleLoadCarton = async (cartonCodeToFetch?: string) => {
+  const handleLoadCarton = async (cartonCodeToFetch?: string, isDemo = false) => {
     const code = (cartonCodeToFetch || cartonInput).trim();
     if (!code) {
       setLastAlert({
@@ -149,36 +149,46 @@ export const QrVerification: React.FC = () => {
       let itemsFromApi: any[] = [];
       let matchedCartonCode = code;
 
-      // 1. Primary Search: Find carton by cartonNo / cartonCode in cartons list
-      try {
-        const cartonsRes = await api.get(`/api/cartons?search=${encodeURIComponent(code)}&pageSize=50`);
-        const cartonList = cartonsRes?.data || cartonsRes || [];
-        const targetCarton = Array.isArray(cartonList) ? (cartonList.find(
-          (c: any) => c.cartonNo === code || c.cartonCode === code || c.id === code || (c.cartonNo && c.cartonNo.toLowerCase() === code.toLowerCase())
-        ) || cartonList[0]) : null;
-
-        if (targetCarton && targetCarton.id) {
-          matchedCartonCode = targetCarton.cartonNo || targetCarton.cartonCode || code;
-          const itemsRes = await api.get(`/api/cartons/${targetCarton.id}/items`);
-          if (Array.isArray(itemsRes) && itemsRes.length > 0) {
-            itemsFromApi = itemsRes;
-          }
-        }
-      } catch (err) {
-        console.error('Carton search error:', err);
-      }
-
-      // 2. Secondary Search: Search barcodes API if items still empty
-      if (itemsFromApi.length === 0) {
+      if (!isDemo) {
+        // 1. Primary Search: Fetch cartons list from backend and parse items array
         try {
-          const res = await api.get(`/api/barcodes/search?code=${encodeURIComponent(code)}`);
-          if (res && res.carton && res.carton.items) {
-            itemsFromApi = res.carton.items;
-          } else if (res && res.items) {
-            itemsFromApi = res.items;
+          const cartonsRes = await api.get(`/api/cartons?pageSize=10000`);
+          const cartonList: any[] = cartonsRes?.items || cartonsRes?.data || (Array.isArray(cartonsRes) ? cartonsRes : []);
+
+          const targetCarton = cartonList.find((c: any) => 
+            c.cartonNo === code || 
+            c.cartonCode === code || 
+            c.id === code || 
+            c.sscc === code ||
+            (c.cartonNo && c.cartonNo.toLowerCase() === code.toLowerCase()) ||
+            (c.cartonCode && c.cartonCode.toLowerCase() === code.toLowerCase())
+          );
+
+          if (targetCarton && targetCarton.id) {
+            matchedCartonCode = targetCarton.cartonNo || targetCarton.cartonCode || code;
+            const itemsRes = await api.get(`/api/cartons/${targetCarton.id}/items`);
+            const fetchedItems = Array.isArray(itemsRes) ? itemsRes : (itemsRes?.items || itemsRes?.data || []);
+            if (fetchedItems.length > 0) {
+              itemsFromApi = fetchedItems;
+            }
           }
-        } catch {
-          // Fallback
+        } catch (err) {
+          console.error('Carton search error:', err);
+        }
+
+        // 2. Secondary Search: Search barcodes API if items still empty
+        if (itemsFromApi.length === 0) {
+          try {
+            const res = await api.get(`/api/barcodes/search?code=${encodeURIComponent(code)}`);
+            if (res && res.carton && res.carton.items) {
+              itemsFromApi = res.carton.items;
+              matchedCartonCode = res.carton.cartonNo || code;
+            } else if (res && res.items) {
+              itemsFromApi = res.items;
+            }
+          } catch {
+            // Fallback
+          }
         }
       }
 
@@ -194,8 +204,8 @@ export const QrVerification: React.FC = () => {
             status: 'pending'
           };
         });
-      } else {
-        // Fallback demo items only if carton not found in system
+      } else if (isDemo) {
+        // Fallback demo items ONLY when user clicks Demo button explicitly
         const sampleCount = 12;
         formattedItems = Array.from({ length: sampleCount }).map((_, idx) => {
           return {
@@ -204,6 +214,15 @@ export const QrVerification: React.FC = () => {
             status: 'pending'
           };
         });
+      } else {
+        // Carton not found in DB
+        setLastAlert({
+          type: 'error',
+          title: 'Koli Bulunamadı',
+          message: `'${code}' kodlu koli veritabanında bulunamadı veya içerisinde okutulmuş ürün yok.`
+        });
+        playAudioFeedback('error');
+        return;
       }
 
       setActiveCartonCode(matchedCartonCode);
@@ -213,7 +232,7 @@ export const QrVerification: React.FC = () => {
       setLastAlert({
         type: 'info',
         title: 'Koli Yüklendi',
-        message: `Koli (${matchedCartonCode}) veritabanından başarıyla yüklendi. ${formattedItems.length} adet gerçek koli içi barkod doğrulama tablosuna eklendi.`
+        message: `Koli (${matchedCartonCode}) veritabanından başarıyla yüklendi. ${formattedItems.length} adet gerçek koli içi barkod tabloya eklendi.`
       });
       playAudioFeedback('success');
     } catch (err: any) {
@@ -230,8 +249,8 @@ export const QrVerification: React.FC = () => {
 
   // Helper for quick Demo Carton load (12-item box)
   const handleLoadDemoCarton = () => {
-    const demoCartonCode = `EH-260089-1162`;
-    handleLoadCarton(demoCartonCode);
+    const demoCartonCode = `DEMO-KOLI-12`;
+    handleLoadCarton(demoCartonCode, true);
   };
 
   // Handle Step 2: Product Scanning
