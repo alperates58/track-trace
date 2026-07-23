@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  CheckSquare, 
   QrCode, 
   Search, 
   AlertTriangle, 
   CheckCircle2, 
   XCircle, 
-  RefreshCw, 
   Camera, 
   Package, 
   Copy, 
