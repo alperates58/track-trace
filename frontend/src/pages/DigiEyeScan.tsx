@@ -210,6 +210,8 @@ export const DigiEyeScan: React.FC = () => {
     };
   }, [digiEyeIp, digiEyeEnabled]);
 
+  const lastScannedTimeRef = useRef<{ code: string; time: number }>({ code: '', time: 0 });
+
   // DIGIEYE LIVE IMAGE FRAME BARCODE DETECTOR (Fallback scanner when WS is blocked by HTTPS)
   useEffect(() => {
     if (!('BarcodeDetector' in window)) return;
@@ -230,11 +232,22 @@ export const DigiEyeScan: React.FC = () => {
 
       try {
         isScanningFrame = true;
-        const detectedBarcodes = await detector.detect(imgEl);
+        let source: any = imgEl;
+        if ('createImageBitmap' in window) {
+          try {
+            source = await createImageBitmap(imgEl);
+          } catch {}
+        }
+        const detectedBarcodes = await detector.detect(source);
         if (detectedBarcodes && detectedBarcodes.length > 0) {
           for (const b of detectedBarcodes) {
             if (b.rawValue && b.rawValue.length >= 3) {
               const scannedCode = b.rawValue.trim();
+              const now = Date.now();
+              if (lastScannedTimeRef.current.code === scannedCode && (now - lastScannedTimeRef.current.time) < 2500) {
+                break;
+              }
+              lastScannedTimeRef.current = { code: scannedCode, time: now };
               setLastDigiEyeRead(scannedCode);
               processBarcodeScan(scannedCode);
               break;
