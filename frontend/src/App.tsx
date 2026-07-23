@@ -44,6 +44,7 @@ const PermissionMatrix = React.lazy(() => import('./pages/PermissionMatrix').the
 const PrintSettings = React.lazy(() => import('./pages/PrintSettings').then(module => ({ default: module.PrintSettings })));
 const Shipments = React.lazy(() => import('./pages/Shipments').then(module => ({ default: module.Shipments })));
 const QrVerification = React.lazy(() => import('./pages/QrVerification').then(module => ({ default: module.QrVerification })));
+const DigiEyeScan = React.lazy(() => import('./pages/DigiEyeScan').then(module => ({ default: module.DigiEyeScan })));
 
 const PageLoader: React.FC = () => (
   <div className="tt-loading-state" role="status" aria-live="polite">
@@ -155,6 +156,7 @@ const AppShell: React.FC = () => {
     orders: 'Sipariş Yönetimi',
     scan: 'Otomatik Koli Modu',
     'preprint-scan': 'Ön Etiketli Koli Modu',
+    'digieye-scan': 'DigiEye Okutma Modu',
     cartons: 'Koli Yönetimi',
     'preprint-create': 'Ön Etiket Oluştur',
     'qr-verification': 'QR Doğrulama',
@@ -172,7 +174,7 @@ const AppShell: React.FC = () => {
     system: 'Sistem Bilgisi'
   };
   const activePageTitle = pageTitles[activeTab] || activeTab;
-  const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'cartons', 'preprint-create', 'qr-verification', 'pallets', 'shipments'].includes(activeTab)
+  const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'digieye-scan', 'cartons', 'preprint-create', 'qr-verification', 'pallets', 'shipments'].includes(activeTab)
     ? 'Operations'
     : ['users', 'stations', 'audit', 'permission-matrix', 'print-settings', 'system'].includes(activeTab)
       ? 'Administration'
@@ -188,6 +190,8 @@ const AppShell: React.FC = () => {
         return showScan ? <Scan /> : <Unauthorized />;
       case 'preprint-scan':
         return showScan ? <PrePrintedScan /> : <Unauthorized />;
+      case 'digieye-scan':
+        return showScan ? <DigiEyeScan /> : <Unauthorized />;
       case 'cartons':
         return showCartons ? <Cartons onNavigate={setActiveTab} /> : <Unauthorized />;
       case 'preprint-create':
@@ -286,6 +290,14 @@ const AppShell: React.FC = () => {
                     >
                       <Barcode size={18} style={{ flexShrink: 0 }} />
                       <span>Ön Etiketli Koli Modu</span>
+                    </div>
+                    <div 
+                      className={`sidebar-link ${activeTab === 'digieye-scan' ? 'active' : ''}`}
+                      onClick={() => handleTabClick('digieye-scan')}
+                      title="DigiEye Okutma Modu"
+                    >
+                      <Camera size={18} style={{ flexShrink: 0 }} />
+                      <span>DigiEye Okutma Modu</span>
                     </div>
                   </>
                 )}
