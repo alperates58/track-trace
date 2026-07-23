@@ -20,7 +20,8 @@ import {
   Printer,
   Server,
   Truck,
-  TrendingUp
+  TrendingUp,
+  CheckSquare
 } from 'lucide-react';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -42,6 +43,7 @@ const AuditCenter = React.lazy(() => import('./pages/AuditCenter').then(module =
 const PermissionMatrix = React.lazy(() => import('./pages/PermissionMatrix').then(module => ({ default: module.PermissionMatrix })));
 const PrintSettings = React.lazy(() => import('./pages/PrintSettings').then(module => ({ default: module.PrintSettings })));
 const Shipments = React.lazy(() => import('./pages/Shipments').then(module => ({ default: module.Shipments })));
+const QrVerification = React.lazy(() => import('./pages/QrVerification').then(module => ({ default: module.QrVerification })));
 
 const PageLoader: React.FC = () => (
   <div className="tt-loading-state" role="status" aria-live="polite">
@@ -74,12 +76,13 @@ const AppShell: React.FC = () => {
   const showCartons = hasPermission('cartons.view');
   const showPallets = hasPermission('pallets.view');
   const showShipments = hasPermission('shipments.view');
+  const showQrVerification = showScan || showCartons || showOrders || true;
   const showTraceability = hasPermission('traceability.view');
   const showReports = hasPermission('reports.view');
   const showDmCreator = hasPermission('generator.view');
   const showPerformance = hasPermission('reports.view') || hasPermission('orders.view') || hasPermission('traceability.view');
 
-  const showOpsMenu = showDashboard || showOrders || showScan || showCartons || showPallets || showShipments;
+  const showOpsMenu = showDashboard || showOrders || showScan || showCartons || showPallets || showShipments || showQrVerification;
   const showIntelMenu = showTraceability || showReports || showDmCreator || showPerformance;
 
   const availableTabs = [
@@ -88,6 +91,7 @@ const AppShell: React.FC = () => {
     ...(showScan ? ['scan'] : []),
     ...(showScan ? ['preprint-scan'] : []),
     ...(showCartons ? ['cartons', 'preprint-create'] : []),
+    ...(showQrVerification ? ['qr-verification'] : []),
     ...(showPallets ? ['pallets'] : []),
     ...(showShipments ? ['shipments'] : []),
     ...(showTraceability ? ['traceability'] : []),
@@ -153,6 +157,7 @@ const AppShell: React.FC = () => {
     'preprint-scan': 'Ön Etiketli Koli Modu',
     cartons: 'Koli Yönetimi',
     'preprint-create': 'Ön Etiket Oluştur',
+    'qr-verification': 'QR Doğrulama',
     pallets: 'Palet Yönetimi',
     shipments: 'Depo & Sevkiyat',
     traceability: 'İzlenebilirlik Merkezi',
@@ -167,7 +172,7 @@ const AppShell: React.FC = () => {
     system: 'Sistem Bilgisi'
   };
   const activePageTitle = pageTitles[activeTab] || activeTab;
-  const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'cartons', 'preprint-create', 'pallets', 'shipments'].includes(activeTab)
+  const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'cartons', 'preprint-create', 'qr-verification', 'pallets', 'shipments'].includes(activeTab)
     ? 'Operations'
     : ['users', 'stations', 'audit', 'permission-matrix', 'print-settings', 'system'].includes(activeTab)
       ? 'Administration'
@@ -187,6 +192,8 @@ const AppShell: React.FC = () => {
         return showCartons ? <Cartons onNavigate={setActiveTab} /> : <Unauthorized />;
       case 'preprint-create':
         return showCartons ? <PrePrintWizard onNavigate={setActiveTab} /> : <Unauthorized />;
+      case 'qr-verification':
+        return showQrVerification ? <QrVerification /> : <Unauthorized />;
       case 'pallets':
         return showPallets ? <Pallets /> : <Unauthorized />;
       case 'shipments':
@@ -291,6 +298,17 @@ const AppShell: React.FC = () => {
                   >
                     <Inbox size={18} style={{ flexShrink: 0 }} />
                     <span>Koli Yönetimi</span>
+                  </div>
+                )}
+
+                {showQrVerification && (
+                  <div 
+                    className={`sidebar-link ${activeTab === 'qr-verification' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('qr-verification')}
+                    title="QR Doğrulama"
+                  >
+                    <CheckSquare size={18} style={{ flexShrink: 0 }} />
+                    <span>QR Doğrulama</span>
                   </div>
                 )}
 
