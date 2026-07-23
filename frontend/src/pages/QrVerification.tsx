@@ -130,6 +130,16 @@ export const QrVerification: React.FC = () => {
     }
   };
 
+  // Helper to sanitize QR codes (removes any 10 (Lot) or 17 (Expiry) segments)
+  const cleanRawQrCode = (rawStr: string): string => {
+    if (!rawStr) return '';
+    let str = rawStr.trim().replace(/[\u001d\u001e\u0004]/g, '');
+    str = str.replace(/10LOT[a-zA-Z0-9_-]*/gi, '');
+    str = str.replace(/10[a-zA-Z0-9_-]{3,15}/g, '');
+    str = str.replace(/17\d{6}/g, '');
+    return str;
+  };
+
   // Handle Step 1: Scan Carton Label
   const handleLoadCarton = async (cartonCodeToFetch?: string) => {
     const code = (cartonCodeToFetch || cartonInput).trim();
@@ -171,16 +181,16 @@ export const QrVerification: React.FC = () => {
 
       if (itemsFromApi.length > 0) {
         formattedItems = itemsFromApi.map((item: any, idx: number) => {
-          // Pure exact QR format as loaded from database
-          const qr = item.qrCode || item.dataMatrix || item.serialNumber || `010869950000100121SN-${code.replace(/[^a-zA-Z0-9]/g, '')}-${1001 + idx}`;
+          const raw = item.qrCode || item.dataMatrix || item.serialNumber || `010869950000100121SN-${code.replace(/[^a-zA-Z0-9]/g, '')}-${1001 + idx}`;
+          const cleanQr = cleanRawQrCode(raw);
           return {
             id: item.id || `item-${idx + 1}`,
-            qrCode: qr,
+            qrCode: cleanQr,
             status: 'pending'
           };
         });
       } else {
-        // Clean, simple QR codes matching exact user input format (NO extra Lot/Expiry appended!)
+        // Clean, simple QR codes matching exact user input format
         const sampleCount = 12;
         const cleanCarton = code.replace(/[^a-zA-Z0-9]/g, '');
         const baseGtin = '08699500001001';
@@ -238,7 +248,7 @@ export const QrVerification: React.FC = () => {
       return;
     }
 
-    const cleanInput = code.replace(/[\u001d\u001e\u0004]/g, '');
+    const cleanInput = cleanRawQrCode(code);
 
     // Strict or substring match against exact QR format
     const matchIndex = expectedItems.findIndex(item => {
