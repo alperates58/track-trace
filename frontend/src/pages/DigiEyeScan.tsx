@@ -11,6 +11,7 @@ import {
   ExternalLink,
   CheckCircle2,
   XCircle,
+  AlertTriangle,
   Eye
 } from 'lucide-react';
 
@@ -504,6 +505,41 @@ export const DigiEyeScan: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* HTTPS Mixed Content Warning Banner */}
+      {window.location.protocol === 'https:' && digiEyeStatus !== 'connected' && (
+        <div style={{
+          backgroundColor: '#fffbeb',
+          border: '1px solid #fde047',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          color: '#854d0e',
+          fontSize: '0.85rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={18} color="#d97706" style={{ flexShrink: 0 }} />
+            <span>
+              <strong>Chrome Güvenlik Uyarısı:</strong> Sayfa HTTPS üzerinden açık olduğu için Chrome yerel kamera soketini (<code>10.0.0.160</code>) engelliyor. Kameranın anında kesintisiz bağlanması için adresi HTTP olarak açabilirsiniz.
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => {
+              window.location.href = window.location.href.replace('https://', 'http://');
+            }}
+            style={{ backgroundColor: '#fef08a', color: '#854d0e', fontWeight: 700, borderRadius: '6px', padding: '6px 12px', fontSize: '0.8rem', border: '1px solid #facc15', flexShrink: 0, cursor: 'pointer' }}
+          >
+            HTTP Olarak Aç (Kesintisiz Bağlan)
+          </button>
+        </div>
+      )}
 
       {/* Main Grid Layout: Scanner & Live Camera View */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', marginBottom: '24px' }}>
