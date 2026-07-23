@@ -448,10 +448,6 @@ export const DigiEyeScan: React.FC = () => {
           setLastClosedCartonId(res.cartonId || null);
           setLastClosedCartonNo(res.cartonNo || null);
           setLastClosedCartonSSCC(res.sscc || null);
-
-          if (autoPrintEnabled && res.cartonId) {
-            handlePrintClosedCartonLabel(res.cartonId);
-          }
           
           setCartonNo(null);
           setCartonSSCC(null);
