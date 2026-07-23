@@ -541,25 +541,28 @@ export const QrVerification: React.FC = () => {
         {!activeCartonCode ? (
           /* Step 1 Input */
           <form onSubmit={(e) => { e.preventDefault(); handleLoadCarton(); }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
+            <div style={{ display: 'flex', gap: '12px', width: '100%', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                 <input
                   ref={cartonInputRef}
                   type="text"
                   className="form-control"
-                  placeholder="Koli QR veya Barkodunu okutun..."
+                  placeholder="Koli QR veya Barkod etiketini okutun..."
                   value={cartonInput}
                   onChange={(e) => setCartonInput(e.target.value)}
                   style={{ 
-                    paddingLeft: '40px', 
-                    fontSize: '0.95rem', 
-                    height: '48px',
+                    width: '100%',
+                    paddingLeft: '48px', 
+                    fontSize: '1.05rem', 
+                    fontWeight: 600,
+                    height: '52px',
                     borderRadius: '10px',
                     border: '1px solid #cbd5e1',
-                    boxShadow: 'none'
+                    backgroundColor: '#ffffff',
+                    color: '#0f172a'
                   }}
                 />
-                <Package size={18} style={{ position: 'absolute', left: '14px', top: '15px', color: '#94a3b8' }} />
+                <Package size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: '#94a3b8' }} />
               </div>
 
               <button 
@@ -567,19 +570,21 @@ export const QrVerification: React.FC = () => {
                 className="btn"
                 disabled={isLoadingCarton}
                 style={{ 
-                  height: '48px', 
-                  padding: '0 24px', 
+                  height: '52px', 
+                  padding: '0 28px', 
                   borderRadius: '10px', 
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  fontSize: '1rem',
                   backgroundColor: '#2563eb',
-                  color: '#ffffff'
+                  color: '#ffffff',
+                  flexShrink: 0
                 }}
               >
                 {isLoadingCarton ? 'Yükleniyor...' : 'Koli Yükle'}
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn btn-sm"
@@ -587,24 +592,24 @@ export const QrVerification: React.FC = () => {
                   setCameraScanTarget('carton');
                   setIsCameraOpen(true);
                 }}
-                style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}
               >
-                <Camera size={14} /> Kamera İle Okut
+                <Camera size={15} /> Kamera İle Okut
               </button>
 
               <button
                 type="button"
                 className="btn btn-sm"
                 onClick={handleLoadDemoCarton}
-                style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, border: '1px solid #bfdbfe' }}
               >
-                <Sparkles size={14} /> Demo 12'li Koli Yükle (Hızlı Test)
+                <Sparkles size={15} /> Demo 12'li Koli (Hızlı Test)
               </button>
 
               {existingCartons.length > 0 && (
                 <select
                   className="form-control form-control-sm"
-                  style={{ width: 'auto', fontSize: '0.8rem', borderRadius: '8px', borderColor: '#cbd5e1' }}
+                  style={{ width: 'auto', fontSize: '0.85rem', borderRadius: '8px', borderColor: '#cbd5e1', height: '36px' }}
                   onChange={(e) => {
                     if (e.target.value) handleLoadCarton(e.target.value);
                   }}
@@ -623,47 +628,53 @@ export const QrVerification: React.FC = () => {
         ) : (
           /* Step 2 Input */
           <form onSubmit={(e) => { e.preventDefault(); handleScanProduct(); }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
+            <div style={{ display: 'flex', gap: '12px', width: '100%', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                 <input
                   ref={productInputRef}
                   type="text"
                   className="form-control"
-                  placeholder="Koli içindeki tekil ürün QR kodunu okutun..."
+                  placeholder="Koli içindeki ürün QR kodunu okutun..."
                   value={productScanInput}
                   onChange={(e) => setProductScanInput(e.target.value)}
                   style={{ 
-                    paddingLeft: '40px', 
-                    fontSize: '0.95rem', 
-                    height: '48px',
+                    width: '100%',
+                    paddingLeft: '48px', 
+                    fontSize: '1.05rem', 
+                    fontWeight: 600,
+                    height: '52px',
                     borderRadius: '10px',
                     border: '2px solid #2563eb',
-                    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)'
+                    backgroundColor: '#ffffff',
+                    color: '#0f172a',
+                    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.12)'
                   }}
                 />
-                <QrCode size={18} style={{ position: 'absolute', left: '14px', top: '15px', color: '#2563eb' }} />
+                <QrCode size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: '#2563eb' }} />
               </div>
 
               <button 
                 type="submit" 
                 className="btn"
                 style={{ 
-                  height: '48px', 
-                  padding: '0 24px', 
+                  height: '52px', 
+                  padding: '0 28px', 
                   borderRadius: '10px', 
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  fontSize: '1rem',
                   backgroundColor: '#2563eb',
                   color: '#ffffff',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '8px',
+                  flexShrink: 0
                 }}
               >
-                <ArrowRight size={18} /> OKUT
+                <ArrowRight size={20} /> OKUT
               </button>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap', gap: '10px' }}>
               <button
                 type="button"
                 className="btn btn-sm"
@@ -671,9 +682,9 @@ export const QrVerification: React.FC = () => {
                   setCameraScanTarget('product');
                   setIsCameraOpen(true);
                 }}
-                style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}
               >
-                <Camera size={14} /> Ürün QR Kamerası
+                <Camera size={15} /> Ürün QR Kamerası
               </button>
 
               <button
@@ -681,7 +692,7 @@ export const QrVerification: React.FC = () => {
                 className="btn btn-sm"
                 onClick={handleAutoMatch11}
                 title="11 ürünü otomatik eşleştirerek kalan 12. ürün QR tespitini görün"
-                style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}
+                style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #bfdbfe' }}
               >
                 ⚡ 11 Tanesini Otomatik Eşleştir (Test)
               </button>
