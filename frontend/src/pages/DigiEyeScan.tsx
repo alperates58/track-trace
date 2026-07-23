@@ -209,6 +209,47 @@ export const DigiEyeScan: React.FC = () => {
     };
   }, [digiEyeIp, digiEyeEnabled]);
 
+  // DIGIEYE LIVE IMAGE FRAME BARCODE DETECTOR (Fallback scanner when WS is blocked by HTTPS)
+  useEffect(() => {
+    if (!('BarcodeDetector' in window)) return;
+    
+    let detector: any = null;
+    try {
+      detector = new (window as any).BarcodeDetector({
+        formats: ['qr_code', 'data_matrix', 'code_128', 'ean_13', 'code_39']
+      });
+    } catch {
+      return;
+    }
+
+    let isScanningFrame = false;
+    const interval = setInterval(async () => {
+      const imgEl = document.getElementById('digieye-live-frame') as HTMLImageElement;
+      if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0 || isScanningFrame) return;
+
+      try {
+        isScanningFrame = true;
+        const detectedBarcodes = await detector.detect(imgEl);
+        if (detectedBarcodes && detectedBarcodes.length > 0) {
+          for (const b of detectedBarcodes) {
+            if (b.rawValue && b.rawValue.length >= 3) {
+              const scannedCode = b.rawValue.trim();
+              setLastDigiEyeRead(scannedCode);
+              processBarcodeScan(scannedCode);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        // Silent catch for frame detection
+      } finally {
+        isScanningFrame = false;
+      }
+    }, 450);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Keep input focused
   useEffect(() => {
     const focusInput = () => {
@@ -671,6 +712,8 @@ export const DigiEyeScan: React.FC = () => {
             {/* Camera Image Stream Frame */}
             <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden', height: '260px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img
+                id="digieye-live-frame"
+                crossOrigin="anonymous"
                 src={`http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`}
                 alt="DigiEye Live Stream"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
