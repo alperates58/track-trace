@@ -741,7 +741,11 @@ export const DigiEyeScan: React.FC = () => {
                 alt="DigiEye Live Stream"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
+                  const target = e.target as HTMLImageElement;
+                  const directUrl = `http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`;
+                  if (!target.src.includes(`http://${digiEyeIp.split(':')[0]}`)) {
+                    target.src = directUrl;
+                  }
                 }}
               />
 
