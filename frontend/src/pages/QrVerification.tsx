@@ -14,7 +14,11 @@ import {
   ArrowRight,
   Check,
   Zap,
-  RotateCcw
+  RotateCcw,
+  Wifi,
+  WifiOff,
+  Settings,
+  ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
 import { CameraScanner } from '../components/CameraScanner';
@@ -53,6 +57,14 @@ export const QrVerification: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
+  // DigiEye Industrial IP Camera Integration States
+  const [digiEyeIp, setDigiEyeIp] = useState(() => localStorage.getItem('tt_digieye_ip') || '10.0.0.160:5173');
+  const [digiEyeEnabled, setDigiEyeEnabled] = useState(() => localStorage.getItem('tt_digieye_enabled') !== 'false');
+  const [digiEyeStatus, setDigiEyeStatus] = useState<'connected' | 'connecting' | 'disconnected'>('disconnected');
+  const [showIpConfigModal, setShowIpConfigModal] = useState(false);
+  const [customIpInput, setCustomIpInput] = useState(digiEyeIp);
+  const [lastDigiEyeRead, setLastDigiEyeRead] = useState<string | null>(null);
+
   // Feedback alert state
   const [lastAlert, setLastAlert] = useState<{
     type: 'success' | 'warning' | 'error' | 'info';
@@ -63,6 +75,18 @@ export const QrVerification: React.FC = () => {
   // Input refs
   const cartonInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const activeCartonRef = useRef<string | null>(null);
+  const expectedItemsRef = useRef<ExpectedItem[]>([]);
+
+  // Keep refs in sync for WebSocket handlers
+  useEffect(() => {
+    activeCartonRef.current = activeCartonCode;
+  }, [activeCartonCode]);
+
+  useEffect(() => {
+    expectedItemsRef.current = expectedItems;
+  }, [expectedItems]);
 
   // Focus carton input on mount
   useEffect(() => {
@@ -78,6 +102,117 @@ export const QrVerification: React.FC = () => {
       }, 100);
     }
   }, [activeCartonCode, expectedItems.length]);
+
+  // Save DigiEye settings
+  useEffect(() => {
+    localStorage.setItem('tt_digieye_ip', digiEyeIp);
+    localStorage.setItem('tt_digieye_enabled', String(digiEyeEnabled));
+  }, [digiEyeIp, digiEyeEnabled]);
+
+  // DIGIEYE WEBSOCKET LIVE LISTENER HOOK
+  useEffect(() => {
+    if (!digiEyeEnabled || !digiEyeIp) {
+      setDigiEyeStatus('disconnected');
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      return;
+    }
+
+    let reconnectTimer: any = null;
+    let isComponentMounted = true;
+
+    const connectWebSocket = () => {
+      try {
+        setDigiEyeStatus('connecting');
+        const cleanIp = digiEyeIp.trim().replace(/^ws:\/\//, '').replace(/^http:\/\//, '');
+        const wsUrl = `ws://${cleanIp}/`;
+        
+        const socket = new WebSocket(wsUrl);
+        wsRef.current = socket;
+
+        socket.onopen = () => {
+          if (!isComponentMounted) return;
+          setDigiEyeStatus('connected');
+        };
+
+        socket.onmessage = (event) => {
+          if (!isComponentMounted) return;
+          try {
+            const data = JSON.parse(event.data);
+            
+            // Ignore heartbeat ping/pong messages
+            if (data.type === 'ping' || data.type === 'pong') return;
+
+            // Extract barcode candidate from DigiEye WebSocket message payload
+            const rawCodeCandidate = 
+              data.barcode || 
+              data.code || 
+              data.data || 
+              data.value || 
+              data.text || 
+              data.result || 
+              data.rawCode || 
+              data.dataMatrix ||
+              (typeof data === 'string' ? data : null);
+
+            if (rawCodeCandidate && typeof rawCodeCandidate === 'string' && rawCodeCandidate.length >= 3) {
+              const scannedCode = rawCodeCandidate.trim();
+              setLastDigiEyeRead(scannedCode);
+
+              // Auto-verify if active carton is loaded, else load carton
+              if (activeCartonRef.current) {
+                handleScanProduct(scannedCode);
+              } else {
+                handleLoadCarton(scannedCode);
+              }
+            }
+          } catch {
+            // Handle plain string message if not JSON
+            if (typeof event.data === 'string' && event.data.length >= 4 && !event.data.includes('ping')) {
+              const scannedCode = event.data.trim();
+              setLastDigiEyeRead(scannedCode);
+              if (activeCartonRef.current) {
+                handleScanProduct(scannedCode);
+              } else {
+                handleLoadCarton(scannedCode);
+              }
+            }
+          }
+        };
+
+        socket.onerror = () => {
+          if (!isComponentMounted) return;
+          setDigiEyeStatus('disconnected');
+        };
+
+        socket.onclose = () => {
+          if (!isComponentMounted) return;
+          setDigiEyeStatus('disconnected');
+          // Auto-reconnect every 4 seconds
+          reconnectTimer = setTimeout(() => {
+            if (isComponentMounted && digiEyeEnabled) {
+              connectWebSocket();
+            }
+          }, 4000);
+        };
+      } catch {
+        if (isComponentMounted) setDigiEyeStatus('disconnected');
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      isComponentMounted = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [digiEyeIp, digiEyeEnabled]);
 
   const loadExistingCartons = async () => {
     try {
@@ -196,7 +331,6 @@ export const QrVerification: React.FC = () => {
 
       if (itemsFromApi.length > 0) {
         formattedItems = itemsFromApi.map((item: any, idx: number) => {
-          // Extract exact real barcode string from database item object (item.rawCode / item.barcode / etc.)
           const raw = item.rawCode || item.rawBarcode || item.code || item.qrCode || item.barcode || item.dataMatrix || item.serialNo || item.serialNumber;
           return {
             id: item.id || `item-${idx + 1}`,
@@ -205,7 +339,6 @@ export const QrVerification: React.FC = () => {
           };
         });
       } else if (isDemo) {
-        // Fallback demo items ONLY when user clicks Demo button explicitly
         const sampleCount = 12;
         formattedItems = Array.from({ length: sampleCount }).map((_, idx) => {
           return {
@@ -215,7 +348,6 @@ export const QrVerification: React.FC = () => {
           };
         });
       } else {
-        // Carton not found in DB
         setLastAlert({
           type: 'error',
           title: 'Koli Bulunamadı',
@@ -232,7 +364,7 @@ export const QrVerification: React.FC = () => {
       setLastAlert({
         type: 'info',
         title: 'Koli Yüklendi',
-        message: `Koli (${matchedCartonCode}) veritabanından başarıyla yüklendi. ${formattedItems.length} adet gerçek koli içi barkod tabloya eklendi.`
+        message: `Koli (${matchedCartonCode}) veritabanından yüklendi. ${formattedItems.length} adet gerçek koli içi barkod tabloya eklendi.`
       });
       playAudioFeedback('success');
     } catch (err: any) {
@@ -247,7 +379,6 @@ export const QrVerification: React.FC = () => {
     }
   };
 
-  // Helper for quick Demo Carton load (12-item box)
   const handleLoadDemoCarton = () => {
     const demoCartonCode = `DEMO-KOLI-12`;
     handleLoadCarton(demoCartonCode, true);
@@ -260,7 +391,9 @@ export const QrVerification: React.FC = () => {
 
     setProductScanInput('');
 
-    if (expectedItems.length === 0) {
+    const currentExpectedItems = expectedItemsRef.current.length > 0 ? expectedItemsRef.current : expectedItems;
+
+    if (currentExpectedItems.length === 0) {
       setLastAlert({
         type: 'warning',
         title: 'Önce Koli Okutun',
@@ -272,8 +405,7 @@ export const QrVerification: React.FC = () => {
     const cleanInput = code.replace(/[\u001d\u001e\u0004]/g, '');
     const gsInput = code.replace(/[\u001d\u001e\u0004]/g, 'GS');
 
-    // Flexible match against real database barcodes (with or without GS control character)
-    const matchIndex = expectedItems.findIndex(item => {
+    const matchIndex = currentExpectedItems.findIndex(item => {
       const cleanItem = item.qrCode.replace(/[\u001d\u001e\u0004]/g, '');
       const gsItem = item.qrCode.replace(/[\u001d\u001e\u0004]/g, 'GS');
 
@@ -284,7 +416,7 @@ export const QrVerification: React.FC = () => {
     });
 
     if (matchIndex !== -1) {
-      const targetItem = expectedItems[matchIndex];
+      const targetItem = currentExpectedItems[matchIndex];
       if (targetItem.status === 'matched') {
         setLastAlert({
           type: 'warning',
@@ -293,7 +425,7 @@ export const QrVerification: React.FC = () => {
         });
         playAudioFeedback('warning');
       } else {
-        const updated = [...expectedItems];
+        const updated = [...currentExpectedItems];
         updated[matchIndex] = {
           ...targetItem,
           status: 'matched',
@@ -324,7 +456,7 @@ export const QrVerification: React.FC = () => {
       setLastAlert({
         type: 'error',
         title: 'Hatalı QR Kodu! ❌',
-        message: `Okutulan QR kodu (${code}) bu kolinin listesinde bulunamadı!`
+        message: `Okutulan QR kodu (${code.slice(0, 30)}...) bu kolinin listesinde bulunamadı!`
       });
       playAudioFeedback('error');
     }
@@ -334,7 +466,6 @@ export const QrVerification: React.FC = () => {
     }, 50);
   };
 
-  // Quick Action for Testing: Auto-match 11 of 12 items to test the deduction alert!
   const handleAutoMatch11 = () => {
     if (expectedItems.length === 0) return;
     const targetMatchCount = Math.max(1, expectedItems.length - 1);
@@ -397,7 +528,7 @@ export const QrVerification: React.FC = () => {
     <div style={{ padding: '24px 32px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
       {/* Sleek Minimalist Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#0f172a', letterSpacing: '-0.02em' }}>
             QR Doğrulama & Koli Kontrolü
@@ -407,7 +538,39 @@ export const QrVerification: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Global Controls & DigiEye IP Camera Status Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          
+          {/* DIGIEYE IP CAMERA STATUS BADGE */}
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              backgroundColor: digiEyeStatus === 'connected' ? '#f0fdf4' : digiEyeStatus === 'connecting' ? '#fffbeb' : '#fef2f2',
+              border: `1px solid ${digiEyeStatus === 'connected' ? '#bbf7d0' : digiEyeStatus === 'connecting' ? '#fef08a' : '#fecaca'}`,
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: digiEyeStatus === 'connected' ? '#166534' : digiEyeStatus === 'connecting' ? '#854d0e' : '#991b1b'
+            }}
+          >
+            {digiEyeStatus === 'connected' ? <Wifi size={14} color="#166534" /> : <WifiOff size={14} color="#991b1b" />}
+            <span>
+              {digiEyeStatus === 'connected' ? `DigiEye IP Kamera (${digiEyeIp.split(':')[0]}): Bağlı` :
+               digiEyeStatus === 'connecting' ? `DigiEye Bağlanıyor...` : `DigiEye Kamera: Kapalı`}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowIpConfigModal(true)}
+              style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', display: 'flex', color: 'inherit' }}
+              title="DigiEye Kamera Ayarları"
+            >
+              <Settings size={13} />
+            </button>
+          </div>
+
           <button
             type="button"
             className="btn"
@@ -491,7 +654,7 @@ export const QrVerification: React.FC = () => {
         </div>
       )}
 
-      {/* UNIFIED INTERACTIVE SCANNER DECK (Step 1 & Step 2 Seamless Workflow) */}
+      {/* UNIFIED INTERACTIVE SCANNER DECK */}
       <div style={{ 
         backgroundColor: '#ffffff', 
         border: '1px solid #e2e8f0', 
@@ -675,17 +838,28 @@ export const QrVerification: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap', gap: '10px' }}>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => {
-                  setCameraScanTarget('product');
-                  setIsCameraOpen(true);
-                }}
-                style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}
-              >
-                <Camera size={15} /> Ürün QR Kamerası
-              </button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => {
+                    setCameraScanTarget('product');
+                    setIsCameraOpen(true);
+                  }}
+                  style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}
+                >
+                  <Camera size={15} /> Ürün QR Kamerası
+                </button>
+
+                <a 
+                  href={`http://${digiEyeIp.split(':')[0]}:5173`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  style={{ fontSize: '0.85rem', color: '#2563eb', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}
+                >
+                  <ExternalLink size={14} /> DigiEye Canlı Panel
+                </a>
+              </div>
 
               <button
                 type="button"
@@ -727,6 +901,11 @@ export const QrVerification: React.FC = () => {
               <span style={{ color: '#b45309', fontWeight: 600 }}>Kalan: </span>
               <strong style={{ color: '#d97706', fontSize: '1rem' }}>{remainingCount}</strong>
             </div>
+            {lastDigiEyeRead && (
+              <div style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 500 }}>
+                ⚡ Son IP Kamera Okuması: <code style={{ backgroundColor: '#eff6ff', padding: '2px 6px', borderRadius: '4px' }}>{lastDigiEyeRead}</code>
+              </div>
+            )}
           </div>
 
           {/* Progress Bar */}
@@ -1040,6 +1219,69 @@ export const QrVerification: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* DigiEye Camera Config Modal */}
+      {showIpConfigModal && (
+        <div className="modal-backdrop" style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 
+        }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', maxWidth: '420px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 8px', color: '#0f172a' }}>
+              DigiEye IP Kamera Ayarları
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 16px' }}>
+              Endüstriyel DigiEye kameranızın ağ adresini ve soket bağlantısını yönetin.
+            </p>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Kamera IP & Port Adresi:
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Örn: 10.0.0.160:5173"
+                value={customIpInput}
+                onChange={(e) => setCustomIpInput(e.target.value)}
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <input
+                type="checkbox"
+                id="digieyeToggle"
+                checked={digiEyeEnabled}
+                onChange={(e) => setDigiEyeEnabled(e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              <label htmlFor="digieyeToggle" style={{ fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}>
+                DigiEye IP Kamera Otomatik Dinlemeyi Etkinleştir
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowIpConfigModal(false)}
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setDigiEyeIp(customIpInput.trim());
+                  setShowIpConfigModal(false);
+                }}
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
