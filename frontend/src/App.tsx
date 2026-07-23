@@ -21,7 +21,8 @@ import {
   Server,
   Truck,
   TrendingUp,
-  CheckSquare
+  CheckSquare,
+  Camera
 } from 'lucide-react';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));

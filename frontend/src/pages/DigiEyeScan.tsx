@@ -1,26 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
-import { getPrintProvider } from '../services/printProvider';
-import { useAuth } from '../context/AuthContext';
 import { 
   Volume2, 
   VolumeX, 
   Barcode, 
-  Printer, 
   Camera, 
   Wifi, 
   WifiOff, 
   Settings, 
   ExternalLink,
-  RefreshCw,
-  Zap,
-  Package,
   CheckCircle2,
-  AlertTriangle,
   XCircle,
   Eye
 } from 'lucide-react';
-import { CameraScanner } from '../components/CameraScanner';
 
 interface Station {
   id: string;
@@ -37,8 +29,6 @@ interface ScanHistory {
 }
 
 export const DigiEyeScan: React.FC = () => {
-  const { user, hasPermission } = useAuth();
-
   // Stations
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedStationId, setSelectedStationId] = useState<string>('');
@@ -52,7 +42,6 @@ export const DigiEyeScan: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const isProcessingRef = useRef<boolean>(false);
   const [barcodeInput, setBarcodeInput] = useState('');
-  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Scan state
   const [status, setStatus] = useState<'ready' | 'success' | 'error' | 'cartonClosed'>('ready');
@@ -61,24 +50,17 @@ export const DigiEyeScan: React.FC = () => {
 
   // Active carton details
   const [cartonNo, setCartonNo] = useState<string | null>(null);
-  const [cartonSSCC, setCartonSSCC] = useState<string | null>(null);
   const [activeCartonId, setActiveCartonId] = useState<string | null>(null);
   const [currentQty, setCurrentQty] = useState(0);
   const [targetQty, setTargetQty] = useState(0);
 
-  // Last closed carton details (for label reprint & ZPL)
+  // Last closed carton details
   const [lastClosedCartonId, setLastClosedCartonId] = useState<string | null>(null);
   const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
-  const [lastClosedCartonSSCC, setLastClosedCartonSSCC] = useState<string | null>(null);
 
   // History & settings
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isOnline, setIsOnline] = useState(true);
-
-  const [printMode, setPrintMode] = useState<string>('browser');
-  const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(true);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   // DIGIEYE INDUSTRIAL IP CAMERA STATES
   const [digiEyeIp, setDigiEyeIp] = useState(() => localStorage.getItem('tt_digieye_ip') || '10.0.0.160:5173');
@@ -88,7 +70,6 @@ export const DigiEyeScan: React.FC = () => {
   const [customIpInput, setCustomIpInput] = useState(digiEyeIp);
   const [lastDigiEyeRead, setLastDigiEyeRead] = useState<string | null>(null);
   const [cameraStreamKey, setCameraStreamKey] = useState<number>(Date.now());
-  const [showLivePreview, setShowLivePreview] = useState(true);
 
   const wsRef = useRef<WebSocket | null>(null);
   const cartonNoRef = useRef<string | null>(null);
@@ -97,64 +78,13 @@ export const DigiEyeScan: React.FC = () => {
     cartonNoRef.current = cartonNo;
   }, [cartonNo]);
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      let activeMode = 'browser';
-      let activeAutoPrint = true;
-
-      const localSettings = localStorage.getItem('trackTrace_printSettings');
-      if (localSettings) {
-        try {
-          const parsed = JSON.parse(localSettings);
-          activeMode = parsed.printMode || 'browser';
-          activeAutoPrint = parsed.autoPrintCarton !== false;
-        } catch (e) {}
-      } else {
-        try {
-          const res = await api.get('/api/settings/GlobalPrintConfig');
-          if (res && res.value) {
-            const parsed = JSON.parse(res.value);
-            activeMode = parsed.printMode || 'browser';
-            activeAutoPrint = parsed.autoPrintCarton !== false;
-          }
-        } catch (e) {}
-      }
-
-      setPrintMode(activeMode);
-      setAutoPrintEnabled(activeAutoPrint);
-    };
-    loadSettings();
-  }, []);
-
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [isReprinting, setIsReprinting] = useState(false);
-
-  // Health Check
-  useEffect(() => {
-    const checkHealth = () => {
-      api.get('/health')
-        .then(res => {
-          setIsOnline(res && res.status === 'Healthy');
-        })
-        .catch(() => {
-          setIsOnline(false);
-        });
-    };
-    checkHealth();
-    const interval = setInterval(checkHealth, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Refresh live camera frame preview
   useEffect(() => {
-    if (!showLivePreview) return;
     const interval = setInterval(() => {
       setCameraStreamKey(Date.now());
     }, 1500);
     return () => clearInterval(interval);
-  }, [showLivePreview]);
+  }, []);
 
   // Load Stations
   useEffect(() => {
@@ -354,44 +284,6 @@ export const DigiEyeScan: React.FC = () => {
       };
     } catch (err: any) {
       alert("PDF yazdırma hatası: " + err.message);
-      throw err;
-    }
-  };
-
-  const handleNetworkPrint = async () => {
-    if (!lastClosedCartonId) return;
-    setIsReprinting(true);
-    try {
-      const zplRes = await api.get(`/api/cartons/${lastClosedCartonId}/zpl`);
-      if (zplRes && zplRes.zpl) {
-        const provider = getPrintProvider(printMode);
-        await provider.printCartonLabel(zplRes.zpl);
-      } else {
-        await printPDFDirectly(lastClosedCartonId);
-      }
-    } catch (err: any) {
-      alert('Etiket basılamadı: ' + (err.message || 'Bilinmeyen hata'));
-    } finally {
-      setIsReprinting(false);
-    }
-  };
-
-  const handlePrintClosedCartonLabel = async (cartonId: string) => {
-    if (!cartonId) return;
-    try {
-      if (printMode === 'browser') {
-        await printPDFDirectly(cartonId);
-      } else {
-        const zplRes = await api.get(`/api/cartons/${cartonId}/zpl`);
-        if (zplRes && zplRes.zpl) {
-          const provider = getPrintProvider(printMode);
-          await provider.printCartonLabel(zplRes.zpl);
-        } else {
-          await printPDFDirectly(cartonId);
-        }
-      }
-    } catch (err: any) {
-      console.error("Carton label print error:", err);
     }
   };
 
@@ -408,7 +300,6 @@ export const DigiEyeScan: React.FC = () => {
         if (res.success) {
           playSound('success');
           setCartonNo(res.cartonNo);
-          setCartonSSCC(res.sscc);
           setActiveCartonId(res.cartonId || null);
           setCurrentQty(res.actualQuantity);
           setTargetQty(res.targetQuantity);
@@ -447,10 +338,8 @@ export const DigiEyeScan: React.FC = () => {
           setStatus('cartonClosed');
           setLastClosedCartonId(res.cartonId || null);
           setLastClosedCartonNo(res.cartonNo || null);
-          setLastClosedCartonSSCC(res.sscc || null);
           
           setCartonNo(null);
-          setCartonSSCC(null);
           setActiveCartonId(null);
           setCurrentQty(0);
           setTargetQty(0);
@@ -593,7 +482,7 @@ export const DigiEyeScan: React.FC = () => {
       </div>
 
       {/* Main Grid Layout: Scanner & Live Camera View */}
-      <div style={{ display: 'grid', gridTemplateColumns: showLivePreview ? '1fr 380px' : '1fr', gap: '24px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', marginBottom: '24px' }}>
         
         {/* Left Column: Active Scanner Deck */}
         <div>
@@ -624,7 +513,7 @@ export const DigiEyeScan: React.FC = () => {
               </div>
             </div>
 
-            {/* Hidden / Manual Input Form */}
+            {/* Input Form */}
             <form onSubmit={handleScanSubmit}>
               <div style={{ display: 'flex', gap: '12px', width: '100%', alignItems: 'center' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
@@ -634,7 +523,7 @@ export const DigiEyeScan: React.FC = () => {
                     className="form-control"
                     placeholder={cartonNo ? "Ürün QR kodunu okutun veya kameraya tutun..." : "Ön etiketli koli barkodunu okutun veya kameraya tutun..."}
                     value={barcodeInput}
-                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    onChange={(e) => setCartonInput(e.target.value)}
                     style={{ 
                       width: '100%',
                       paddingLeft: '48px', 
@@ -727,18 +616,6 @@ export const DigiEyeScan: React.FC = () => {
                   <span>Koli Kodu: <code style={{ fontFamily: 'monospace', fontWeight: 700 }}>{lastClosedCartonNo}</code></span>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-primary"
-                  disabled={isReprinting}
-                  onClick={handleNetworkPrint}
-                  style={{ borderRadius: '8px', padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
-                >
-                  <Printer size={16} /> Etiket Tekrar Yazdır
-                </button>
-              </div>
             </div>
           )}
 
@@ -792,51 +669,48 @@ export const DigiEyeScan: React.FC = () => {
         </div>
 
         {/* Right Column: Live Camera Image Feed Card */}
-        {showLivePreview && (
-          <div>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', position: 'sticky', top: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Eye size={16} color="#2563eb" /> DigiEye Canlı İzleme
-                </span>
-                <a 
-                  href={`http://${digiEyeIp.split(':')[0]}:5173`} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{ fontSize: '0.75rem', color: '#2563eb', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
-                >
-                  <ExternalLink size={12} /> Web Panel
-                </a>
-              </div>
-
-              {/* Camera Image Stream Frame */}
-              <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden', height: '260px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img
-                  src={`http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`}
-                  alt="DigiEye Live Stream"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  onError={(e) => {
-                    // Placeholder if camera stream offline
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
-
-                <div style={{ position: 'absolute', bottom: '8px', left: '10px', backgroundColor: 'rgba(15, 23, 42, 0.75)', color: '#ffffff', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontFamily: 'monospace' }}>
-                  {digiEyeIp.split(':')[0]}
-                </div>
-              </div>
-
-              {lastDigiEyeRead && (
-                <div style={{ marginTop: '14px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 12px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 600 }}>Son Kamera Okuması:</div>
-                  <code style={{ fontSize: '0.85rem', color: '#1e3a8a', fontWeight: 700, fontFamily: 'monospace', wordBreak: 'break-all', display: 'block', marginTop: '2px' }}>
-                    {lastDigiEyeRead}
-                  </code>
-                </div>
-              )}
+        <div>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', position: 'sticky', top: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Eye size={16} color="#2563eb" /> DigiEye Canlı İzleme
+              </span>
+              <a 
+                href={`http://${digiEyeIp.split(':')[0]}:5173`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: '0.75rem', color: '#2563eb', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
+              >
+                <ExternalLink size={12} /> Web Panel
+              </a>
             </div>
+
+            {/* Camera Image Stream Frame */}
+            <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden', height: '260px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img
+                src={`http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`}
+                alt="DigiEye Live Stream"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+
+              <div style={{ position: 'absolute', bottom: '8px', left: '10px', backgroundColor: 'rgba(15, 23, 42, 0.75)', color: '#ffffff', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontFamily: 'monospace' }}>
+                {digiEyeIp.split(':')[0]}
+              </div>
+            </div>
+
+            {lastDigiEyeRead && (
+              <div style={{ marginTop: '14px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 12px' }}>
+                <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 600 }}>Son Kamera Okuması:</div>
+                <code style={{ fontSize: '0.85rem', color: '#1e3a8a', fontWeight: 700, fontFamily: 'monospace', wordBreak: 'break-all', display: 'block', marginTop: '2px' }}>
+                  {lastDigiEyeRead}
+                </code>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
       </div>
 
