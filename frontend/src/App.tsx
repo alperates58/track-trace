@@ -157,7 +157,7 @@ const AppShell: React.FC = () => {
     orders: 'Sipariş Yönetimi',
     scan: 'Otomatik Koli Modu',
     'preprint-scan': 'Ön Etiketli Koli Modu',
-    'digieye-scan': 'DigiEye Okutma Modu',
+    'digieye-scan': 'Endüstriyel Kamera Okutma',
     cartons: 'Koli Yönetimi',
     'preprint-create': 'Ön Etiket Oluştur',
     'qr-verification': 'QR Doğrulama',
@@ -295,10 +295,10 @@ const AppShell: React.FC = () => {
                     <div 
                       className={`sidebar-link ${activeTab === 'digieye-scan' ? 'active' : ''}`}
                       onClick={() => handleTabClick('digieye-scan')}
-                      title="DigiEye Okutma Modu"
+                      title="Endüstriyel Kamera"
                     >
                       <Camera size={18} style={{ flexShrink: 0 }} />
-                      <span>DigiEye Okutma Modu</span>
+                      <span>Endüstriyel Kamera</span>
                     </div>
                   </>
                 )}

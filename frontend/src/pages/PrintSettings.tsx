@@ -23,6 +23,9 @@ const DEFAULT_CONFIG: PrintConfig = {
   showNotification: true
 };
 
+const AGENT_DOWNLOAD_URL = import.meta.env.VITE_AGENT_DOWNLOAD_URL
+  || 'https://github.com/alperates58/track-trace/raw/refs/heads/main/frontend/public/downloads/TrackTraceLocalAgentSetup.exe';
+
 type AgentConnectionStatus = 'idle' | 'testing' | 'online' | 'invalid-token' | 'offline' | 'missing-token';
 type InlineMessage = { text: string; type: 'success' | 'error' | 'info' };
 
@@ -144,27 +147,16 @@ export const PrintSettings: React.FC = () => {
     }
   };
 
-  const handleDownloadAgent = async () => {
-    setDownloadMessage({ text: 'İndirme hazırlanıyor...', type: 'info' });
+  const handleDownloadAgent = () => {
+    setDownloadMessage({ text: 'GitHub üzerinden indirme başlatıldı', type: 'success' });
 
-    try {
-      const blob = await api.get('/api/agent/download');
-      if (!(blob instanceof Blob) || blob.size === 0) {
-        throw new Error('Installer dosyası indirilemedi.');
-      }
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'TrackTraceLocalAgentSetup.exe';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      setDownloadMessage({ text: 'İndirme başlatıldı', type: 'success' });
-    } catch (err: any) {
-      setDownloadMessage({ text: err.message || 'Local Agent indirilemedi.', type: 'error' });
-    }
+    const link = document.createElement('a');
+    link.href = AGENT_DOWNLOAD_URL;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   useEffect(() => {
@@ -553,7 +545,7 @@ export const PrintSettings: React.FC = () => {
                   style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', padding: '10px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                 >
                   <FileDown size={18} />
-                  Local Agent İndir
+                  GitHub'dan Agent İndir
                 </button>
               </div>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>

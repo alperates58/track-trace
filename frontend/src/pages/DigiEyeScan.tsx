@@ -76,7 +76,7 @@ export const DigiEyeScan: React.FC = () => {
   const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus>('ready');
   const [lastScannedBarcode, setLastScannedBarcode] = useState('');
   const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
-  const [message, setMessage] = useState('DigiEye kod bekliyor. Önce ön etiketli koliyi kameraya gönderin.');
+  const [message, setMessage] = useState('Kamera kod bekliyor. Önce ön etiketli koliyi kameraya gönderin.');
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const soundEnabledRef = useRef(true);
@@ -343,7 +343,7 @@ export const DigiEyeScan: React.FC = () => {
       setConfig(value);
       setDraftConfig(value);
     } catch (error) {
-      setConfigError(error instanceof Error ? error.message : 'DigiEye ayarları okunamadı.');
+      setConfigError(error instanceof Error ? error.message : 'Endüstriyel kamera ayarları okunamadı.');
     }
   };
 
@@ -357,7 +357,7 @@ export const DigiEyeScan: React.FC = () => {
       setDraftConfig(value);
       setShowConfig(false);
     } catch (error) {
-      setConfigError(error instanceof Error ? error.message : 'DigiEye ayarları kaydedilemedi.');
+      setConfigError(error instanceof Error ? error.message : 'Endüstriyel kamera ayarları kaydedilemedi.');
     } finally {
       setSavingConfig(false);
     }
@@ -373,7 +373,7 @@ export const DigiEyeScan: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <div>
           <h1 style={{ margin: 0, color: '#0f172a', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Camera size={26} color="#2563eb" /> DigiEye Hızlı Bant Okutma
+            <Camera size={26} color="#2563eb" /> Endüstriyel Kamera Bant Okutma
           </h1>
           <p style={{ color: '#64748b', margin: '5px 0 0', fontSize: '0.875rem' }}>
             Koli etiketi → ürünler → sıradaki koli akışını Local Agent otomatik yönetir.
@@ -466,7 +466,7 @@ export const DigiEyeScan: React.FC = () => {
             <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>2 FPS önizleme</span>
           </div>
           <div style={{ flex: 1, minHeight: 270, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#020617' }}>
-            {previewUrl ? <img src={previewUrl} alt="DigiEye son kamera karesi" style={{ width: '100%', maxHeight: 300, objectFit: 'contain' }} /> : <Camera size={48} color="#475569" />}
+            {previewUrl ? <img src={previewUrl} alt="Endüstriyel kamera son karesi" style={{ width: '100%', maxHeight: 300, objectFit: 'contain' }} /> : <Camera size={48} color="#475569" />}
           </div>
           <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: '0.78rem' }}>
             <Stat icon={<Gauge size={14} />} label="Yakalama" value={`${agentStatus?.captureFramesPerSecond || 0} FPS`} />
@@ -478,7 +478,7 @@ export const DigiEyeScan: React.FC = () => {
       </div>
 
       <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#0f172a' }}>Son DigiEye okumaları</div>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#0f172a' }}>Son kamera okumaları</div>
         {scanHistory.length === 0 ? (
           <div style={{ padding: 26, textAlign: 'center', color: '#94a3b8' }}>Henüz kod işlenmedi.</div>
         ) : (
@@ -502,7 +502,7 @@ export const DigiEyeScan: React.FC = () => {
       {showConfig && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
           <div style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 24px 60px rgba(15,23,42,.28)' }}>
-            <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem' }}>DigiEye Local Agent ayarları</h2>
+            <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem' }}>Endüstriyel Kamera Ayarları</h2>
             <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.5 }}>Kamera bu bilgisayarda çalıştığı için adres varsayılan olarak localhost’tur. ROI değerleri yalnızca etiketin geçtiği alanı tarayarak hızı artırır.</p>
 
             {configError && <div style={{ padding: 10, background: '#fef2f2', color: '#991b1b', borderRadius: 8, marginBottom: 12 }}>{configError}</div>}
