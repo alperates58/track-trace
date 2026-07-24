@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { CameraScanner } from '../components/CameraScanner';
+import { QrRoutingLookup } from './QrRoutingLookup';
 
 interface ExpectedItem {
   id: string;
@@ -33,7 +34,7 @@ interface MismatchedScan {
   reason: string;
 }
 
-export const QrVerification: React.FC = () => {
+const CartonQrVerification: React.FC = () => {
   // Step 1: Carton Selection / Scanning
   const [cartonInput, setCartonInput] = useState('');
   const [activeCartonCode, setActiveCartonCode] = useState<string | null>(null);
@@ -395,13 +396,13 @@ export const QrVerification: React.FC = () => {
   });
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ padding: '16px 32px 32px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
       {/* Sleek Minimalist Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#0f172a', letterSpacing: '-0.02em' }}>
-            QR Doğrulama & Koli Kontrolü
+            Koli İçeriği Doğrulama
           </h1>
           <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '0.875rem' }}>
             Koli QR etiketini okutun, koli içi ürün QR kodlarını anlık olarak doğrulayın.
@@ -1065,6 +1066,38 @@ export const QrVerification: React.FC = () => {
         />
       )}
     </div>
+  );
+};
+
+export const QrVerification: React.FC = () => {
+  const [verificationMode, setVerificationMode] = useState<'carton' | 'routing'>('carton');
+
+  return (
+    <>
+      <div style={{ padding: '24px 32px 0', maxWidth: 1200, margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, padding: 6, background: '#e2e8f0', borderRadius: 14 }}>
+          <button
+            type="button"
+            data-testid="qr-mode-carton"
+            onClick={() => setVerificationMode('carton')}
+            style={{ minHeight: 58, border: verificationMode === 'carton' ? '1px solid #bfdbfe' : '1px solid transparent', borderRadius: 10, background: verificationMode === 'carton' ? '#fff' : 'transparent', color: verificationMode === 'carton' ? '#1d4ed8' : '#475569', boxShadow: verificationMode === 'carton' ? '0 2px 8px rgba(15,23,42,.08)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontWeight: 800 }}
+          >
+            <Package size={19} />
+            <span style={{ textAlign: 'left' }}>Koli İçeriği Doğrulama<small style={{ display: 'block', fontWeight: 500, color: '#64748b', marginTop: 2 }}>Koli içindeki QR kodlarını karşılaştır</small></span>
+          </button>
+          <button
+            type="button"
+            data-testid="qr-mode-routing"
+            onClick={() => setVerificationMode('routing')}
+            style={{ minHeight: 58, border: verificationMode === 'routing' ? '1px solid #bfdbfe' : '1px solid transparent', borderRadius: 10, background: verificationMode === 'routing' ? '#fff' : 'transparent', color: verificationMode === 'routing' ? '#1d4ed8' : '#475569', boxShadow: verificationMode === 'routing' ? '0 2px 8px rgba(15,23,42,.08)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontWeight: 800 }}
+          >
+            <QrCode size={19} />
+            <span style={{ textAlign: 'left' }}>QR Sipariş & Koli Bulucu<small style={{ display: 'block', fontWeight: 500, color: '#64748b', marginTop: 2 }}>Sipariş, stok ve hedef koliyi bul</small></span>
+          </button>
+        </div>
+      </div>
+      {verificationMode === 'carton' ? <CartonQrVerification /> : <QrRoutingLookup />}
+    </>
   );
 };
 

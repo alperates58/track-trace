@@ -24,6 +24,7 @@ using TrackTrace.Application.Features.Auth;
 using TrackTrace.Application.Features.Cartons;
 using TrackTrace.Application.Features.Orders;
 using TrackTrace.Application.Features.Pallets;
+using TrackTrace.Application.Features.QrVerification;
 using TrackTrace.Application.Features.Reports;
 using TrackTrace.Application.Features.Scan;
 using TrackTrace.Application.Features.Shipments;
@@ -1973,6 +1974,22 @@ app.MapDelete("/api/shipments/{id:guid}", async (Guid id, IMediator mediator) =>
 }).RequireAuthorization("AdminOnly").RequirePermission("shipments.delete");
 
 // Barcode Search
+app.MapGet("/api/qr-verification/route", async ([FromQuery] string code, IMediator mediator) =>
+{
+    if (string.IsNullOrWhiteSpace(code))
+    {
+        return Results.BadRequest(new { message = "QR kodu boş olamaz." });
+    }
+
+    var result = await mediator.Send(new GetQrRoutingQuery(code));
+    if (result is null)
+    {
+        return Results.NotFound(new { message = "QR kodu sistemde kayıtlı değil." });
+    }
+
+    return Results.Ok(result);
+}).RequireAuthorization("ViewerOrAbove");
+
 app.MapGet("/api/barcodes/search", async ([FromQuery] string code, IMediator mediator) =>
 {
     var result = await mediator.Send(new BarcodeSearchQuery(code));
