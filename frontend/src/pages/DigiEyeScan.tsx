@@ -1,824 +1,536 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { api } from '../services/api';
-import { 
-  Volume2, 
-  VolumeX, 
-  Barcode, 
-  Camera, 
-  Wifi, 
-  WifiOff, 
-  Settings, 
-  ExternalLink,
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Barcode,
+  Camera,
   CheckCircle2,
-  XCircle,
-  Eye
+  Clock3,
+  Eye,
+  Gauge,
+  Settings,
+  ShieldCheck,
+  Volume2,
+  VolumeX,
+  Wifi,
+  WifiOff,
+  XCircle
 } from 'lucide-react';
+import { api } from '../services/api';
+import { digiEyeAgent, DigiEyeConfig, DigiEyeEvent, DigiEyeStatus } from '../services/digiEyeAgent';
+import { digiEyeBackend, DigiEyeBackendConnectionError } from '../services/digiEyeBackend';
 
 interface Station {
   id: string;
   name: string;
 }
 
+interface ScanSession {
+  cartonNo: string | null;
+  cartonId: string | null;
+  orderId: string;
+  orderNo: string;
+  productName: string;
+  currentQty: number;
+  targetQty: number;
+}
+
 interface ScanHistory {
+  sequence: number;
   rawCode: string;
-  gtin: string;
-  serialNo: string;
+  format: string;
   status: string;
   timestamp: string;
   cartonNo: string;
+  success: boolean;
+}
+
+type WorkflowStatus = 'ready' | 'success' | 'error' | 'cartonClosed';
+
+const EMPTY_SESSION: ScanSession = {
+  cartonNo: null,
+  cartonId: null,
+  orderId: '',
+  orderNo: '',
+  productName: '',
+  currentQty: 0,
+  targetQty: 0
+};
+
+const PROCESSED_EVENTS_KEY = 'tt_digieye_processed_events';
+
+function loadProcessedEvents(): Set<number> {
+  try {
+    const values = JSON.parse(localStorage.getItem(PROCESSED_EVENTS_KEY) || '[]');
+    return new Set(Array.isArray(values) ? values.filter(Number.isFinite) : []);
+  } catch {
+    return new Set();
+  }
 }
 
 export const DigiEyeScan: React.FC = () => {
-  // Stations
   const [stations, setStations] = useState<Station[]>([]);
-  const [selectedStationId, setSelectedStationId] = useState<string>('');
+  const [selectedStationId, setSelectedStationId] = useState('');
+  const selectedStationRef = useRef('');
 
-  // Active order is determined by the carton
-  const [activeOrderNo, setActiveOrderNo] = useState<string>('');
-  const [activeOrderId, setActiveOrderId] = useState<string>('');
-  const [activeProductName, setActiveProductName] = useState<string>('');
-
-  // Input focus logic
-  const inputRef = useRef<HTMLInputElement>(null);
-  const isProcessingRef = useRef<boolean>(false);
-  const [barcodeInput, setBarcodeInput] = useState('');
-
-  // Scan state
-  const [status, setStatus] = useState<'ready' | 'success' | 'error' | 'cartonClosed'>('ready');
-  const [lastScannedBarcode, setLastScannedBarcode] = useState<string>('');
-  const [errorMsg, setErrorMsg] = useState<string>('');
-
-  // Active carton details
-  const [cartonNo, setCartonNo] = useState<string | null>(null);
-  const [activeCartonId, setActiveCartonId] = useState<string | null>(null);
-  const [currentQty, setCurrentQty] = useState(0);
-  const [targetQty, setTargetQty] = useState(0);
-
-  // Last closed carton details
+  const [session, setSession] = useState<ScanSession>(EMPTY_SESSION);
+  const sessionRef = useRef<ScanSession>(EMPTY_SESSION);
+  const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus>('ready');
+  const [lastScannedBarcode, setLastScannedBarcode] = useState('');
   const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
-
-  // History & settings
+  const [message, setMessage] = useState('DigiEye kod bekliyor. Önce ön etiketli koliyi kameraya gönderin.');
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(true);
 
-  // DIGIEYE INDUSTRIAL IP CAMERA STATES
-  const [digiEyeIp, setDigiEyeIp] = useState(() => localStorage.getItem('tt_digieye_ip') || '10.0.0.160:5173');
-  const [digiEyeEnabled, setDigiEyeEnabled] = useState(() => localStorage.getItem('tt_digieye_enabled') !== 'false');
-  const [digiEyeStatus, setDigiEyeStatus] = useState<'connected' | 'connecting' | 'disconnected'>('disconnected');
-  const [showIpConfigModal, setShowIpConfigModal] = useState(false);
-  const [customIpInput, setCustomIpInput] = useState(digiEyeIp);
-  const [lastDigiEyeRead, setLastDigiEyeRead] = useState<string | null>(null);
-  const [cameraStreamKey, setCameraStreamKey] = useState<number>(Date.now());
+  const [agentStatus, setAgentStatus] = useState<DigiEyeStatus | null>(null);
+  const agentStatusRef = useRef<DigiEyeStatus | null>(null);
+  const [agentError, setAgentError] = useState('');
+  const [backendError, setBackendError] = useState('');
+  const [processingEvent, setProcessingEvent] = useState<DigiEyeEvent | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const cartonNoRef = useRef<string | null>(null);
+  const [config, setConfig] = useState<DigiEyeConfig | null>(null);
+  const [draftConfig, setDraftConfig] = useState<DigiEyeConfig | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [configError, setConfigError] = useState('');
 
-  useEffect(() => {
-    cartonNoRef.current = cartonNo;
-  }, [cartonNo]);
+  const processedEventsRef = useRef<Set<number>>(loadProcessedEvents());
 
-  // Refresh live camera frame preview
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCameraStreamKey(Date.now());
-    }, 1500);
-    return () => clearInterval(interval);
+  const persistProcessedEvents = useCallback(() => {
+    localStorage.setItem(PROCESSED_EVENTS_KEY, JSON.stringify([...processedEventsRef.current].slice(-100)));
   }, []);
 
-  // Load Stations
+  const applySession = useCallback((next: ScanSession) => {
+    sessionRef.current = next;
+    setSession(next);
+  }, []);
+
+  const playSound = useCallback((type: 'success' | 'error' | 'warning') => {
+    if (!soundEnabledRef.current) return;
+    try {
+      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const context = new AudioContextClass();
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.type = type === 'error' ? 'sawtooth' : type === 'warning' ? 'square' : 'sine';
+      oscillator.frequency.setValueAtTime(type === 'error' ? 160 : type === 'warning' ? 600 : 1000, context.currentTime);
+      gain.gain.setValueAtTime(type === 'error' ? 0.15 : 0.1, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + (type === 'error' ? 0.45 : 0.16));
+      oscillator.start();
+      oscillator.stop(context.currentTime + (type === 'error' ? 0.45 : 0.16));
+      oscillator.addEventListener('ended', () => void context.close());
+    } catch {
+      // Audio feedback is optional; scanning must continue if the browser blocks sound.
+    }
+  }, []);
+
+  const addHistory = useCallback((event: DigiEyeEvent, status: string, cartonNo: string, success: boolean) => {
+    setScanHistory(previous => [{
+      sequence: event.sequence,
+      rawCode: event.rawCode,
+      format: event.format,
+      status,
+      timestamp: new Date().toLocaleTimeString('tr-TR'),
+      cartonNo,
+      success
+    }, ...previous].slice(0, 20));
+  }, []);
+
+  const registerScanError = useCallback((event: DigiEyeEvent, errorMessage: string) => {
+    playSound('error');
+    setWorkflowStatus('error');
+    setLastScannedBarcode(event.rawCode);
+    setMessage(errorMessage);
+    addHistory(event, errorMessage, sessionRef.current.cartonNo || '-', false);
+  }, [addHistory, playSound]);
+
+  const acknowledgeProcessedEvent = useCallback(async (sequence: number) => {
+    processedEventsRef.current.add(sequence);
+    persistProcessedEvents();
+    await digiEyeAgent.acknowledge(sequence);
+    processedEventsRef.current.delete(sequence);
+    persistProcessedEvents();
+  }, [persistProcessedEvents]);
+
+  const processEvent = useCallback(async (event: DigiEyeEvent): Promise<boolean> => {
+    if (processedEventsRef.current.has(event.sequence)) {
+      try {
+        await digiEyeAgent.acknowledge(event.sequence);
+        processedEventsRef.current.delete(event.sequence);
+        persistProcessedEvents();
+        return true;
+      } catch (error) {
+        setAgentError(error instanceof Error ? error.message : 'Agent olayı onaylanamadı.');
+        return false;
+      }
+    }
+
+    const stationId = selectedStationRef.current;
+    if (!stationId) return false;
+
+    setProcessingEvent(event);
+    setBackendError('');
+    try {
+      const current = sessionRef.current;
+      if (!current.cartonNo) {
+        const response = await digiEyeBackend.openPrePrintedCarton(event.rawCode, stationId);
+        if (!response.success) {
+          registerScanError(event, response.message || 'Ön etiketli koli açılamadı.');
+        } else {
+          const next: ScanSession = {
+            cartonNo: response.cartonNo || null,
+            cartonId: response.cartonId || null,
+            orderId: response.orderId || '',
+            orderNo: response.orderNo || '',
+            productName: response.productName || '',
+            currentQty: response.actualQuantity || 0,
+            targetQty: response.targetQuantity || 0
+          };
+          applySession(next);
+          playSound('success');
+          setWorkflowStatus('ready');
+          setLastScannedBarcode(event.rawCode);
+          setMessage(`${next.cartonNo} açıldı. Şimdi ürünleri gönderin.`);
+          addHistory(event, 'Koli açıldı', next.cartonNo || '-', true);
+        }
+      } else {
+        if (!current.cartonId || !current.orderId) {
+          throw new DigiEyeBackendConnectionError('Aktif koli bilgisi eksik. Sayfayı yenileyip koliyi tekrar okutun.');
+        }
+
+        const response = await digiEyeBackend.scanProduct({
+          orderId: current.orderId,
+          rawCode: event.rawCode,
+          stationId,
+          activeCartonId: current.cartonId
+        });
+
+        if (!response.success) {
+          registerScanError(event, response.message || 'Ürün okutulamadı.');
+        } else {
+          playSound('success');
+          setLastScannedBarcode(event.rawCode);
+          addHistory(event, response.status === 'CartonClosed' ? 'Koli tamamlandı' : 'Ürün eklendi', response.cartonNo || current.cartonNo, true);
+
+          if (response.status === 'CartonClosed') {
+            setLastClosedCartonNo(response.cartonNo || current.cartonNo);
+            applySession(EMPTY_SESSION);
+            setWorkflowStatus('cartonClosed');
+            setMessage(`${response.cartonNo || current.cartonNo} tamamlandı. Sıradaki koliyi gönderin.`);
+          } else {
+            const next = { ...current, currentQty: response.cartonCurrentQty };
+            applySession(next);
+            setWorkflowStatus('success');
+            setMessage(`Ürün eklendi: ${response.cartonCurrentQty}/${current.targetQty}`);
+          }
+        }
+      }
+
+      await acknowledgeProcessedEvent(event.sequence);
+      return true;
+    } catch (error) {
+      if (error instanceof DigiEyeBackendConnectionError) {
+        setBackendError(error.message);
+        setMessage(error.message);
+      } else {
+        setAgentError(error instanceof Error ? error.message : 'Local Agent onayı başarısız.');
+      }
+      return false;
+    } finally {
+      setProcessingEvent(null);
+    }
+  }, [acknowledgeProcessedEvent, addHistory, applySession, persistProcessedEvents, playSound, registerScanError]);
+
   useEffect(() => {
     api.get('/api/stations?includeInactive=false')
-      .then(res => {
-        setStations(res);
-        if (res.length > 0) {
-          const savedStation = localStorage.getItem('trackTrace_selectedStation');
-          if (savedStation && res.some((s: Station) => s.id === savedStation)) {
-            setSelectedStationId(savedStation);
-          } else {
-            setSelectedStationId(res[0].id);
-          }
-        }
+      .then((items: Station[]) => {
+        setStations(items);
+        const saved = localStorage.getItem('trackTrace_selectedStation');
+        const selected = saved && items.some(station => station.id === saved) ? saved : items[0]?.id || '';
+        selectedStationRef.current = selected;
+        setSelectedStationId(selected);
       })
-      .catch(err => console.error("Error loading stations:", err));
+      .catch((error: Error) => setBackendError(error.message));
   }, []);
 
-  const handleStationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const stId = e.target.value;
-    setSelectedStationId(stId);
-    localStorage.setItem('trackTrace_selectedStation', stId);
-  };
-
-  // DIGIEYE WEBSOCKET LIVE LISTENER HOOK
   useEffect(() => {
-    if (!digiEyeEnabled || !digiEyeIp) {
-      setDigiEyeStatus('disconnected');
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      return;
-    }
-
-    // On HTTPS origins, direct ws:// connections trigger Chrome security downgrades ("Güvenli değil").
-    // We rely on the HTTPS backend proxy stream (/api/digieye/latest-image) for 100% secure HTTPS operation.
-    if (window.location.protocol === 'https:') {
-      setDigiEyeStatus('connected');
-      return;
-    }
-
-    let reconnectTimer: any = null;
-    let pingInterval: any = null;
-    let isComponentMounted = true;
-
-    const connectWebSocket = () => {
-      try {
-        setDigiEyeStatus('connecting');
-        const cleanIp = digiEyeIp.trim().replace(/^ws:\/\//, '').replace(/^http:\/\//, '');
-        const wsUrl = `ws://${cleanIp}/`;
-        
-        const socket = new WebSocket(wsUrl);
-        wsRef.current = socket;
-
-        socket.onopen = () => {
-          if (!isComponentMounted) return;
-          setDigiEyeStatus('connected');
-          
-          // Send periodic ping heartbeat every 10s to keep connection alive & prevent idle timeout
-          pingInterval = setInterval(() => {
-            if (socket.readyState === WebSocket.OPEN) {
-              try {
-                socket.send(JSON.stringify({ type: 'ping' }));
-              } catch {}
-            }
-          }, 10000);
-        };
-
-        socket.onmessage = (event) => {
-          if (!isComponentMounted) return;
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'ping' || data.type === 'pong') return;
-
-            const rawCodeCandidate = 
-              data.barcode || 
-              data.code || 
-              data.data || 
-              data.value || 
-              data.text || 
-              data.result || 
-              data.rawCode || 
-              data.dataMatrix ||
-              (typeof data === 'string' ? data : null);
-
-            if (rawCodeCandidate && typeof rawCodeCandidate === 'string' && rawCodeCandidate.length >= 3) {
-              const scannedCode = rawCodeCandidate.trim();
-              setLastDigiEyeRead(scannedCode);
-              processBarcodeScan(scannedCode);
-            }
-          } catch {
-            if (typeof event.data === 'string' && event.data.length >= 4 && !event.data.includes('ping')) {
-              const scannedCode = event.data.trim();
-              setLastDigiEyeRead(scannedCode);
-              processBarcodeScan(scannedCode);
-            }
+    let stopped = false;
+    const run = async () => {
+      while (!stopped) {
+        try {
+          const status = await digiEyeAgent.getStatus();
+          if (stopped) return;
+          agentStatusRef.current = status;
+          setAgentStatus(status);
+          setAgentError('');
+        } catch (error) {
+          if (!stopped) {
+            setAgentStatus(null);
+            agentStatusRef.current = null;
+            setAgentError(error instanceof Error ? error.message : "Local Agent'a ulaşılamıyor.");
           }
-        };
-
-        socket.onerror = () => {
-          if (!isComponentMounted) return;
-        };
-
-        socket.onclose = () => {
-          if (pingInterval) clearInterval(pingInterval);
-          if (!isComponentMounted) return;
-          setDigiEyeStatus('disconnected');
-          reconnectTimer = setTimeout(() => {
-            if (isComponentMounted && digiEyeEnabled) {
-              connectWebSocket();
-            }
-          }, 2000);
-        };
-      } catch {
-        if (isComponentMounted) setDigiEyeStatus('disconnected');
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      isComponentMounted = false;
-      if (pingInterval) clearInterval(pingInterval);
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, [digiEyeIp, digiEyeEnabled]);
-
-  const lastScannedTimeRef = useRef<{ code: string; time: number }>({ code: '', time: 0 });
-
-  // DIGIEYE LIVE IMAGE FRAME BARCODE DETECTOR (Fallback scanner when WS is blocked by HTTPS)
-  useEffect(() => {
-    if (!('BarcodeDetector' in window)) return;
-    
-    let detector: any = null;
-    try {
-      detector = new (window as any).BarcodeDetector({
-        formats: ['qr_code', 'data_matrix', 'code_128', 'ean_13', 'code_39']
-      });
-    } catch {
-      return;
-    }
-
-    let isScanningFrame = false;
-    const interval = setInterval(async () => {
-      const imgEl = document.getElementById('digieye-live-frame') as HTMLImageElement;
-      if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0 || isScanningFrame) return;
-
-      try {
-        isScanningFrame = true;
-        let source: any = imgEl;
-        if ('createImageBitmap' in window) {
-          try {
-            source = await createImageBitmap(imgEl);
-          } catch {}
         }
-        const detectedBarcodes = await detector.detect(source);
-        if (detectedBarcodes && detectedBarcodes.length > 0) {
-          for (const b of detectedBarcodes) {
-            if (b.rawValue && b.rawValue.length >= 3) {
-              const scannedCode = b.rawValue.trim();
-              const now = Date.now();
-              if (lastScannedTimeRef.current.code === scannedCode && (now - lastScannedTimeRef.current.time) < 2500) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    };
+    void run();
+    return () => { stopped = true; };
+  }, []);
+
+  useEffect(() => {
+    let stopped = false;
+    const run = async () => {
+      while (!stopped) {
+        let delay = 100;
+        try {
+          const currentAgentStatus = agentStatusRef.current;
+          if (selectedStationRef.current && currentAgentStatus?.enabled && !currentAgentStatus.shadowMode) {
+            const events = await digiEyeAgent.getEvents(25);
+            for (const event of events) {
+              if (stopped) return;
+              const completed = await processEvent(event);
+              if (!completed) {
+                delay = 500;
                 break;
               }
-              lastScannedTimeRef.current = { code: scannedCode, time: now };
-              setLastDigiEyeRead(scannedCode);
-              processBarcodeScan(scannedCode);
-              break;
             }
           }
+        } catch (error) {
+          if (!stopped) setAgentError(error instanceof Error ? error.message : "Local Agent'a ulaşılamıyor.");
+          delay = 500;
         }
-      } catch (err) {
-        // Silent catch for frame detection
-      } finally {
-        isScanningFrame = false;
-      }
-    }, 450);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Keep input focused
-  useEffect(() => {
-    const focusInput = () => {
-      if (inputRef.current && document.activeElement !== inputRef.current) {
-        inputRef.current.focus();
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     };
-    focusInput();
-    const interval = setInterval(focusInput, 1000);
-    return () => clearInterval(interval);
+    void run();
+    return () => { stopped = true; };
+  }, [processEvent]);
+
+  useEffect(() => {
+    let stopped = false;
+    const refresh = async () => {
+      try {
+        const blob = await digiEyeAgent.getLatestFrame();
+        if (!stopped && blob) {
+          const nextUrl = URL.createObjectURL(blob);
+          if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+          previewUrlRef.current = nextUrl;
+          setPreviewUrl(nextUrl);
+        }
+      } catch {
+        // Status polling already reports Agent/camera failures.
+      }
+    };
+    const interval = window.setInterval(() => void refresh(), 500);
+    void refresh();
+    return () => {
+      stopped = true;
+      window.clearInterval(interval);
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    };
   }, []);
 
-  const playSound = (type: 'success' | 'error' | 'warning') => {
-    if (!soundEnabled) return;
+  const openConfig = async () => {
+    setShowConfig(true);
+    setConfigError('');
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      
-      if (type === 'success') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1000, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.15);
-      } else if (type === 'error') {
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(ctx.destination);
-        osc1.type = 'sawtooth';
-        osc1.frequency.setValueAtTime(150, ctx.currentTime);
-        osc2.type = 'sawtooth';
-        osc2.frequency.setValueAtTime(155, ctx.currentTime);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        osc1.start();
-        osc2.start();
-        osc1.stop(ctx.currentTime + 0.5);
-        osc2.stop(ctx.currentTime + 0.5);
-      } else {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-      }
-    } catch (e) {}
+      const value = await digiEyeAgent.getConfig();
+      setConfig(value);
+      setDraftConfig(value);
+    } catch (error) {
+      setConfigError(error instanceof Error ? error.message : 'DigiEye ayarları okunamadı.');
+    }
   };
 
-  const processBarcodeScan = async (code: string) => {
-    if (isProcessingRef.current) return;
-    isProcessingRef.current = true;
-
-    const currentCartonNo = cartonNoRef.current || cartonNo;
-
-    if (!currentCartonNo) {
-      // Step 1: Open Preprinted Carton
-      try {
-        const res = await api.post('/api/scan/preprinted/open-carton', { code: code, stationId: selectedStationId });
-        if (res.success) {
-          playSound('success');
-          setCartonNo(res.cartonNo);
-          setActiveCartonId(res.cartonId || null);
-          setCurrentQty(res.actualQuantity);
-          setTargetQty(res.targetQuantity);
-          setActiveOrderId(res.orderId || '');
-          setActiveOrderNo(res.orderNo || '');
-          setActiveProductName(res.productName || '');
-          setStatus('ready');
-          setLastScannedBarcode(code);
-          setErrorMsg('');
-        } else {
-          handleScanError(code, res.message || 'Koli açılamadı.');
-        }
-      } catch (err: any) {
-        handleScanError(code, err.message || 'Bağlantı hatası.');
-      } finally {
-        isProcessingRef.current = false;
-      }
-      return;
-    }
-
-    // Step 2: Scan Product into the opened carton
+  const saveConfig = async () => {
+    if (!draftConfig) return;
+    setSavingConfig(true);
+    setConfigError('');
     try {
-      const res = await api.post('/api/scan/product', { 
-        orderId: activeOrderId, 
-        rawCode: code, 
-        stationId: selectedStationId, 
-        mode: 'PrePrinted',
-        activeCartonId: activeCartonId 
-      });
-      
-      if (res.success) {
-        playSound('success');
-        setCurrentQty(res.cartonCurrentQty);
-
-        if (res.status === 'CartonClosed') {
-          setStatus('cartonClosed');
-          setLastClosedCartonNo(res.cartonNo || null);
-          
-          setCartonNo(null);
-          setActiveCartonId(null);
-          setCurrentQty(0);
-          setTargetQty(0);
-          setActiveOrderId('');
-          setActiveOrderNo('');
-          setActiveProductName('');
-        } else {
-          setStatus('success');
-        }
-
-        setLastScannedBarcode(code);
-        setErrorMsg('');
-
-        setScanHistory(prev => [
-          {
-            rawCode: code,
-            gtin: res.gtin || '',
-            serialNo: res.serialNo || '',
-            status: 'Başarılı',
-            timestamp: new Date().toLocaleTimeString('tr-TR'),
-            cartonNo: res.cartonNo || '-'
-          },
-          ...prev.slice(0, 9)
-        ]);
-
-      } else {
-        handleScanError(code, res.message || 'Hatalı okutma.');
-      }
-    } catch (err: any) {
-      handleScanError(code, err.message || 'Bağlantı hatası.');
+      const value = await digiEyeAgent.updateConfig(draftConfig);
+      setConfig(value);
+      setDraftConfig(value);
+      setShowConfig(false);
+    } catch (error) {
+      setConfigError(error instanceof Error ? error.message : 'DigiEye ayarları kaydedilemedi.');
     } finally {
-      isProcessingRef.current = false;
+      setSavingConfig(false);
     }
   };
 
-  const handleScanSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = barcodeInput.trim();
-    if (!code) return;
-    setBarcodeInput('');
-    await processBarcodeScan(code);
-  };
-
-  const handleScanError = (code: string, errorMsg: string) => {
-    playSound('error');
-    setStatus('error');
-    setLastScannedBarcode(code);
-    setErrorMsg(errorMsg);
-
-    setScanHistory(prev => [
-      {
-        rawCode: code,
-        gtin: '-',
-        serialNo: '-',
-        status: errorMsg,
-        timestamp: new Date().toLocaleTimeString('tr-TR'),
-        cartonNo: '-'
-      },
-      ...prev.slice(0, 9)
-    ]);
-  };
+  const progress = session.targetQty > 0 ? Math.min(100, (session.currentQty / session.targetQty) * 100) : 0;
+  const connected = Boolean(agentStatus?.cameraConnected);
+  const statusColor = connected ? '#166534' : agentStatus ? '#9a3412' : '#991b1b';
+  const statusBackground = connected ? '#f0fdf4' : agentStatus ? '#fff7ed' : '#fef2f2';
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: '1280px', margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+    <div style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#0f172a', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Camera size={26} color="#2563eb" /> DigiEye IP Kamera Okutma Modu
+          <h1 style={{ margin: 0, color: '#0f172a', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Camera size={26} color="#2563eb" /> DigiEye Hızlı Bant Okutma
           </h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '0.875rem' }}>
-            Ön etiketli kolileri ve koli içi ürünleri DigiEye endüstriyel vision kamerası ile otomatik okutun.
+          <p style={{ color: '#64748b', margin: '5px 0 0', fontSize: '0.875rem' }}>
+            Koli etiketi → ürünler → sıradaki koli akışını Local Agent otomatik yönetir.
           </p>
         </div>
 
-        {/* Global Controls & DigiEye IP Camera Status Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          
-          {/* DIGIEYE IP CAMERA STATUS BADGE */}
-          <div 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              backgroundColor: digiEyeStatus === 'connected' ? '#f0fdf4' : digiEyeStatus === 'connecting' ? '#fffbeb' : '#fef2f2',
-              border: `1px solid ${digiEyeStatus === 'connected' ? '#bbf7d0' : digiEyeStatus === 'connecting' ? '#fef08a' : '#fecaca'}`,
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              color: digiEyeStatus === 'connected' ? '#166534' : digiEyeStatus === 'connecting' ? '#854d0e' : '#991b1b'
-            }}
-          >
-            {digiEyeStatus === 'connected' ? <Wifi size={16} color="#166534" /> : <WifiOff size={16} color="#991b1b" />}
-            <span>
-              {digiEyeStatus === 'connected' ? `DigiEye IP Kamera (${digiEyeIp.split(':')[0]}): Bağlı` :
-               digiEyeStatus === 'connecting' ? `DigiEye Bağlanıyor...` : `DigiEye Kamera: Kapalı`}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowIpConfigModal(true)}
-              style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', display: 'flex', color: 'inherit' }}
-              title="Kamera Ayarları"
-            >
-              <Settings size={14} />
-            </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 20, background: statusBackground, color: statusColor, border: `1px solid ${connected ? '#bbf7d0' : '#fed7aa'}`, fontWeight: 700, fontSize: '0.82rem' }}>
+            {connected ? <Wifi size={16} /> : <WifiOff size={16} />}
+            {connected ? `Kamera bağlı · ${agentStatus?.captureFramesPerSecond || 0} FPS` : agentStatus ? 'Agent bağlı · kamera bekleniyor' : 'Local Agent kapalı'}
           </div>
-
-          {/* Station Selection */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>İstasyon:</span>
-            <select
-              className="form-control form-control-sm"
-              value={selectedStationId}
-              onChange={handleStationChange}
-              style={{ width: '160px', borderRadius: '8px', fontWeight: 600 }}
-            >
-              {stations.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            className="btn"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            style={{ 
-              backgroundColor: '#ffffff', 
-              border: '1px solid #cbd5e1', 
-              color: soundEnabled ? '#2563eb' : '#94a3b8',
-              borderRadius: '8px', 
-              padding: '6px 12px'
-            }}
-          >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          <button className="btn" type="button" onClick={() => { soundEnabledRef.current = !soundEnabled; setSoundEnabled(!soundEnabled); }} style={{ border: '1px solid #cbd5e1', background: '#fff', color: soundEnabled ? '#2563eb' : '#94a3b8' }}>
+            {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+          </button>
+          <button className="btn" type="button" onClick={() => void openConfig()} style={{ border: '1px solid #cbd5e1', background: '#fff', color: '#334155', display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Settings size={16} /> Ayarlar
           </button>
         </div>
       </div>
 
+      {(agentError || backendError) && (
+        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontWeight: 600, fontSize: '0.875rem' }}>
+          {backendError || agentError}
+          {agentStatus?.pendingEvents ? ` · ${agentStatus.pendingEvents} kod güvenli kuyrukta bekliyor.` : ''}
+        </div>
+      )}
 
+      {agentStatus?.shadowMode && (
+        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: '#fffbeb', border: '1px solid #fde68a', color: '#854d0e', fontWeight: 600, fontSize: '0.875rem' }}>
+          Gölge test modu açık: kamera kodları çözüyor ancak backend’e okutma göndermiyor.
+        </div>
+      )}
 
-      {/* Main Grid Layout: Scanner & Live Camera View */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', marginBottom: '24px' }}>
-        
-        {/* Left Column: Active Scanner Deck */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 24, marginBottom: 24 }}>
         <div>
-          {/* Active Carton Banner */}
-          <div style={{ 
-            backgroundColor: '#ffffff', 
-            border: '1px solid #e2e8f0', 
-            borderRadius: '16px', 
-            padding: '24px',
-            marginBottom: '24px',
-            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ 
-                  backgroundColor: cartonNo ? '#10b981' : '#2563eb', 
-                  color: '#ffffff', 
-                  borderRadius: '6px', 
-                  padding: '4px 10px', 
-                  fontSize: '0.8rem', 
-                  fontWeight: 700 
-                }}>
-                  {cartonNo ? 'ADIM 2: ÜRÜN OKUTMA' : 'ADIM 1: ÖN ETİKETLİ KOLİ OKUTMA'}
-                </span>
-                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>
-                  {cartonNo ? 'Koli İçi Ürün QR Kodunu Kamera Altından Geçirin' : 'Koli Üzerindeki Barkodu Kamera Altından Geçirin'}
-                </span>
-              </div>
-            </div>
-
-            {/* Input Form */}
-            <form onSubmit={handleScanSubmit}>
-              <div style={{ display: 'flex', gap: '12px', width: '100%', alignItems: 'center' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    className="form-control"
-                    placeholder={cartonNo ? "Ürün QR kodunu okutun veya kameraya tutun..." : "Ön etiketli koli barkodunu okutun veya kameraya tutun..."}
-                    value={barcodeInput}
-                    onChange={(e) => setBarcodeInput(e.target.value)}
-                    style={{ 
-                      width: '100%',
-                      paddingLeft: '48px', 
-                      fontSize: '1.05rem', 
-                      fontWeight: 600,
-                      height: '52px',
-                      borderRadius: '10px',
-                      border: cartonNo ? '2px solid #10b981' : '2px solid #2563eb',
-                      backgroundColor: '#ffffff',
-                      color: '#0f172a',
-                      boxShadow: cartonNo ? '0 0 0 3px rgba(16, 185, 129, 0.12)' : '0 0 0 3px rgba(37, 99, 235, 0.12)'
-                    }}
-                  />
-                  <Barcode size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: cartonNo ? '#10b981' : '#2563eb' }} />
-                </div>
-
-                <button 
-                  type="submit" 
-                  className="btn"
-                  style={{ 
-                    height: '52px', 
-                    padding: '0 28px', 
-                    borderRadius: '10px', 
-                    fontWeight: 700,
-                    fontSize: '1rem',
-                    backgroundColor: cartonNo ? '#10b981' : '#2563eb',
-                    color: '#ffffff',
-                    flexShrink: 0
-                  }}
-                >
-                  OKUT
-                </button>
-              </div>
-            </form>
-
-            {/* Active Carton Progress Stats */}
-            {cartonNo && (
-              <div style={{ marginTop: '20px', backgroundColor: '#f8fafc', borderRadius: '12px', padding: '16px 20px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>AKTİF KOLİ NO:</span>
-                    <h3 style={{ margin: '2px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>
-                      {cartonNo}
-                    </h3>
-                    <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '2px' }}>
-                      Ürün: <strong>{activeProductName || 'Belirtilmedi'}</strong> | Sipariş: <strong>{activeOrderNo || '-'}</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>KOLİ DOLDURMA DURUMU</div>
-                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: currentQty === targetQty ? '#10b981' : '#2563eb' }}>
-                      {currentQty} / {targetQty}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div style={{ height: '10px', backgroundColor: '#e2e8f0', borderRadius: '5px', overflow: 'hidden', marginTop: '12px' }}>
-                  <div 
-                    style={{ 
-                      width: `${targetQty > 0 ? Math.round((currentQty / targetQty) * 100) : 0}%`, 
-                      height: '100%', 
-                      backgroundColor: currentQty === targetQty ? '#10b981' : '#2563eb',
-                      transition: 'width 0.3s ease'
-                    }} 
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Feedback Status Alert */}
-          {status === 'error' && (
-            <div style={{ backgroundColor: '#fef2f2', border: '2px solid #fecaca', borderRadius: '12px', padding: '16px 20px', marginBottom: '24px', color: '#991b1b', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <XCircle size={24} style={{ flexShrink: 0 }} />
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(15,23,42,.04)', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', marginBottom: 18 }}>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.95rem' }}>Okuma Hatası!</strong>
-                <span>{errorMsg} (Barkod: <code style={{ fontFamily: 'monospace' }}>{lastScannedBarcode}</code>)</span>
-              </div>
-            </div>
-          )}
-
-          {status === 'cartonClosed' && (
-            <div style={{ backgroundColor: '#f0fdf4', border: '2px solid #bbf7d0', borderRadius: '12px', padding: '20px', marginBottom: '24px', color: '#166534' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <CheckCircle2 size={28} style={{ flexShrink: 0 }} />
-                <div>
-                  <strong style={{ fontSize: '1.1rem', display: 'block' }}>Koli Başarıyla Doldu ve Kapatıldı! 🎉</strong>
-                  <span>Koli Kodu: <code style={{ fontFamily: 'monospace', fontWeight: 700 }}>{lastClosedCartonNo}</code></span>
+                <span style={{ display: 'inline-block', padding: '4px 9px', borderRadius: 6, color: '#fff', background: session.cartonNo ? '#10b981' : '#2563eb', fontSize: '0.75rem', fontWeight: 800 }}>
+                  {session.cartonNo ? '2 · ÜRÜNLERİ OKUT' : '1 · KOLİ ETİKETİNİ OKUT'}
+                </span>
+                <h2 style={{ margin: '10px 0 2px', color: '#0f172a', fontSize: '1.35rem' }}>{session.cartonNo || 'Koli bekleniyor'}</h2>
+                <div style={{ color: '#64748b', fontSize: '0.84rem' }}>
+                  {session.cartonNo ? `${session.orderNo}${session.productName ? ` · ${session.productName}` : ''}` : 'Ön etiketli koliyi görüş alanına gönderin.'}
                 </div>
               </div>
+              <div style={{ minWidth: 170 }}>
+                <label style={{ display: 'block', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, marginBottom: 5 }}>İSTASYON</label>
+                <select
+                  className="form-control"
+                  value={selectedStationId}
+                  disabled={Boolean(session.cartonNo || processingEvent)}
+                  onChange={event => {
+                    selectedStationRef.current = event.target.value;
+                    setSelectedStationId(event.target.value);
+                    localStorage.setItem('trackTrace_selectedStation', event.target.value);
+                  }}
+                  style={{ borderRadius: 8, fontWeight: 600 }}
+                >
+                  {stations.map(station => <option key={station.id} value={station.id}>{station.name}</option>)}
+                </select>
+              </div>
             </div>
-          )}
 
-          {/* Scan History Table */}
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 14px', color: '#0f172a' }}>
-              Son DigiEye Okuma Geçmişi
-            </h3>
-            <div className="table-responsive">
-              <table className="table align-middle" style={{ marginBottom: 0 }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <th style={{ fontSize: '0.75rem', color: '#64748b' }}>ZAMAN</th>
-                    <th style={{ fontSize: '0.75rem', color: '#64748b' }}>DURUM</th>
-                    <th style={{ fontSize: '0.75rem', color: '#64748b' }}>BARKOD / DATAMATRIX</th>
-                    <th style={{ fontSize: '0.75rem', color: '#64748b' }}>KOLİ NO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {scanHistory.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                        Henüz okuma yapılmadı. Kamera altından koli veya ürün geçirin.
-                      </td>
-                    </tr>
-                  ) : (
-                    scanHistory.map((h, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ fontSize: '0.8rem', color: '#64748b' }}>{h.timestamp}</td>
-                        <td>
-                          <span style={{ 
-                            backgroundColor: h.status === 'Başarılı' ? '#d1fae5' : '#fef2f2',
-                            color: h.status === 'Başarılı' ? '#065f46' : '#991b1b',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600
-                          }}>
-                            {h.status}
-                          </span>
-                        </td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.85rem', fontWeight: 600 }}>{h.rawCode}</td>
-                        <td style={{ fontSize: '0.8rem', color: '#64748b' }}>{h.cartonNo}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+              <span style={{ color: '#475569', fontSize: '0.84rem', fontWeight: 700 }}>Koli doluluğu</span>
+              <strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{session.currentQty} / {session.targetQty || '-'}</strong>
+            </div>
+            <div style={{ height: 12, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progress}%`, background: progress >= 100 ? '#10b981' : '#2563eb', transition: 'width .15s ease' }} />
+            </div>
+          </div>
+
+          <div style={{ borderRadius: 16, padding: 24, minHeight: 172, display: 'flex', alignItems: 'center', gap: 18, background: workflowStatus === 'error' ? '#fef2f2' : workflowStatus === 'cartonClosed' ? '#ecfdf5' : '#eff6ff', border: `1px solid ${workflowStatus === 'error' ? '#fecaca' : workflowStatus === 'cartonClosed' ? '#a7f3d0' : '#bfdbfe'}` }}>
+            {workflowStatus === 'error' ? <XCircle size={50} color="#dc2626" /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={50} color="#059669" /> : processingEvent ? <Clock3 size={50} color="#2563eb" /> : <Barcode size={50} color="#2563eb" />}
+            <div>
+              <div style={{ color: '#0f172a', fontSize: '1.2rem', fontWeight: 800, marginBottom: 5 }}>
+                {processingEvent ? 'Kod işleniyor…' : workflowStatus === 'error' ? 'Okutma reddedildi' : workflowStatus === 'cartonClosed' ? 'Koli tamamlandı' : 'Bant akışı hazır'}
+              </div>
+              <div style={{ color: workflowStatus === 'error' ? '#991b1b' : '#475569', fontSize: '0.9rem', lineHeight: 1.5 }}>{message}</div>
+              {lastScannedBarcode && <code style={{ display: 'block', marginTop: 9, color: '#334155', wordBreak: 'break-all' }}>{lastScannedBarcode}</code>}
+              {lastClosedCartonNo && workflowStatus === 'cartonClosed' && <div style={{ marginTop: 8, color: '#047857', fontWeight: 700 }}>Son koli: {lastClosedCartonNo}</div>}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Live Camera Image Feed Card */}
-        <div>
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', position: 'sticky', top: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Eye size={16} color="#2563eb" /> DigiEye Canlı İzleme
-              </span>
-              <a 
-                href={`http://${digiEyeIp.split(':')[0]}:5173`} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: '0.75rem', color: '#2563eb', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
-              >
-                <ExternalLink size={12} /> Web Panel
-              </a>
-            </div>
-
-            {/* Camera Image Stream Frame */}
-            <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden', height: '260px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img
-                id="digieye-live-frame"
-                src={`http://${digiEyeIp.split(':')[0]}:5173/latest-image?t=${cameraStreamKey}`}
-                alt="DigiEye Live Stream"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-
-              <div style={{ position: 'absolute', bottom: '8px', left: '10px', backgroundColor: 'rgba(15, 23, 42, 0.75)', color: '#ffffff', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontFamily: 'monospace' }}>
-                {digiEyeIp.split(':')[0]}
-              </div>
-            </div>
-
-            {lastDigiEyeRead && (
-              <div style={{ marginTop: '14px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 12px' }}>
-                <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 600 }}>Son Kamera Okuması:</div>
-                <code style={{ fontSize: '0.85rem', color: '#1e3a8a', fontWeight: 700, fontFamily: 'monospace', wordBreak: 'break-all', display: 'block', marginTop: '2px' }}>
-                  {lastDigiEyeRead}
-                </code>
-              </div>
-            )}
+        <div style={{ background: '#0f172a', borderRadius: 16, overflow: 'hidden', color: '#fff', minHeight: 410, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}><Eye size={17} /> Agent kamera önizleme</span>
+            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>2 FPS önizleme</span>
+          </div>
+          <div style={{ flex: 1, minHeight: 270, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#020617' }}>
+            {previewUrl ? <img src={previewUrl} alt="DigiEye son kamera karesi" style={{ width: '100%', maxHeight: 300, objectFit: 'contain' }} /> : <Camera size={48} color="#475569" />}
+          </div>
+          <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: '0.78rem' }}>
+            <Stat icon={<Gauge size={14} />} label="Yakalama" value={`${agentStatus?.captureFramesPerSecond || 0} FPS`} />
+            <Stat icon={<Clock3 size={14} />} label="Çözümleme" value={`${agentStatus?.lastDecodeMilliseconds || 0} ms`} />
+            <Stat icon={<ShieldCheck size={14} />} label="Kuyruk" value={`${agentStatus?.pendingEvents || 0} kod`} />
+            <Stat icon={<Barcode size={14} />} label="Algılanan" value={`${agentStatus?.detectedCodes || 0}`} />
           </div>
         </div>
-
       </div>
 
-      {/* Config Modal */}
-      {showIpConfigModal && (
-        <div className="modal-backdrop" style={{ 
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 
-        }}>
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', maxWidth: '420px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 8px', color: '#0f172a' }}>
-              DigiEye IP Kamera Ayarları
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 16px' }}>
-              Endüstriyel DigiEye kameranızın ağ adresini ve soket bağlantısını yönetin.
-            </p>
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#0f172a' }}>Son DigiEye okumaları</div>
+        {scanHistory.length === 0 ? (
+          <div style={{ padding: 26, textAlign: 'center', color: '#94a3b8' }}>Henüz kod işlenmedi.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead><tr style={{ background: '#f8fafc', color: '#64748b', textAlign: 'left' }}><th style={cell}>Saat</th><th style={cell}>Kod</th><th style={cell}>Format</th><th style={cell}>Koli</th><th style={cell}>Sonuç</th></tr></thead>
+              <tbody>{scanHistory.map(item => (
+                <tr key={item.sequence} style={{ borderTop: '1px solid #f1f5f9' }}>
+                  <td style={cell}>{item.timestamp}</td>
+                  <td style={{ ...cell, maxWidth: 410, wordBreak: 'break-all', fontFamily: 'monospace' }}>{item.rawCode}</td>
+                  <td style={cell}>{item.format}</td>
+                  <td style={cell}>{item.cartonNo}</td>
+                  <td style={{ ...cell, color: item.success ? '#047857' : '#b91c1c', fontWeight: 700 }}>{item.status}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                Kamera IP & Port Adresi:
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Örn: 10.0.0.160:5173"
-                value={customIpInput}
-                onChange={(e) => setCustomIpInput(e.target.value)}
-                style={{ fontSize: '0.9rem' }}
-              />
-            </div>
+      {showConfig && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+          <div style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 24px 60px rgba(15,23,42,.28)' }}>
+            <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem' }}>DigiEye Local Agent ayarları</h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.5 }}>Kamera bu bilgisayarda çalıştığı için adres varsayılan olarak localhost’tur. ROI değerleri yalnızca etiketin geçtiği alanı tarayarak hızı artırır.</p>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <input
-                type="checkbox"
-                id="digieyeToggle"
-                checked={digiEyeEnabled}
-                onChange={(e) => setDigiEyeEnabled(e.target.checked)}
-                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-              />
-              <label htmlFor="digieyeToggle" style={{ fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}>
-                DigiEye IP Kamera Otomatik Dinlemeyi Etkinleştir
-              </label>
-            </div>
+            {configError && <div style={{ padding: 10, background: '#fef2f2', color: '#991b1b', borderRadius: 8, marginBottom: 12 }}>{configError}</div>}
+            {draftConfig ? (
+              <div style={{ display: 'grid', gap: 15 }}>
+                <Toggle label="Kamera taramasını etkinleştir" checked={draftConfig.enabled} onChange={enabled => setDraftConfig({ ...draftConfig, enabled })} />
+                <Toggle label="Gölge test modu (backend’e gönderme)" checked={draftConfig.shadowMode} onChange={shadowMode => setDraftConfig({ ...draftConfig, shadowMode })} />
+                <Field label="Kamera son görüntü adresi"><input className="form-control" value={draftConfig.cameraUrl} onChange={event => setDraftConfig({ ...draftConfig, cameraUrl: event.target.value })} /></Field>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <NumberField label="Kare aralığı (ms)" value={draftConfig.pollIntervalMs} min={40} max={1000} onChange={pollIntervalMs => setDraftConfig({ ...draftConfig, pollIntervalMs })} />
+                  <NumberField label="Zaman aşımı (ms)" value={draftConfig.requestTimeoutMs} min={250} max={5000} onChange={requestTimeoutMs => setDraftConfig({ ...draftConfig, requestTimeoutMs })} />
+                </div>
+                <NumberField label="Aynı kodu yeniden kurma için boş kare" value={draftConfig.releaseAfterMissedFrames} min={1} max={20} onChange={releaseAfterMissedFrames => setDraftConfig({ ...draftConfig, releaseAfterMissedFrames })} />
+                <div>
+                  <div style={{ color: '#334155', fontWeight: 700, fontSize: '0.8rem', marginBottom: 7 }}>Tarama alanı ROI (%)</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                    <NumberField label="Sol" value={draftConfig.roiXPercent} min={0} max={99} onChange={roiXPercent => setDraftConfig({ ...draftConfig, roiXPercent })} />
+                    <NumberField label="Üst" value={draftConfig.roiYPercent} min={0} max={99} onChange={roiYPercent => setDraftConfig({ ...draftConfig, roiYPercent })} />
+                    <NumberField label="Genişlik" value={draftConfig.roiWidthPercent} min={1} max={100} onChange={roiWidthPercent => setDraftConfig({ ...draftConfig, roiWidthPercent })} />
+                    <NumberField label="Yükseklik" value={draftConfig.roiHeightPercent} min={1} max={100} onChange={roiHeightPercent => setDraftConfig({ ...draftConfig, roiHeightPercent })} />
+                  </div>
+                </div>
+              </div>
+            ) : <div style={{ padding: 20, color: '#64748b' }}>Ayarlar yükleniyor…</div>}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowIpConfigModal(false)}
-              >
-                Vazgeç
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setDigiEyeIp(customIpInput.trim());
-                  setShowIpConfigModal(false);
-                }}
-              >
-                Kaydet
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
+              <button className="btn btn-secondary" type="button" onClick={() => { setShowConfig(false); setDraftConfig(config); }}>Vazgeç</button>
+              <button className="btn btn-primary" type="button" disabled={!draftConfig || savingConfig} onClick={() => void saveConfig()}>{savingConfig ? 'Kaydediliyor…' : 'Kaydet'}</button>
             </div>
           </div>
         </div>
@@ -826,5 +538,28 @@ export const DigiEyeScan: React.FC = () => {
     </div>
   );
 };
+
+const cell: React.CSSProperties = { padding: '11px 14px', verticalAlign: 'top' };
+
+const Stat: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
+  <div style={{ background: '#1e293b', borderRadius: 8, padding: '8px 10px' }}>
+    <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 5 }}>{icon}{label}</div>
+    <div style={{ color: '#f8fafc', fontWeight: 800, marginTop: 3 }}>{value}</div>
+  </div>
+);
+
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <label><span style={{ display: 'block', color: '#334155', fontWeight: 700, fontSize: '0.8rem', marginBottom: 6 }}>{label}</span>{children}</label>
+);
+
+const NumberField: React.FC<{ label: string; value: number; min: number; max: number; onChange: (value: number) => void }> = ({ label, value, min, max, onChange }) => (
+  <Field label={label}><input className="form-control" type="number" value={value} min={min} max={max} onChange={event => onChange(Number(event.target.value))} /></Field>
+);
+
+const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
+  <label style={{ display: 'flex', alignItems: 'center', gap: 9, color: '#334155', fontWeight: 650, fontSize: '0.86rem' }}>
+    <input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} style={{ width: 17, height: 17 }} />{label}
+  </label>
+);
 
 export default DigiEyeScan;

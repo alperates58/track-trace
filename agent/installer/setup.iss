@@ -1,6 +1,10 @@
+#ifndef PublishDir
+  #define PublishDir "publish"
+#endif
+
 [Setup]
 AppName=TrackTrace Local Agent
-AppVersion=1.0.0
+AppVersion=2.0.0
 DefaultDirName={autopf}\TrackTraceAgent
 DefaultGroupName=TrackTrace Local Agent
 OutputBaseFilename=TrackTraceLocalAgentSetup
@@ -15,8 +19,8 @@ Name: "{commonappdata}\TrackTraceAgent"
 Name: "{commonappdata}\TrackTraceAgent\Logs"
 
 [Files]
-Source: "publish\TrackTrace.LocalAgent.dll"; DestDir: "{app}"; DestName: "TrackTrace.LocalAgent.dll"; Flags: ignoreversion; BeforeInstall: PreInstallCleanup
-Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "TrackTrace.LocalAgent,TrackTrace.LocalAgent.dll"
+Source: "{#PublishDir}\TrackTrace.LocalAgent.exe"; DestDir: "{app}"; DestName: "TrackTrace.LocalAgent.exe"; Flags: ignoreversion; BeforeInstall: PreInstallCleanup
+Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "TrackTrace.LocalAgent,TrackTrace.LocalAgent.exe"
 
 [UninstallRun]
 Filename: "{sys}\sc.exe"; Parameters: "stop TrackTraceAgent"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
@@ -102,7 +106,19 @@ begin
     '{' + #13#10 +
     '  "PairingToken": "' + MakePairingToken() + '",' + #13#10 +
     '  "DefaultPrinter": "ARGOX CP-2140",' + #13#10 +
-    '  "EnableDummyMode": false' + #13#10 +
+    '  "EnableDummyMode": false,' + #13#10 +
+    '  "DigiEye": {' + #13#10 +
+    '    "Enabled": false,' + #13#10 +
+    '    "CameraUrl": "http://127.0.0.1:5173/latest-image",' + #13#10 +
+    '    "PollIntervalMs": 80,' + #13#10 +
+    '    "RequestTimeoutMs": 1000,' + #13#10 +
+    '    "ReleaseAfterMissedFrames": 3,' + #13#10 +
+    '    "ShadowMode": false,' + #13#10 +
+    '    "RoiXPercent": 0,' + #13#10 +
+    '    "RoiYPercent": 0,' + #13#10 +
+    '    "RoiWidthPercent": 100,' + #13#10 +
+    '    "RoiHeightPercent": 100' + #13#10 +
+    '  }' + #13#10 +
     '}';
 
   if (not SaveStringToFile(ConfigPath, JsonContent, False)) or (not FileExists(ConfigPath)) then
@@ -114,33 +130,26 @@ end;
 
 procedure InstallService();
 var
-  DotnetPath, AgentDllPath: String;
+  AgentExePath: String;
 begin
   if ServiceInstalled then
     Exit;
 
-  DotnetPath := 'C:\Program Files\dotnet\dotnet.exe';
-  AgentDllPath := ExpandConstant('{app}\TrackTrace.LocalAgent.dll');
+  AgentExePath := ExpandConstant('{app}\TrackTrace.LocalAgent.exe');
 
-  if not FileExists(DotnetPath) then
+  if not FileExists(AgentExePath) then
   begin
-    MsgBox('.NET runtime bulunamadi. Lutfen Microsoft .NET Runtime yukleyin ve kurulumu tekrar calistirin: ' + DotnetPath, mbError, MB_OK);
-    Abort;
-  end;
-
-  if not FileExists(AgentDllPath) then
-  begin
-    MsgBox('HATA: TrackTrace.LocalAgent.dll dosyasi bulunamadi: ' + AgentDllPath, mbError, MB_OK);
+    MsgBox('HATA: TrackTrace.LocalAgent.exe dosyasi bulunamadi: ' + AgentExePath, mbError, MB_OK);
     Abort;
   end;
 
   RunSc(
-    'create TrackTraceAgent binPath= "\"' + DotnetPath + '\" \"' + AgentDllPath + '\"" DisplayName= "TrackTrace Local Agent" start= auto',
+    'create TrackTraceAgent binPath= "\"' + AgentExePath + '\"" DisplayName= "TrackTrace Local Agent" start= auto',
     'TrackTraceAgent service create',
     False);
 
   RunSc(
-    'config TrackTraceAgent binPath= "\"' + DotnetPath + '\" \"' + AgentDllPath + '\"" start= auto',
+    'config TrackTraceAgent binPath= "\"' + AgentExePath + '\"" start= auto',
     'TrackTraceAgent service startup config',
     False);
 
@@ -160,9 +169,9 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    if not FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.dll')) then
+    if not FileExists(ExpandConstant('{app}\TrackTrace.LocalAgent.exe')) then
     begin
-      MsgBox('HATA: TrackTrace.LocalAgent.dll dosyasi kurulum klasorune kopyalanamadi!', mbError, MB_OK);
+      MsgBox('HATA: TrackTrace.LocalAgent.exe dosyasi kurulum klasorune kopyalanamadi!', mbError, MB_OK);
       Abort;
     end;
 
@@ -230,10 +239,10 @@ var
 begin
   if CurPageID = wpFinished then
   begin
-    DllPath := ExpandConstant('{app}\TrackTrace.LocalAgent.dll');
+    DllPath := ExpandConstant('{app}\TrackTrace.LocalAgent.exe');
     if not FileExists(DllPath) then
     begin
-      WizardForm.FinishedLabel.Caption := 'Kurulum basarisiz oldu: TrackTrace.LocalAgent.dll dosyasi bulunamadi!';
+      WizardForm.FinishedLabel.Caption := 'Kurulum basarisiz oldu: TrackTrace.LocalAgent.exe dosyasi bulunamadi!';
       Exit;
     end;
 
