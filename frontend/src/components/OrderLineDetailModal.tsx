@@ -83,6 +83,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
   const [printLine2, setPrintLine2] = useState(selectedOrder.gtin || '');
   const [printLabelBelow, setPrintLabelBelow] = useState(true);
   const [printSplitSize, setPrintSplitSize] = useState(0);
+  const [printCodeScope, setPrintCodeScope] = useState<'all' | 'unassigned'>('all');
   const [printingPdf, setPrintingPdf] = useState(false);
 
   // File Import State
@@ -255,14 +256,16 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         line1: printLine1,
         line2: printLine2,
         labelBelow: printLabelBelow,
-        splitSize: printSplitSize
+        splitSize: printSplitSize,
+        onlyUnassigned: printCodeScope === 'unassigned'
       });
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       const fileExt = printSplitSize > 0 ? 'zip' : 'pdf';
-      link.setAttribute('download', `dm_labels_${selectedOrder.orderNo}.${fileExt}`);
+      const scopeSuffix = printCodeScope === 'unassigned' ? '_acikta' : '';
+      link.setAttribute('download', `dm_labels_${selectedOrder.orderNo}${scopeSuffix}.${fileExt}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -795,7 +798,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 )}
                 {user?.role !== 'Viewer' && (
                   <>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowPrintModal(true)}>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => { setError(null); setShowPrintModal(true); }}>
                       <Printer size={16} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
                     </button>
                     <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
@@ -902,11 +905,55 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
       {/* --- PRINT PDF MODAL --- */}
       {showPrintModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={(e) => { e.stopPropagation(); setShowPrintModal(false); }}>
-          <div className="card" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
+        <div data-testid="print-pdf-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-labelledby="print-pdf-title" className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 id="print-pdf-title" style={{ fontSize: '1.25rem', margin: 0 }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
+              <button
+                type="button"
+                aria-label="PDF penceresini kapat"
+                data-testid="print-pdf-close"
+                disabled={printingPdf}
+                onClick={() => { setShowPrintModal(false); setError(null); }}
+                style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', border: 'none', backgroundColor: '#f1f5f9', color: '#475569', cursor: printingPdf ? 'not-allowed' : 'pointer' }}
+              >
+                <X size={19} />
+              </button>
+            </div>
             {error && <div style={{ color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>{error}</div>}
             <form onSubmit={(e) => { e.preventDefault(); handlePrintCodes(); }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label className="form-label" style={{ marginBottom: '8px' }}>PDF Kod Kapsamı</label>
+                <div role="radiogroup" aria-label="PDF kod kapsamı" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={printCodeScope === 'all'}
+                    data-testid="print-scope-all"
+                    onClick={() => setPrintCodeScope('all')}
+                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'all' ? '2px solid #2563eb' : '1px solid #cbd5e1', backgroundColor: printCodeScope === 'all' ? '#eff6ff' : '#fff', color: '#0f172a', textAlign: 'left', cursor: 'pointer' }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Barcode size={17} color={printCodeScope === 'all' ? '#2563eb' : '#64748b'} /> Tüm QR Kodları</span>
+                    <small style={{ display: 'block', marginTop: '5px', color: '#64748b', lineHeight: 1.35 }}>Siparişe yüklenen bütün kodları üretir.</small>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={printCodeScope === 'unassigned'}
+                    data-testid="print-scope-unassigned"
+                    onClick={() => setPrintCodeScope('unassigned')}
+                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'unassigned' ? '2px solid #d97706' : '1px solid #cbd5e1', backgroundColor: printCodeScope === 'unassigned' ? '#fffbeb' : '#fff', color: '#0f172a', textAlign: 'left', cursor: 'pointer' }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Archive size={17} color={printCodeScope === 'unassigned' ? '#d97706' : '#64748b'} /> Sadece Açıkta Kalanlar</span>
+                    <small style={{ display: 'block', marginTop: '5px', color: '#64748b', lineHeight: 1.35 }}>Hiç okutulmamış ve hiçbir koliye girmemiş kodlar.</small>
+                  </button>
+                </div>
+              </div>
+              {printCodeScope === 'unassigned' && (
+                <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', fontSize: '0.82rem', lineHeight: 1.45 }}>
+                  PDF yalnızca okutma zamanı olmayan ve herhangi bir koliye bağlanmamış açıkta kalan QR kodlarından oluşturulacak.
+                </div>
+              )}
               <div className="two-column-grid">
                 <div className="form-group">
                   <label className="form-label">Sütun Sayısı (Cols)</label>
@@ -949,9 +996,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 <input type="number" className="form-input" min="0" placeholder="0 (Parçalama yok)" value={printSplitSize === 0 ? '' : printSplitSize} onChange={e => setPrintSplitSize(parseInt(e.target.value) || 0)} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowPrintModal(false)} disabled={printingPdf}>İptal</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowPrintModal(false); setError(null); }} disabled={printingPdf}>İptal</button>
                 <button type="submit" className="btn btn-primary" disabled={printingPdf}>
-                  {printingPdf ? 'PDF Üretiliyor...' : 'Yazdır & İndir'}
+                  {printingPdf ? 'PDF Üretiliyor...' : printCodeScope === 'unassigned' ? 'Açıkta Kalanları Üret & İndir' : 'Yazdır & İndir'}
                 </button>
               </div>
             </form>

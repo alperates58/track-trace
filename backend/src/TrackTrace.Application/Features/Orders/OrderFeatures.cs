@@ -42,7 +42,8 @@ public record PrintOrderCodesPdfQuery(
     string? Line1,
     string? Line2,
     bool LabelBelow,
-    int SplitSize) : IRequest<PrintOrderCodesResult>;
+    int SplitSize,
+    bool OnlyUnassigned) : IRequest<PrintOrderCodesResult>;
 
 public record OrderImportResultDto(
     int TotalRows,
@@ -358,14 +359,21 @@ public class OrderHandlers :
         if (order == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
         string orderNo = order.orderno;
 
-        var codes = (await connection.QueryAsync<string>(
-            "SELECT RawCode FROM ProductCodes WHERE OrderId = @OrderId ORDER BY CreatedAt ASC",
-            new { OrderId = request.OrderId })).ToList();
+        var codeSql = request.OnlyUnassigned
+            ? "SELECT RawCode FROM ProductCodes WHERE OrderId = @OrderId AND CartonId IS NULL AND ScannedAt IS NULL ORDER BY CreatedAt ASC"
+            : "SELECT RawCode FROM ProductCodes WHERE OrderId = @OrderId ORDER BY CreatedAt ASC";
+
+        var codes = (await connection.QueryAsync<string>(codeSql, new { OrderId = request.OrderId })).ToList();
 
         if (codes.Count == 0)
         {
-            throw new InvalidOperationException("Siparişe ait yüklenmiş barkod bulunamadı.");
+            var message = request.OnlyUnassigned
+                ? "Siparişte koliye girmemiş ve hiç okutulmamış açıkta QR kodu bulunmuyor."
+                : "Siparişe ait yüklenmiş barkod bulunamadı.";
+            throw new InvalidOperationException(message);
         }
+
+        var fileSuffix = request.OnlyUnassigned ? "_unassigned" : string.Empty;
 
         if (request.SplitSize > 0 && codes.Count > request.SplitSize)
         {
@@ -379,21 +387,21 @@ public class OrderHandlers :
                     byte[] pdfBytes = _labelGenerator.GenerateDataMatrixCodesPdf(
                         chunk, request.Cols, request.Rows, request.Size, request.AddText, request.Line1, request.Line2, request.LabelBelow);
 
-                    var entry = archive.CreateEntry($"dm_labels_{orderNo}_part{partNo}.pdf");
+                    var entry = archive.CreateEntry($"dm_labels_{orderNo}{fileSuffix}_part{partNo}.pdf");
                     using var entryStream = entry.Open();
                     await entryStream.WriteAsync(pdfBytes, 0, pdfBytes.Length, cancellationToken);
                     partNo++;
                 }
             }
 
-            return new PrintOrderCodesResult(zipMs.ToArray(), "application/zip", $"dm_labels_{orderNo}.zip");
+            return new PrintOrderCodesResult(zipMs.ToArray(), "application/zip", $"dm_labels_{orderNo}{fileSuffix}.zip");
         }
         else
         {
             byte[] pdfBytes = _labelGenerator.GenerateDataMatrixCodesPdf(
                 codes, request.Cols, request.Rows, request.Size, request.AddText, request.Line1, request.Line2, request.LabelBelow);
 
-            return new PrintOrderCodesResult(pdfBytes, "application/pdf", $"dm_labels_{orderNo}.pdf");
+            return new PrintOrderCodesResult(pdfBytes, "application/pdf", $"dm_labels_{orderNo}{fileSuffix}.pdf");
         }
     }
 

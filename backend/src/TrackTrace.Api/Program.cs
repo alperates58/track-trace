@@ -1092,7 +1092,8 @@ app.MapPost("/api/orders/{id:guid}/print-codes", async (
             request.Line1,
             request.Line2,
             request.LabelBelow,
-            request.SplitSize);
+            request.SplitSize,
+            request.OnlyUnassigned);
 
         var result = await mediator.Send(query);
         return Results.File(result.FileContents, result.ContentType, result.FileName);
@@ -2094,7 +2095,8 @@ public record PrintCodesRequest(
     string? Line1,
     string? Line2,
     bool LabelBelow,
-    int SplitSize);
+    int SplitSize,
+    bool OnlyUnassigned = false);
 
 public record PrintTestRequest(string IpAddress, int Port);
 public record ScanShipmentRequest(string Code);
