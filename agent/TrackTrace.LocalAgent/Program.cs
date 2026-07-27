@@ -50,6 +50,14 @@ app.UseCors("AllowSpecific");
 
 app.Use(async (context, next) =>
 {
+    context.Response.Headers.Append("Access-Control-Allow-Private-Network", "true");
+
+    if (HttpMethods.IsOptions(context.Request.Method))
+    {
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return;
+    }
+
     if (!context.Request.Path.StartsWithSegments("/api"))
     {
         await next(context);
