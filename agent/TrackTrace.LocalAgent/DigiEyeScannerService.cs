@@ -115,9 +115,9 @@ public sealed class DigiEyeScannerService : BackgroundService
         using var reader = new BarcodeReader
         {
             Formats = new BarcodeFormats(BarcodeFormat.QRCode, BarcodeFormat.DataMatrix, BarcodeFormat.Code128),
-            TryHarder = false,
+            TryHarder = true,
             TryRotate = true,
-            TryInvert = false,
+            TryInvert = true,
             TryDownscale = true,
             ReturnErrors = false,
             TextMode = TextMode.Plain,
