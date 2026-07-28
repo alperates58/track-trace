@@ -190,7 +190,13 @@ public class ReportHandlers :
         
         const string sql = @"
             SELECT 
-                (SELECT COUNT(*) FROM Orders WHERE Status = 'Active') as ActiveOrders,
+                (SELECT COUNT(*)
+                 FROM (
+                     SELECT 1
+                     FROM Orders
+                     WHERE Status = 'Active'
+                     GROUP BY OrderNo, CustomerName
+                 ) active_order_groups) as ActiveOrders,
                 (SELECT COUNT(*) FROM Cartons WHERE Status = 'Open') as OpenCartons,
                 (SELECT COUNT(*) FROM Pallets WHERE Status = 'Open') as OpenPallets,
                 (SELECT COUNT(*) FROM ProductCodes WHERE Status = 'Scanned' AND ScannedAt >= CURRENT_DATE) as ScannedToday,

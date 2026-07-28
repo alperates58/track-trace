@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Dapper;
+using TrackTrace.Application.Common;
 using TrackTrace.Application.Common.Interfaces;
 
 namespace TrackTrace.Infrastructure.Services;
@@ -19,6 +20,11 @@ public class AuditLogService : IAuditLogService
 
     public async Task LogAsync(string entityName, Guid? entityId, string action, object? oldValue = null, object? newValue = null)
     {
+        if (!AuditLogPolicy.ShouldLog(entityName, action))
+        {
+            return;
+        }
+
         using var connection = _dbConnectionFactory.CreateConnection();
         const string sql = @"
             INSERT INTO AuditLogs (Id, UserId, EntityName, EntityId, Action, OldValue, NewValue, CreatedAt, IpAddress)
