@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
-import { Printer } from 'lucide-react';
+import { Printer, AlertTriangle, RotateCcw, FileDown } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
 import { SessionHeader } from '../components/Scan/SessionHeader';
 import { ScanToolbar } from '../components/Scan/ScanToolbar';
 import { ScanProgressCard } from '../components/Scan/ScanProgressCard';
 import { RecentScanPanel } from '../components/Scan/RecentScanPanel';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 
 interface Station {
   id: string;
@@ -60,8 +61,9 @@ export const Scan: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   // Active carton details
-  const [, setCartonNo] = useState<string | null>(null);
-  const [, setCartonSSCC] = useState<string | null>(null);
+  const [cartonNo, setCartonNo] = useState<string | null>(null);
+  const [cartonSSCC, setCartonSSCC] = useState<string | null>(null);
+  const [activeCartonId, setActiveCartonId] = useState<string | null>(null);
   const [currentQty, setCurrentQty] = useState(0);
   const [targetQty, setTargetQty] = useState(0);
   const [, setCompletedCartons] = useState(0);
@@ -69,8 +71,11 @@ export const Scan: React.FC = () => {
 
   // Last closed carton details (for label reprint & ZPL)
   const [lastClosedCartonId, setLastClosedCartonId] = useState<string | null>(null);
-  const [, setLastClosedCartonNo] = useState<string | null>(null);
-  const [, setLastClosedCartonSSCC] = useState<string | null>(null);
+  const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
+  const [lastClosedCartonSSCC, setLastClosedCartonSSCC] = useState<string | null>(null);
+  const [printError, setPrintError] = useState<string | null>(null);
+  const [isReprinting, setIsReprinting] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false);
 
   // History & settings
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
@@ -159,18 +164,29 @@ export const Scan: React.FC = () => {
       
       // Fetch current progress from backend
       api.get(`/api/scan/current-carton?orderId=${selectedOrderId}&stationId=${selectedStationId}`)
-        .then(res => {
+        .then(async (res) => {
           setCartonNo(res.cartonNo);
           setCartonSSCC(res.sscc);
           setCurrentQty(res.cartonCurrentQty);
           setTargetQty(res.cartonTargetQty);
           setCompletedCartons(res.completedCartonsCount);
           setTotalScanned(res.totalScannedCount);
+          if (res.hasOpenCarton && res.cartonNo) {
+            try {
+              const openCartonRes = await api.get(`/api/cartons?orderId=${selectedOrderId}&search=${encodeURIComponent(res.cartonNo)}&pageSize=1`);
+              if (openCartonRes.items && openCartonRes.items.length > 0) {
+                setActiveCartonId(openCartonRes.items[0].id);
+              }
+            } catch (e) {}
+          } else {
+            setActiveCartonId(null);
+          }
         })
         .catch(err => {
           console.error(err);
           setCartonNo(null);
           setCartonSSCC(null);
+          setActiveCartonId(null);
           setCurrentQty(0);
           setTargetQty(order?.productPerCarton || 0);
           setCompletedCartons(0);
@@ -202,11 +218,14 @@ export const Scan: React.FC = () => {
       setStatus('ready');
       setLastScannedBarcode('');
       setErrorMsg('');
+      setPrintError(null);
       setTimeout(focusInput, 100);
     } else {
       setSelectedOrder(null);
       setCartonNo(null);
       setCartonSSCC(null);
+      setActiveCartonId(null);
+      setPrintError(null);
       setCurrentQty(0);
       setTargetQty(0);
       setCompletedCartons(0);
@@ -424,9 +443,11 @@ export const Scan: React.FC = () => {
         
         setCartonNo(res.cartonNo);
         setCartonSSCC(res.sscc);
+        setActiveCartonId(res.cartonId || null);
         setCurrentQty(res.cartonCurrentQty);
         setTargetQty(res.cartonTargetQty);
         setTotalScanned(prev => prev + 1);
+        setPrintError(null);
 
         if (res.status === 'CartonClosed') {
           setStatus('cartonClosed');
@@ -442,17 +463,18 @@ export const Scan: React.FC = () => {
           if (currentAuto && res.cartonId) {
             if (currentMode === 'pdf') {
               playSound('warning');
-              alert("PDF Download modunda otomatik yazdırma desteklenmez. Etiketi manuel olarak indirip yazdırın.");
+              setPrintError('PDF modunda otomatik yazdırma desteklenmez. Etiketi manuel indirin.');
             } else {
               const provider = getPrintProvider(currentMode);
               provider.print({ id: res.cartonId, type: 'carton' })
                 .then(() => {
                   console.log(`Koli barkodu otomatik yazdırılmaya gönderildi (Mode: ${currentMode}).`);
+                  setPrintError(null);
                 })
                 .catch((printErr: any) => {
                   console.error(`Otomatik yazdırma başarısız (Mode: ${currentMode}):`, printErr);
                   playSound('warning');
-                  alert(`Koli tamamlandı ancak etiket otomatik olarak yazdırılamadı: ${printErr.message}`);
+                  setPrintError(`Koli tamamlandı ancak etiket yazdırılamadı: ${printErr.message}`);
                 });
             }
           }
@@ -520,6 +542,77 @@ export const Scan: React.FC = () => {
     ]);
   };
 
+  const handleRemoveItemFromCarton = async (codeToRemove: string) => {
+    if (!activeCartonId) {
+      alert('Aktif açık bir koli bulunamadı.');
+      return;
+    }
+
+    setIsUndoing(true);
+    try {
+      await api.post(`/api/cartons/${activeCartonId}/remove-product?rawCode=${encodeURIComponent(codeToRemove)}`);
+      playSound('warning');
+      setCurrentQty(prev => Math.max(0, prev - 1));
+      setTotalScanned(prev => Math.max(0, prev - 1));
+      if (selectedOrder) {
+        setSelectedOrder(prev => prev ? { ...prev, scannedCount: Math.max(0, prev.scannedCount - 1) } : null);
+      }
+      setScanHistory(prev => prev.map(item => 
+        item.rawCode === codeToRemove && item.status === 'Başarılı'
+          ? { ...item, status: 'Geri Alındı' }
+          : item
+      ));
+      setStatus('ready');
+      setErrorMsg('');
+    } catch (err: any) {
+      playSound('error');
+      alert('Ürün koliden çıkarılamadı: ' + (err.message || 'Bilinmeyen hata'));
+    } finally {
+      setIsUndoing(false);
+    }
+  };
+
+  const handleUndoLastScan = async () => {
+    if (!activeCartonId || currentQty <= 0) {
+      alert('Aktif kolide geri alınabilecek ürün yok.');
+      return;
+    }
+    const lastSuccess = scanHistory.find(item => item.status === 'Başarılı');
+    if (!lastSuccess) {
+      alert('Geri alınabilecek son okutulmuş ürün bulunamadı.');
+      return;
+    }
+    await handleRemoveItemFromCarton(lastSuccess.rawCode);
+  };
+
+  const handleRetryPrint = async () => {
+    if (!lastClosedCartonId) return;
+    setIsReprinting(true);
+    try {
+      const currentMode = printMode || 'browser';
+      if (currentMode === 'pdf') {
+        await printPDFDirectly(lastClosedCartonId);
+      } else {
+        const provider = getPrintProvider(currentMode);
+        await provider.print({ id: lastClosedCartonId, type: 'carton' });
+      }
+      setPrintError(null);
+      playSound('success');
+    } catch (err: any) {
+      setPrintError(`Tekrar deneme başarısız: ${err.message}`);
+      playSound('error');
+    } finally {
+      setIsReprinting(false);
+    }
+  };
+
+  // Global hardware barcode scanner hook for reliable laptop scanning
+  useBarcodeScanner({
+    onScan: processBarcode,
+    onUndo: handleUndoLastScan,
+    enabled: isOnline && !!selectedOrderId && !!selectedStationId && !isSettingsModalOpen && !isCameraOpen
+  });
+
   return (
     <div className="min-h-full flex flex-col overflow-x-hidden overflow-y-auto bg-gray-50" onClick={focusInput}>
       <SessionHeader isOnline={isOnline} operatorName={user?.name} />
@@ -545,7 +638,59 @@ export const Scan: React.FC = () => {
           onOpenPrinterSettings={() => setIsSettingsModalOpen(true)}
           onOpenCamera={() => setIsCameraOpen(true)}
           onCloseFocusRestoration={focusInput}
+          onUndoLast={handleUndoLastScan}
+          canUndo={currentQty > 0 && !!activeCartonId}
+          isUndoing={isUndoing}
         />
+
+        {/* Yazıcı Hata Kurtarma Bildirimi */}
+        {printError && lastClosedCartonId && (
+          <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm shadow-sm animate-pulse">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+              <span className="font-semibold">{printError}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRetryPrint}
+                disabled={isReprinting}
+                className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                {isReprinting ? 'Yazdırılıyor...' : 'Tekrar Yazdır'}
+              </button>
+              <button
+                onClick={() => printPDFDirectly(lastClosedCartonId)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded-lg text-xs font-bold transition-colors shadow-sm"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                PDF İndir
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Koli Kapandı / Aşırı Dolum Koruma Bildirimi */}
+        {status === 'cartonClosed' && (
+          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl text-green-900 text-sm shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+              <span className="font-bold">Koli Tamamlandı ({lastClosedCartonNo || 'Son Koli'}). Lütfen yeni koliye geçin. Sıradaki barkod yeni koliye eklenecektir.</span>
+            </div>
+            {lastClosedCartonId && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRetryPrint}
+                  disabled={isReprinting}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Etiketi Yazdır
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-4 overflow-hidden min-h-0" style={{ position: 'relative', zIndex: 1 }}>
           <ScanProgressCard 
@@ -560,6 +705,8 @@ export const Scan: React.FC = () => {
           <RecentScanPanel 
             history={scanHistory}
             errorMsg={status === 'error' ? errorMsg : undefined}
+            onRemoveItem={handleRemoveItemFromCarton}
+            activeCartonNo={cartonNo}
           />
         </div>
       </main>

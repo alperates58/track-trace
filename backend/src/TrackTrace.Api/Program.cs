@@ -1721,7 +1721,7 @@ app.MapPost("/api/cartons/{id:guid}/remove-product", async (Guid id, [FromQuery]
     {
         return Results.BadRequest(new { message = ex.Message });
     }
-}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.edit");
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.edit", "scan.edit");
 
 app.MapPost("/api/cartons/{id:guid}/add-product", async (Guid id, [FromQuery] string rawCode, IMediator mediator) =>
 {

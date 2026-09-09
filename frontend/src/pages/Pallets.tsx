@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Printer, Eye, Search, Barcode, Trash2, X, Check, Loader2, ArrowRight, Clock, Package, Layers } from 'lucide-react';
 import { TTPageHeader, TTLoadingState, TTEmptyState, TTButton } from '../components/common';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 interface Pallet {
   id: string;
   orderId: string;
@@ -214,12 +215,11 @@ export const Pallets: React.FC = () => {
     }
   };
 
-  const handleAddCarton = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPallet || !cartonSSCCInput.trim()) return;
+  const addCartonToPalletByCode = async (code: string) => {
+    if (!selectedPallet || selectedPallet.status !== 'Open' || !code.trim()) return;
 
     try {
-      await api.post(`/api/pallets/${selectedPallet.id}/add-carton?cartonSscc=${cartonSSCCInput.trim()}`);
+      await api.post(`/api/pallets/${selectedPallet.id}/add-carton?cartonSscc=${encodeURIComponent(code.trim())}`);
       setCartonSSCCInput('');
       fetchPallets();
       // Reload pallet
@@ -229,6 +229,22 @@ export const Pallets: React.FC = () => {
       alert('Koli palete eklenemedi: ' + err.message);
     }
   };
+
+  const handleAddCarton = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPallet || !cartonSSCCInput.trim()) return;
+    await addCartonToPalletByCode(cartonSSCCInput);
+  };
+
+  // Rapid hardware barcode scanner support for laptop/handheld scanner
+  useBarcodeScanner({
+    onScan: (barcode) => {
+      if (selectedPallet && selectedPallet.status === 'Open' && !showCreateDrawer && !showTransferModal) {
+        addCartonToPalletByCode(barcode);
+      }
+    },
+    enabled: !!selectedPallet && selectedPallet.status === 'Open' && !showCreateDrawer && !showTransferModal
+  });
 
   const handleClosePallet = async (palletId: string) => {
     if (!confirm('Paleti kapatmak istediğinize emin misiniz? Palet kapatıldıktan sonra yeni koli eklenemez.')) return;

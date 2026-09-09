@@ -10,7 +10,9 @@
       "TrackTrace.LocalAgent/1.0.0": {
         "dependencies": {
           "Microsoft.Extensions.Hosting.WindowsServices": "8.0.1",
+          "System.Drawing.Common": "8.0.8",
           "System.Management": "8.0.0",
+          "ZXingCpp": "0.5.2",
           "runtimepack.Microsoft.NETCore.App.Runtime.win-x64": "8.0.27",
           "runtimepack.Microsoft.AspNetCore.App.Runtime.win-x64": "8.0.27"
         },
@@ -1514,6 +1516,14 @@
         }
       },
       "Microsoft.Extensions.Primitives/8.0.0": {},
+      "Microsoft.Win32.SystemEvents/8.0.0": {
+        "runtime": {
+          "runtimes/win/lib/net8.0/Microsoft.Win32.SystemEvents.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.23.53103"
+          }
+        }
+      },
       "System.CodeDom/8.0.0": {
         "runtime": {
           "lib/net8.0/System.CodeDom.dll": {
@@ -1523,6 +1533,17 @@
         }
       },
       "System.Diagnostics.EventLog/8.0.1": {},
+      "System.Drawing.Common/8.0.8": {
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "8.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/System.Drawing.Common.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.824.36606"
+          }
+        }
+      },
       "System.Management/8.0.0": {
         "dependencies": {
           "System.CodeDom": "8.0.0"
@@ -1542,6 +1563,19 @@
           "runtimes/win/lib/net8.0/System.ServiceProcess.ServiceController.dll": {
             "assemblyVersion": "8.0.0.1",
             "fileVersion": "8.0.1024.46610"
+          }
+        }
+      },
+      "ZXingCpp/0.5.2": {
+        "runtime": {
+          "lib/net5.0/ZXingCpp.dll": {
+            "assemblyVersion": "0.5.2.0",
+            "fileVersion": "0.5.2.0"
+          }
+        },
+        "native": {
+          "runtimes/win-x64/native/ZXing.dll": {
+            "fileVersion": "3.1.0.0"
           }
         }
       }
@@ -1759,6 +1793,13 @@
       "path": "microsoft.extensions.primitives/8.0.0",
       "hashPath": "microsoft.extensions.primitives.8.0.0.nupkg.sha512"
     },
+    "Microsoft.Win32.SystemEvents/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9opKRyOKMCi2xJ7Bj7kxtZ1r9vbzosMvRrdEhVhDz8j8MoBGgB+WmC94yH839NPH+BclAjtQ/pyagvi/8gDLkw==",
+      "path": "microsoft.win32.systemevents/8.0.0",
+      "hashPath": "microsoft.win32.systemevents.8.0.0.nupkg.sha512"
+    },
     "System.CodeDom/8.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1773,6 +1814,13 @@
       "path": "system.diagnostics.eventlog/8.0.1",
       "hashPath": "system.diagnostics.eventlog.8.0.1.nupkg.sha512"
     },
+    "System.Drawing.Common/8.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4ZM1wvLjz9nVVExsfPAaSl/qOvU+QNedJL5rQ+2Wbow+iGeyO0e7XN07707rMBgaffEeeLrCZBwC0oHUuvRdPw==",
+      "path": "system.drawing.common/8.0.8",
+      "hashPath": "system.drawing.common.8.0.8.nupkg.sha512"
+    },
     "System.Management/8.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1786,6 +1834,13 @@
       "sha512": "sha512-02I0BXo1kmMBgw03E8Hu4K6nTqur4wpQdcDZrndczPzY2fEoGvlinE35AWbyzLZ2h2IksEZ6an4tVt3hi9j1oA==",
       "path": "system.serviceprocess.servicecontroller/8.0.1",
       "hashPath": "system.serviceprocess.servicecontroller.8.0.1.nupkg.sha512"
+    },
+    "ZXingCpp/0.5.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8PAaLTwEQ0HS9lRhXT46dsUGFJCzPAJhhwb164+ekP9S//95A09uTwFf+DlO62Ikm3hOmo3u9wGXH9iO1S1QFA==",
+      "path": "zxingcpp/0.5.2",
+      "hashPath": "zxingcpp.0.5.2.nupkg.sha512"
     }
   },
   "runtimes": {

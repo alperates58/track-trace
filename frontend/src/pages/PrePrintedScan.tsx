@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
-import { useAuth } from '../context/AuthContext';
-import { Volume2, VolumeX, Barcode, Printer, Camera } from 'lucide-react';
+import { Volume2, VolumeX, Barcode, Printer, Camera, RotateCcw, AlertTriangle } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 
 interface Station {
   id: string;
@@ -96,6 +96,7 @@ export const PrePrintedScan: React.FC = () => {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [isReprinting, setIsReprinting] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false);
 
   // Check API health status
   useEffect(() => {
@@ -463,6 +464,52 @@ export const PrePrintedScan: React.FC = () => {
     ]);
   };
 
+  const handleRemoveItemFromCarton = async (codeToRemove: string) => {
+    if (!activeCartonId) {
+      alert('Aktif açık bir koli bulunamadı.');
+      return;
+    }
+
+    setIsUndoing(true);
+    try {
+      await api.post(`/api/cartons/${activeCartonId}/remove-product?rawCode=${encodeURIComponent(codeToRemove)}`);
+      playSound('warning');
+      setCurrentQty(prev => Math.max(0, prev - 1));
+      setScanHistory(prev => prev.map(item => 
+        item.rawCode === codeToRemove && item.status === 'Başarılı'
+          ? { ...item, status: 'Geri Alındı' }
+          : item
+      ));
+      setStatus('ready');
+      setErrorMsg('');
+    } catch (err: any) {
+      playSound('error');
+      alert('Ürün koliden çıkarılamadı: ' + (err.message || 'Bilinmeyen hata'));
+    } finally {
+      setIsUndoing(false);
+    }
+  };
+
+  const handleUndoLastScan = async () => {
+    if (!activeCartonId || currentQty <= 0) {
+      alert('Aktif kolide geri alınabilecek ürün yok.');
+      return;
+    }
+    const lastSuccess = scanHistory.find(item => item.status === 'Başarılı');
+    if (!lastSuccess) {
+      alert('Geri alınabilecek son okutulmuş ürün bulunamadı.');
+      return;
+    }
+    await handleRemoveItemFromCarton(lastSuccess.rawCode);
+  };
+
+  // Global hardware barcode scanner hook for laptop scanning
+  useBarcodeScanner({
+    onScan: processBarcode,
+    onUndo: handleUndoLastScan,
+    enabled: isOnline && !!selectedStationId && !isSettingsModalOpen && !isCameraOpen
+  });
+
   const handleDownloadPDF = async () => {
     if (!lastClosedCartonId) return;
     try {
@@ -603,6 +650,30 @@ export const PrePrintedScan: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Undo Action */}
+          <button
+            onClick={handleUndoLastScan}
+            disabled={!activeCartonId || currentQty <= 0 || isUndoing}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '8px',
+              border: '1px solid #fcd34d',
+              backgroundColor: (!activeCartonId || currentQty <= 0) ? '#fef3c755' : '#fef3c7',
+              color: '#92400e',
+              cursor: (!activeCartonId || currentQty <= 0) ? 'not-allowed' : 'pointer',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              opacity: (!activeCartonId || currentQty <= 0) ? 0.6 : 1
+            }}
+            title="Son okutulan ürünü koliden çıkar (Ctrl+Z)"
+          >
+            <RotateCcw size={16} className={isUndoing ? 'animate-spin' : ''} />
+            Geri Al
+          </button>
+
           {/* Focus State Indicator */}
           <div 
             onClick={focusInput}
@@ -906,16 +977,37 @@ export const PrePrintedScan: React.FC = () => {
                   </div>
                   
                   <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: item.status === 'Başarılı' ? '#047857' : '#b91c1c',
-                      backgroundColor: item.status === 'Başarılı' ? '#d1fae5' : '#fee2e2',
-                      padding: '2px 8px',
-                      borderRadius: '4px'
-                    }}>
-                      {item.status}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {item.status === 'Başarılı' && activeCartonId && (!cartonNo || item.cartonNo === cartonNo) && (
+                        <button
+                          onClick={() => handleRemoveItemFromCarton(item.rawCode)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#d97706',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderRadius: '4px'
+                          }}
+                          title="Bu barkodu koliden çıkar"
+                          aria-label="Koliden çıkar"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: item.status === 'Başarılı' ? '#047857' : item.status === 'Geri Alındı' ? '#d97706' : '#b91c1c',
+                        backgroundColor: item.status === 'Başarılı' ? '#d1fae5' : item.status === 'Geri Alındı' ? '#fef3c7' : '#fee2e2',
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        {item.status}
+                      </span>
+                    </div>
                     <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>{item.timestamp}</div>
                   </div>
                 </div>

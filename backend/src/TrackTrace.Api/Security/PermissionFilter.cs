@@ -6,11 +6,11 @@ namespace TrackTrace.Api.Security;
 
 public class PermissionFilter : IEndpointFilter
 {
-    private readonly string _permissionKey;
+    private readonly string[] _permissionKeys;
 
-    public PermissionFilter(string permissionKey)
+    public PermissionFilter(params string[] permissionKeys)
     {
-        _permissionKey = permissionKey;
+        _permissionKeys = permissionKeys;
     }
 
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
@@ -27,14 +27,20 @@ public class PermissionFilter : IEndpointFilter
 
         if (string.IsNullOrEmpty(role))
         {
-            // If there's no role, but it passed RequireAuthorization, maybe they have no role claim?
-            // Existing logic for my-permissions returns empty list. Here we forbid.
             return Results.Forbid();
         }
 
-        var hasPermission = await permissionService.HasPermissionAsync(currentUserService.UserId, role, _permissionKey);
+        bool hasAny = false;
+        foreach (var key in _permissionKeys)
+        {
+            if (await permissionService.HasPermissionAsync(currentUserService.UserId, role, key))
+            {
+                hasAny = true;
+                break;
+            }
+        }
 
-        if (!hasPermission)
+        if (!hasAny)
         {
             return Results.Forbid();
         }
