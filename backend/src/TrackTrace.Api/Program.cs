@@ -620,15 +620,15 @@ app.MapGet("/api/reports/download/{token:guid}", async (Guid token, IDbConnectio
 });
 
 // Performance & Efficiency Analytics Endpoints
-app.MapGet("/api/performance/summary", async (IMediator mediator, CancellationToken cancellationToken) =>
+app.MapGet("/api/performance/summary", async (DateTime? from, DateTime? to, IMediator mediator, CancellationToken cancellationToken) =>
 {
-    var summary = await mediator.Send(new TrackTrace.Application.Features.Performance.GetPerformanceSummaryQuery(), cancellationToken);
+    var summary = await mediator.Send(new TrackTrace.Application.Features.Performance.GetPerformanceSummaryQuery(from, to), cancellationToken);
     return Results.Ok(summary);
 }).RequireAuthorization("ViewerOrAbove");
 
-app.MapGet("/api/performance/orders", async (string? search, IMediator mediator, CancellationToken cancellationToken) =>
+app.MapGet("/api/performance/orders", async (string? search, DateTime? from, DateTime? to, IMediator mediator, CancellationToken cancellationToken) =>
 {
-    var orders = await mediator.Send(new TrackTrace.Application.Features.Performance.GetOrderPerformanceQuery(search), cancellationToken);
+    var orders = await mediator.Send(new TrackTrace.Application.Features.Performance.GetOrderPerformanceQuery(search, from, to), cancellationToken);
     return Results.Ok(orders);
 }).RequireAuthorization("ViewerOrAbove");
 
@@ -638,9 +638,9 @@ app.MapGet("/api/performance/orders/{orderNo}/cartons", async (string orderNo, I
     return Results.Ok(cartons);
 }).RequireAuthorization("ViewerOrAbove");
 
-app.MapGet("/api/performance/operators", async (IMediator mediator, CancellationToken cancellationToken) =>
+app.MapGet("/api/performance/operators", async (DateTime? from, DateTime? to, IMediator mediator, CancellationToken cancellationToken) =>
 {
-    var operators = await mediator.Send(new TrackTrace.Application.Features.Performance.GetOperatorPerformanceQuery(), cancellationToken);
+    var operators = await mediator.Send(new TrackTrace.Application.Features.Performance.GetOperatorPerformanceQuery(from, to), cancellationToken);
     return Results.Ok(operators);
 }).RequireAuthorization("ViewerOrAbove");
 
