@@ -10,10 +10,9 @@ import {
   Zap, 
   User, 
   Minimize2, 
-  Radio,
   Server
 } from 'lucide-react';
-import { TTPageHeader, TTButton } from '../components/common';
+import { TTPageHeader } from '../components/common';
 
 interface RecentActivity {
   message: string;

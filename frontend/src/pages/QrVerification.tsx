@@ -13,7 +13,6 @@ import {
   Sparkles,
   ArrowRight,
   Check,
-  Zap,
   RotateCcw
 } from 'lucide-react';
 import { api } from '../services/api';
