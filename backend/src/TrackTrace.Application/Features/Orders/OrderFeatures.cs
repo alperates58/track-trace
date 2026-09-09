@@ -29,7 +29,7 @@ public record CompleteOrderCommand(Guid Id) : IRequest<Unit>;
 
 public record CancelOrderCommand(Guid Id) : IRequest<Unit>;
 
-public record DeleteOrderCommand(Guid Id) : IRequest<Unit>;
+public record DeleteOrderCommand(Guid Id, bool Force = false) : IRequest<Unit>;
 
 public record PrintOrderCodesResult(byte[] FileContents, string ContentType, string FileName);
 
@@ -325,30 +325,90 @@ public class OrderHandlers :
 
     public async Task<Unit> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
     {
-        using var connection = _dbConnectionFactory.CreateConnection();
-        var existing = await connection.QueryFirstOrDefaultAsync<dynamic>("SELECT Status FROM Orders WHERE Id = @Id", new { Id = request.Id });
-        if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
 
-        int cartonCount = await connection.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM Cartons WHERE OrderId = @Id", new { Id = request.Id });
-
-        if (cartonCount > 0)
+        using var transaction = connection.BeginTransaction();
+        try
         {
-            throw new InvalidOperationException($"Bu siparişe tanımlı {cartonCount} adet koli bulunmaktadır! Siparişi silebilmek için önce Koli Yönetimi sayfasından kolileri bozmalı/silmelisiniz.");
+            var existing = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT Status FROM Orders WHERE Id = @Id FOR UPDATE", 
+                new { Id = request.Id }, transaction);
+            if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+
+            int packedCartonCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM Cartons WHERE OrderId = @Id AND (ActualQuantity > 0 OR Status = @ShippedStatus)", 
+                new { Id = request.Id, ShippedStatus = CartonStatus.Shipped.ToString() }, transaction);
+
+            if (packedCartonCount > 0)
+            {
+                throw new InvalidOperationException($"Bu siparişte içi dolu veya sevk edilmiş {packedCartonCount} adet koli bulunmaktadır! Üretim verisi içeren siparişler silinemez.");
+            }
+
+            int cartonCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM Cartons WHERE OrderId = @Id", new { Id = request.Id }, transaction);
+
+            int scannedCodeCount = await connection.ExecuteScalarAsync<int>(@"
+                SELECT COUNT(*) FROM ProductCodes
+                WHERE OrderId = @Id
+                  AND (Status <> @UploadedStatus OR CartonId IS NOT NULL OR ScannedAt IS NOT NULL)",
+                new { Id = request.Id, UploadedStatus = ProductCodeStatus.Uploaded.ToString() }, transaction);
+
+            if (scannedCodeCount > 0)
+            {
+                throw new InvalidOperationException($"Bu siparişte okutulmuş veya koliye atanmış {scannedCodeCount} adet ürün kodu bulunmaktadır! Sipariş silinemez.");
+            }
+
+            int codeCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @Id", new { Id = request.Id }, transaction);
+
+            if (!request.Force && cartonCount > 0)
+            {
+                throw new InvalidOperationException($"Bu siparişe tanımlı {cartonCount} adet boş koli bulunmaktadır! Siparişi silebilmek için önce Koliler sekmesinden 'İçi Boş Kolileri Toplu Sil' işlemini yapmalı veya zorla silme onayını vermelisiniz.");
+            }
+
+            if (!request.Force && codeCount > 0)
+            {
+                throw new InvalidOperationException($"Bu siparişe yüklenmiş {codeCount} adet QR/Barkod bulunmaktadır! Siparişi silebilmek için önce Kodlar sekmesinden 'Tüm Kodları Temizle' işlemini yapmalı veya zorla silme onayını vermelisiniz.");
+            }
+
+            // Clean up empty cartons and pallet associations if force or count > 0
+            if (cartonCount > 0)
+            {
+                await connection.ExecuteAsync(@"
+                    UPDATE ProductCodes SET CartonId = NULL WHERE OrderId = @Id;
+                    DELETE FROM PalletCartons WHERE CartonId IN (SELECT Id FROM Cartons WHERE OrderId = @Id);
+                    DELETE FROM Cartons WHERE OrderId = @Id;
+                ", new { Id = request.Id }, transaction);
+            }
+
+            // Clean up codes and import batches
+            if (codeCount > 0)
+            {
+                await connection.ExecuteAsync(@"
+                    DELETE FROM ProductCodes WHERE OrderId = @Id;
+                    DELETE FROM ImportBatches WHERE OrderId = @Id;
+                ", new { Id = request.Id }, transaction);
+            }
+
+            const string sql = "DELETE FROM Orders WHERE Id = @Id";
+            await connection.ExecuteAsync(sql, new { Id = request.Id }, transaction);
+
+            transaction.Commit();
+
+            await _auditLogService.LogAsync("Orders", request.Id, "Delete", existing, new 
+            { 
+                Forced = request.Force, 
+                ClearedCartons = cartonCount, 
+                ClearedCodes = codeCount 
+            });
+            return Unit.Value;
         }
-
-        int codeCount = await connection.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM ProductCodes WHERE OrderId = @Id", new { Id = request.Id });
-
-        if (codeCount > 0)
+        catch (Exception)
         {
-            throw new InvalidOperationException($"Bu siparişe yüklenmiş {codeCount} adet QR/Barkod bulunmaktadır! Siparişi silebilmek için önce sipariş detayındaki Kodlar sekmesinden 'Tüm Kodları Temizle' işlemini yapmalısınız.");
+            transaction.Rollback();
+            throw;
         }
-
-        const string sql = "DELETE FROM Orders WHERE Id = @Id";
-        await connection.ExecuteAsync(sql, new { Id = request.Id });
-        await _auditLogService.LogAsync("Orders", request.Id, "Delete", existing, null);
-        return Unit.Value;
     }
 
     public async Task<PrintOrderCodesResult> Handle(PrintOrderCodesPdfQuery request, CancellationToken cancellationToken)

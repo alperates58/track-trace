@@ -1059,11 +1059,11 @@ app.MapPost("/api/orders/{id:guid}/cancel", async (Guid id, IMediator mediator) 
     }
 }).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.edit");
 
-app.MapDelete("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
+app.MapDelete("/api/orders/{id:guid}", async (Guid id, [FromQuery] bool? force, IMediator mediator) =>
 {
     try
     {
-        await mediator.Send(new DeleteOrderCommand(id));
+        await mediator.Send(new DeleteOrderCommand(id, force ?? false));
         return Results.NoContent();
     }
     catch (KeyNotFoundException)
@@ -1075,6 +1075,23 @@ app.MapDelete("/api/orders/{id:guid}", async (Guid id, IMediator mediator) =>
         return Results.BadRequest(new { message = ex.Message });
     }
 }).RequireAuthorization("OperatorOrAdmin").RequirePermission("orders.delete");
+
+app.MapDelete("/api/orders/{id:guid}/empty-cartons", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        int deletedCount = await mediator.Send(new DeleteEmptyCartonsByOrderCommand(id));
+        return Results.Ok(new { deletedCount, message = $"{deletedCount} adet boş koli başarıyla silindi." });
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound(new { message = "Sipariş bulunamadı." });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.delete");
 
 app.MapPost("/api/orders/{id:guid}/print-codes", async (
     Guid id,
@@ -1660,6 +1677,19 @@ app.MapPost("/api/cartons/{id:guid}/decompose", async (Guid id, IMediator mediat
     {
         await mediator.Send(new DecomposeCartonCommand(id));
         return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("OperatorOrAdmin").RequirePermission("cartons.delete");
+
+app.MapDelete("/api/cartons/{id:guid}", async (Guid id, IMediator mediator) =>
+{
+    try
+    {
+        await mediator.Send(new DecomposeCartonCommand(id));
+        return Results.NoContent();
     }
     catch (Exception ex)
     {

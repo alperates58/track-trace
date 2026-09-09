@@ -33,6 +33,8 @@ public record AddProductToCartonCommand(Guid CartonId, string RawCode) : IReques
 
 public record TransferCartonCommand(Guid Id, TransferCartonRequest Request) : IRequest<Unit>;
 
+public record DeleteEmptyCartonsByOrderCommand(Guid OrderId) : IRequest<int>;
+
 public class CartonHandlers :
     IRequestHandler<GetCartonsQuery, (IEnumerable<CartonDto> Items, int TotalCount)>,
     IRequestHandler<GetCartonByIdQuery, CartonDto>,
@@ -40,6 +42,7 @@ public class CartonHandlers :
     IRequestHandler<PrintCartonLabelCommand, (byte[]? FileContent, string? ZplText)>,
     IRequestHandler<DecomposeCartonCommand, Unit>,
     IRequestHandler<EmptyCartonCommand, Unit>,
+    IRequestHandler<DeleteEmptyCartonsByOrderCommand, int>,
     IRequestHandler<RemoveProductFromCartonCommand, Unit>,
     IRequestHandler<AddProductToCartonCommand, Unit>,
     IRequestHandler<TransferCartonCommand, Unit>
@@ -325,6 +328,88 @@ public class CartonHandlers :
 
             await _auditLogService.LogAsync("Cartons", request.Id, "Decompose", null, new { CartonNo = cartonNo, SSCC = sscc });
             return Unit.Value;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<int> Handle(DeleteEmptyCartonsByOrderCommand request, CancellationToken cancellationToken)
+    {
+        using var connection = (NpgsqlConnection)_dbConnectionFactory.CreateConnection();
+        if (connection.State != ConnectionState.Open) connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT Id, OrderNo FROM Orders WHERE Id = @OrderId FOR UPDATE",
+                new { OrderId = request.OrderId }, transaction);
+            if (order == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+
+            // 1. Unlink any product codes that might point to an empty carton of this order
+            const string unlinkProductsSql = @"
+                UPDATE ProductCodes 
+                SET CartonId = NULL, Status = @UploadedStatus, ScannedAt = NULL, ScannedBy = NULL 
+                WHERE CartonId IN (
+                    SELECT Id FROM Cartons 
+                    WHERE OrderId = @OrderId 
+                      AND ActualQuantity = 0 
+                      AND Status <> @ShippedStatus
+                )";
+            await connection.ExecuteAsync(unlinkProductsSql, new 
+            { 
+                OrderId = request.OrderId, 
+                UploadedStatus = ProductCodeStatus.Uploaded.ToString(),
+                ShippedStatus = CartonStatus.Shipped.ToString() 
+            }, transaction);
+
+            // 2. Remove PalletCartons links for these empty cartons
+            const string deletePalletCartonsSql = @"
+                DELETE FROM PalletCartons 
+                WHERE CartonId IN (
+                    SELECT Id FROM Cartons 
+                    WHERE OrderId = @OrderId 
+                      AND ActualQuantity = 0 
+                      AND Status <> @ShippedStatus
+                )";
+            await connection.ExecuteAsync(deletePalletCartonsSql, new 
+            { 
+                OrderId = request.OrderId, 
+                ShippedStatus = CartonStatus.Shipped.ToString() 
+            }, transaction);
+
+            // 3. Delete the empty cartons (excluding any shipped or in active shipment)
+            const string deleteCartonsSql = @"
+                DELETE FROM Cartons 
+                WHERE OrderId = @OrderId 
+                  AND ActualQuantity = 0 
+                  AND Status <> @ShippedStatus
+                  AND NOT EXISTS (
+                      SELECT 1 FROM ShipmentItems 
+                      WHERE CartonId = Cartons.Id AND RemovedAt IS NULL
+                  )";
+
+            int deletedCount = await connection.ExecuteAsync(deleteCartonsSql, new 
+            { 
+                OrderId = request.OrderId, 
+                ShippedStatus = CartonStatus.Shipped.ToString() 
+            }, transaction);
+
+            transaction.Commit();
+
+            if (deletedCount > 0)
+            {
+                await _auditLogService.LogAsync("Orders", request.OrderId, "BulkDeleteEmptyCartons", null, new 
+                { 
+                    DeletedCount = deletedCount, 
+                    OrderNo = (string)order.orderno 
+                });
+            }
+
+            return deletedCount;
         }
         catch (Exception)
         {

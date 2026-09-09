@@ -58,6 +58,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
   const [selectedCartonForItems, setSelectedCartonForItems] = useState<any | null>(null);
   const [cartonItems, setCartonItems] = useState<any[]>([]);
   const [cartonItemsLoading, setCartonItemsLoading] = useState(false);
+  const [cartonsTotal, setCartonsTotal] = useState(0);
+  const [deletingEmptyCartons, setDeletingEmptyCartons] = useState(false);
+  const [deletingCartonId, setDeletingCartonId] = useState<string | null>(null);
 
   // Product Codes State
   const [codes, setCodes] = useState<any[]>([]);
@@ -113,8 +116,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
   const fetchOrderCartons = (orderId: string) => {
     setCartonsLoading(true);
     api.get(`/api/cartons?orderId=${orderId}&pageSize=1000`)
-      .then(res => {
+      .then((res: any) => {
         setCartons(res.items || []);
+        setCartonsTotal(res.totalCount ?? (res.items ? res.items.length : 0));
       })
       .catch(console.error)
       .finally(() => setCartonsLoading(false));
@@ -210,6 +214,36 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
     }
   };
 
+  const handleDeleteEmptyCartons = async () => {
+    const countText = cartonsTotal > 0 ? `${cartonsTotal} koli içerisindeki tüm içi boş koliler` : 'Tüm içi boş koliler';
+    if (!confirm(`Bu siparişe ait ${countText} kalıcı olarak silinecektir.\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?`)) return;
+    setDeletingEmptyCartons(true);
+    try {
+      const res = await api.delete(`/api/orders/${selectedOrder.id}/empty-cartons`);
+      alert(res?.message || `${res?.deletedCount || 0} adet boş koli başarıyla silindi.`);
+      fetchOrderCartons(selectedOrder.id);
+      onOrderUpdated();
+    } catch (err: any) {
+      alert(err.message || 'Boş koliler silinemedi.');
+    } finally {
+      setDeletingEmptyCartons(false);
+    }
+  };
+
+  const handleDeleteSingleCarton = async (carton: any) => {
+    if (!confirm(`${carton.cartonNo} numaralı boş koli silinsin mi?`)) return;
+    setDeletingCartonId(carton.id);
+    try {
+      await api.delete(`/api/cartons/${carton.id}`);
+      fetchOrderCartons(selectedOrder.id);
+      onOrderUpdated();
+    } catch (err: any) {
+      alert(err.message || 'Koli silinemedi.');
+    } finally {
+      setDeletingCartonId(null);
+    }
+  };
+
   const handleDeleteOrder = async () => {
     if (!confirm(`${selectedOrder.orderNo} (${selectedOrder.stockCode}) sipariş satırı sistemden tamamen silinsin mi?`)) return;
     try {
@@ -217,7 +251,21 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
       onClose();
       onOrderUpdated();
     } catch (err: any) {
-      alert(err.message || 'Sipariş silinemedi.');
+      const msg = err.message || '';
+      if (msg.includes('koli bulunmaktadır') || msg.includes('QR/Barkod bulunmaktadır')) {
+        if (confirm(`${msg}\n\nBu siparişin tüm boş kolilerini ve kullanılmamış kodlarını otomatik temizleyip siparişi ZORLA SİLMEK ister misiniz?`)) {
+          try {
+            await api.delete(`/api/orders/${selectedOrder.id}?force=true`);
+            alert('Sipariş ve bağlı boş koli / kodlar başarıyla silindi.');
+            onClose();
+            onOrderUpdated();
+          } catch (forceErr: any) {
+            alert(forceErr.message || 'Zorla silme işlemi başarısız.');
+          }
+        }
+      } else {
+        alert(msg || 'Sipariş silinemedi.');
+      }
     }
   };
 
@@ -389,7 +437,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             onClick={() => setActiveTab('cartons')}
           >
             <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
-            Koliler ({cartons.length})
+            Koliler ({cartonsTotal || cartons.length})
           </button>
           <button
             style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'pallets' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'pallets' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
@@ -515,6 +563,30 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
           {activeTab === 'cartons' && (
             <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '500px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                    Toplam Koli: <span style={{ color: '#2563eb' }}>{cartonsTotal || cartons.length}</span>
+                  </span>
+                  {cartonsTotal > cartons.length && (
+                    <span style={{ fontSize: '0.8rem', color: '#64748b', backgroundColor: '#e2e8f0', padding: '3px 8px', borderRadius: '6px' }}>
+                      (İlk {cartons.length} adedi listeleniyor)
+                    </span>
+                  )}
+                </div>
+                {(hasPermission('cartons.delete') || hasPermission('orders.delete') || hasPermission('cartons.create')) && (
+                  <button 
+                    className="btn" 
+                    style={{ padding: '8px 16px', backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #f87171', borderRadius: '8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: deletingEmptyCartons ? 'not-allowed' : 'pointer' }}
+                    onClick={handleDeleteEmptyCartons}
+                    disabled={deletingEmptyCartons || (cartonsTotal === 0 && cartons.length === 0)}
+                    title="İçinde hiçbir ürün bulunmayan tüm kolileri toplu olarak siler"
+                  >
+                    {deletingEmptyCartons ? <><Loader2 className="spinner" size={16} /> Koliler Siliniyor...</> : <><Trash2 size={16} /> İçi Boş Kolileri Toplu Sil</>}
+                  </button>
+                )}
+              </div>
+
               {cartonsLoading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader2 className="spinner" size={40} /></div>
               ) : cartons.length === 0 ? (
@@ -564,6 +636,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                         <button className="btn btn-secondary" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => downloadCartonPdf(c.id, c.cartonNo)}>
                           <Printer size={14} /> PDF
                         </button>
+                        {c.actualQuantity === 0 && (hasPermission('cartons.delete') || hasPermission('orders.delete') || hasPermission('cartons.create')) && (
+                          <button 
+                            className="btn" 
+                            style={{ padding: '6px 10px', fontSize: '0.8rem', backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }}
+                            onClick={() => handleDeleteSingleCarton(c)}
+                            disabled={deletingCartonId === c.id}
+                            title="Bu boş koliyi sil"
+                          >
+                            {deletingCartonId === c.id ? <Loader2 className="spinner" size={14} /> : <Trash2 size={14} />}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
