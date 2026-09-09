@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
 import { useAuth } from '../context/AuthContext';
-import { Printer, AlertTriangle, RotateCcw, FileDown } from 'lucide-react';
+import { Printer, AlertTriangle, FileDown } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
 import { SessionHeader } from '../components/Scan/SessionHeader';
 import { ScanToolbar } from '../components/Scan/ScanToolbar';
@@ -62,7 +62,7 @@ export const Scan: React.FC = () => {
 
   // Active carton details
   const [cartonNo, setCartonNo] = useState<string | null>(null);
-  const [cartonSSCC, setCartonSSCC] = useState<string | null>(null);
+  const [, setCartonSSCC] = useState<string | null>(null);
   const [activeCartonId, setActiveCartonId] = useState<string | null>(null);
   const [currentQty, setCurrentQty] = useState(0);
   const [targetQty, setTargetQty] = useState(0);
@@ -72,7 +72,7 @@ export const Scan: React.FC = () => {
   // Last closed carton details (for label reprint & ZPL)
   const [lastClosedCartonId, setLastClosedCartonId] = useState<string | null>(null);
   const [lastClosedCartonNo, setLastClosedCartonNo] = useState<string | null>(null);
-  const [lastClosedCartonSSCC, setLastClosedCartonSSCC] = useState<string | null>(null);
+  const [, setLastClosedCartonSSCC] = useState<string | null>(null);
   const [printError, setPrintError] = useState<string | null>(null);
   const [isReprinting, setIsReprinting] = useState(false);
   const [isUndoing, setIsUndoing] = useState(false);
@@ -177,7 +177,7 @@ export const Scan: React.FC = () => {
               if (openCartonRes.items && openCartonRes.items.length > 0) {
                 setActiveCartonId(openCartonRes.items[0].id);
               }
-            } catch (e) {}
+            } catch {}
           } else {
             setActiveCartonId(null);
           }
