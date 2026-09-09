@@ -792,15 +792,15 @@ export const PrePrintedScan: React.FC = () => {
             )}
 
             {lastScannedBarcode && (
-              <div style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 600 }}>Son Okunan Barkod:</span>
-                <code style={{ fontSize: '1.35rem', fontFamily: 'monospace', fontWeight: 700, color: '#0f172a', letterSpacing: '0.5px' }}>
+              <div style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontWeight: 600 }}>Son Okunan Barkod:</span>
+                <code style={{ fontSize: '1.35rem', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '0.5px' }}>
                   {lastScannedBarcode}
                 </code>
               </div>
             )}
 
-            <span style={{ position: 'absolute', bottom: '16px', fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>
+            <span style={{ position: 'absolute', bottom: '16px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
               Barkod tabancasıyla okutun veya kodu yazıp Enter'a basın.
             </span>
           </div>
@@ -835,10 +835,10 @@ export const PrePrintedScan: React.FC = () => {
                 {cartonNo ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '12px' }}>
-                      <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>{currentQty}</span>
-                      <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>/ {targetQty} Adet</span>
+                      <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>{currentQty}</span>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 600 }}>/ {targetQty} Adet</span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cartonSSCC || ''}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cartonSSCC || ''}>
                       No: <strong>{cartonNo}</strong> | SSCC: <code>{cartonSSCC}</code>
                     </div>
                     <div style={{ width: '100%', height: '8px', backgroundColor: '#dbeafe', borderRadius: '4px', overflow: 'hidden', marginTop: '12px' }}>
@@ -885,13 +885,13 @@ export const PrePrintedScan: React.FC = () => {
                   <h4 style={{ fontSize: '0.9rem', color: '#047857', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Son Kapatılan Koli</h4>
                   {lastClosedCartonNo ? (
                     <div style={{ marginTop: '10px' }}>
-                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{lastClosedCartonNo}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={lastClosedCartonSSCC || ''}>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>{lastClosedCartonNo}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={lastClosedCartonSSCC || ''}>
                         SSCC: <code>{lastClosedCartonSSCC}</code>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                    <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                       Kapatılan koli bulunmuyor.
                     </div>
                   )}

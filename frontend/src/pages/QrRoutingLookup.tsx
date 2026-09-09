@@ -146,8 +146,8 @@ export const QrRoutingLookup: React.FC = () => {
     <div style={{ padding: '16px 32px 32px', maxWidth: 1200, margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap', marginBottom: 22 }}>
         <div>
-          <h1 style={{ margin: 0, color: '#0f172a', fontSize: '1.5rem', letterSpacing: '-0.02em' }}>QR Sipariş & Koli Bulucu</h1>
-          <p style={{ margin: '5px 0 0', color: '#64748b', fontSize: '0.875rem' }}>
+          <h1 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.5rem', letterSpacing: '-0.02em' }}>QR Sipariş & Koli Bulucu</h1>
+          <p style={{ margin: '5px 0 0', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
             Herhangi bir ürün QR kodunu okutun; sipariş, stok ve koli yönlendirmesini anında görün.
           </p>
         </div>
@@ -222,7 +222,7 @@ export const QrRoutingLookup: React.FC = () => {
                 : <AlertTriangle size={26} color={routingStyle.color} />}
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.72rem', letterSpacing: '.08em', fontWeight: 900, color: routingStyle.color }}>{routingStyle.label}</div>
-                <div style={{ marginTop: 3, color: '#0f172a', fontWeight: 700 }}>{result.routingMessage}</div>
+                <div style={{ marginTop: 3, color: 'var(--text-main)', fontWeight: 700 }}>{result.routingMessage}</div>
               </div>
               {result.candidateCartonCount > 1 && (
                 <span style={{ padding: '5px 9px', borderRadius: 999, background: '#fff', color: routingStyle.color, fontSize: '0.75rem', fontWeight: 800 }}>{result.candidateCartonCount} aday koli</span>
@@ -293,8 +293,8 @@ export const QrRoutingLookup: React.FC = () => {
             <button key={item.id} type="button" onClick={() => setResult(item.result)} style={{ width: '100%', padding: '12px 17px', border: 0, borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'grid', gridTemplateColumns: 'minmax(180px,1.4fr) minmax(130px,1fr) minmax(150px,1fr) 80px', gap: 12, textAlign: 'left', cursor: 'pointer', alignItems: 'center' }}>
               <code style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)', fontFamily: 'var(--font-mono)', fontSize: '0.76rem' }}>{item.result.rawCode}</code>
               <strong style={{ color: 'var(--text-main)', fontSize: '0.82rem' }}>{item.result.orderNo}</strong>
-              <span style={{ color: '#475569', fontSize: '0.82rem' }}>{item.result.cartonNo || 'Koli bekleniyor'}</span>
-              <span style={{ color: '#94a3b8', fontSize: '0.76rem', textAlign: 'right' }}>{item.checkedAt}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{item.result.cartonNo || 'Koli bekleniyor'}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.76rem', textAlign: 'right' }}>{item.checkedAt}</span>
             </button>
           ))}
         </section>

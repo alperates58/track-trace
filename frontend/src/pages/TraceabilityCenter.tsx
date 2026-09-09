@@ -519,7 +519,7 @@ export const TraceabilityCenter: React.FC = () => {
       </div>
 
       {/* Giant Search Block */}
-      <div className="card" style={{ padding: '32px', marginBottom: '28px', background: 'radial-gradient(circle at top right, #eff6ff 0%, #ffffff 100%)' }}>
+      <div className="card" style={{ padding: '32px', marginBottom: '28px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
         <form className="traceability-search-form" onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '12px', maxWidth: '800px', margin: '0 auto' }}>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

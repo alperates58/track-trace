@@ -400,10 +400,10 @@ const CartonQrVerification: React.FC = () => {
       {/* Sleek Minimalist Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#0f172a', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             Koli İçeriği Doğrulama
           </h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '0.875rem' }}>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0', fontSize: '0.875rem' }}>
             Koli QR etiketini okutun, koli içi ürün QR kodlarını anlık olarak doğrulayın.
           </p>
         </div>

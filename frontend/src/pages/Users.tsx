@@ -446,7 +446,7 @@ export const Users: React.FC = () => {
                   </td>
                   <td>
                     {u.defaultStationName ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>
                         <Building2 size={14} style={{ color: '#0284c7' }} />
                         {u.defaultStationName}
                       </span>

@@ -75,10 +75,10 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
 
 
   return (
-    <div className="scan-toolbar relative z-20 bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap lg:flex-nowrap gap-4 shrink-0 items-end overflow-visible" style={{ position: 'relative', zIndex: 30000, overflow: 'visible' }}>
+    <div className="scan-toolbar relative z-20 rounded-xl shadow-sm p-3 flex flex-wrap lg:flex-nowrap gap-4 shrink-0 items-end overflow-visible" style={{ position: 'relative', zIndex: 30000, overflow: 'visible', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
       {/* İstasyon */}
       <div className="scan-toolbar-field scan-toolbar-station flex flex-col gap-1 shrink-0 w-32 md:w-40 relative">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">İstasyon</label>
+        <label className="text-[10px] font-bold uppercase tracking-wider ml-1" style={{ color: 'var(--text-muted)' }}>İstasyon</label>
         <div className="relative">
           <select 
             value={selectedStationId}
@@ -86,7 +86,8 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
               onStationChange(e.target.value);
               if (onCloseFocusRestoration) onCloseFocusRestoration();
             }}
-            className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-3 pr-8 text-sm font-semibold text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+            className="w-full appearance-none border rounded-lg py-2 pl-3 pr-8 text-sm font-semibold cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">-- SEÇ --</option>
             {stations.map(s => (
@@ -99,7 +100,7 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
 
       {/* Sipariş */}
       <div className="scan-toolbar-field scan-toolbar-order flex flex-col gap-1 shrink-0 w-40 md:w-56 relative">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">İş Emri / Sipariş</label>
+        <label className="text-[10px] font-bold uppercase tracking-wider ml-1" style={{ color: 'var(--text-muted)' }}>İş Emri / Sipariş</label>
         <div className="relative">
           <select 
             value={selectedOrderNo}
@@ -107,7 +108,8 @@ export const ScanToolbar: React.FC<ScanToolbarProps> = ({
               onOrderNoChange(e.target.value);
               if (onCloseFocusRestoration) onCloseFocusRestoration();
             }}
-            className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-3 pr-8 text-sm font-semibold text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 truncate"
+            style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+            className="w-full appearance-none border rounded-lg py-2 pl-3 pr-8 text-sm font-semibold cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 truncate"
           >
             <option value="">-- SEÇ --</option>
             {uniqueOrderNos.map(o => (

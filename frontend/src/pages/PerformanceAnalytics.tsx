@@ -528,7 +528,7 @@ export const PerformanceAnalytics: React.FC = () => {
 
                         {/* 4. Net Çalışma Süresi */}
                         <td style={{ padding: '14px 16px' }}>
-                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>
+                          <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>
                             {formatDuration(o.netDurationSeconds)}
                           </div>
                           {o.hasPauseBreak && (

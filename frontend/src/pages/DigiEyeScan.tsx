@@ -369,59 +369,59 @@ export const DigiEyeScan: React.FC = () => {
   const statusBackground = connected ? '#f0fdf4' : agentStatus ? '#fff7ed' : '#fef2f2';
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', fontFamily: 'var(--font-primary)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
         <div>
-          <h1 style={{ margin: 0, color: '#0f172a', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Camera size={26} color="#2563eb" /> Endüstriyel Kamera Bant Okutma
+          <h1 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700 }}>
+            <Camera size={26} color="var(--primary)" /> Endüstriyel Kamera Bant Okutma
           </h1>
-          <p style={{ color: '#64748b', margin: '5px 0 0', fontSize: '0.875rem' }}>
+          <p style={{ color: 'var(--text-muted)', margin: '5px 0 0', fontSize: '0.875rem' }}>
             Koli etiketi → ürünler → sıradaki koli akışını Local Agent otomatik yönetir.
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 20, background: statusBackground, color: statusColor, border: `1px solid ${connected ? '#bbf7d0' : '#fed7aa'}`, fontWeight: 700, fontSize: '0.82rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 20, background: statusBackground, color: statusColor, border: `1px solid ${connected ? 'var(--success-border)' : 'var(--warning-border)'}`, fontWeight: 700, fontSize: '0.82rem' }}>
             {connected ? <Wifi size={16} /> : <WifiOff size={16} />}
             {connected ? `Kamera bağlı · ${agentStatus?.captureFramesPerSecond || 0} FPS` : agentStatus ? 'Agent bağlı · kamera bekleniyor' : 'Local Agent kapalı'}
           </div>
-          <button className="btn" type="button" onClick={() => { soundEnabledRef.current = !soundEnabled; setSoundEnabled(!soundEnabled); }} style={{ border: '1px solid #cbd5e1', background: '#fff', color: soundEnabled ? '#2563eb' : '#94a3b8' }}>
+          <button className="btn" type="button" onClick={() => { soundEnabledRef.current = !soundEnabled; setSoundEnabled(!soundEnabled); }} style={{ border: '1px solid var(--border-color)', background: 'var(--btn-secondary-bg)', color: soundEnabled ? 'var(--primary)' : 'var(--text-muted)' }}>
             {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
           </button>
-          <button className="btn" type="button" onClick={() => void openConfig()} style={{ border: '1px solid #cbd5e1', background: '#fff', color: '#334155', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <button className="btn" type="button" onClick={() => void openConfig()} style={{ border: '1px solid var(--border-color)', background: 'var(--btn-secondary-bg)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600 }}>
             <Settings size={16} /> Ayarlar
           </button>
         </div>
       </div>
 
       {(agentError || backendError) && (
-        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', fontWeight: 600, fontSize: '0.875rem' }}>
+        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', fontWeight: 600, fontSize: '0.875rem' }}>
           {backendError || agentError}
           {agentStatus?.pendingEvents ? ` · ${agentStatus.pendingEvents} kod güvenli kuyrukta bekliyor.` : ''}
         </div>
       )}
 
       {agentStatus?.shadowMode && (
-        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: '#fffbeb', border: '1px solid #fde68a', color: '#854d0e', fontWeight: 600, fontSize: '0.875rem' }}>
+        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning-text)', fontWeight: 600, fontSize: '0.875rem' }}>
           Gölge test modu açık: kamera kodları çözüyor ancak backend’e okutma göndermiyor.
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 24, marginBottom: 24 }}>
         <div>
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(15,23,42,.04)', marginBottom: 20 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-sm)', marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', marginBottom: 18 }}>
               <div>
-                <span style={{ display: 'inline-block', padding: '4px 9px', borderRadius: 6, color: '#fff', background: session.cartonNo ? '#10b981' : '#2563eb', fontSize: '0.75rem', fontWeight: 800 }}>
+                <span style={{ display: 'inline-block', padding: '4px 9px', borderRadius: 6, color: '#fff', background: session.cartonNo ? 'var(--success)' : 'var(--primary)', fontSize: '0.75rem', fontWeight: 800 }}>
                   {session.cartonNo ? '2 · ÜRÜNLERİ OKUT' : '1 · KOLİ ETİKETİNİ OKUT'}
                 </span>
-                <h2 style={{ margin: '10px 0 2px', color: '#0f172a', fontSize: '1.35rem' }}>{session.cartonNo || 'Koli bekleniyor'}</h2>
-                <div style={{ color: '#64748b', fontSize: '0.84rem' }}>
+                <h2 style={{ margin: '10px 0 2px', color: 'var(--text-main)', fontSize: '1.35rem', fontWeight: 700 }}>{session.cartonNo || 'Koli bekleniyor'}</h2>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>
                   {session.cartonNo ? `${session.orderNo}${session.productName ? ` · ${session.productName}` : ''}` : 'Ön etiketli koliyi görüş alanına gönderin.'}
                 </div>
               </div>
               <div style={{ minWidth: 170 }}>
-                <label style={{ display: 'block', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, marginBottom: 5 }}>İSTASYON</label>
+                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, marginBottom: 5 }}>İSTASYON</label>
                 <select
                   className="form-control"
                   value={selectedStationId}
@@ -439,23 +439,23 @@ export const DigiEyeScan: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-              <span style={{ color: '#475569', fontSize: '0.84rem', fontWeight: 700 }}>Koli doluluğu</span>
-              <strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{session.currentQty} / {session.targetQty || '-'}</strong>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.84rem', fontWeight: 700 }}>Koli doluluğu</span>
+              <strong style={{ color: 'var(--text-main)', fontSize: '1.1rem' }}>{session.currentQty} / {session.targetQty || '-'}</strong>
             </div>
-            <div style={{ height: 12, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${progress}%`, background: progress >= 100 ? '#10b981' : '#2563eb', transition: 'width .15s ease' }} />
+            <div style={{ height: 12, borderRadius: 999, background: 'var(--border-color)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progress}%`, background: progress >= 100 ? 'var(--success)' : 'var(--primary)', transition: 'width .15s ease' }} />
             </div>
           </div>
 
-          <div style={{ borderRadius: 16, padding: 24, minHeight: 172, display: 'flex', alignItems: 'center', gap: 18, background: workflowStatus === 'error' ? '#fef2f2' : workflowStatus === 'cartonClosed' ? '#ecfdf5' : '#eff6ff', border: `1px solid ${workflowStatus === 'error' ? '#fecaca' : workflowStatus === 'cartonClosed' ? '#a7f3d0' : '#bfdbfe'}` }}>
-            {workflowStatus === 'error' ? <XCircle size={50} color="#dc2626" /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={50} color="#059669" /> : processingEvent ? <Clock3 size={50} color="#2563eb" /> : <Barcode size={50} color="#2563eb" />}
+          <div style={{ borderRadius: 16, padding: 24, minHeight: 172, display: 'flex', alignItems: 'center', gap: 18, background: workflowStatus === 'error' ? 'var(--danger-bg)' : workflowStatus === 'cartonClosed' ? 'var(--success-bg)' : 'var(--primary-light)', border: `1px solid ${workflowStatus === 'error' ? 'var(--danger-border)' : workflowStatus === 'cartonClosed' ? 'var(--success-border)' : 'rgba(59, 130, 246, 0.3)'}` }}>
+            {workflowStatus === 'error' ? <XCircle size={50} color="var(--danger)" /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={50} color="var(--success)" /> : processingEvent ? <Clock3 size={50} color="var(--primary)" /> : <Barcode size={50} color="var(--primary)" />}
             <div>
-              <div style={{ color: '#0f172a', fontSize: '1.2rem', fontWeight: 800, marginBottom: 5 }}>
+              <div style={{ color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 800, marginBottom: 5 }}>
                 {processingEvent ? 'Kod işleniyor…' : workflowStatus === 'error' ? 'Okutma reddedildi' : workflowStatus === 'cartonClosed' ? 'Koli tamamlandı' : 'Bant akışı hazır'}
               </div>
-              <div style={{ color: workflowStatus === 'error' ? '#991b1b' : '#475569', fontSize: '0.9rem', lineHeight: 1.5 }}>{message}</div>
-              {lastScannedBarcode && <code style={{ display: 'block', marginTop: 9, color: '#334155', wordBreak: 'break-all' }}>{lastScannedBarcode}</code>}
-              {lastClosedCartonNo && workflowStatus === 'cartonClosed' && <div style={{ marginTop: 8, color: '#047857', fontWeight: 700 }}>Son koli: {lastClosedCartonNo}</div>}
+              <div style={{ color: workflowStatus === 'error' ? 'var(--danger-text)' : 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>{message}</div>
+              {lastScannedBarcode && <code style={{ display: 'block', marginTop: 9, color: 'var(--text-main)', wordBreak: 'break-all' }}>{lastScannedBarcode}</code>}
+              {lastClosedCartonNo && workflowStatus === 'cartonClosed' && <div style={{ marginTop: 8, color: 'var(--success-text)', fontWeight: 700 }}>Son koli: {lastClosedCartonNo}</div>}
             </div>
           </div>
         </div>
@@ -517,7 +517,7 @@ export const DigiEyeScan: React.FC = () => {
                 </div>
                 <NumberField label="Aynı kodu yeniden kurma için boş kare" value={draftConfig.releaseAfterMissedFrames} min={1} max={20} onChange={releaseAfterMissedFrames => setDraftConfig({ ...draftConfig, releaseAfterMissedFrames })} />
                 <div>
-                  <div style={{ color: '#334155', fontWeight: 700, fontSize: '0.8rem', marginBottom: 7 }}>Tarama alanı ROI (%)</div>
+                  <div style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '0.8rem', marginBottom: 7 }}>Tarama alanı ROI (%)</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                     <NumberField label="Sol" value={draftConfig.roiXPercent} min={0} max={99} onChange={roiXPercent => setDraftConfig({ ...draftConfig, roiXPercent })} />
                     <NumberField label="Üst" value={draftConfig.roiYPercent} min={0} max={99} onChange={roiYPercent => setDraftConfig({ ...draftConfig, roiYPercent })} />
@@ -526,9 +526,9 @@ export const DigiEyeScan: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ) : <div style={{ padding: 20, color: '#64748b' }}>Ayarlar yükleniyor…</div>}
+            ) : <div style={{ padding: 20, color: 'var(--text-muted)' }}>Ayarlar yükleniyor…</div>}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px solid var(--border-color)' }}>
               <button className="btn btn-secondary" type="button" onClick={() => { setShowConfig(false); setDraftConfig(config); }}>Vazgeç</button>
               <button className="btn btn-primary" type="button" disabled={!draftConfig || savingConfig} onClick={() => void saveConfig()}>{savingConfig ? 'Kaydediliyor…' : 'Kaydet'}</button>
             </div>
@@ -542,14 +542,14 @@ export const DigiEyeScan: React.FC = () => {
 const cell: React.CSSProperties = { padding: '11px 14px', verticalAlign: 'top' };
 
 const Stat: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-  <div style={{ background: '#1e293b', borderRadius: 8, padding: '8px 10px' }}>
-    <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 5 }}>{icon}{label}</div>
-    <div style={{ color: '#f8fafc', fontWeight: 800, marginTop: 3 }}>{value}</div>
+  <div style={{ background: 'var(--bg-surface-subtle)', borderRadius: 8, padding: '8px 10px', border: '1px solid var(--border-color)' }}>
+    <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>{icon}{label}</div>
+    <div style={{ color: 'var(--text-main)', fontWeight: 800, marginTop: 3 }}>{value}</div>
   </div>
 );
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <label><span style={{ display: 'block', color: '#334155', fontWeight: 700, fontSize: '0.8rem', marginBottom: 6 }}>{label}</span>{children}</label>
+  <label><span style={{ display: 'block', color: 'var(--text-main)', fontWeight: 700, fontSize: '0.8rem', marginBottom: 6 }}>{label}</span>{children}</label>
 );
 
 const NumberField: React.FC<{ label: string; value: number; min: number; max: number; onChange: (value: number) => void }> = ({ label, value, min, max, onChange }) => (
@@ -557,7 +557,7 @@ const NumberField: React.FC<{ label: string; value: number; min: number; max: nu
 );
 
 const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: 9, color: '#334155', fontWeight: 650, fontSize: '0.86rem' }}>
+  <label style={{ display: 'flex', alignItems: 'center', gap: 9, color: 'var(--text-main)', fontWeight: 650, fontSize: '0.86rem' }}>
     <input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} style={{ width: 17, height: 17 }} />{label}
   </label>
 );

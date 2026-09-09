@@ -165,12 +165,12 @@ export const Orders: React.FC = () => {
           {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', marginBottom: '6px', color: '#0f172a', fontWeight: 700 }}>Sipariş Yönetimi</h2>
+          <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', marginBottom: '6px', color: 'var(--text-main)', fontWeight: 700 }}>Sipariş Yönetimi</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Sipariş oluşturma, grupları yönetme ve genel ilerleme takibi.</p>
         </div>
         {hasPermission('orders.create') && (
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn" style={{ backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #e2e8f0', fontWeight: 600 }} onClick={() => { setShowExcelImportModal(true); setExcelFile(null); setExcelImportResult(null); setExcelError(null); }}>
+            <button className="btn btn-secondary" style={{ fontWeight: 600 }} onClick={() => { setShowExcelImportModal(true); setExcelFile(null); setExcelImportResult(null); setExcelError(null); }}>
               <Upload size={18} style={{ marginRight: '6px' }}/> Excel'den Sipariş Aktar
             </button>
             <button className="btn btn-primary" style={{ fontWeight: 600, padding: '10px 20px', borderRadius: '8px' }} onClick={() => setShowCreateModal(true)}>
@@ -182,21 +182,21 @@ export const Orders: React.FC = () => {
 
       {/* Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #3b82f6', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #3b82f6', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>Toplam Sipariş Grubu</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{kpis?.totalOrderGroups ?? 0}</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>{kpis?.totalOrderGroups ?? 0}</div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #10b981', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #10b981', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>Hedefe Ulaşmayan (Açık)</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{kpis?.openOrderGroups ?? 0}</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>{kpis?.openOrderGroups ?? 0}</div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #8b5cf6', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #8b5cf6', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>Hedefe Ulaşan (Tamamlanan)</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{kpis?.completedOrderGroups ?? 0}</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)' }}>{kpis?.completedOrderGroups ?? 0}</div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #f59e0b', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div className="card" style={{ padding: '20px', borderLeft: '4px solid #f59e0b', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>Genel Okutma İlerlemesi</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             {kpis?.overallProgressPercentage ?? 0}%
           </div>
         </div>
@@ -206,7 +206,7 @@ export const Orders: React.FC = () => {
       <div className="card" style={{ padding: '16px', marginBottom: '24px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
         <form onSubmit={handleSearchSubmit} className="orders-filter-form" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="form-group" style={{ flex: 2, minWidth: '250px', marginBottom: 0 }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '6px', display: 'block' }}>Arama</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Arama</label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <Search size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
               <input
@@ -220,7 +220,7 @@ export const Orders: React.FC = () => {
             </div>
           </div>
           <div className="form-group" style={{ flex: 1, minWidth: '180px', marginBottom: 0 }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '6px', display: 'block' }}>Durum Filtresi</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Durum Filtresi</label>
             <select
               className="form-input"
               style={{ height: '42px', borderRadius: '8px' }}
