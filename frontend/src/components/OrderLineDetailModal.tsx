@@ -345,20 +345,20 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Draft': return <span className="badge" style={{ backgroundColor: '#e2e8f0', color: '#475569' }}>Taslak</span>;
-      case 'Active': return <span className="badge" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>Aktif</span>;
-      case 'Completed': return <span className="badge" style={{ backgroundColor: '#dcfce3', color: '#15803d' }}>Tamamlandı</span>;
-      case 'Cancelled': return <span className="badge" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>İptal</span>;
+      case 'Draft': return <span className="badge badge-gray">Taslak</span>;
+      case 'Active': return <span className="badge badge-blue">Aktif</span>;
+      case 'Completed': return <span className="badge badge-green">Tamamlandı</span>;
+      case 'Cancelled': return <span className="badge badge-red">İptal</span>;
       default: return <span className="badge">{status}</span>;
     }
   };
 
   const getCartonStatusBadge = (status: string) => {
     switch (status) {
-      case 'Open': return <span className="badge" style={{ backgroundColor: '#dbeafe', color: '#1d4ed8' }}>Açık</span>;
-      case 'Closed': return <span className="badge" style={{ backgroundColor: '#f3e8ff', color: '#6b21a8' }}>Kapalı</span>;
-      case 'Printed': return <span className="badge" style={{ backgroundColor: '#e0f2fe', color: '#0369a1' }}>Yazdırıldı</span>;
-      case 'Palletized': return <span className="badge" style={{ backgroundColor: '#dcfce3', color: '#15803d' }}>Paletlendi</span>;
+      case 'Open': return <span className="badge badge-blue">Açık</span>;
+      case 'Closed': return <span className="badge badge-purple">Kapalı</span>;
+      case 'Printed': return <span className="badge badge-cyan">Yazdırıldı</span>;
+      case 'Palletized': return <span className="badge badge-green">Paletlendi</span>;
       default: return <span className="badge">{status}</span>;
     }
   };
@@ -389,42 +389,42 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         width: '100%',
         maxWidth: '1200px',
         height: '85vh',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--modal-bg)',
         borderRadius: '16px',
-        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+        boxShadow: 'var(--shadow-xl)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         animation: 'fadeIn 0.2s ease-out'
       }} onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="order-line-modal-header" style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#f8fafc' }}>
+        <div className="order-line-modal-header" style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: 'var(--bg-surface-subtle)' }}>
           <div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               Sipariş Satırı Detayı 
               {getStatusBadge(selectedOrder.status)}
             </h3>
-            <p style={{ color: '#475569', fontSize: '0.95rem', margin: 0, fontWeight: 600 }}>{selectedOrder.orderNo} / {selectedOrder.customerName} — <span style={{ color: '#0f172a' }}>{selectedOrder.productName || '-'}</span></p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0, fontWeight: 600 }}>{selectedOrder.orderNo} / {selectedOrder.customerName} — <span style={{ color: 'var(--text-main)' }}>{selectedOrder.productName || '-'}</span></p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             {hasPermission('orders.delete') && (
               <button 
                 className="btn" 
-                style={{ padding: '8px 16px', backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fca5a5', fontWeight: 700, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}
+                style={{ padding: '8px 16px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', fontWeight: 700, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}
                 onClick={handleDeleteOrder}
                 title="Bu Sipariş Satırını Sil"
               >
                 <Trash2 size={16} /> Sipariş Satırını Sil
               </button>
             )}
-            <button className="btn" style={{ padding: '8px', borderRadius: '50%', backgroundColor: '#e2e8f0', color: '#475569', border: 'none' }} onClick={onClose}>
+            <button className="btn btn-secondary" style={{ padding: '8px', borderRadius: '50%', border: 'none' }} onClick={onClose}>
               <X size={20} />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="order-line-modal-tabs" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 24px', backgroundColor: '#fff' }}>
+        <div className="order-line-modal-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 24px', backgroundColor: 'var(--bg-card)' }}>
           <button
             style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'summary' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'summary' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
             onClick={() => setActiveTab('summary')}
@@ -463,80 +463,80 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         </div>
 
         {/* Modal Content Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: '#f1f5f9' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: 'var(--bg-primary)' }}>
           
           {activeTab === 'summary' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Sipariş No</div>
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedOrder.orderNo}</div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Sipariş No</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedOrder.orderNo}</div>
                   </div>
-                  <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Müşteri</div>
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedOrder.customerName}</div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Müşteri</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedOrder.customerName}</div>
                   </div>
-                  <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>İş Emri No</div>
-                    <div><code style={{ backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{selectedOrder.gtin}</code></div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>İş Emri No</div>
+                    <div><code style={{ backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>{selectedOrder.gtin}</code></div>
                   </div>
-                  <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Stok Kodu</div>
-                    <div style={{ fontWeight: 600, color: '#334155' }}>{selectedOrder.stockCode || '-'}</div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Stok Kodu</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.stockCode || '-'}</div>
                   </div>
-                  <div className="card" style={{ gridColumn: 'span 2', padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Stok İsmi / Ürün Adı</div>
-                    <div style={{ fontWeight: 500, color: '#0f172a', wordBreak: 'break-word' }}>{selectedOrder.productName || '-'}</div>
+                  <div className="card" style={{ gridColumn: 'span 2', padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Stok İsmi / Ürün Adı</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-main)', wordBreak: 'break-word' }}>{selectedOrder.productName || '-'}</div>
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>Üretim Hedefleri</h4>
+                <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Üretim Hedefleri</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Beklenen Adet</div>
-                      <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0f172a' }}>{selectedOrder.expectedQuantity}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Beklenen Adet</div>
+                      <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>{selectedOrder.expectedQuantity}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Okutulan Adet</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Okutulan Adet</div>
                       <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0284c7' }}>{selectedOrder.scannedCount}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Kalan Adet</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Kalan Adet</div>
                       <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#b91c1c' }}>{Math.max(0, selectedOrder.expectedQuantity - selectedOrder.scannedCount)}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Tamamlanma Yüzdesi</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Tamamlanma Yüzdesi</div>
                       <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>
                         {selectedOrder.expectedQuantity > 0 ? Math.round((selectedOrder.scannedCount / selectedOrder.expectedQuantity) * 100) : 0}%
                       </div>
                     </div>
-                    <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '4px' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Koli İçi Adet</div>
-                      <div style={{ fontWeight: 600 }}>{selectedOrder.productPerCarton}</div>
+                    <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Koli İçi Adet</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.productPerCarton}</div>
                     </div>
-                    <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '12px', marginTop: '4px' }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>Palet İçi Koli</div>
-                      <div style={{ fontWeight: 600 }}>{selectedOrder.cartonPerPallet}</div>
+                    <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Palet İçi Koli</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.cartonPerPallet}</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>Günlük Üretim Raporu</h4>
+                <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Günlük Üretim Raporu</h4>
                   <div style={{ flex: 1, overflowY: 'auto' }}>
                     {productionByDate.length === 0 ? (
-                      <div style={{ color: '#64748b', fontSize: '0.9rem', textAlign: 'center', padding: '40px' }}>Henüz üretim kaydı bulunmuyor.</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '40px' }}>Henüz üretim kaydı bulunmuyor.</div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {productionByDate.map((p, idx) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
-                            <span style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>{p.date}</span>
-                            <span style={{ fontWeight: 800, color: '#1e3a8a', fontSize: '0.95rem' }}>{p.count} adet okutuldu</span>
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>{p.date}</span>
+                            <span style={{ fontWeight: 800, color: '#3b82f6', fontSize: '0.95rem' }}>{p.count} adet okutuldu</span>
                           </div>
                         ))}
                       </div>
@@ -544,17 +544,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>Açıklama</div>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#334155', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>Açıklama</div>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', backgroundColor: 'var(--bg-surface-subtle)', padding: '12px', borderRadius: '8px' }}>
                     {selectedOrder.description || 'Açıklama bulunmuyor.'}
                   </p>
                 </div>
 
-                <div className="card" style={{ padding: '16px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between' }}>
+                <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Oluşturma Tarihi</div>
-                    <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Oluşturma Tarihi</div>
+                    <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--text-main)' }}>{new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}</div>
                   </div>
                 </div>
               </div>
@@ -562,14 +562,14 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
           )}
 
           {activeTab === 'cartons' && (
-            <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '500px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '12px' }}>
+            <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', minHeight: '500px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '12px' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     Toplam Koli: <span style={{ color: '#2563eb' }}>{cartonsTotal || cartons.length}</span>
                   </span>
                   {cartonsTotal > cartons.length && (
-                    <span style={{ fontSize: '0.8rem', color: '#64748b', backgroundColor: '#e2e8f0', padding: '3px 8px', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', backgroundColor: 'var(--bg-surface-subtle)', padding: '3px 8px', borderRadius: '6px' }}>
                       (İlk {cartons.length} adedi listeleniyor)
                     </span>
                   )}
@@ -577,7 +577,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 {(hasPermission('cartons.delete') || hasPermission('orders.delete') || hasPermission('cartons.create')) && (
                   <button 
                     className="btn" 
-                    style={{ padding: '8px 16px', backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #f87171', borderRadius: '8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: deletingEmptyCartons ? 'not-allowed' : 'pointer' }}
+                    style={{ padding: '8px 16px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', borderRadius: '8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: deletingEmptyCartons ? 'not-allowed' : 'pointer' }}
                     onClick={handleDeleteEmptyCartons}
                     disabled={deletingEmptyCartons || (cartonsTotal === 0 && cartons.length === 0)}
                     title="İçinde hiçbir ürün bulunmayan tüm kolileri toplu olarak siler"
@@ -590,16 +590,16 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               {cartonsLoading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader2 className="spinner" size={40} /></div>
               ) : cartons.length === 0 ? (
-                <div style={{ color: '#64748b', textAlign: 'center', padding: '100px', fontSize: '1.1rem' }}>Bu siparişe ait henüz koli bulunmuyor.</div>
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '100px', fontSize: '1.1rem' }}>Bu siparişe ait henüz koli bulunmuyor.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                   {cartons.map((c: any) => (
                     <div key={c.id} style={{ 
-                      backgroundColor: '#fff', 
+                      backgroundColor: 'var(--bg-card)', 
                       borderRadius: '12px', 
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border-color)',
                       padding: '16px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      boxShadow: 'var(--shadow-sm)',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -607,17 +607,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     }}>
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{c.cartonNo}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem' }}>{c.cartonNo}</span>
                           {getCartonStatusBadge(c.status)}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', fontFamily: 'monospace', marginBottom: '12px', wordBreak: 'break-all' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', wordBreak: 'break-all' }}>
                           SSCC: {c.sscc}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px', fontWeight: 600 }}>
-                          <span style={{ color: '#64748b' }}>Doluluk</span>
-                          <span style={{ color: '#0f172a' }}>{c.actualQuantity} / {c.targetQuantity}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>Doluluk</span>
+                          <span style={{ color: 'var(--text-main)' }}>{c.actualQuantity} / {c.targetQuantity}</span>
                         </div>
-                        <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
+                        <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                           <div style={{ 
                             height: '100%', 
                             width: `${Math.min(100, Math.round((c.actualQuantity / c.targetQuantity) * 100))}%`, 
@@ -625,12 +625,12 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                             transition: 'width 0.3s'
                           }}></div>
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '12px' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
                           Tarih: {new Date(c.createdAt).toLocaleString('tr-TR')}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
-                        <button className="btn" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => loadCartonItems(c)}>
+                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                        <button className="btn btn-secondary" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => loadCartonItems(c)}>
                           <Eye size={14} /> İçerik
                         </button>
                         <button className="btn btn-secondary" style={{ flex: 1, padding: '6px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }} onClick={() => downloadCartonPdf(c.id, c.cartonNo)}>
@@ -639,7 +639,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                         {c.actualQuantity === 0 && (hasPermission('cartons.delete') || hasPermission('orders.delete') || hasPermission('cartons.create')) && (
                           <button 
                             className="btn" 
-                            style={{ padding: '6px 10px', fontSize: '0.8rem', backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }}
+                            style={{ padding: '6px 10px', fontSize: '0.8rem', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontWeight: 600 }}
                             onClick={() => handleDeleteSingleCarton(c)}
                             disabled={deletingCartonId === c.id}
                             title="Bu boş koliyi sil"
@@ -656,20 +656,20 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
           )}
 
           {activeTab === 'pallets' && (
-            <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '500px' }}>
+            <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', minHeight: '500px' }}>
               {palletsLoading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader2 className="spinner" size={40} /></div>
               ) : pallets.length === 0 ? (
-                <div style={{ color: '#64748b', textAlign: 'center', padding: '100px', fontSize: '1.1rem' }}>Bu siparişe ait henüz palet bulunmuyor.</div>
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '100px', fontSize: '1.1rem' }}>Bu siparişe ait henüz palet bulunmuyor.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                   {pallets.map((p: any) => (
                     <div key={p.id} style={{ 
-                      backgroundColor: '#fff', 
+                      backgroundColor: 'var(--bg-card)', 
                       borderRadius: '12px', 
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border-color)',
                       padding: '16px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      boxShadow: 'var(--shadow-sm)',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -677,20 +677,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     }}>
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{p.palletNo}</span>
-                          <span className="badge" style={{ 
-                            backgroundColor: p.status === 'Closed' ? '#dcfce3' : p.status === 'Printed' ? '#dbeafe' : '#fef3c7', 
-                            color: p.status === 'Closed' ? '#166534' : p.status === 'Printed' ? '#1e40af' : '#92400e' 
-                          }}>{p.status}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem' }}>{p.palletNo}</span>
+                          <span className={p.status === 'Closed' ? 'badge badge-green' : p.status === 'Printed' ? 'badge badge-cyan' : 'badge badge-orange'}>{p.status}</span>
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', fontFamily: 'monospace', marginBottom: '12px', wordBreak: 'break-all' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginBottom: '12px', wordBreak: 'break-all' }}>
                           SSCC: {p.sscc}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '12px', fontWeight: 600 }}>
-                          <span style={{ color: '#64748b' }}>Koli Sayısı</span>
-                          <span style={{ color: '#0f172a' }}>{p.cartonCount} Koli</span>
+                          <span style={{ color: 'var(--text-muted)' }}>Koli Sayısı</span>
+                          <span style={{ color: 'var(--text-main)' }}>{p.cartonCount} Koli</span>
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '12px' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
                           Tarih: {new Date(p.createdAt).toLocaleString('tr-TR')}
                         </div>
                       </div>
@@ -727,9 +724,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 <button type="submit" className="btn btn-secondary">Ara</button>
               </form>
 
-              <div style={{ flex: 1, overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div style={{ flex: 1, overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
                 <table className="data-table" style={{ margin: 0, minWidth: '800px' }}>
-                  <thead style={{ backgroundColor: '#f8fafc' }}>
+                  <thead style={{ backgroundColor: 'var(--table-header-bg)' }}>
                     <tr>
                       <th style={{ padding: '12px' }}>Raw Code</th>
                       <th style={{ padding: '12px' }}>Seri No</th>
@@ -745,12 +742,12 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     ) : (
                       codes.map((c: any) => (
                         <tr key={c.id}>
-                          <td style={{ padding: '12px', fontSize: '0.85rem', fontFamily: 'monospace' }}>{c.rawCode}</td>
+                          <td style={{ padding: '12px', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>{c.rawCode}</td>
                           <td style={{ padding: '12px', fontSize: '0.85rem' }}>{c.serialNo || '-'}</td>
                           <td style={{ padding: '12px' }}>
-                            <span className="badge" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '0.75rem' }}>{getProductCodeStatusLabel(c.status)}</span>
+                            <span className="badge badge-gray" style={{ fontSize: '0.75rem' }}>{getProductCodeStatusLabel(c.status)}</span>
                           </td>
-                          <td style={{ padding: '12px', fontSize: '0.85rem', color: '#64748b' }}>
+                          <td style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                             {c.scannedAt ? new Date(c.scannedAt).toLocaleString('tr-TR') : '-'}
                           </td>
                         </tr>
@@ -761,7 +758,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               </div>
 
               <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Toplam: {codesTotal} kod</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Toplam: {codesTotal} kod</span>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button className="btn btn-secondary" style={{ padding: '4px 8px' }} disabled={codesPage === 1} onClick={() => setCodesPage(p => p - 1)}><ChevronLeft size={16} /></button>
                   <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{codesPage}</span>
@@ -772,11 +769,11 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
           )}
 
           {activeTab === 'imports' && (
-            <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '420px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', minHeight: '420px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>Kod Yükleme Kayıtları</h4>
-                  <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '4px 0 0' }}>Bu sipariş satırına yüklenen dosyaları ve bağlı kodları yönetin.</p>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Kod Yükleme Kayıtları</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Bu sipariş satırına yüklenen dosyaları ve bağlı kodları yönetin.</p>
                 </div>
                 {hasPermission('orders.edit') && (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -793,9 +790,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 )}
               </div>
 
-              <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
                 <table className="data-table" style={{ margin: 0, minWidth: '980px' }}>
-                  <thead style={{ backgroundColor: '#f8fafc' }}>
+                  <thead style={{ backgroundColor: 'var(--table-header-bg)' }}>
                     <tr>
                       <th style={{ padding: '12px' }}>Tarih</th>
                       <th style={{ padding: '12px' }}>Dosya</th>
@@ -813,19 +810,19 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     {importBatchesLoading ? (
                       <tr><td colSpan={10} style={{ textAlign: 'center', padding: '40px' }}><Loader2 className="spinner" size={24} style={{ margin: '0 auto' }} /></td></tr>
                     ) : importBatches.length === 0 ? (
-                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Bu siparişe ait yükleme kaydı bulunamadı.</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Bu siparişe ait yükleme kaydı bulunamadı.</td></tr>
                     ) : (
                       importBatches.map((batch) => (
                         <tr key={batch.id}>
                           <td style={{ padding: '12px', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>{new Date(batch.createdAt).toLocaleString('tr-TR')}</td>
-                          <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a', maxWidth: '220px', wordBreak: 'break-word' }}>{batch.fileName || '-'}</td>
+                          <td style={{ padding: '12px', fontWeight: 600, color: 'var(--text-main)', maxWidth: '220px', wordBreak: 'break-word' }}>{batch.fileName || '-'}</td>
                           <td style={{ padding: '12px' }}>{batch.totalRows.toLocaleString()}</td>
-                          <td style={{ padding: '12px', color: '#15803d', fontWeight: 700 }}>{batch.importedCount.toLocaleString()}</td>
-                          <td style={{ padding: '12px', color: '#b45309' }}>{batch.duplicateCount.toLocaleString()}</td>
-                          <td style={{ padding: '12px', color: batch.invalidCount > 0 ? '#b91c1c' : '#64748b' }}>{batch.invalidCount.toLocaleString()}</td>
+                          <td style={{ padding: '12px', color: 'var(--success)', fontWeight: 700 }}>{batch.importedCount.toLocaleString()}</td>
+                          <td style={{ padding: '12px', color: 'var(--warning-text)' }}>{batch.duplicateCount.toLocaleString()}</td>
+                          <td style={{ padding: '12px', color: batch.invalidCount > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{batch.invalidCount.toLocaleString()}</td>
                           <td style={{ padding: '12px' }}>{batch.linkedCodeCount.toLocaleString()}</td>
                           <td style={{ padding: '12px' }}>
-                            <span className="badge" style={{ backgroundColor: batch.usedCodeCount > 0 ? '#fee2e2' : '#dcfce7', color: batch.usedCodeCount > 0 ? '#b91c1c' : '#166534' }}>
+                            <span className={batch.usedCodeCount > 0 ? 'badge badge-red' : 'badge badge-green'}>
                               {batch.usedCodeCount.toLocaleString()}
                             </span>
                           </td>
@@ -856,7 +853,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
         {/* Modal Footer Actions */}
         {activeTab === 'summary' && (
-          <div className="order-line-modal-footer" style={{ padding: '20px 24px', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <div className="order-line-modal-footer" style={{ padding: '20px 24px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
             {selectedOrder.status === 'Draft' && (
               <>
                 {hasPermission('orders.edit') && (
@@ -936,17 +933,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             maxWidth: '650px',
             maxHeight: '75vh',
             borderRadius: '12px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            boxShadow: 'var(--shadow-xl)',
             padding: '24px',
-            backgroundColor: '#fff',
+            backgroundColor: 'var(--modal-bg)',
             display: 'flex',
             flexDirection: 'column'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
                 Koli İçeriği ({selectedCartonForItems.cartonNo})
               </h3>
-              <button className="btn" style={{ padding: '6px', borderRadius: '50%', backgroundColor: '#f1f5f9', color: '#475569', border: 'none' }} onClick={() => setSelectedCartonForItems(null)}>
+              <button className="btn btn-secondary" style={{ padding: '6px', borderRadius: '50%', border: 'none' }} onClick={() => setSelectedCartonForItems(null)}>
                 <X size={18} />
               </button>
             </div>
@@ -955,10 +952,10 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               {cartonItemsLoading ? (
                 <div style={{ textAlign: 'center', padding: '30px' }}><Loader2 className="spinner" size={24} style={{ margin: '0 auto' }} /></div>
               ) : cartonItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>Bu kolide henüz okutulmuş ürün bulunmuyor.</div>
+                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>Bu kolide henüz okutulmuş ürün bulunmuyor.</div>
               ) : (
                 <table className="data-table" style={{ margin: 0 }}>
-                  <thead style={{ backgroundColor: '#f8fafc' }}>
+                  <thead style={{ backgroundColor: 'var(--table-header-bg)' }}>
                     <tr>
                       <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Barkod / Datamatrix</th>
                       <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Seri No</th>
@@ -968,9 +965,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                   <tbody>
                     {cartonItems.map((item: any, idx: number) => (
                       <tr key={idx}>
-                        <td style={{ padding: '8px 12px', fontSize: '0.85rem', fontFamily: 'monospace' }}>{item.rawCode}</td>
+                        <td style={{ padding: '8px 12px', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>{item.rawCode}</td>
                         <td style={{ padding: '8px 12px', fontSize: '0.85rem' }}>{item.serialNo || '-'}</td>
-                        <td style={{ padding: '8px 12px', fontSize: '0.85rem', color: '#64748b' }}>
+                        <td style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                           {item.scannedAt ? new Date(item.scannedAt).toLocaleString('tr-TR') : '-'}
                         </td>
                       </tr>
@@ -979,7 +976,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 </table>
               )}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
               <button className="btn btn-secondary" onClick={() => setSelectedCartonForItems(null)}>Kapat</button>
             </div>
           </div>
@@ -991,14 +988,15 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         <div data-testid="print-pdf-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={e => e.stopPropagation()}>
           <div role="dialog" aria-modal="true" aria-labelledby="print-pdf-title" className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <h3 id="print-pdf-title" style={{ fontSize: '1.25rem', margin: 0 }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
+              <h3 id="print-pdf-title" style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-main)' }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
               <button
                 type="button"
                 aria-label="PDF penceresini kapat"
                 data-testid="print-pdf-close"
                 disabled={printingPdf}
                 onClick={() => { setShowPrintModal(false); setError(null); }}
-                style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', border: 'none', backgroundColor: '#f1f5f9', color: '#475569', cursor: printingPdf ? 'not-allowed' : 'pointer' }}
+                className="btn btn-secondary"
+                style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', border: 'none', cursor: printingPdf ? 'not-allowed' : 'pointer' }}
               >
                 <X size={19} />
               </button>
@@ -1014,10 +1012,10 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     aria-checked={printCodeScope === 'all'}
                     data-testid="print-scope-all"
                     onClick={() => setPrintCodeScope('all')}
-                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'all' ? '2px solid #2563eb' : '1px solid #cbd5e1', backgroundColor: printCodeScope === 'all' ? '#eff6ff' : '#fff', color: '#0f172a', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'all' ? '2px solid #2563eb' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'all' ? 'rgba(37, 99, 235, 0.12)' : 'var(--bg-card)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Barcode size={17} color={printCodeScope === 'all' ? '#2563eb' : '#64748b'} /> Tüm QR Kodları</span>
-                    <small style={{ display: 'block', marginTop: '5px', color: '#64748b', lineHeight: 1.35 }}>Siparişe yüklenen bütün kodları üretir.</small>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Barcode size={17} color={printCodeScope === 'all' ? '#2563eb' : 'var(--text-muted)'} /> Tüm QR Kodları</span>
+                    <small style={{ display: 'block', marginTop: '5px', color: 'var(--text-muted)', lineHeight: 1.35 }}>Siparişe yüklenen bütün kodları üretir.</small>
                   </button>
                   <button
                     type="button"
@@ -1025,15 +1023,15 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     aria-checked={printCodeScope === 'unassigned'}
                     data-testid="print-scope-unassigned"
                     onClick={() => setPrintCodeScope('unassigned')}
-                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'unassigned' ? '2px solid #d97706' : '1px solid #cbd5e1', backgroundColor: printCodeScope === 'unassigned' ? '#fffbeb' : '#fff', color: '#0f172a', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'unassigned' ? '2px solid #d97706' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'unassigned' ? 'rgba(217, 119, 6, 0.12)' : 'var(--bg-card)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Archive size={17} color={printCodeScope === 'unassigned' ? '#d97706' : '#64748b'} /> Sadece Açıkta Kalanlar</span>
-                    <small style={{ display: 'block', marginTop: '5px', color: '#64748b', lineHeight: 1.35 }}>Hiç okutulmamış ve hiçbir koliye girmemiş kodlar.</small>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Archive size={17} color={printCodeScope === 'unassigned' ? '#d97706' : 'var(--text-muted)'} /> Sadece Açıkta Kalanlar</span>
+                    <small style={{ display: 'block', marginTop: '5px', color: 'var(--text-muted)', lineHeight: 1.35 }}>Hiç okutulmamış ve hiçbir koliye girmemiş kodlar.</small>
                   </button>
                 </div>
               </div>
               {printCodeScope === 'unassigned' && (
-                <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', fontSize: '0.82rem', lineHeight: 1.45 }}>
+                <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning-text)', fontSize: '0.82rem', lineHeight: 1.45 }}>
                   PDF yalnızca okutma zamanı olmayan ve herhangi bir koliye bağlanmamış açıkta kalan QR kodlarından oluşturulacak.
                 </div>
               )}
@@ -1103,9 +1101,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 <input type="file" accept=".txt,.csv,.xlsx" className="form-input" required onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </div>
               {importResult && (
-                <div style={{ backgroundColor: '#f1f5f9', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
-                  <h4 style={{ fontWeight: 700, marginBottom: '8px' }}>Yükleme Sonucu:</h4>
-                  <div>Toplam Satır: <strong style={{ float: 'right' }}>{importResult.totalRows}</strong></div>
+                <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
+                  <h4 style={{ fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Yükleme Sonucu:</h4>
+                  <div style={{ color: 'var(--text-main)' }}>Toplam Satır: <strong style={{ float: 'right' }}>{importResult.totalRows}</strong></div>
                   <div style={{ color: 'var(--success-text)' }}>İçe Aktarılan: <strong style={{ float: 'right' }}>{importResult.importedCount}</strong></div>
                   <div style={{ color: 'var(--warning-text)' }}>Mükerrer: <strong style={{ float: 'right' }}>{importResult.duplicateCount}</strong></div>
                   <div style={{ color: 'var(--danger-text)' }}>Hatalı/Geçersiz: <strong style={{ float: 'right' }}>{importResult.invalidCount}</strong></div>

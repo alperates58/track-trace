@@ -407,11 +407,11 @@ export const AuditCenter: React.FC = () => {
 
       {selectedLog && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '16px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+          <div style={{ backgroundColor: 'var(--modal-bg)', border: '1px solid var(--border-color)', padding: '32px', borderRadius: '16px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-xl)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
               <div>
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: '#111827' }}>Audit Detayı</h3>
-                <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>Audit Detayı</h3>
+                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
                   {selectedLog.entityName} - {selectedLog.action} 
                   ({new Date(selectedLog.createdAt).toLocaleString('tr-TR')})
                 </p>
@@ -423,14 +423,14 @@ export const AuditCenter: React.FC = () => {
 
             <div style={{ display: 'flex', gap: '24px', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
               <div style={{ flex: 1 }}>
-                <h4 style={{ margin: '0 0 12px 0', color: '#dc2626', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><ShieldAlert size={16} /> Eski Değer (Old Value)</h4>
-                <pre style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px', overflowX: 'auto', fontSize: '13px', color: '#374151', border: '1px solid #e5e7eb', margin: 0, minHeight: '100px' }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--danger-text)', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><ShieldAlert size={16} /> Eski Değer (Old Value)</h4>
+                <pre style={{ backgroundColor: 'var(--bg-surface-subtle)', padding: '16px', borderRadius: '8px', overflowX: 'auto', fontSize: '13px', color: 'var(--text-main)', border: '1px solid var(--border-color)', margin: 0, minHeight: '100px', fontFamily: 'var(--font-mono)' }}>
                   {formatJson(selectedLog.oldValue)}
                 </pre>
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ margin: '0 0 12px 0', color: '#059669', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={16} /> Yeni Değer (New Value)</h4>
-                <pre style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px', overflowX: 'auto', fontSize: '13px', color: '#374151', border: '1px solid #e5e7eb', margin: 0, minHeight: '100px' }}>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--success-text)', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle2 size={16} /> Yeni Değer (New Value)</h4>
+                <pre style={{ backgroundColor: 'var(--bg-surface-subtle)', padding: '16px', borderRadius: '8px', overflowX: 'auto', fontSize: '13px', color: 'var(--text-main)', border: '1px solid var(--border-color)', margin: 0, minHeight: '100px', fontFamily: 'var(--font-mono)' }}>
                   {formatJson(selectedLog.newValue)}
                 </pre>
               </div>

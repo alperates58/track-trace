@@ -328,7 +328,7 @@ select.ac-input {
 }
 
 .ac-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--table-row-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -4px rgba(0,0,0,0.05);
 }
@@ -349,22 +349,22 @@ select.ac-input {
 }
 
 .ac-badge-module {
-  background-color: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
 }
 
-.ac-badge-module.users { background-color: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
-.ac-badge-module.orders { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
-.ac-badge-module.cartons { background-color: #fef9c3; color: #854d0e; border-color: #fef08a; }
-.ac-badge-module.stations { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
-.ac-badge-module.productcodes { background-color: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
-.ac-badge-module.auth { background-color: #ffe4e6; color: #be123c; border-color: #fecdd3; }
+.ac-badge-module.users { background-color: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.25); }
+.ac-badge-module.orders { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.25); }
+.ac-badge-module.cartons { background-color: rgba(234, 179, 8, 0.15); color: #facc15; border-color: rgba(234, 179, 8, 0.25); }
+.ac-badge-module.stations { background-color: rgba(249, 115, 22, 0.15); color: #fb923c; border-color: rgba(249, 115, 22, 0.25); }
+.ac-badge-module.productcodes { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.25); }
+.ac-badge-module.auth { background-color: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.25); }
 
 .ac-badge-action {
-  background-color: #f8fafc;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
 }
 
 /* Status Badges */

@@ -109,12 +109,12 @@ export const BarcodeSearch: React.FC = () => {
             <div className="card" style={{ display: 'flex', gap: '20px' }}>
               <div style={{
                 width: '40px', height: '40px', borderRadius: '50%',
-                backgroundColor: result.scannedAt ? 'var(--success-bg)' : '#f1f5f9',
+                backgroundColor: result.scannedAt ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface-subtle)',
                 color: result.scannedAt ? 'var(--success)' : 'var(--text-muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>2</div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
                   Okutma (Scan) Bilgisi
                   {result.scannedAt ? (
                     <span className="badge badge-completed" style={{ fontSize: '0.7rem' }}>Okutuldu</span>
@@ -137,12 +137,12 @@ export const BarcodeSearch: React.FC = () => {
             <div className="card" style={{ display: 'flex', gap: '20px' }}>
               <div style={{
                 width: '40px', height: '40px', borderRadius: '50%',
-                backgroundColor: result.cartonNo ? '#e0f2fe' : '#f1f5f9',
+                backgroundColor: result.cartonNo ? 'rgba(14, 165, 233, 0.15)' : 'var(--bg-surface-subtle)',
                 color: result.cartonNo ? '#0284c7' : 'var(--text-muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>3</div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
                   Koli Agregasyonu
                   {result.cartonNo ? (
                     <span className="badge badge-printed" style={{ fontSize: '0.7rem' }}>Kolilendi</span>
@@ -153,7 +153,7 @@ export const BarcodeSearch: React.FC = () => {
                 {result.cartonNo ? (
                   <div className="two-column-grid" style={{ gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
                     <div>Koli Numarası: <strong>{result.cartonNo}</strong></div>
-                    <div>Koli SSCC: <code>{result.cartonSSCC}</code></div>
+                    <div>Koli SSCC: <code style={{ fontFamily: 'var(--font-mono)' }}>{result.cartonSSCC}</code></div>
                   </div>
                 ) : (
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>Bu ürün henüz bir koli içerisine yerleştirilmemiş.</p>
@@ -165,12 +165,12 @@ export const BarcodeSearch: React.FC = () => {
             <div className="card" style={{ display: 'flex', gap: '20px' }}>
               <div style={{
                 width: '40px', height: '40px', borderRadius: '50%',
-                backgroundColor: result.palletNo ? '#faf5ff' : '#f1f5f9',
+                backgroundColor: result.palletNo ? 'rgba(168, 85, 247, 0.15)' : 'var(--bg-surface-subtle)',
                 color: result.palletNo ? '#8b5cf6' : 'var(--text-muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0
               }}>4</div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
                   Palet Agregasyonu
                   {result.palletNo ? (
                     <span className="badge badge-palletized" style={{ fontSize: '0.7rem' }}>Paletlendi</span>
@@ -181,7 +181,7 @@ export const BarcodeSearch: React.FC = () => {
                 {result.palletNo ? (
                   <div className="two-column-grid" style={{ gap: '8px', fontSize: '0.85rem', marginTop: '12px' }}>
                     <div>Palet Numarası: <strong>{result.palletNo}</strong></div>
-                    <div>Palet SSCC: <code>{result.palletSSCC}</code></div>
+                    <div>Palet SSCC: <code style={{ fontFamily: 'var(--font-mono)' }}>{result.palletSSCC}</code></div>
                   </div>
                 ) : (
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>Ürünün bulunduğu koli henüz bir palete yerleştirilmemiş.</p>
@@ -199,7 +199,7 @@ export const BarcodeSearch: React.FC = () => {
               </h3>
               <div style={{ marginTop: '12px' }}>
                 <textarea readOnly className="form-input" style={{
-                  width: '100%', minHeight: '120px', backgroundColor: '#f8fafc', fontFamily: 'monospace',
+                  width: '100%', minHeight: '120px', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', fontFamily: 'var(--font-mono)',
                   fontSize: '0.85rem', cursor: 'text', resize: 'none'
                 }} value={result.rawCode}></textarea>
               </div>
@@ -216,8 +216,8 @@ export const BarcodeSearch: React.FC = () => {
                 <div style={{ marginTop: '12px', maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {result.cartonItems.map((item, idx) => (
                     <div key={idx} style={{
-                      padding: '8px 12px', backgroundColor: '#f8fafc', border: '1px solid var(--border-color)',
-                      borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all'
+                      padding: '8px 12px', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', border: '1px solid var(--border-color)',
+                      borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', wordBreak: 'break-all'
                     }}>
                       {idx + 1}. {item}
                     </div>

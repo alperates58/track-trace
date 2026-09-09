@@ -249,15 +249,20 @@ const AppShell: React.FC = () => {
       {/* Sidebar Navigation */}
       <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">
-          <Package size={28} color="var(--primary)" style={{ flexShrink: 0 }} />
-          <span>TrackTrace</span>
+          <div className="sidebar-brand-logo">
+            <Package size={20} />
+          </div>
+          <div className="sidebar-brand-info">
+            <span className="sidebar-brand-title">TrackTrace</span>
+            <span className="sidebar-brand-badge">PRO</span>
+          </div>
         </div>
 
         <div className="sidebar-scrollable" style={{ flex: 1, overflowY: 'auto' }}>
           <nav className="sidebar-nav">
             {showOpsMenu && (
               <div className="sidebar-section">
-                <span className="sidebar-section-title">Operations</span>
+                <span className="sidebar-section-title">Operasyon</span>
                 {showDashboard && (
                   <div 
                     className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -356,8 +361,8 @@ const AppShell: React.FC = () => {
             )}
 
             {showIntelMenu && (
-              <div className="sidebar-section" style={{ marginTop: '24px' }}>
-                <span className="sidebar-section-title">Intelligence</span>
+              <div className="sidebar-section" style={{ marginTop: '20px' }}>
+                <span className="sidebar-section-title">Analitik & İzleme</span>
                 {showTraceability && (
                   <div 
                     className={`sidebar-link ${activeTab === 'traceability' ? 'active' : ''}`}
@@ -405,8 +410,8 @@ const AppShell: React.FC = () => {
             )}
 
             {showAdminMenu && (
-              <div className="sidebar-section" style={{ marginTop: '24px' }}>
-                <span className="sidebar-section-title">Administration</span>
+              <div className="sidebar-section" style={{ marginTop: '20px' }}>
+                <span className="sidebar-section-title">Sistem Yönetimi</span>
                 
                 {showUsers && (
                   <div 

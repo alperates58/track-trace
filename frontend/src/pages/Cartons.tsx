@@ -1015,7 +1015,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                                 <strong>{g.orderNo}</strong> Siparişine Ait Koliler ({g.cartons.length})
                               </h4>
                             </div>
-                            <table className="data-table" style={{ backgroundColor: '#ffffff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                            <table className="data-table" style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                               <thead>
                                 <tr>
                                   <th>Koli No</th>
@@ -1112,7 +1112,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                   {isExpanded && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
                       {g.cartons.map(c => (
-                        <div key={c.id} style={{ padding: '10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: '#f8fafc' }} onClick={() => handleCartonClick(c)}>
+                        <div key={c.id} style={{ padding: '10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-subtle)' }} onClick={() => handleCartonClick(c)}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                             <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.cartonNo}</span>
                             <span className={`badge badge-${c.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
@@ -1247,7 +1247,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
             {/* Drawer Scrollable Body */}
             <div className="drawer-body">
               {/* Carton Details Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '16px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                 <div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Sipariş No</span>
                   <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedCarton.orderNo}</span>
@@ -1472,7 +1472,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {paginatedBarcodes.map((item, idx) => (
                         <div key={idx} style={{
-                          backgroundColor: '#f8fafc',
+                          backgroundColor: 'var(--bg-surface-subtle)',
                           padding: '10px',
                           borderRadius: '4px',
                           fontSize: '0.8rem',

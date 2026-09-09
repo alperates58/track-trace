@@ -235,23 +235,23 @@ export const Orders: React.FC = () => {
             </select>
           </div>
           <button type="submit" className="btn btn-primary" style={{ height: '42px', padding: '0 24px', borderRadius: '8px', fontWeight: 600 }}>Ara</button>
-          <button type="button" className="btn" style={{ height: '42px', padding: '0 24px', borderRadius: '8px', fontWeight: 600, backgroundColor: '#f1f5f9', color: '#475569' }} onClick={() => { setSearch(''); setStatusFilter(''); setPage(1); fetchGroups(); }}>Temizle</button>
+          <button type="button" className="btn btn-secondary" style={{ height: '42px', padding: '0 24px', borderRadius: '8px', fontWeight: 600 }} onClick={() => { setSearch(''); setStatusFilter(''); setPage(1); fetchGroups(); }}>Temizle</button>
         </form>
       </div>
 
       {/* Main DataGrid */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table" style={{ margin: 0 }}>
-            <thead style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+            <thead>
               <tr>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Sipariş No</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Müşteri</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700, textAlign: 'center' }}>Ürün Satırı</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700, textAlign: 'center' }}>Farklı İş Emri</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Okutulan / Hedef</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Durum</th>
-                <th style={{ padding: '16px', color: '#475569', fontWeight: 700 }}>Aksiyon</th>
+                <th style={{ padding: '16px', fontWeight: 700 }}>Sipariş No</th>
+                <th style={{ padding: '16px', fontWeight: 700 }}>Müşteri</th>
+                <th style={{ padding: '16px', fontWeight: 700, textAlign: 'center' }}>Ürün Satırı</th>
+                <th style={{ padding: '16px', fontWeight: 700, textAlign: 'center' }}>Farklı İş Emri</th>
+                <th style={{ padding: '16px', fontWeight: 700 }}>Okutulan / Hedef</th>
+                <th style={{ padding: '16px', fontWeight: 700 }}>Durum</th>
+                <th style={{ padding: '16px', fontWeight: 700 }}>Aksiyon</th>
               </tr>
             </thead>
             <tbody>
@@ -262,33 +262,33 @@ export const Orders: React.FC = () => {
               ) : (
                 groups.map((g) => (
                   <tr key={g.groupKey} style={{ cursor: 'pointer', transition: 'background-color 0.2s' }} onClick={() => setSelectedGroupKey(g.groupKey)} className="hover-row">
-                    <td data-label="Sipariş No" style={{ padding: '16px', fontWeight: 700, color: '#0f172a' }}>{g.orderNo}</td>
-                    <td data-label="Müşteri" style={{ padding: '16px', color: '#334155' }}>{g.customerName}</td>
+                    <td data-label="Sipariş No" style={{ padding: '16px', fontWeight: 700, color: 'var(--text-main)' }}>{g.orderNo}</td>
+                    <td data-label="Müşteri" style={{ padding: '16px', color: 'var(--text-main)' }}>{g.customerName}</td>
                     <td data-label="Ürün Satırı" style={{ padding: '16px', textAlign: 'center' }}>
-                      <span style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.lineCount}</span>
+                      <span style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', color: 'var(--text-main)', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.lineCount}</span>
                     </td>
                     <td data-label="Farklı İş Emri" style={{ padding: '16px', textAlign: 'center' }}>
-                      <span style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.distinctWorkOrderCount}</span>
+                      <span style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', color: 'var(--text-main)', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>{g.distinctWorkOrderCount}</span>
                     </td>
                     <td data-label="Okutulan / Hedef" style={{ padding: '16px' }}>
                       <div className="progress-cell-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
-                          <span style={{ color: '#0284c7' }}>{g.totalScannedQuantity.toLocaleString()}</span>
-                          <span style={{ color: '#64748b' }}>{g.totalExpectedQuantity.toLocaleString()}</span>
+                          <span style={{ color: 'var(--primary)' }}>{g.totalScannedQuantity.toLocaleString()}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>{g.totalExpectedQuantity.toLocaleString()}</span>
                         </div>
-                        <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${g.progressPercentage}%`, backgroundColor: g.progressPercentage === 100 ? '#10b981' : '#3b82f6', transition: 'width 0.3s ease' }}></div>
+                        <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${g.progressPercentage}%`, backgroundColor: g.progressPercentage === 100 ? 'var(--success)' : 'var(--primary)', transition: 'width 0.3s ease' }}></div>
                         </div>
                       </div>
                     </td>
                     <td data-label="Durum" style={{ padding: '16px' }}>{getStatusBadge(g.statusSummary)}</td>
                     <td data-label="Aksiyon" style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <button className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#fff', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: 600, borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupKey(g.groupKey); }}>
+                        <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupKey(g.groupKey); }}>
                           İncele
                         </button>
                         {hasPermission('orders.delete') && (
-                          <button className="btn" style={{ padding: '6px 10px', fontSize: '0.85rem', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', fontWeight: 600, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Sipariş Grubunu Komple Sil" onClick={(e) => {
+                          <button className="btn" style={{ padding: '6px 10px', fontSize: '0.85rem', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', fontWeight: 600, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Sipariş Grubunu Komple Sil" onClick={(e) => {
                             e.stopPropagation();
                             if (!window.confirm(`${g.orderNo} (${g.customerName}) sipariş grubu ve bağlı sipariş satırları silinsin mi?`)) return;
                             api.delete(`/api/order-groups/${encodeURIComponent(g.groupKey)}`)
@@ -308,12 +308,12 @@ export const Orders: React.FC = () => {
         </div>
         
         {/* Pagination */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
-          <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500 }}>Toplam {totalCount} kayıt</span>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-subtle)' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Toplam {totalCount} kayıt</span>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button className="btn" style={{ padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }} disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={16} /></button>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, minWidth: '30px', textAlign: 'center' }}>{page}</span>
-            <button className="btn" style={{ padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }} disabled={page * 10 >= totalCount} onClick={() => setPage(p => p + 1)}><ChevronRight size={16} /></button>
+            <button className="btn btn-secondary" style={{ padding: '6px 12px' }} disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={16} /></button>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, minWidth: '30px', textAlign: 'center', color: 'var(--text-main)' }}>{page}</span>
+            <button className="btn btn-secondary" style={{ padding: '6px 12px' }} disabled={page * 10 >= totalCount} onClick={() => setPage(p => p + 1)}><ChevronRight size={16} /></button>
           </div>
         </div>
       </div>
@@ -378,14 +378,14 @@ export const Orders: React.FC = () => {
             {excelError && <div style={{ color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>{excelError}</div>}
             
             {/* Download Sample Template Callout */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', backgroundColor: '#eff6ff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', backgroundColor: 'var(--primary-light)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
               <div>
-                <div style={{ fontWeight: 700, color: '#1e40af', fontSize: '0.9rem' }}>Örnek Şablon Hazır</div>
-                <div style={{ fontSize: '0.8rem', color: '#1d4ed8' }}>Kolon başlıkları tanımlı hazır Excel dosyasını indirebilirsiniz.</div>
+                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>Örnek Şablon Hazır</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Kolon başlıkları tanımlı hazır Excel dosyasını indirebilirsiniz.</div>
               </div>
               <button 
                 type="button" 
-                className="btn" 
+                className="btn btn-primary" 
                 onClick={async () => {
                   try {
                     const blob = await api.get('/api/orders/excel-template');
@@ -401,7 +401,7 @@ export const Orders: React.FC = () => {
                     alert('Şablon indirilirken hata oluştu: ' + err.message);
                   }
                 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 14px', backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 14px', flexShrink: 0 }}
               >
                 <FileSpreadsheet size={16} /> Şablon İndir (.xlsx)
               </button>
@@ -424,7 +424,7 @@ export const Orders: React.FC = () => {
                 <input type="file" accept=".xlsx" className="form-input" required onChange={(e) => setExcelFile(e.target.files?.[0] || null)} />
               </div>
               {excelImportResult && (
-                <div style={{ backgroundColor: '#f1f5f9', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
+                <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
                   <h4 style={{ fontWeight: 700, marginBottom: '8px' }}>İçe Aktarım Özeti:</h4>
                   <div>Okunan Toplam Satır: <strong style={{ float: 'right' }}>{excelImportResult.totalRows}</strong></div>
                   <div style={{ color: 'var(--success-text)' }}>Eklenen Siparişler: <strong style={{ float: 'right' }}>{excelImportResult.importedCount}</strong></div>

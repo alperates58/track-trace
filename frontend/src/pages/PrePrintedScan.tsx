@@ -588,21 +588,21 @@ export const PrePrintedScan: React.FC = () => {
       {/* Top Header Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: '#0f172a', margin: 0 }}>Ön Etiketli Koli Modu</h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: 0 }}>Ön Etiketli Koli Modu</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Önce koli barkodunu okutun, ardından ürünleri okutarak doldurun.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {/* Connection Status Indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', backgroundColor: isOnline ? '#ecfdf5' : '#fef2f2', border: `1px solid ${isOnline ? '#a7f3d0' : '#fca5a5'}` }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isOnline ? '#10b981' : '#ef4444', display: 'inline-block' }}></span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isOnline ? '#065f46' : '#991b1b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', backgroundColor: isOnline ? 'var(--success-bg)' : 'var(--danger-bg)', border: `1px solid ${isOnline ? 'var(--success-border)' : 'var(--danger-border)'}` }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isOnline ? 'var(--success)' : 'var(--danger)', display: 'inline-block' }}></span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isOnline ? 'var(--success-text)' : 'var(--danger-text)' }}>
               {isOnline ? 'Çevrimiçi' : 'Çevrimdışı'}
             </span>
           </div>
           {/* Operator Name Info */}
           {user?.name && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
                 Operatör: <strong>{user.name}</strong>
               </span>
             </div>
@@ -616,7 +616,7 @@ export const PrePrintedScan: React.FC = () => {
           <div style={{ flex: 1, minWidth: '150px' }}>
             <select
               className="form-input"
-              style={{ width: '100%', height: '42px', fontWeight: 600, borderRadius: '8px', border: '1px solid #cbd5e1' }}
+              style={{ width: '100%', height: '42px', fontWeight: 600, borderRadius: '8px' }}
               value={selectedStationId}
               onChange={(e) => {
                 const newId = e.target.value;
@@ -636,17 +636,17 @@ export const PrePrintedScan: React.FC = () => {
           {cartonNo ? (
             <div style={{ flex: 2, display: 'flex', alignItems: 'center', gap: '12px', padding: '0 12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Aktif Sipariş</span>
-                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{activeOrderNo}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Aktif Sipariş</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>{activeOrderNo}</span>
               </div>
-              <div style={{ height: '24px', width: '1px', backgroundColor: '#cbd5e1' }}></div>
+              <div style={{ height: '24px', width: '1px', backgroundColor: 'var(--border-color)' }}></div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Ürün</span>
-                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#334155' }}>{activeProductName}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ürün</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)' }}>{activeProductName}</span>
               </div>
             </div>
           ) : (
-            <div style={{ flex: 2, display: 'flex', alignItems: 'center', color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic' }}>
+            <div style={{ flex: 2, display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>
               Koli barkodu okutmanız bekleniyor...
             </div>
           )}
@@ -660,9 +660,9 @@ export const PrePrintedScan: React.FC = () => {
             style={{
               padding: '8px 14px',
               borderRadius: '8px',
-              border: '1px solid #fcd34d',
-              backgroundColor: (!activeCartonId || currentQty <= 0) ? '#fef3c755' : '#fef3c7',
-              color: '#92400e',
+              border: '1px solid var(--warning-border)',
+              backgroundColor: (!activeCartonId || currentQty <= 0) ? 'var(--bg-surface-subtle)' : 'var(--warning-bg)',
+              color: 'var(--warning-text)',
               cursor: (!activeCartonId || currentQty <= 0) ? 'not-allowed' : 'pointer',
               fontWeight: 700,
               fontSize: '0.85rem',
@@ -689,75 +689,66 @@ export const PrePrintedScan: React.FC = () => {
               borderRadius: '8px', 
               fontSize: '0.85rem', 
               fontWeight: 600,
-              backgroundColor: isInputFocused ? '#eff6ff' : '#fff7ed', 
-              border: `1px solid ${isInputFocused ? '#bfdbfe' : '#fed7aa'}`,
-              color: isInputFocused ? '#1d4ed8' : '#c2410c'
+              backgroundColor: isInputFocused ? 'var(--primary-light)' : 'var(--warning-bg)', 
+              border: `1px solid ${isInputFocused ? 'var(--border-color)' : 'var(--warning-border)'}`,
+              color: isInputFocused ? 'var(--primary)' : 'var(--warning-text)'
             }}
           >
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isInputFocused ? '#3b82f6' : '#f97316', display: 'inline-block' }}></span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isInputFocused ? 'var(--primary)' : 'var(--warning)', display: 'inline-block' }}></span>
             {isInputFocused ? 'Odak Aktif' : 'Odak Kayboldu / Tıkla veya F8 ile odakla'}
           </div>
 
           {/* Sound State Toggle Button */}
           <button
-            className="btn"
+            className="btn btn-secondary"
             style={{ 
               height: '42px', 
               padding: '0 16px', 
               borderRadius: '8px', 
-              backgroundColor: soundEnabled ? '#ecfdf5' : '#f1f5f9',
-              border: `1px solid ${soundEnabled ? '#a7f3d0' : '#cbd5e1'}`,
-              color: soundEnabled ? '#047857' : '#475569',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              fontWeight: 600 
             }}
             onClick={(e) => { e.stopPropagation(); setSoundEnabled(!soundEnabled); }}
           >
-            {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            {soundEnabled ? <Volume2 size={18} color="var(--success)" /> : <VolumeX size={18} />}
             {soundEnabled ? 'Ses Açık' : 'Ses Kapalı'}
           </button>
 
           {/* Camera Settings Button */}
           <button
-            className="btn"
+            className="btn btn-secondary"
             style={{ 
               height: '42px', 
               padding: '0 16px', 
               borderRadius: '8px', 
-              backgroundColor: '#fef3c7',
-              border: '1px solid #fde68a',
-              color: '#d97706',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              fontWeight: 600 
             }}
             onClick={(e) => { e.stopPropagation(); setIsCameraOpen(true); }}
           >
-            <Camera size={18} />
+            <Camera size={18} color="var(--warning)" />
             Kamera ile Okut
           </button>
 
           {/* Printer Settings Button */}
           <button
-            className="btn"
+            className="btn btn-secondary"
             style={{ 
               height: '42px', 
               padding: '0 16px', 
               borderRadius: '8px', 
-              backgroundColor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              color: '#1d4ed8',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              fontWeight: 600 
             }}
             onClick={(e) => { e.stopPropagation(); setIsSettingsModalOpen(true); }}
           >
-            <Printer size={18} />
+            <Printer size={18} color="var(--primary)" />
             Yazıcı Ayarları
           </button>
         </div>
@@ -940,41 +931,41 @@ export const PrePrintedScan: React.FC = () => {
         </div>
 
         {/* Right Section: Real-time Scan History List */}
-        <div className="scan-right" style={{ backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', margin: 0 }}>
+        <div className="scan-right" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', margin: 0 }}>
             Okutma Geçmişi (Son 10)
           </h3>
           
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginTop: '16px', overflowY: 'auto' }}>
             {scanHistory.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, color: '#64748b', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-muted)', gap: '10px' }}>
                 <Barcode size={32} />
                 <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>Bu oturumda henüz okuma yapılmadı.</p>
               </div>
             ) : (
               scanHistory.map((item, idx) => (
                 <div key={idx} style={{
-                  borderLeft: `4px solid ${item.status === 'Başarılı' ? '#10b981' : '#ef4444'}`,
-                  backgroundColor: item.status === 'Başarılı' ? '#f8fafc' : '#fef2f2',
+                  borderLeft: `4px solid ${item.status === 'Başarılı' ? 'var(--success)' : 'var(--danger)'}`,
+                  backgroundColor: item.status === 'Başarılı' ? 'var(--bg-surface-subtle)' : 'var(--danger-bg)',
                   marginBottom: '10px',
                   borderRadius: '6px',
                   padding: '12px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border-color)',
                   borderLeftWidth: '4px'
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxWidth: '70%' }}>
-                    <code style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.rawCode}>
+                    <code style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.rawCode}>
                       {item.rawCode}
                     </code>
                     {item.serialNo && (
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                         Seri No: {item.serialNo}
                       </span>
                     )}
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                       Koli: <strong>{item.cartonNo}</strong>
                     </span>
                   </div>
@@ -987,7 +978,7 @@ export const PrePrintedScan: React.FC = () => {
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#d97706',
+                            color: 'var(--warning)',
                             cursor: 'pointer',
                             padding: '2px',
                             display: 'flex',
@@ -1003,15 +994,16 @@ export const PrePrintedScan: React.FC = () => {
                       <span style={{
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        color: item.status === 'Başarılı' ? '#047857' : item.status === 'Geri Alındı' ? '#d97706' : '#b91c1c',
-                        backgroundColor: item.status === 'Başarılı' ? '#d1fae5' : item.status === 'Geri Alındı' ? '#fef3c7' : '#fee2e2',
+                        color: item.status === 'Başarılı' ? 'var(--success-text)' : item.status === 'Geri Alındı' ? 'var(--warning-text)' : 'var(--danger-text)',
+                        backgroundColor: item.status === 'Başarılı' ? 'var(--success-bg)' : item.status === 'Geri Alındı' ? 'var(--warning-bg)' : 'var(--danger-bg)',
+                        border: `1px solid ${item.status === 'Başarılı' ? 'var(--success-border)' : item.status === 'Geri Alındı' ? 'var(--warning-border)' : 'var(--danger-border)'}`,
                         padding: '2px 8px',
                         borderRadius: '4px'
                       }}>
                         {item.status}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>{item.timestamp}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>{item.timestamp}</div>
                   </div>
                 </div>
               ))
@@ -1031,7 +1023,7 @@ export const PrePrintedScan: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
@@ -1042,18 +1034,18 @@ export const PrePrintedScan: React.FC = () => {
           <div 
             onClick={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'var(--modal-bg)',
               borderRadius: '16px',
               width: '90%',
               maxWidth: '500px',
               padding: '24px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              border: '1px solid #e2e8f0',
+              boxShadow: 'var(--shadow-xl)',
+              border: '1px solid var(--border-color)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Printer size={20} style={{ color: '#3b82f6' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Printer size={20} style={{ color: 'var(--primary)' }} />
                 Yazıcı Ayarları
               </h3>
               <button 
@@ -1063,7 +1055,7 @@ export const PrePrintedScan: React.FC = () => {
                   border: 'none',
                   fontSize: '1.5rem',
                   fontWeight: 'bold',
-                  color: '#94a3b8',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   padding: '4px',
                   lineHeight: 1
@@ -1075,12 +1067,12 @@ export const PrePrintedScan: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Yazdırma Yöntemi
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
+                  Yazdırma Yöntemi (Baskı Modu)
                 </label>
                 <select
                   className="form-input"
-                  style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600 }}
+                  style={{ width: '100%', height: '40px' }}
                   value={printMode}
                   onChange={(e) => setPrintMode(e.target.value)}
                 >
@@ -1093,13 +1085,14 @@ export const PrePrintedScan: React.FC = () => {
 
               {printMode === 'browser' && (
                 <>
-                  <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                  <div style={{ backgroundColor: 'var(--bg-surface-subtle)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
                       Bilgisayarınızda kurulu olan <strong>Zebra Browser Print</strong> uygulaması aracılığıyla, varsayılan yazıcınıza doğrudan çıktı gönderilir.
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <button
                         type="button"
+                        className="btn btn-secondary"
                         onClick={async () => {
                           try {
                             const res = await fetch("https://localhost:9101/default?type=printer");
@@ -1113,12 +1106,8 @@ export const PrePrintedScan: React.FC = () => {
                         }}
                         style={{
                           padding: '6px 12px',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '6px',
                           fontSize: '0.8rem',
                           fontWeight: 600,
-                          cursor: 'pointer'
                         }}
                       >
                         Bağlı Yazıcıyı Sorgula
@@ -1126,7 +1115,7 @@ export const PrePrintedScan: React.FC = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-surface-subtle)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <input
                       type="checkbox"
                       id="autoPrintCheckbox"
@@ -1134,7 +1123,7 @@ export const PrePrintedScan: React.FC = () => {
                       onChange={(e) => setAutoPrintEnabled(e.target.checked)}
                       style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                     />
-                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
+                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
                       Koli Tamamlanınca Otomatik Barkod Bas
                     </label>
                   </div>
@@ -1142,23 +1131,13 @@ export const PrePrintedScan: React.FC = () => {
                   <div>
                     <button
                       type="button"
+                      className="btn btn-secondary"
                       disabled={isTestingConnection}
                       onClick={handleTestPrint}
                       style={{
                         width: '100%',
                         height: '38px',
-                        backgroundColor: '#f1f5f9',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        color: '#334155',
-                        fontWeight: 600,
                         fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'background-color 0.2s'
                       }}
                     >
                       {isTestingConnection ? 'Bağlantı Test Ediliyor...' : 'Test Et (ZPL Barkodu Bas)'}
@@ -1168,9 +1147,9 @@ export const PrePrintedScan: React.FC = () => {
                         marginTop: '8px',
                         fontSize: '0.8rem',
                         fontWeight: 600,
-                        color: testMessage.type === 'success' ? '#16a34a' : '#dc2626',
-                        backgroundColor: testMessage.type === 'success' ? '#f0fdf4' : '#fef2f2',
-                        border: `1px solid ${testMessage.type === 'success' ? '#bcf0da' : '#fde8e8'}`,
+                        color: testMessage.type === 'success' ? 'var(--success-text)' : 'var(--danger-text)',
+                        backgroundColor: testMessage.type === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                        border: `1px solid ${testMessage.type === 'success' ? 'var(--success-border)' : 'var(--danger-border)'}`,
                         padding: '8px 12px',
                         borderRadius: '6px'
                       }}>
@@ -1183,24 +1162,24 @@ export const PrePrintedScan: React.FC = () => {
 
               {printMode === 'kiosk' && (
                 <>
-                  <div style={{ backgroundColor: '#f0fdf4', padding: '14px', borderRadius: '8px', border: '1px solid #bcf0da' }}>
-                    <p style={{ fontSize: '0.8rem', color: '#14532d', margin: '0 0 8px 0', lineHeight: '1.4', fontWeight: 600 }}>
+                  <div style={{ backgroundColor: 'var(--success-bg)', padding: '14px', borderRadius: '8px', border: '1px solid var(--success-border)' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--success-text)', margin: '0 0 8px 0', lineHeight: '1.4', fontWeight: 600 }}>
                       ✓ Bu mod, Argox dahil TÜM marka yazıcıları destekler.
                     </p>
-                    <p style={{ fontSize: '0.75rem', color: '#166534', margin: 0, lineHeight: '1.4' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--success-text)', margin: 0, lineHeight: '1.4', opacity: 0.9 }}>
                       Bunun için etiket yazıcınızı Windows üzerinde <strong>Varsayılan Yazıcı</strong> yapmalısınız. Otomatik (onay penceresiz) baskı almak istiyorsanız, Google Chrome tarayıcınızı <code>--kiosk-printing</code> parametresi ile başlatmalısınız.
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-surface-subtle)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <input
                       type="checkbox"
-                      id="autoPrintCheckbox"
+                      id="autoPrintCheckboxKiosk"
                       checked={autoPrintEnabled}
                       onChange={(e) => setAutoPrintEnabled(e.target.checked)}
                       style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                     />
-                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', cursor: 'pointer', userSelect: 'none' }}>
+                    <label htmlFor="autoPrintCheckboxKiosk" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
                       Koli Tamamlanınca Otomatik Barkod Bas
                     </label>
                   </div>
@@ -1208,6 +1187,7 @@ export const PrePrintedScan: React.FC = () => {
                   <div>
                     <button
                       type="button"
+                      className="btn btn-secondary"
                       disabled={isTestingConnection}
                       onClick={async () => {
                         if (lastClosedCartonId) {
@@ -1224,18 +1204,7 @@ export const PrePrintedScan: React.FC = () => {
                       style={{
                         width: '100%',
                         height: '38px',
-                        backgroundColor: '#f1f5f9',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        color: '#334155',
-                        fontWeight: 600,
                         fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'background-color 0.2s'
                       }}
                     >
                       {isTestingConnection ? 'Yazdırılıyor...' : 'Test Et (Mevcut Koliyi Yazdır)'}
@@ -1245,7 +1214,7 @@ export const PrePrintedScan: React.FC = () => {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', justifyContent: 'flex-end' }}>
               <button
                 className="btn btn-secondary"
                 style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600 }}
@@ -1255,7 +1224,7 @@ export const PrePrintedScan: React.FC = () => {
               </button>
               <button
                 className="btn btn-primary"
-                style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600, backgroundColor: '#3b82f6' }}
+                style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600 }}
                 onClick={() => handleSaveSettings(printMode, autoPrintEnabled)}
               >
                 Ayarları Kaydet

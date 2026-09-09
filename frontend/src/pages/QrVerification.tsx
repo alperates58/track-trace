@@ -411,15 +411,11 @@ const CartonQrVerification: React.FC = () => {
 
         {/* Global Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button
+          <button 
             type="button"
-            className="btn"
+            className="btn btn-secondary"
             onClick={() => setSoundEnabled(!soundEnabled)}
             style={{ 
-              backgroundColor: '#f8fafc', 
-              border: '1px solid #e2e8f0', 
-              color: soundEnabled ? '#2563eb' : '#94a3b8',
-              borderRadius: '8px', 
               fontSize: '0.85rem', 
               padding: '8px 14px', 
               display: 'inline-flex', 
@@ -428,27 +424,22 @@ const CartonQrVerification: React.FC = () => {
               fontWeight: 500
             }}
           >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {soundEnabled ? <Volume2 size={16} color="var(--primary)" /> : <VolumeX size={16} />}
             <span>{soundEnabled ? 'Ses Açık' : 'Ses Kapalı'}</span>
           </button>
 
           {activeCartonCode && (
             <button
               type="button"
-              className="btn"
+              className="btn btn-secondary"
               onClick={handleResetAll}
               style={{ 
-                backgroundColor: '#ffffff', 
-                border: '1px solid #e2e8f0', 
-                color: '#0f172a',
-                borderRadius: '8px', 
                 fontSize: '0.85rem', 
                 padding: '8px 14px', 
                 display: 'inline-flex', 
                 alignItems: 'center', 
                 gap: '6px',
                 fontWeight: 500,
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
               }}
             >
               <RotateCcw size={15} />
@@ -458,35 +449,23 @@ const CartonQrVerification: React.FC = () => {
         </div>
       </div>
 
-      {/* Dynamic Alert Message */}
+      {/* ALERT BANNER */}
       {lastAlert && (
-        <div 
-          style={{
-            padding: '12px 18px',
-            borderRadius: '10px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            backgroundColor: 
-              lastAlert.type === 'success' ? '#f0fdf4' :
-              lastAlert.type === 'error' ? '#fef2f2' :
-              lastAlert.type === 'warning' ? '#fffbeb' : '#f0f9ff',
-            border: `1px solid ${
-              lastAlert.type === 'success' ? '#bbf7d0' :
-              lastAlert.type === 'error' ? '#fecaca' :
-              lastAlert.type === 'warning' ? '#fef08a' : '#bae6fd'
-            }`,
-            color: 
-              lastAlert.type === 'success' ? '#166534' :
-              lastAlert.type === 'error' ? '#991b1b' :
-              lastAlert.type === 'warning' ? '#854d0e' : '#075985'
-          }}
-        >
-          {lastAlert.type === 'success' && <CheckCircle2 size={20} style={{ flexShrink: 0 }} />}
-          {lastAlert.type === 'error' && <XCircle size={20} style={{ flexShrink: 0 }} />}
-          {lastAlert.type === 'warning' && <AlertTriangle size={20} style={{ flexShrink: 0 }} />}
-          {lastAlert.type === 'info' && <Zap size={20} style={{ flexShrink: 0 }} />}
+        <div style={{
+          backgroundColor: lastAlert.type === 'success' ? 'var(--success-bg)' : lastAlert.type === 'error' ? 'var(--danger-bg)' : 'var(--warning-bg)',
+          border: `1px solid ${lastAlert.type === 'success' ? 'var(--success-border)' : lastAlert.type === 'error' ? 'var(--danger-border)' : 'var(--warning-border)'}`,
+          color: lastAlert.type === 'success' ? 'var(--success-text)' : lastAlert.type === 'error' ? 'var(--danger-text)' : 'var(--warning-text)',
+          borderRadius: '12px',
+          padding: '14px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          {lastAlert.type === 'success' && <CheckCircle2 size={22} color="var(--success)" />}
+          {lastAlert.type === 'error' && <XCircle size={22} color="var(--danger)" />}
+          {lastAlert.type === 'warning' && <AlertTriangle size={22} color="var(--warning)" />}
           <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>
             <strong style={{ marginRight: '6px' }}>{lastAlert.title}:</strong>
             {lastAlert.message}
@@ -496,19 +475,19 @@ const CartonQrVerification: React.FC = () => {
 
       {/* UNIFIED INTERACTIVE SCANNER DECK */}
       <div style={{ 
-        backgroundColor: '#ffffff', 
-        border: '1px solid #e2e8f0', 
+        backgroundColor: 'var(--bg-card)', 
+        border: '1px solid var(--border-color)', 
         borderRadius: '16px', 
         padding: '24px',
         marginBottom: '24px',
-        boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)'
+        boxShadow: 'var(--shadow-sm)'
       }}>
         
         {/* Scanner Deck Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ 
-              backgroundColor: activeCartonCode ? '#10b981' : '#2563eb', 
+              backgroundColor: activeCartonCode ? 'var(--success)' : 'var(--primary)', 
               color: '#ffffff', 
               borderRadius: '6px', 
               padding: '4px 8px', 
@@ -518,21 +497,21 @@ const CartonQrVerification: React.FC = () => {
             }}>
               {activeCartonCode ? 'ADIM 2' : 'ADIM 1'}
             </span>
-            <span style={{ fontWeight: 700, fontSize: '1.05rem', color: '#0f172a' }}>
+            <span style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-main)' }}>
               {activeCartonCode ? 'Koli İçi Ürün QR Kodunu Okutun' : 'Koli QR Etiketini Okutun'}
             </span>
           </div>
 
           {activeCartonCode && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                Koli Kodu: <strong style={{ color: '#0f172a', fontFamily: 'monospace' }}>{activeCartonCode}</strong>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Koli Kodu: <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>{activeCartonCode}</strong>
               </span>
               <button 
                 type="button" 
-                className="btn btn-sm btn-outline" 
+                className="btn btn-secondary" 
                 onClick={handleResetAll}
-                style={{ fontSize: '0.75rem', padding: '2px 10px', borderRadius: '6px' }}
+                style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '6px' }}
               >
                 Koli Değiştir
               </button>
@@ -549,7 +528,7 @@ const CartonQrVerification: React.FC = () => {
                 <input
                   ref={cartonInputRef}
                   type="text"
-                  className="form-control"
+                  className="form-input"
                   placeholder="Koli QR veya Barkod etiketini okutun..."
                   value={cartonInput}
                   onChange={(e) => setCartonInput(e.target.value)}
@@ -559,13 +538,10 @@ const CartonQrVerification: React.FC = () => {
                     fontSize: '1.05rem', 
                     fontWeight: 600,
                     height: '52px',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a'
+                    borderRadius: '10px'
                   }}
                 />
-                <Package size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: '#94a3b8' }} />
+                <Package size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: 'var(--text-muted)' }} />
               </div>
 
               <button 
@@ -647,26 +623,24 @@ const CartonQrVerification: React.FC = () => {
                     fontWeight: 600,
                     height: '52px',
                     borderRadius: '10px',
-                    border: '2px solid #2563eb',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a',
+                    border: '2px solid var(--primary)',
+                    backgroundColor: 'var(--input-bg)',
+                    color: 'var(--input-text)',
                     boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.12)'
                   }}
                 />
-                <QrCode size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: '#2563eb' }} />
+                <QrCode size={22} style={{ position: 'absolute', left: '14px', top: '15px', color: 'var(--primary)' }} />
               </div>
 
               <button 
                 type="submit" 
-                className="btn"
+                className="btn btn-primary"
                 style={{ 
                   height: '52px', 
                   padding: '0 28px', 
                   borderRadius: '10px', 
                   fontWeight: 700,
                   fontSize: '1rem',
-                  backgroundColor: '#2563eb',
-                  color: '#ffffff',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -681,12 +655,12 @@ const CartonQrVerification: React.FC = () => {
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <button
                   type="button"
-                  className="btn btn-sm"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => {
                     setCameraScanTarget('product');
                     setIsCameraOpen(true);
                   }}
-                  style={{ backgroundColor: '#f1f5f9', color: '#475569', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}
+                  style={{ borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}
                 >
                   <Camera size={15} /> Ürün QR Kamerası
                 </button>
@@ -698,7 +672,7 @@ const CartonQrVerification: React.FC = () => {
                 className="btn btn-sm"
                 onClick={handleAutoMatch11}
                 title="11 ürünü otomatik eşleştirerek kalan 12. ürün QR tespitini görün"
-                style={{ backgroundColor: '#eff6ff', color: '#2563eb', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #bfdbfe' }}
+                style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '8px', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid var(--border-color)' }}
               >
                 ⚡ 11 Tanesini Otomatik Eşleştir (Test)
               </button>
@@ -710,8 +684,8 @@ const CartonQrVerification: React.FC = () => {
       {/* Progress Stats Pill Bar */}
       {activeCartonCode && (
         <div style={{ 
-          backgroundColor: '#ffffff', 
-          border: '1px solid #e2e8f0', 
+          backgroundColor: 'var(--bg-card)', 
+          border: '1px solid var(--border-color)', 
           borderRadius: '12px', 
           padding: '14px 20px',
           marginBottom: '24px',
@@ -722,26 +696,26 @@ const CartonQrVerification: React.FC = () => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '0.875rem' }}>
             <div>
-              <span style={{ color: '#64748b' }}>Toplam Ürün: </span>
-              <strong style={{ color: '#0f172a' }}>{totalItems} Adet</strong>
+              <span style={{ color: 'var(--text-muted)' }}>Toplam Ürün: </span>
+              <strong style={{ color: 'var(--text-main)' }}>{totalItems} Adet</strong>
             </div>
             <div>
-              <span style={{ color: '#047857', fontWeight: 600 }}>Doğrulanan: </span>
-              <strong style={{ color: '#059669', fontSize: '1rem' }}>{matchedCount}</strong>
+              <span style={{ color: 'var(--success-text)', fontWeight: 600 }}>Doğrulanan: </span>
+              <strong style={{ color: 'var(--success)', fontSize: '1rem' }}>{matchedCount}</strong>
             </div>
             <div>
-              <span style={{ color: '#b45309', fontWeight: 600 }}>Kalan: </span>
-              <strong style={{ color: '#d97706', fontSize: '1rem' }}>{remainingCount}</strong>
+              <span style={{ color: 'var(--warning-text)', fontWeight: 600 }}>Kalan: </span>
+              <strong style={{ color: 'var(--warning)', fontSize: '1rem' }}>{remainingCount}</strong>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div style={{ flex: 1, maxWidth: '240px', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ flex: 1, maxWidth: '240px', height: '8px', backgroundColor: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
             <div 
               style={{ 
                 width: `${progressPercent}%`, 
                 height: '100%', 
-                backgroundColor: progressPercent === 100 ? '#10b981' : '#2563eb',
+                backgroundColor: progressPercent === 100 ? 'var(--success)' : 'var(--primary)',
                 transition: 'width 0.3s ease-in-out'
               }} 
             />
@@ -753,17 +727,17 @@ const CartonQrVerification: React.FC = () => {
       {activeCartonCode && (remainingCount === 1 || remainingCount === 2) && (
         <div 
           style={{
-            backgroundColor: '#fffbf0',
-            border: '2px solid #f59e0b',
+            backgroundColor: 'var(--warning-bg)',
+            border: '2px solid var(--warning)',
             borderRadius: '16px',
             padding: '20px 24px',
             marginBottom: '24px',
-            boxShadow: '0 8px 20px rgba(245, 158, 11, 0.12)'
+            boxShadow: 'var(--shadow-md)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <AlertTriangle size={22} color="#d97706" />
-            <h2 style={{ fontSize: '1.05rem', color: '#92400e', margin: 0, fontWeight: 700 }}>
+            <AlertTriangle size={22} color="var(--warning)" />
+            <h2 style={{ fontSize: '1.05rem', color: 'var(--warning-text)', margin: 0, fontWeight: 700 }}>
               🎯 KOLİDE OKUNMAYAN {remainingCount === 1 ? '12. ÜRÜN' : 'SON ÜRÜNLERİN'} TESPİTİ ({matchedCount}/{totalItems} Eşleşti)
             </h2>
           </div>
@@ -773,8 +747,8 @@ const CartonQrVerification: React.FC = () => {
               <div 
                 key={item.id} 
                 style={{ 
-                  backgroundColor: '#ffffff', 
-                  border: '1px solid #fde68a', 
+                  backgroundColor: 'var(--bg-card)', 
+                  border: '1px solid var(--border-color)', 
                   borderRadius: '10px', 
                   padding: '12px 16px',
                   display: 'flex',
@@ -784,14 +758,14 @@ const CartonQrVerification: React.FC = () => {
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--warning-text)', fontWeight: 600 }}>
                     Koli İçi Okunmayan QR Kodu #{totalItems - pendingItems.length + idx + 1}:
                   </div>
                   <code style={{ 
                     fontSize: '0.95rem', 
-                    fontWeight: 700,
-                    color: '#0f172a',
-                    fontFamily: 'Consolas, Monaco, monospace',
+                    fontWeight: 700, 
+                    color: 'var(--text-main)',
+                    fontFamily: 'var(--font-mono)',
                     wordBreak: 'break-all',
                     display: 'block',
                     marginTop: '2px'
@@ -802,7 +776,7 @@ const CartonQrVerification: React.FC = () => {
 
                 <button
                   type="button"
-                  className="btn btn-sm"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => copyToClipboard(item.qrCode, item.id)}
                   style={{ 
                     borderRadius: '6px', 
@@ -811,14 +785,11 @@ const CartonQrVerification: React.FC = () => {
                     display: 'inline-flex', 
                     alignItems: 'center', 
                     gap: '6px',
-                    border: '1px solid #f59e0b',
-                    color: '#92400e',
-                    backgroundColor: copiedId === item.id ? '#fef3c7' : '#ffffff',
                     fontWeight: 600,
                     flexShrink: 0
                   }}
                 >
-                  {copiedId === item.id ? <Check size={14} color="#059669" /> : <Copy size={14} />}
+                  {copiedId === item.id ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}
                   <span>{copiedId === item.id ? 'Kopyalandı' : 'Kopyala'}</span>
                 </button>
               </div>
@@ -831,19 +802,19 @@ const CartonQrVerification: React.FC = () => {
       {activeCartonCode && remainingCount === 0 && totalItems > 0 && (
         <div 
           style={{
-            backgroundColor: '#f0fdf4',
-            border: '2px solid #10b981',
+            backgroundColor: 'var(--success-bg)',
+            border: '2px solid var(--success)',
             borderRadius: '16px',
             padding: '24px',
             marginBottom: '24px',
             textAlign: 'center'
           }}
         >
-          <CheckCircle2 size={40} color="#10b981" style={{ margin: '0 auto 8px' }} />
-          <h2 style={{ fontSize: '1.25rem', color: '#166534', margin: 0, fontWeight: 700 }}>
+          <CheckCircle2 size={40} color="var(--success)" style={{ margin: '0 auto 8px' }} />
+          <h2 style={{ fontSize: '1.25rem', color: 'var(--success-text)', margin: 0, fontWeight: 700 }}>
             🎉 Kolideki Tüm ({totalItems}/{totalItems}) QR Kodları Başarıyla Eşleşti!
           </h2>
-          <p style={{ color: '#15803d', marginTop: '4px', fontSize: '0.875rem' }}>
+          <p style={{ color: 'var(--success-text)', marginTop: '4px', fontSize: '0.875rem', opacity: 0.9 }}>
             Tüm fiziki ürünler doğrulandı. Eksik veya uyumsuz karekod bulunmamaktadır.
           </p>
         </div>
@@ -852,20 +823,20 @@ const CartonQrVerification: React.FC = () => {
       {/* PURE CLEAN TABLE (Only QR Code & Status) */}
       {activeCartonCode && (
         <div style={{ 
-          backgroundColor: '#ffffff', 
-          border: '1px solid #e2e8f0', 
+          backgroundColor: 'var(--bg-card)', 
+          border: '1px solid var(--border-color)', 
           borderRadius: '16px', 
           overflow: 'hidden',
-          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)'
+          boxShadow: 'var(--shadow-sm)'
         }}>
           {/* Table Toolbar */}
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>
               Koli İçi QR Kodları ({filteredItems.length})
             </span>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', gap: '4px', backgroundColor: 'var(--bg-surface-subtle)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                 <button
                   type="button"
                   className="btn btn-sm"
@@ -874,10 +845,11 @@ const CartonQrVerification: React.FC = () => {
                     borderRadius: '6px', 
                     fontSize: '0.8rem', 
                     padding: '4px 10px',
-                    backgroundColor: filterMode === 'all' ? '#ffffff' : 'transparent',
-                    color: filterMode === 'all' ? '#0f172a' : '#64748b',
-                    boxShadow: filterMode === 'all' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                    fontWeight: filterMode === 'all' ? 600 : 400
+                    border: 'none',
+                    backgroundColor: filterMode === 'all' ? 'var(--bg-card)' : 'transparent',
+                    color: filterMode === 'all' ? 'var(--text-main)' : 'var(--text-muted)',
+                    boxShadow: filterMode === 'all' ? 'var(--shadow-sm)' : 'none',
+                    fontWeight: filterMode === 'all' ? 700 : 500
                   }}
                 >
                   Tümü ({totalItems})
@@ -890,10 +862,11 @@ const CartonQrVerification: React.FC = () => {
                     borderRadius: '6px', 
                     fontSize: '0.8rem', 
                     padding: '4px 10px',
-                    backgroundColor: filterMode === 'matched' ? '#ffffff' : 'transparent',
-                    color: filterMode === 'matched' ? '#047857' : '#64748b',
-                    boxShadow: filterMode === 'matched' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                    fontWeight: filterMode === 'matched' ? 600 : 400
+                    border: 'none',
+                    backgroundColor: filterMode === 'matched' ? 'var(--bg-card)' : 'transparent',
+                    color: filterMode === 'matched' ? 'var(--success)' : 'var(--text-muted)',
+                    boxShadow: filterMode === 'matched' ? 'var(--shadow-sm)' : 'none',
+                    fontWeight: filterMode === 'matched' ? 700 : 500
                   }}
                 >
                   Eşleşenler ({matchedCount})
@@ -906,10 +879,11 @@ const CartonQrVerification: React.FC = () => {
                     borderRadius: '6px', 
                     fontSize: '0.8rem', 
                     padding: '4px 10px',
-                    backgroundColor: filterMode === 'pending' ? '#ffffff' : 'transparent',
-                    color: filterMode === 'pending' ? '#b45309' : '#64748b',
-                    boxShadow: filterMode === 'pending' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                    fontWeight: filterMode === 'pending' ? 600 : 400
+                    border: 'none',
+                    backgroundColor: filterMode === 'pending' ? 'var(--bg-card)' : 'transparent',
+                    color: filterMode === 'pending' ? 'var(--warning)' : 'var(--text-muted)',
+                    boxShadow: filterMode === 'pending' ? 'var(--shadow-sm)' : 'none',
+                    fontWeight: filterMode === 'pending' ? 700 : 500
                   }}
                 >
                   Kalanlar ({remainingCount})
@@ -919,32 +893,32 @@ const CartonQrVerification: React.FC = () => {
               <div style={{ position: 'relative', width: '220px' }}>
                 <input
                   type="text"
-                  className="form-control form-control-sm"
+                  className="form-input"
                   placeholder="QR ara..."
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
-                  style={{ paddingLeft: '30px', borderRadius: '6px', fontSize: '0.8rem', borderColor: '#cbd5e1' }}
+                  style={{ paddingLeft: '30px', borderRadius: '6px', fontSize: '0.8rem', height: '32px' }}
                 />
-                <Search size={13} style={{ position: 'absolute', left: '10px', top: '8px', color: '#94a3b8' }} />
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '9px', color: 'var(--text-muted)' }} />
               </div>
             </div>
           </div>
 
           {/* Clean Borderless Table */}
           <div className="table-responsive" style={{ maxHeight: '550px', overflowY: 'auto' }}>
-            <table className="table align-middle" style={{ marginBottom: 0 }}>
+            <table className="data-table align-middle" style={{ marginBottom: 0 }}>
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  <th style={{ width: '60px', padding: '12px 20px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>#</th>
-                  <th style={{ width: '130px', padding: '12px 20px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>DURUM</th>
-                  <th style={{ padding: '12px 20px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>QR KODU / DATAMATRIX</th>
-                  <th style={{ width: '140px', padding: '12px 20px', fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textAlign: 'right' }}>ZAMAN</th>
+                <tr>
+                  <th style={{ width: '60px', padding: '12px 20px', fontSize: '0.8rem' }}>#</th>
+                  <th style={{ width: '130px', padding: '12px 20px', fontSize: '0.8rem' }}>DURUM</th>
+                  <th style={{ padding: '12px 20px', fontSize: '0.8rem' }}>QR KODU / DATAMATRIX</th>
+                  <th style={{ width: '140px', padding: '12px 20px', fontSize: '0.8rem', textAlign: 'right' }}>ZAMAN</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: '#94a3b8', fontSize: '0.875rem' }}>
+                    <td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                       QR kodu bulunamadı.
                     </td>
                   </tr>
@@ -953,41 +927,21 @@ const CartonQrVerification: React.FC = () => {
                     <tr 
                       key={item.id}
                       style={{
-                        backgroundColor: item.status === 'matched' ? '#f0fdf4' : '#ffffff',
-                        borderBottom: '1px solid #f1f5f9'
+                        backgroundColor: item.status === 'matched' ? 'var(--success-bg)' : 'transparent',
                       }}
+                      className="hover-row"
                     >
-                      <td style={{ padding: '14px 20px', fontWeight: 600, color: '#94a3b8', fontSize: '0.85rem' }}>
+                      <td style={{ padding: '14px 20px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                         {idx + 1}
                       </td>
 
                       <td style={{ padding: '14px 20px' }}>
                         {item.status === 'matched' ? (
-                          <span style={{ 
-                            backgroundColor: '#d1fae5', 
-                            color: '#065f46', 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
-                            fontSize: '0.75rem', 
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
+                          <span className="badge badge-completed" style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px' }}>
                             <CheckCircle2 size={12} /> Eşleşti
                           </span>
                         ) : (
-                          <span style={{ 
-                            backgroundColor: '#f1f5f9', 
-                            color: '#64748b', 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
-                            fontSize: '0.75rem', 
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
+                          <span className="badge badge-draft" style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px' }}>
                             Bekliyor
                           </span>
                         )}
@@ -997,8 +951,8 @@ const CartonQrVerification: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <code style={{ 
                             fontSize: '0.875rem', 
-                            fontFamily: 'Consolas, Monaco, monospace', 
-                            color: item.status === 'matched' ? '#065f46' : '#0f172a',
+                            fontFamily: 'var(--font-mono)', 
+                            color: item.status === 'matched' ? 'var(--success-text)' : 'var(--text-main)',
                             fontWeight: 600,
                             wordBreak: 'break-all'
                           }}>
@@ -1009,14 +963,14 @@ const CartonQrVerification: React.FC = () => {
                             className="btn btn-link btn-sm p-0 text-muted"
                             onClick={() => copyToClipboard(item.qrCode, item.id)}
                             title="Kopyala"
-                            style={{ opacity: 0.5, border: 'none', background: 'none' }}
+                            style={{ opacity: 0.6, border: 'none', background: 'none', cursor: 'pointer' }}
                           >
-                            {copiedId === item.id ? <Check size={13} color="#059669" /> : <Copy size={13} />}
+                            {copiedId === item.id ? <Check size={13} color="var(--success)" /> : <Copy size={13} />}
                           </button>
                         </div>
                       </td>
 
-                      <td style={{ padding: '14px 20px', textAlign: 'right', fontSize: '0.8rem', color: '#64748b' }}>
+                      <td style={{ padding: '14px 20px', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                         {item.matchedAt || '-'}
                       </td>
                     </tr>
@@ -1028,8 +982,8 @@ const CartonQrVerification: React.FC = () => {
 
           {/* Mismatched / Wrong Scans List */}
           {mismatches.length > 0 && (
-            <div style={{ padding: '16px 20px', backgroundColor: '#fef2f2', borderTop: '1px solid #fecaca' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#991b1b' }}>
+            <div style={{ padding: '16px 20px', backgroundColor: 'var(--danger-bg)', borderTop: '1px solid var(--danger-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--danger-text)' }}>
                 <XCircle size={15} />
                 <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
                   Koli Dışı Okutulan QR Kodları ({mismatches.length})
@@ -1038,7 +992,7 @@ const CartonQrVerification: React.FC = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {mismatches.map((m) => (
-                  <div key={m.id} style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: '#991b1b', display: 'flex', justifyContent: 'space-between' }}>
+                  <div key={m.id} style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--danger-text)', display: 'flex', justifyContent: 'space-between' }}>
                     <span>{m.scannedCode}</span>
                     <span style={{ opacity: 0.7 }}>{m.scannedAt}</span>
                   </div>

@@ -657,7 +657,7 @@ export const TraceabilityCenter: React.FC = () => {
                     <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '8px' }}>Koli İçi Barkod Listesi ({searchResult.data.cartonItems.length} Ürün):</span>
                     <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {searchResult.data.cartonItems.map((item: string, idx: number) => (
-                        <div key={idx} style={{ padding: '6px 10px', backgroundColor: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                        <div key={idx} style={{ padding: '6px 10px', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
                           {idx + 1}. {item}
                         </div>
                       ))}
@@ -669,7 +669,7 @@ export const TraceabilityCenter: React.FC = () => {
                 {searchResult.type === 'product' && (
                   <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '8px' }}>Ham Barkod Verisi (RawCode):</span>
-                    <textarea readOnly className="form-input" style={{ width: '100%', height: '80px', backgroundColor: '#f8fafc', fontFamily: 'monospace', fontSize: '0.8rem', resize: 'none' }} value={searchResult.data.rawCode} />
+                    <textarea readOnly className="form-input" style={{ width: '100%', height: '80px', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', resize: 'none' }} value={searchResult.data.rawCode} />
                   </div>
                 )}
               </div>
@@ -743,7 +743,7 @@ export const TraceabilityCenter: React.FC = () => {
 
           {/* Loader */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px', backgroundColor: '#ffffff', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ textAlign: 'center', padding: '60px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
               <RefreshCw size={24} className="animate-spin" style={{ color: 'var(--primary)', marginBottom: '10px' }} />
               <div style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>İzlenebilirlik verileri yükleniyor...</div>
             </div>

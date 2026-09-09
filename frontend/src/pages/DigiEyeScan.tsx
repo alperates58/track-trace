@@ -477,21 +477,21 @@ export const DigiEyeScan: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#0f172a' }}>Son kamera okumaları</div>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)', fontWeight: 800, color: 'var(--text-main)' }}>Son kamera okumaları</div>
         {scanHistory.length === 0 ? (
-          <div style={{ padding: 26, textAlign: 'center', color: '#94a3b8' }}>Henüz kod işlenmedi.</div>
+          <div style={{ padding: 26, textAlign: 'center', color: 'var(--text-muted)' }}>Henüz kod işlenmedi.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-              <thead><tr style={{ background: '#f8fafc', color: '#64748b', textAlign: 'left' }}><th style={cell}>Saat</th><th style={cell}>Kod</th><th style={cell}>Format</th><th style={cell}>Koli</th><th style={cell}>Sonuç</th></tr></thead>
+              <thead><tr style={{ background: 'var(--table-header-bg)', color: 'var(--text-muted)', textAlign: 'left' }}><th style={cell}>Saat</th><th style={cell}>Kod</th><th style={cell}>Format</th><th style={cell}>Koli</th><th style={cell}>Sonuç</th></tr></thead>
               <tbody>{scanHistory.map(item => (
-                <tr key={item.sequence} style={{ borderTop: '1px solid #f1f5f9' }}>
+                <tr key={item.sequence} style={{ borderTop: '1px solid var(--border-color)' }}>
                   <td style={cell}>{item.timestamp}</td>
-                  <td style={{ ...cell, maxWidth: 410, wordBreak: 'break-all', fontFamily: 'monospace' }}>{item.rawCode}</td>
+                  <td style={{ ...cell, maxWidth: 410, wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>{item.rawCode}</td>
                   <td style={cell}>{item.format}</td>
                   <td style={cell}>{item.cartonNo}</td>
-                  <td style={{ ...cell, color: item.success ? '#047857' : '#b91c1c', fontWeight: 700 }}>{item.status}</td>
+                  <td style={{ ...cell, color: item.success ? 'var(--success)' : 'var(--danger)', fontWeight: 700 }}>{item.status}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -501,9 +501,9 @@ export const DigiEyeScan: React.FC = () => {
 
       {showConfig && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-          <div style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 24px 60px rgba(15,23,42,.28)' }}>
-            <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem' }}>Endüstriyel Kamera Ayarları</h2>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.5 }}>Kamera bu bilgisayarda çalıştığı için adres varsayılan olarak localhost’tur. ROI değerleri yalnızca etiketin geçtiği alanı tarayarak hızı artırır.</p>
+          <div style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'var(--modal-bg)', borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-color)' }}>
+            <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.25rem' }}>Endüstriyel Kamera Ayarları</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5 }}>Kamera bu bilgisayarda çalıştığı için adres varsayılan olarak localhost’tur. ROI değerleri yalnızca etiketin geçtiği alanı tarayarak hızı artırır.</p>
 
             {configError && <div style={{ padding: 10, background: '#fef2f2', color: '#991b1b', borderRadius: 8, marginBottom: 12 }}>{configError}</div>}
             {draftConfig ? (

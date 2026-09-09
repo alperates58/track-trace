@@ -251,9 +251,9 @@ export const QrRoutingLookup: React.FC = () => {
               <DetailRow label="Seri numarası" value={result.serialNo || '-'} mono />
               <DetailRow label="GTIN" value={result.gtin || '-'} mono />
               <DetailRow label="Okutma zamanı" value={result.scannedAt ? new Date(result.scannedAt).toLocaleString('tr-TR') : 'Henüz okutulmadı'} />
-              <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: '#f8fafc', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <code style={{ flex: 1, color: '#334155', fontSize: '0.75rem', wordBreak: 'break-all' }}>{result.rawCode}</code>
-                <button type="button" aria-label="QR kodunu kopyala" onClick={() => void copyRawCode()} style={{ border: 0, background: 'transparent', color: copied ? '#059669' : '#64748b', cursor: 'pointer' }}>
+              <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <code style={{ flex: 1, color: 'var(--text-main)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{result.rawCode}</code>
+                <button type="button" aria-label="QR kodunu kopyala" onClick={() => void copyRawCode()} style={{ border: 0, background: 'transparent', color: copied ? '#059669' : 'var(--text-muted)', cursor: 'pointer' }}>
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                 </button>
               </div>
@@ -267,13 +267,13 @@ export const QrRoutingLookup: React.FC = () => {
               <DetailRow label="Atama türü" value={result.isAssigned ? 'Kesin atama' : result.routingStatus === 'ActiveTarget' ? 'Aktif hedef önerisi' : 'Atama bekleniyor'} />
               {result.cartonTargetQuantity ? (
                 <div style={{ marginTop: 13 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#64748b', marginBottom: 6 }}>
-                    <span>Koli doluluğu</span><strong style={{ color: '#0f172a' }}>{result.cartonActualQuantity || 0} / {result.cartonTargetQuantity}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 6 }}>
+                    <span>Koli doluluğu</span><strong style={{ color: 'var(--text-main)' }}>{result.cartonActualQuantity || 0} / {result.cartonTargetQuantity}</strong>
                   </div>
-                  <div style={{ height: 8, borderRadius: 999, background: '#e2e8f0', overflow: 'hidden' }}><div style={{ width: `${progress}%`, height: '100%', background: '#2563eb', borderRadius: 999 }} /></div>
+                  <div style={{ height: 8, borderRadius: 999, background: 'var(--border-color)', overflow: 'hidden' }}><div style={{ width: `${progress}%`, height: '100%', background: '#2563eb', borderRadius: 999 }} /></div>
                 </div>
               ) : (
-                <div style={{ marginTop: 13, padding: 10, borderRadius: 8, background: '#f8fafc', color: '#64748b', fontSize: '0.8rem' }}>Koli açıldığında doluluk bilgisi burada gösterilir.</div>
+                <div style={{ marginTop: 13, padding: 10, borderRadius: 8, background: 'var(--bg-surface-subtle)', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Koli açıldığında doluluk bilgisi burada gösterilir.</div>
               )}
             </div>
           </section>
@@ -281,18 +281,18 @@ export const QrRoutingLookup: React.FC = () => {
       )}
 
       {!result && !error && (
-        <div style={{ minHeight: 190, display: 'grid', placeItems: 'center', border: '1px dashed #cbd5e1', borderRadius: 16, background: '#f8fafc', color: '#64748b', textAlign: 'center', padding: 24 }}>
-          <div><QrCode size={44} color="#94a3b8" /><div style={{ marginTop: 10, fontWeight: 800, color: '#334155' }}>Okutma için hazır</div><div style={{ marginTop: 4, fontSize: '0.84rem' }}>Sonuçlar veritabanında değişiklik yapılmadan gösterilir.</div></div>
+        <div style={{ minHeight: 190, display: 'grid', placeItems: 'center', border: '1px dashed var(--border-color)', borderRadius: 16, background: 'var(--bg-surface-subtle)', color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>
+          <div><QrCode size={44} color="var(--text-muted)" /><div style={{ marginTop: 10, fontWeight: 800, color: 'var(--text-main)' }}>Okutma için hazır</div><div style={{ marginTop: 4, fontSize: '0.84rem' }}>Sonuçlar veritabanında değişiklik yapılmadan gösterilir.</div></div>
         </div>
       )}
 
       {history.length > 0 && (
-        <section style={{ marginTop: 20, border: '1px solid #e2e8f0', borderRadius: 14, background: '#fff', overflow: 'hidden' }}>
-          <div style={{ padding: '13px 17px', borderBottom: '1px solid #e2e8f0', fontWeight: 800, color: '#0f172a' }}>Son sorgular</div>
+        <section style={{ marginTop: 20, border: '1px solid var(--border-color)', borderRadius: 14, background: 'var(--bg-card)', overflow: 'hidden' }}>
+          <div style={{ padding: '13px 17px', borderBottom: '1px solid var(--border-color)', fontWeight: 800, color: 'var(--text-main)' }}>Son sorgular</div>
           {history.map(item => (
-            <button key={item.id} type="button" onClick={() => setResult(item.result)} style={{ width: '100%', padding: '12px 17px', border: 0, borderBottom: '1px solid #f1f5f9', background: '#fff', display: 'grid', gridTemplateColumns: 'minmax(180px,1.4fr) minmax(130px,1fr) minmax(150px,1fr) 80px', gap: 12, textAlign: 'left', cursor: 'pointer', alignItems: 'center' }}>
-              <code style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#334155', fontSize: '0.76rem' }}>{item.result.rawCode}</code>
-              <strong style={{ color: '#0f172a', fontSize: '0.82rem' }}>{item.result.orderNo}</strong>
+            <button key={item.id} type="button" onClick={() => setResult(item.result)} style={{ width: '100%', padding: '12px 17px', border: 0, borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', display: 'grid', gridTemplateColumns: 'minmax(180px,1.4fr) minmax(130px,1fr) minmax(150px,1fr) 80px', gap: 12, textAlign: 'left', cursor: 'pointer', alignItems: 'center' }}>
+              <code style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)', fontFamily: 'var(--font-mono)', fontSize: '0.76rem' }}>{item.result.rawCode}</code>
+              <strong style={{ color: 'var(--text-main)', fontSize: '0.82rem' }}>{item.result.orderNo}</strong>
               <span style={{ color: '#475569', fontSize: '0.82rem' }}>{item.result.cartonNo || 'Koli bekleniyor'}</span>
               <span style={{ color: '#94a3b8', fontSize: '0.76rem', textAlign: 'right' }}>{item.checkedAt}</span>
             </button>
@@ -315,22 +315,22 @@ export const QrRoutingLookup: React.FC = () => {
   );
 };
 
-const panelStyle: React.CSSProperties = { padding: 18, border: '1px solid #e2e8f0', borderRadius: 14, background: '#fff' };
-const panelTitleStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0f172a', marginBottom: 13 };
+const panelStyle: React.CSSProperties = { padding: 18, border: '1px solid var(--border-color)', borderRadius: 14, background: 'var(--bg-card)' };
+const panelTitleStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: 'var(--text-main)', marginBottom: 13 };
 
 const DetailRow: React.FC<{ label: string; value: string; mono?: boolean }> = ({ label, value, mono }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '7px 0', borderBottom: '1px solid #f1f5f9', fontSize: '0.8rem' }}>
-    <span style={{ color: '#64748b' }}>{label}</span>
-    <strong style={{ color: '#1e293b', textAlign: 'right', fontFamily: mono ? 'Consolas, monospace' : undefined, wordBreak: 'break-all' }}>{value}</strong>
+  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '7px 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+    <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+    <strong style={{ color: 'var(--text-main)', textAlign: 'right', fontFamily: mono ? 'var(--font-mono)' : undefined, wordBreak: 'break-all' }}>{value}</strong>
   </div>
 );
 
 const RouteCard: React.FC<{ eyebrow: string; primary: string; secondary: string; footer: string; accent?: boolean }> = ({ eyebrow, primary, secondary, footer, accent }) => (
-  <div style={{ padding: 18, borderRadius: 14, border: `1px solid ${accent ? '#93c5fd' : '#e2e8f0'}`, background: accent ? '#eff6ff' : '#fff', minWidth: 0 }}>
-    <div style={{ color: accent ? '#1d4ed8' : '#64748b', fontSize: '0.68rem', fontWeight: 900, letterSpacing: '.08em' }}>{eyebrow}</div>
-    <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 900, marginTop: 7, overflow: 'hidden', textOverflow: 'ellipsis' }} title={primary}>{primary}</div>
-    <div style={{ color: '#475569', fontSize: '0.8rem', marginTop: 5, minHeight: 20 }}>{secondary}</div>
-    <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: 10 }}>{footer}</div>
+  <div style={{ padding: 18, borderRadius: 14, border: `1px solid ${accent ? '#93c5fd' : 'var(--border-color)'}`, background: accent ? 'var(--primary-light)' : 'var(--bg-card)', minWidth: 0 }}>
+    <div style={{ color: accent ? '#1d4ed8' : 'var(--text-muted)', fontSize: '0.68rem', fontWeight: 900, letterSpacing: '.08em' }}>{eyebrow}</div>
+    <div style={{ color: 'var(--text-main)', fontSize: '1.05rem', fontWeight: 900, marginTop: 7, overflow: 'hidden', textOverflow: 'ellipsis' }} title={primary}>{primary}</div>
+    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: 5, minHeight: 20 }}>{secondary}</div>
+    <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginTop: 10 }}>{footer}</div>
   </div>
 );
 

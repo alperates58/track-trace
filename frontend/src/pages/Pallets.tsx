@@ -529,7 +529,7 @@ export const Pallets: React.FC = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: 'var(--bg-surface-subtle)',
                       padding: '10px',
                       borderRadius: '4px',
                       fontSize: '0.8rem',

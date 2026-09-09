@@ -1043,13 +1043,13 @@ export const Reports: React.FC = () => {
                       <div key={carton.id} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
                         {/* Header Row */}
                         <div 
-                          style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', backgroundColor: isExpanded ? '#f8fafc' : 'transparent' }}
+                          style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', backgroundColor: isExpanded ? 'var(--bg-surface-subtle)' : 'transparent' }}
                           onClick={() => toggleCarton(carton.id)}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <Inbox size={20} color="var(--primary)" />
                             <div>
-                              <div style={{ fontWeight: 700, fontSize: '1rem' }}>{carton.cartonno}</div>
+                              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{carton.cartonno}</div>
                               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SSCC: <strong>{carton.sscc}</strong></div>
                             </div>
                           </div>
@@ -1057,15 +1057,15 @@ export const Reports: React.FC = () => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                             <div>
                               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Doluluk: </span>
-                              <strong style={{ fontSize: '1rem' }}>{carton.actualquantity} / {carton.targetquantity}</strong>
+                              <strong style={{ fontSize: '1rem', color: 'var(--text-main)' }}>{carton.actualquantity} / {carton.targetquantity}</strong>
                             </div>
                             
                             <div>
                               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Palet: </span>
-                              <strong>{carton.palletno || 'Paletlenmemiş'}</strong>
+                              <strong style={{ color: 'var(--text-main)' }}>{carton.palletno || 'Paletlenmemiş'}</strong>
                             </div>
 
-                            <span className={`badge ${carton.status === 'Open' ? 'badge-active' : 'badge-completed'}`}>
+                            <span className={`badge ${carton.status === 'Open' ? 'badge-open' : 'badge-closed'}`}>
                               {carton.status}
                             </span>
 
@@ -1075,7 +1075,7 @@ export const Reports: React.FC = () => {
 
                         {/* Expanded Items Drawer (Lazy Loaded) */}
                         {isExpanded && (
-                          <div style={{ borderTop: '1px solid var(--border-color)', padding: '16px', backgroundColor: '#fdfdfd' }}>
+                          <div style={{ borderTop: '1px solid var(--border-color)', padding: '16px', backgroundColor: 'var(--bg-surface-subtle)' }}>
                             <h4 style={{ fontSize: '0.9rem', marginBottom: '8px', color: 'var(--primary)' }}>Koli İçindeki QR Kodları</h4>
                             
                             {itemsLoading ? (
@@ -1085,7 +1085,7 @@ export const Reports: React.FC = () => {
                             ) : (
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
                                 {items.map((item, idx) => (
-                                  <div key={item.rawCode} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-sm)', backgroundColor: '#ffffff', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div key={item.rawCode} style={{ padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }} title={item.rawCode}>
                                       {idx + 1}. {item.rawCode}
                                     </span>
@@ -1126,8 +1126,8 @@ export const Reports: React.FC = () => {
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Koli Sayısı: <strong>{pallet.cartonCount}</strong></span>
-                        <span className={`badge ${pallet.status === 'Open' ? 'badge-active' : 'badge-completed'}`}>{pallet.status}</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Koli Sayısı: <strong style={{ color: 'var(--text-main)' }}>{pallet.cartonCount}</strong></span>
+                        <span className={`badge ${pallet.status === 'Open' ? 'badge-open' : 'badge-closed'}`}>{pallet.status}</span>
                       </div>
                     </div>
 
@@ -1140,11 +1140,11 @@ export const Reports: React.FC = () => {
                       ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
                           {pallet.cartons.map((carton: any) => (
-                            <div key={carton.SSCC} style={{ padding: '10px', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-sm)', backgroundColor: '#f8fafc', fontSize: '0.85rem' }}>
+                            <div key={carton.SSCC} style={{ padding: '10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', fontSize: '0.85rem' }}>
                               <div style={{ fontWeight: 700 }}>{carton.CartonNo}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
                                 <span>SSCC: {carton.SSCC ? carton.SSCC.substring(carton.SSCC.length - 8) : '-'}</span>
-                                <strong>{carton.ActualQuantity} / {carton.TargetQuantity} ürün</strong>
+                                <strong style={{ color: 'var(--text-main)' }}>{carton.ActualQuantity} / {carton.TargetQuantity} ürün</strong>
                               </div>
                             </div>
                           ))}
@@ -1216,7 +1216,7 @@ export const Reports: React.FC = () => {
                 onClick={() => startBackgroundJob(exportPrompt.orderNo, exportPrompt.stockCode, 'Excel')}
                 style={{ 
                   padding: '14px 18px', 
-                  backgroundColor: '#f8fafc', 
+                  backgroundColor: 'var(--bg-surface-subtle)', 
                   color: 'var(--text-main)', 
                   border: '1px solid var(--border-color)', 
                   borderRadius: '8px', 
@@ -1257,9 +1257,9 @@ export const Reports: React.FC = () => {
                 }}
                 style={{ 
                   padding: '12px 18px', 
-                  backgroundColor: '#ffffff', 
-                  color: '#0284c7', 
-                  border: '1px solid #7dd3fc', 
+                  backgroundColor: 'var(--primary-light)', 
+                  color: 'var(--primary)', 
+                  border: '1px solid var(--border-color)', 
                   borderRadius: '8px', 
                   textAlign: 'left', 
                   cursor: 'pointer' 
@@ -1389,7 +1389,7 @@ export const Reports: React.FC = () => {
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', backgroundColor: '#f8fafc', padding: '0 16px', overflowX: 'auto' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface-subtle)', padding: '0 16px', overflowX: 'auto' }}>
               <button 
                 style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.85rem', borderBottom: settingsTab === 'used' ? '2px solid var(--primary)' : '2px solid transparent', color: settingsTab === 'used' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer' }}
                 onClick={() => setSettingsTab('used')}
@@ -1462,7 +1462,7 @@ export const Reports: React.FC = () => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                       {cols.map((col: any, idx: number) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: col.enabled ? '#ffffff' : '#f8fafc', opacity: col.enabled ? 1 : 0.6 }}>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: col.enabled ? 'var(--bg-card)' : 'var(--bg-surface-subtle)', opacity: col.enabled ? 1 : 0.6 }}>
                           <input 
                             type="checkbox" 
                             checked={col.enabled} 
@@ -1513,7 +1513,7 @@ export const Reports: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-subtle)' }}>
               <button 
                 className="btn btn-secondary" 
                 onClick={() => setColumnSettings(getDefaultColumnSettings())}
