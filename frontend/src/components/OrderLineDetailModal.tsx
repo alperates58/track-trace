@@ -389,7 +389,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         width: '100%',
         maxWidth: '1200px',
         height: '85vh',
-        backgroundColor: 'var(--bg-surface)',
+        backgroundColor: 'var(--bg-card)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-xl)',
         border: '1px solid var(--border-color)',
@@ -399,11 +399,18 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         animation: 'fadeIn 0.2s ease-out'
       }} onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="order-line-modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-subtle)' }}>
+        <div className="order-line-modal-header" style={{ 
+          padding: '18px 24px', 
+          borderBottom: '1px solid var(--border-color)', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          backgroundColor: 'var(--bg-card)' 
+        }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
-                Sipariş Satırı Detayı: <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>{selectedOrder.orderNo}</span>
+                Sipariş Satırı Detayı: <span className="tabular-nums font-mono">{selectedOrder.orderNo}</span>
               </h3>
               {getStatusBadge(selectedOrder.status)}
             </div>
@@ -415,55 +422,132 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             {hasPermission('orders.delete') && (
               <button 
                 className="btn" 
-                style={{ padding: '6px 12px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)', fontWeight: 500, fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '6px 12px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', fontWeight: 600, fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '6px', borderRadius: 'var(--radius-sm)' }}
                 onClick={handleDeleteOrder}
                 title="Bu Sipariş Satırını Sil"
               >
                 <Trash2 size={14} /> Sipariş Satırını Sil
               </button>
             )}
-            <button className="btn btn-secondary" style={{ padding: '6px', border: 'none', background: 'transparent' }} onClick={onClose}>
+            <button className="btn btn-secondary" style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }} onClick={onClose}>
               <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="order-line-modal-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 20px', backgroundColor: 'var(--bg-surface)', gap: '4px' }}>
+        <div className="order-line-modal-tabs" style={{ 
+          display: 'flex', 
+          borderBottom: '1px solid var(--border-color)', 
+          padding: '0 24px', 
+          backgroundColor: 'var(--bg-card)', 
+          gap: '8px',
+          overflowX: 'auto'
+        }}>
           <button
-            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'summary' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'summary' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'summary' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
+            type="button"
+            style={{ 
+              padding: '12px 16px', 
+              border: 'none', 
+              background: 'transparent', 
+              fontWeight: activeTab === 'summary' ? 600 : 500, 
+              fontSize: '0.875rem', 
+              cursor: 'pointer', 
+              borderBottom: activeTab === 'summary' ? '2px solid var(--primary)' : '2px solid transparent', 
+              color: activeTab === 'summary' ? 'var(--primary)' : 'var(--text-muted)', 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease' 
+            }}
             onClick={() => setActiveTab('summary')}
           >
-            <FileText size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
-            Özet
+            <FileText size={16} />
+            <span>Özet</span>
           </button>
           <button
-            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'cartons' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'cartons' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'cartons' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
+            type="button"
+            style={{ 
+              padding: '12px 16px', 
+              border: 'none', 
+              background: 'transparent', 
+              fontWeight: activeTab === 'cartons' ? 600 : 500, 
+              fontSize: '0.875rem', 
+              cursor: 'pointer', 
+              borderBottom: activeTab === 'cartons' ? '2px solid var(--primary)' : '2px solid transparent', 
+              color: activeTab === 'cartons' ? 'var(--primary)' : 'var(--text-muted)', 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease' 
+            }}
             onClick={() => setActiveTab('cartons')}
           >
-            <Barcode size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
-            Koliler ({cartonsTotal || cartons.length})
+            <Barcode size={16} />
+            <span>Koliler ({cartonsTotal || cartons.length})</span>
           </button>
           <button
-            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'pallets' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'pallets' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'pallets' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
+            type="button"
+            style={{ 
+              padding: '12px 16px', 
+              border: 'none', 
+              background: 'transparent', 
+              fontWeight: activeTab === 'pallets' ? 600 : 500, 
+              fontSize: '0.875rem', 
+              cursor: 'pointer', 
+              borderBottom: activeTab === 'pallets' ? '2px solid var(--primary)' : '2px solid transparent', 
+              color: activeTab === 'pallets' ? 'var(--primary)' : 'var(--text-muted)', 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease' 
+            }}
             onClick={() => setActiveTab('pallets')}
           >
-            <Layers size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
-            Paletler ({palletsTotal})
+            <Layers size={16} />
+            <span>Paletler ({palletsTotal})</span>
           </button>
           <button 
-            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'codes' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'codes' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'codes' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
+            type="button"
+            style={{ 
+              padding: '12px 16px', 
+              border: 'none', 
+              background: 'transparent', 
+              fontWeight: activeTab === 'codes' ? 600 : 500, 
+              fontSize: '0.875rem', 
+              cursor: 'pointer', 
+              borderBottom: activeTab === 'codes' ? '2px solid var(--primary)' : '2px solid transparent', 
+              color: activeTab === 'codes' ? 'var(--primary)' : 'var(--text-muted)', 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease' 
+            }}
             onClick={() => setActiveTab('codes')}
           >
-            <Barcode size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
-            Kodlar ({codesTotal})
+            <Barcode size={16} />
+            <span>Kodlar ({codesTotal})</span>
           </button>
           <button 
-            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'imports' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'imports' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'imports' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
+            type="button"
+            style={{ 
+              padding: '12px 16px', 
+              border: 'none', 
+              background: 'transparent', 
+              fontWeight: activeTab === 'imports' ? 600 : 500, 
+              fontSize: '0.875rem', 
+              cursor: 'pointer', 
+              borderBottom: activeTab === 'imports' ? '2px solid var(--primary)' : '2px solid transparent', 
+              color: activeTab === 'imports' ? 'var(--primary)' : 'var(--text-muted)', 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease' 
+            }}
             onClick={() => setActiveTab('imports')}
           >
-            <Archive size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
-            Yüklemeler ({importBatches.length})
+            <Archive size={16} />
+            <span>Yüklemeler ({importBatches.length})</span>
           </button>
         </div>
 
@@ -475,73 +559,97 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Sipariş No</div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedOrder.orderNo}</div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sipariş No</div>
+                    <div className="font-mono tabular-nums" style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1rem' }}>{selectedOrder.orderNo}</div>
                   </div>
-                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Müşteri</div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedOrder.customerName}</div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Müşteri</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1rem' }}>{selectedOrder.customerName}</div>
                   </div>
-                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>İş Emri No</div>
-                    <div><code style={{ backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>{selectedOrder.gtin}</code></div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>İş Emri No</div>
+                    <div className="font-mono tabular-nums" style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.92rem' }}>{selectedOrder.gtin || '-'}</div>
                   </div>
-                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Stok Kodu</div>
-                    <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.stockCode || '-'}</div>
+                  <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Stok Kodu</div>
+                    <div className="font-mono tabular-nums" style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.92rem' }}>{selectedOrder.stockCode || '-'}</div>
                   </div>
-                  <div className="card" style={{ gridColumn: 'span 2', padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Stok İsmi / Ürün Adı</div>
-                    <div style={{ fontWeight: 500, color: 'var(--text-main)', wordBreak: 'break-word' }}>{selectedOrder.productName || '-'}</div>
+                  <div className="card" style={{ gridColumn: 'span 2', padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Stok İsmi / Ürün Adı</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.92rem', wordBreak: 'break-word' }}>{selectedOrder.productName || '-'}</div>
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
                   <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Üretim Hedefleri</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Beklenen Adet</div>
-                      <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>{selectedOrder.expectedQuantity}</div>
+                      <div className="tabular-nums font-mono" style={{ fontWeight: 800, fontSize: '1.35rem', color: 'var(--text-main)' }}>
+                        {selectedOrder.expectedQuantity?.toLocaleString('tr-TR')}
+                      </div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Okutulan Adet</div>
-                      <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0284c7' }}>{selectedOrder.scannedCount}</div>
+                      <div className="tabular-nums font-mono" style={{ fontWeight: 800, fontSize: '1.35rem', color: 'var(--primary)' }}>
+                        {selectedOrder.scannedCount?.toLocaleString('tr-TR')}
+                      </div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Kalan Adet</div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#b91c1c' }}>{Math.max(0, selectedOrder.expectedQuantity - selectedOrder.scannedCount)}</div>
+                      <div className="tabular-nums font-mono" style={{ 
+                        fontWeight: 700, 
+                        fontSize: '1.15rem', 
+                        color: selectedOrder.expectedQuantity <= selectedOrder.scannedCount ? 'var(--success)' : 'var(--text-main)' 
+                      }}>
+                        {Math.max(0, selectedOrder.expectedQuantity - selectedOrder.scannedCount).toLocaleString('tr-TR')}
+                      </div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Tamamlanma Yüzdesi</div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>
+                      <div className="tabular-nums font-mono" style={{ 
+                        fontWeight: 700, 
+                        fontSize: '1.15rem', 
+                        color: selectedOrder.expectedQuantity > 0 && selectedOrder.scannedCount >= selectedOrder.expectedQuantity ? 'var(--success)' : 'var(--primary)' 
+                      }}>
                         {selectedOrder.expectedQuantity > 0 ? Math.round((selectedOrder.scannedCount / selectedOrder.expectedQuantity) * 100) : 0}%
                       </div>
                     </div>
                     <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Koli İçi Adet</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.productPerCarton}</div>
+                      <div className="tabular-nums font-mono" style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.productPerCarton}</div>
                     </div>
                     <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Palet İçi Koli</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.cartonPerPallet}</div>
+                      <div className="tabular-nums font-mono" style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder.cartonPerPallet}</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)', flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Günlük Üretim Raporu</h4>
                   <div style={{ flex: 1, overflowY: 'auto' }}>
                     {productionByDate.length === 0 ? (
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '40px' }}>Henüz üretim kaydı bulunmuyor.</div>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {productionByDate.map((p, idx) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>{p.date}</span>
-                            <span style={{ fontWeight: 800, color: '#3b82f6', fontSize: '0.95rem' }}>{p.count} adet okutuldu</span>
+                          <div key={idx} style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            padding: '12px 16px', 
+                            backgroundColor: 'var(--bg-surface-subtle)', 
+                            borderRadius: 'var(--radius-sm)', 
+                            borderLeft: '3px solid var(--primary)',
+                            border: '1px solid var(--border-subtle)',
+                            borderLeftWidth: '3px'
+                          }}>
+                            <span className="tabular-nums font-mono" style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.88rem' }}>{p.date}</span>
+                            <span className="tabular-nums font-mono" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.92rem' }}>{p.count.toLocaleString('tr-TR')} adet okutuldu</span>
                           </div>
                         ))}
                       </div>
@@ -549,17 +657,17 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>Açıklama</div>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', backgroundColor: 'var(--bg-surface-subtle)', padding: '12px', borderRadius: '8px' }}>
+                <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Açıklama</div>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-main)', backgroundColor: 'var(--bg-surface-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                     {selectedOrder.description || 'Açıklama bulunmuyor.'}
                   </p>
                 </div>
 
-                <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', justifyContent: 'space-between' }}>
+                <div className="card" style={{ padding: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', backgroundColor: 'var(--bg-card)', display: 'flex', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Oluşturma Tarihi</div>
-                    <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--text-main)' }}>{new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: '4px' }}>Oluşturma Tarihi</div>
+                    <div className="tabular-nums font-mono" style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-main)' }}>{new Date(selectedOrder.createdAt).toLocaleString('tr-TR')}</div>
                   </div>
                 </div>
               </div>
@@ -571,7 +679,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '12px' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                    Toplam Koli: <span style={{ color: '#2563eb' }}>{cartonsTotal || cartons.length}</span>
+                    Toplam Koli: <span style={{ color: 'var(--primary)' }}>{cartonsTotal || cartons.length}</span>
                   </span>
                   {cartonsTotal > cartons.length && (
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', backgroundColor: 'var(--bg-surface-subtle)', padding: '3px 8px', borderRadius: '6px' }}>
@@ -582,7 +690,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 {(hasPermission('cartons.delete') || hasPermission('orders.delete') || hasPermission('cartons.create')) && (
                   <button 
                     className="btn" 
-                    style={{ padding: '8px 16px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', borderRadius: '8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: deletingEmptyCartons ? 'not-allowed' : 'pointer' }}
+                    style={{ padding: '8px 16px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-sm)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', cursor: deletingEmptyCartons ? 'not-allowed' : 'pointer' }}
                     onClick={handleDeleteEmptyCartons}
                     disabled={deletingEmptyCartons || (cartonsTotal === 0 && cartons.length === 0)}
                     title="İçinde hiçbir ürün bulunmayan tüm kolileri toplu olarak siler"
@@ -601,7 +709,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                   {cartons.map((c: any) => (
                     <div key={c.id} style={{ 
                       backgroundColor: 'var(--bg-card)', 
-                      borderRadius: '12px', 
+                      borderRadius: 'var(--radius-md)', 
                       border: '1px solid var(--border-color)',
                       padding: '16px',
                       boxShadow: 'var(--shadow-sm)',
@@ -620,13 +728,13 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px', fontWeight: 600 }}>
                           <span style={{ color: 'var(--text-muted)' }}>Doluluk</span>
-                          <span style={{ color: 'var(--text-main)' }}>{c.actualQuantity} / {c.targetQuantity}</span>
+                          <span className="tabular-nums font-mono" style={{ color: 'var(--text-main)' }}>{c.actualQuantity} / {c.targetQuantity}</span>
                         </div>
-                        <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
+                        <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-subtle)', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                           <div style={{ 
                             height: '100%', 
                             width: `${Math.min(100, Math.round((c.actualQuantity / c.targetQuantity) * 100))}%`, 
-                            backgroundColor: c.status === 'Closed' || c.status === 'Printed' || c.status === 'Palletized' ? '#10b981' : '#3b82f6',
+                            backgroundColor: c.status === 'Closed' || c.status === 'Printed' || c.status === 'Palletized' ? 'var(--success)' : 'var(--primary)',
                             transition: 'width 0.3s'
                           }}></div>
                         </div>
@@ -671,7 +779,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                   {pallets.map((p: any) => (
                     <div key={p.id} style={{ 
                       backgroundColor: 'var(--bg-card)', 
-                      borderRadius: '12px', 
+                      borderRadius: 'var(--radius-md)', 
                       border: '1px solid var(--border-color)',
                       padding: '16px',
                       boxShadow: 'var(--shadow-sm)',
@@ -690,7 +798,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '12px', fontWeight: 600 }}>
                           <span style={{ color: 'var(--text-muted)' }}>Koli Sayısı</span>
-                          <span style={{ color: 'var(--text-main)' }}>{p.cartonCount} Koli</span>
+                          <span className="tabular-nums font-mono" style={{ color: 'var(--text-main)' }}>{p.cartonCount} Koli</span>
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
                           Tarih: {new Date(p.createdAt).toLocaleString('tr-TR')}
@@ -704,7 +812,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
           )}
 
           {activeTab === 'codes' && (
-            <div className="card" style={{ padding: '20px', border: 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', minHeight: '500px', display: 'flex', flexDirection: 'column' }}>
+            <div className="card" style={{ padding: '20px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)', minHeight: '500px', display: 'flex', flexDirection: 'column' }}>
               <form onSubmit={handleCodesSearchSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <input 
                   type="text" 
@@ -858,16 +966,25 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
         {/* Modal Footer Actions */}
         {activeTab === 'summary' && (
-          <div className="order-line-modal-footer" style={{ padding: '12px 20px', backgroundColor: 'var(--bg-surface-subtle)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="order-line-modal-footer" style={{ 
+            padding: '14px 24px', 
+            backgroundColor: 'var(--bg-card)', 
+            borderTop: '1px solid var(--border-color)', 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            alignItems: 'center',
+            gap: '10px', 
+            flexWrap: 'wrap' 
+          }}>
             {selectedOrder.status === 'Draft' && (
               <>
                 {hasPermission('orders.edit') && (
                   <>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={15} style={{ marginRight: '6px' }}/> Kod Yükle
+                    <button className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.85rem' }} onClick={() => setShowImportModal(true)}>
+                      <Upload size={15} /> Kod Yükle
                     </button>
-                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <Play size={15} style={{ marginRight: '6px' }}/> Aktifleştir
+                    <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.85rem' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
+                      <Play size={15} /> Aktifleştir
                     </button>
                   </>
                 )}
@@ -877,23 +994,65 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             {selectedOrder.status === 'Active' && (
               <>
                 {hasPermission('orders.edit') && (
-                  <button className="btn" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)', fontWeight: 500 }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
-                    <XCircle size={15} style={{ marginRight: '6px' }}/> İptal Et
+                  <button className="btn" style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '6px',
+                    height: '36px',
+                    padding: '0 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--danger-bg)', 
+                    color: 'var(--danger-text)', 
+                    border: '1px solid var(--danger-border)', 
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
+                    <XCircle size={15} /> İptal Et
                   </button>
                 )}
                 {user?.role !== 'Viewer' && (
                   <>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => { setError(null); setShowPrintModal(true); }}>
-                      <Printer size={15} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
+                    <button className="btn btn-secondary" style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      height: '36px',
+                      padding: '0 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem'
+                    }} onClick={() => { setError(null); setShowPrintModal(true); }}>
+                      <Printer size={15} /> Kod Sayfası PDF Üret
                     </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', color: 'var(--primary)' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
-                      <Barcode size={15} style={{ marginRight: '6px' }}/> Scan Ekranına Git
+                    <button className="btn btn-secondary" style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      height: '36px',
+                      padding: '0 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--primary)',
+                      borderColor: 'var(--primary-light)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem'
+                    }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
+                      <Barcode size={15} /> Scan Ekranına Git
                     </button>
                   </>
                 )}
                 {hasPermission('orders.edit') && (
-                  <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
-                    <CheckCircle2 size={15} style={{ marginRight: '6px' }}/> Tamamla
+                  <button className="btn btn-primary" style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '6px',
+                    height: '36px',
+                    padding: '0 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem'
+                  }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
+                    <CheckCircle2 size={15} /> Tamamla
                   </button>
                 )}
               </>
@@ -903,14 +1062,14 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               <>
                 {hasPermission('orders.edit') && (
                   <>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setActiveTab('imports')}>
-                      <Archive size={15} style={{ marginRight: '6px' }}/> Yüklemeleri Yönet
+                    <button className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.85rem' }} onClick={() => setActiveTab('imports')}>
+                      <Archive size={15} /> Yüklemeleri Yönet
                     </button>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={15} style={{ marginRight: '6px' }}/> Kod Yükle
+                    <button className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.85rem' }} onClick={() => setShowImportModal(true)}>
+                      <Upload size={15} /> Kod Yükle
                     </button>
-                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <RotateCcw size={15} style={{ marginRight: '6px' }}/> Tekrar Aktifleştir
+                    <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.85rem' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
+                      <RotateCcw size={15} /> Tekrar Aktifleştir
                     </button>
                   </>
                 )}
@@ -940,7 +1099,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-xl)',
             padding: 0,
-            backgroundColor: 'var(--bg-surface)',
+            backgroundColor: 'var(--bg-card)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
@@ -994,7 +1153,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
       {/* --- PRINT PDF MODAL --- */}
       {showPrintModal && (
         <div data-testid="print-pdf-overlay" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={e => e.stopPropagation()}>
-          <div role="dialog" aria-modal="true" aria-labelledby="print-pdf-title" className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', boxShadow: 'var(--shadow-xl)' }} onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-labelledby="print-pdf-title" className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', boxShadow: 'var(--shadow-xl)', backgroundColor: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h3 id="print-pdf-title" style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
               <button
@@ -1020,7 +1179,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     aria-checked={printCodeScope === 'all'}
                     data-testid="print-scope-all"
                     onClick={() => setPrintCodeScope('all')}
-                    style={{ padding: '12px', borderRadius: 'var(--radius-sm)', border: printCodeScope === 'all' ? '2px solid var(--primary)' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'all' ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-surface)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '12px', borderRadius: 'var(--radius-sm)', border: printCodeScope === 'all' ? '2px solid var(--primary)' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'all' ? 'var(--primary-light)' : 'var(--bg-card)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
                   >
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.875rem' }}><Barcode size={15} color={printCodeScope === 'all' ? 'var(--primary)' : 'var(--text-muted)'} /> Tüm QR Kodları</span>
                     <small style={{ display: 'block', marginTop: '4px', color: 'var(--text-muted)', lineHeight: 1.3, fontSize: '0.75rem' }}>Siparişe yüklenen bütün kodları üretir.</small>
@@ -1031,7 +1190,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     aria-checked={printCodeScope === 'unassigned'}
                     data-testid="print-scope-unassigned"
                     onClick={() => setPrintCodeScope('unassigned')}
-                    style={{ padding: '12px', borderRadius: 'var(--radius-sm)', border: printCodeScope === 'unassigned' ? '2px solid var(--warning)' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'unassigned' ? 'rgba(217, 119, 6, 0.08)' : 'var(--bg-surface)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '12px', borderRadius: 'var(--radius-sm)', border: printCodeScope === 'unassigned' ? '2px solid var(--warning)' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'unassigned' ? 'var(--warning-bg)' : 'var(--bg-card)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
                   >
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.875rem' }}><Archive size={15} color={printCodeScope === 'unassigned' ? 'var(--warning)' : 'var(--text-muted)'} /> Sadece Açıkta Kalanlar</span>
                     <small style={{ display: 'block', marginTop: '4px', color: 'var(--text-muted)', lineHeight: 1.3, fontSize: '0.75rem' }}>Hiç okutulmamış ve koliye girmemiş kodlar.</small>
@@ -1098,7 +1257,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
       {/* --- IMPORT MODAL --- */}
       {showImportModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={(e) => { e.stopPropagation(); setShowImportModal(false); setImportResult(null); setFile(null); }}>
-          <div className="card" style={{ width: '100%', maxWidth: '550px', padding: '24px', boxShadow: 'var(--shadow-xl)' }} onClick={e => e.stopPropagation()}>
+          <div className="card" style={{ width: '100%', maxWidth: '550px', padding: '24px', boxShadow: 'var(--shadow-xl)', backgroundColor: 'var(--bg-card)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
                 Barkod Yükleme ({selectedOrder.orderNo})

@@ -13,10 +13,14 @@
 
   /* Surfaces & Canvas */
   --bg-primary: #f8fafc;
+  --bg-canvas: #f8fafc;
   --bg-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-main: #f8fafc;
   --bg-surface-subtle: #f8fafc;
   --border-color: #e2e8f0;
   --border-subtle: #edf2f7;
+  --border-default: #e2e8f0;
   
   /* Primary Brand Tokens */
   --primary: #2563eb;
@@ -44,6 +48,8 @@
 
   /* Text Hierarchy */
   --text-main: #0f172a;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
   --text-muted: #64748b;
   --text-white: #ffffff;
 
@@ -84,6 +90,7 @@
   --radius-lg: 10px;
   --radius-xl: 10px;
   
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
   --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
@@ -98,10 +105,14 @@
 
   /* Surfaces & Canvas */
   --bg-primary: #090d16;
+  --bg-canvas: #090d16;
   --bg-card: #111827;
+  --bg-surface: #111827;
+  --bg-main: #090d16;
   --bg-surface-subtle: rgba(255, 255, 255, 0.03);
   --border-color: #1e293b;
   --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-default: #1e293b;
 
   /* Primary Brand Tokens */
   --primary: #3b82f6;
@@ -129,6 +140,8 @@
 
   /* Text Hierarchy */
   --text-main: #f8fafc;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
   --text-muted: #94a3b8;
   --text-white: #ffffff;
 
@@ -163,6 +176,7 @@
   --badge-neutral-text: #94a3b8;
 
   /* Dark mode shadows - subtle elevation */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.45);
