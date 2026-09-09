@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { getPrintProvider } from '../services/printProvider';
+import { useAuth } from '../context/AuthContext';
 import { Volume2, VolumeX, Barcode, Printer, Camera, RotateCcw } from 'lucide-react';
 import { CameraScanner } from '../components/CameraScanner';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
