@@ -9,9 +9,7 @@ import {
 import { 
   TTPageHeader, 
   TTButton, 
-  TTBadge, 
-  TTModal, 
-  TTCard 
+  TTBadge 
 } from '../components/common';
 import './AuditCenter.css';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 
 export interface TTAlertProps {
-  variant?: 'info' | 'success' | 'warning' | 'error';
+  variant?: 'info' | 'success' | 'warning' | 'error' | 'danger';
   title?: string;
   children: React.ReactNode;
   icon?: boolean;
@@ -14,9 +14,10 @@ export const TTAlert: React.FC<TTAlertProps> = ({
   children,
   icon = true
 }) => {
+  const resolvedVariant = variant === 'danger' ? 'error' : variant;
   const getIcon = () => {
     if (!icon) return null;
-    switch (variant) {
+    switch (resolvedVariant) {
       case 'success': return <CheckCircle size={20} />;
       case 'warning': return <AlertTriangle size={20} />;
       case 'error': return <AlertCircle size={20} />;
@@ -25,7 +26,7 @@ export const TTAlert: React.FC<TTAlertProps> = ({
   };
 
   return (
-    <div className={`tt-alert tt-alert-${variant}`}>
+    <div className={`tt-alert tt-alert-${resolvedVariant}`}>
       {icon && <div className="tt-alert-icon">{getIcon()}</div>}
       <div className="tt-alert-content">
         {title && <h5 className="tt-alert-title">{title}</h5>}

@@ -18,7 +18,6 @@ import {
   TTButton, 
   TTBadge, 
   TTDrawer, 
-  TTStatCard, 
   TTProgressBar, 
   TTEmptyState, 
   TTLoadingState, 

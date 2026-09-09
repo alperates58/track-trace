@@ -16,7 +16,6 @@ import {
   TTModal,
   TTLoadingState,
   TTEmptyState,
-  TTStatCard,
   TTFilterBar
 } from '../components/common';
 import { PermissionMatrix } from './PermissionMatrix';

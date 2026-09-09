@@ -1,5 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { TTPageHeader, TTCard, TTButton, TTLoadingState, TTAlert } from '../components/common';
-import { Check, Minus, ShieldAlert, Save, RefreshCw, Shield } from 'lucide-react';
+import { Check, Minus, Save, RefreshCw, Shield } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -47,15 +48,15 @@ export const PermissionMatrix: React.FC = () => {
   }, []);
 
   const hasRolePerm = (role: string, key: string) => {
-    return rolePermissions.some(rp => rp.role === role && rp.permissionKey === key);
+    return rolePermissions.some((rp: RolePermission) => rp.role === role && rp.permissionKey === key);
   };
 
   const togglePermission = (role: string, key: string) => {
     if (!isAdmin || role === 'Admin') return;
-    setRolePermissions(prev => {
-      const exists = prev.some(rp => rp.role === role && rp.permissionKey === key);
+    setRolePermissions((prev: RolePermission[]) => {
+      const exists = prev.some((rp: RolePermission) => rp.role === role && rp.permissionKey === key);
       if (exists) {
-        return prev.filter(rp => !(rp.role === role && rp.permissionKey === key));
+        return prev.filter((rp: RolePermission) => !(rp.role === role && rp.permissionKey === key));
       } else {
         return [...prev, { role, permissionKey: key }];
       }
@@ -76,7 +77,7 @@ export const PermissionMatrix: React.FC = () => {
   };
 
   // Group permissions by module
-  const modules = Array.from(new Set(permissions.map(p => p.module)));
+  const modules: string[] = Array.from(new Set(permissions.map((p: Permission) => p.module)));
   const actionsList = ['view', 'create', 'edit', 'delete', 'print', 'export', 'manage'];
 
   if (loading) {
@@ -106,7 +107,7 @@ export const PermissionMatrix: React.FC = () => {
 
       {error && (
         <div style={{ marginBottom: '16px' }}>
-          <TTAlert variant="danger" title="Hata">
+          <TTAlert variant="error" title="Hata">
             {error}
           </TTAlert>
         </div>
@@ -136,7 +137,7 @@ export const PermissionMatrix: React.FC = () => {
               <th rowSpan={2} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', textAlign: 'left', backgroundColor: 'var(--bg-main)', width: '200px', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Modül</th>
               <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Admin (Yönetici)</th>
               <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Operator (Operatör)</th>
-              <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Viewer (İzleyici)</th>
+              <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Viewer (İzleyici)</th>
             </tr>
             <tr>
               {/* Actions Header for each role */}
@@ -154,9 +155,9 @@ export const PermissionMatrix: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {modules.map((moduleName, i) => {
-              const modulePerms = permissions.filter(p => p.module === moduleName);
-              const getPermKey = (action: string) => modulePerms.find(p => p.action === action)?.key;
+            {modules.map((moduleName: string, i: number) => {
+              const modulePerms = permissions.filter((p: Permission) => p.module === moduleName);
+              const getPermKey = (action: string) => modulePerms.find((p: Permission) => p.action === action)?.key;
 
               return (
                 <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle, var(--border-color))' }}>

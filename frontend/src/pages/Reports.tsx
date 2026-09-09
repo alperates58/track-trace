@@ -15,7 +15,6 @@ import {
   AlertTriangle, 
   RefreshCw,
   Eye,
-  Percent,
   SlidersHorizontal,
   Plus,
   Trash2,

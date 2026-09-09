@@ -472,7 +472,7 @@ export const DigiEyeScan: React.FC = () => {
               boxShadow: 'var(--shadow-xs)'
             }}
           >
-            {workflowStatus === 'error' ? <XCircle size={44} style={{ color: 'var(--danger)', shrink: 0 }} /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={44} style={{ color: 'var(--success)', shrink: 0 }} /> : processingEvent ? <Clock3 size={44} style={{ color: 'var(--primary)', shrink: 0 }} /> : <Barcode size={44} style={{ color: 'var(--primary)', shrink: 0 }} />}
+            {workflowStatus === 'error' ? <XCircle size={44} style={{ color: 'var(--danger)', flexShrink: 0 }} /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={44} style={{ color: 'var(--success)', flexShrink: 0 }} /> : processingEvent ? <Clock3 size={44} style={{ color: 'var(--primary)', flexShrink: 0 }} /> : <Barcode size={44} style={{ color: 'var(--primary)', flexShrink: 0 }} />}
             <div>
               <div style={{ color: 'var(--text-main)', fontSize: '1.15rem', fontWeight: 800, marginBottom: '4px' }}>
                 {processingEvent ? 'Kod işleniyor…' : workflowStatus === 'error' ? 'Okutma reddedildi' : workflowStatus === 'cartonClosed' ? 'Koli tamamlandı' : 'Bant akışı hazır'}
