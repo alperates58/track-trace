@@ -726,6 +726,7 @@ export const PerformanceAnalytics: React.FC = () => {
               </table>
             </div>
           )}
+        </TTCard>
       )}
 
       {/* DRAWER: Koli Zaman Çizelgesi & Detay */}

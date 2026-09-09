@@ -24,7 +24,6 @@ export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({
   activeCartonNo
 }) => {
   return (
-  return (
     <div 
       className="scan-history-panel w-full lg:w-[350px] 2xl:w-[420px] flex flex-col overflow-hidden shrink-0 h-full shadow-xs"
       style={{
