@@ -448,7 +448,7 @@ export const PerformanceAnalytics: React.FC = () => {
 
           {/* Table */}
           {loadingOrders ? (
-            <TTLoadingState message="Sipariş performans verileri hesaplanıyor..." />
+            <TTLoadingState text="Sipariş performans verileri hesaplanıyor..." />
           ) : orders.length === 0 ? (
             <TTEmptyState
               icon={<Layers size={40} color="var(--text-muted)" />}
@@ -609,7 +609,7 @@ export const PerformanceAnalytics: React.FC = () => {
           </div>
 
           {loadingOperators ? (
-            <TTLoadingState message="Operatör verileri yükleniyor..." />
+            <TTLoadingState text="Operatör verileri yükleniyor..." />
           ) : operators.length === 0 ? (
             <TTEmptyState
               icon={<User size={40} color="var(--text-muted)" />}
@@ -754,7 +754,7 @@ export const PerformanceAnalytics: React.FC = () => {
               </div>
 
               {loadingCartons ? (
-                <TTLoadingState message="Koli verileri yükleniyor..." />
+                <TTLoadingState text="Koli verileri yükleniyor..." />
               ) : cartonDetails.length === 0 ? (
                 <TTEmptyState
                   icon={<Package size={32} color="var(--text-muted)" />}
