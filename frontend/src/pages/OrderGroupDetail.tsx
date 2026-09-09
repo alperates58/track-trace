@@ -60,32 +60,38 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Taslak': return <span className="badge badge-gray">Taslak</span>;
-      case 'Aktif': return <span className="badge badge-blue">Aktif</span>;
-      case 'Tamamlandı': return <span className="badge badge-green">Tamamlandı</span>;
-      case 'İptal': return <span className="badge badge-red">İptal</span>;
-      
-      // Original Order status fallbacks
-      case 'Draft': return <span className="badge badge-gray">Taslak</span>;
-      case 'Active': return <span className="badge badge-blue">Aktif</span>;
-      case 'Completed': return <span className="badge badge-green">Tamamlandı</span>;
-      case 'Cancelled': return <span className="badge badge-red">İptal</span>;
-      
-      default: return <span className="badge">{status}</span>;
+      case 'Taslak':
+      case 'Draft':
+        return <span className="tt-badge tt-badge-neutral">Taslak</span>;
+      case 'Aktif':
+      case 'Active':
+        return <span className="tt-badge tt-badge-primary">Aktif</span>;
+      case 'Tamamlandı':
+      case 'Completed':
+        return <span className="tt-badge tt-badge-success">Tamamlandı</span>;
+      case 'İptal':
+      case 'Cancelled':
+        return <span className="tt-badge tt-badge-danger">İptal</span>;
+      default:
+        return <span className="tt-badge tt-badge-neutral">{status}</span>;
     }
   };
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader2 className="spinner" size={40} /></div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px' }}>
+        <Loader2 className="spinner" size={32} />
+      </div>
+    );
   }
 
   if (error || !summary) {
     return (
-      <div>
-        <button className="btn" onClick={onBack} style={{ marginBottom: '20px' }}>
-          <ArrowLeft size={16} style={{ marginRight: '6px' }} /> Geri Dön
+      <div style={{ padding: '20px' }}>
+        <button className="btn btn-secondary" onClick={onBack} style={{ marginBottom: '16px' }}>
+          <ArrowLeft size={15} style={{ marginRight: '6px' }} /> Geri Dön
         </button>
-        <div style={{ padding: '20px', color: '#b91c1c', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
+        <div style={{ padding: '16px', color: 'var(--danger)', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem' }}>
           {error || 'Grup verisi bulunamadı.'}
         </div>
       </div>
@@ -93,21 +99,24 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
   }
 
   return (
-    <div>      {/* Header with Title and Action */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button className="btn btn-secondary" onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '10px', borderRadius: '8px' }}>
-            <ArrowLeft size={18} />
+    <div>
+      {/* Header with Title and Action */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="btn btn-secondary" onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '8px 12px' }}>
+            <ArrowLeft size={16} style={{ marginRight: '4px' }} /> Geri
           </button>
           <div>
-            <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-main)', fontWeight: 700 }}>Sipariş Genel Detayı</h2>
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>{summary.orderNo} / {summary.customerName}</p>
+            <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-main)', fontWeight: 600 }}>
+              Sipariş Detayı: <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>{summary.orderNo}</span>
+            </h2>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{summary.customerName}</p>
           </div>
         </div>
         {hasPermission('orders.delete') && (
           <button
             className="btn"
-            style={{ padding: '8px 16px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', fontWeight: 700, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            style={{ padding: '6px 14px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)', fontWeight: 500, fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={async () => {
               if (!window.confirm(`${summary.orderNo} (${summary.customerName}) sipariş grubunu ve ait tüm sipariş satırlarını silmek istediğinize emin misiniz?`)) return;
               try {
@@ -118,101 +127,111 @@ export const OrderGroupDetail: React.FC<OrderGroupDetailProps> = ({ groupKey, on
               }
             }}
           >
-            <Trash2 size={16} /> Tüm Grubu Sil
+            <Trash2 size={14} /> Tüm Grubu Sil
           </button>
         )}
       </div>
 
       {/* Summary Cards */}
-      <div className="stats-grid" style={{ marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Toplam Hedef</span>
-          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)' }}>{summary.totalExpectedQuantity.toLocaleString()}</div>
-        </div>
-        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Okutulan</span>
-          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0284c7' }}>{summary.totalScannedQuantity.toLocaleString()}</div>
-        </div>
-        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>İlerleme</span>
-          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: summary.progressPercentage === 100 ? '#10b981' : '#3b82f6' }}>%{summary.progressPercentage}</div>
-          <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-color)', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${summary.progressPercentage}%`, backgroundColor: summary.progressPercentage === 100 ? '#10b981' : '#3b82f6' }}></div>
+      <div className="stats-grid" style={{ marginBottom: '20px' }}>
+        <div className="stat-card-modern">
+          <div className="stat-info">
+            <span className="stat-title">Toplam Hedef</span>
+            <div className="stat-value tabular-nums">{summary.totalExpectedQuantity.toLocaleString('tr-TR')}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>Ürün Satırları</span>
-          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)' }}>{summary.lineCount}</div>
+        <div className="stat-card-modern">
+          <div className="stat-info">
+            <span className="stat-title">Okutulan</span>
+            <div className="stat-value tabular-nums" style={{ color: 'var(--primary)' }}>{summary.totalScannedQuantity.toLocaleString('tr-TR')}</div>
+          </div>
+        </div>
+        <div className="stat-card-modern">
+          <div className="stat-info">
+            <span className="stat-title">İlerleme</span>
+            <div className="stat-value tabular-nums" style={{ color: summary.progressPercentage === 100 ? 'var(--success)' : 'var(--primary)' }}>
+              %{summary.progressPercentage}
+            </div>
+            <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-subtle)', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${summary.progressPercentage}%`, backgroundColor: summary.progressPercentage === 100 ? 'var(--success)' : 'var(--primary)' }}></div>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card-modern">
+          <div className="stat-info">
+            <span className="stat-title">Ürün Satırları</span>
+            <div className="stat-value tabular-nums">{summary.lineCount}</div>
+          </div>
         </div>
       </div>
 
-      <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)' }}>Ürün Satırları (İş Emirleri)</h3>
+      <div style={{ marginBottom: '12px' }}>
+        <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>Ürün Satırları (İş Emirleri)</h3>
+      </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <table className="data-table" style={{ margin: 0 }}>
-            <thead style={{ backgroundColor: 'var(--table-header-bg)' }}>
-              <tr>
-                <th style={{ padding: '16px', color: 'var(--text-muted)' }}>Stok / Ürün</th>
-                <th style={{ padding: '16px', color: 'var(--text-muted)' }}>İş Emri No</th>
-                <th style={{ padding: '16px', color: 'var(--text-muted)' }}>Koli İçi / Palet İçi</th>
-                <th style={{ padding: '16px', color: 'var(--text-muted)' }}>Miktar (Okutulan / Hedef)</th>
-                <th style={{ padding: '16px', color: 'var(--text-muted)' }}>Durum</th>
-                <th style={{ padding: '16px', textAlign: 'right', color: 'var(--text-muted)' }}>Aksiyon</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Bu grupta ürün satırı bulunmuyor.</td></tr>
-              ) : (
-                lines.map((line) => (
-                  <tr key={line.id} className="hover-row" onClick={() => setSelectedLine(line)} style={{ cursor: 'pointer' }}>
-                    <td data-label="Stok / Ürün" style={{ padding: '16px' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{line.productName || '-'}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{line.stockCode || '-'}</div>
+      <div className="table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th style={{ padding: '10px 14px' }}>Stok / Ürün</th>
+              <th style={{ padding: '10px 14px' }}>İş Emri No</th>
+              <th style={{ padding: '10px 14px' }}>Koli İçi / Palet İçi</th>
+              <th style={{ padding: '10px 14px' }}>Miktar (Okutulan / Hedef)</th>
+              <th style={{ padding: '10px 14px' }}>Durum</th>
+              <th style={{ padding: '10px 14px', textAlign: 'right' }}>Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Bu grupta ürün satırı bulunmuyor.</td></tr>
+            ) : (
+              lines.map((line) => (
+                <tr key={line.id} className="hover-row" onClick={() => setSelectedLine(line)} style={{ cursor: 'pointer' }}>
+                  <td data-label="Stok / Ürün" style={{ padding: '12px 14px' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{line.productName || '-'}</div>
+                      <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{line.stockCode || '-'}</div>
+                    </div>
+                  </td>
+                  <td data-label="İş Emri No" style={{ padding: '12px 14px' }}>
+                    <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', padding: '2px 8px', borderRadius: 'var(--radius-xs)', fontSize: '0.8125rem', border: '1px solid var(--border-subtle)' }}>
+                      {line.gtin}
+                    </span>
+                  </td>
+                  <td data-label="Koli İçi / Palet İçi" style={{ padding: '12px 14px' }}>
+                    <div className="tabular-nums" style={{ display: 'flex', gap: '12px', fontSize: '0.8125rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Package size={13} color="var(--text-muted)" /> {line.productPerCarton}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Layers size={13} color="var(--text-muted)" /> {line.cartonPerPallet}</span>
+                    </div>
+                  </td>
+                  <td data-label="Miktar" style={{ padding: '12px 14px' }}>
+                    <div className="progress-cell-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
+                      <div className="tabular-nums" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', fontWeight: 500, width: '100%' }}>
+                        <span style={{ color: 'var(--primary)' }}>{line.scannedCount?.toLocaleString('tr-TR') || 0}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{line.expectedQuantity?.toLocaleString('tr-TR') || 0}</span>
                       </div>
-                    </td>
-                    <td data-label="İş Emri No" style={{ padding: '16px' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.9rem' }}>
-                        {line.gtin}
-                      </span>
-                    </td>
-                    <td data-label="Koli İçi / Palet İçi" style={{ padding: '16px' }}>
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Package size={14} color="var(--text-muted)" /> {line.productPerCarton}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Layers size={14} color="var(--text-muted)" /> {line.cartonPerPallet}</span>
+                      <div style={{ width: '100%', height: '5px', backgroundColor: 'var(--border-subtle)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          height: '100%', 
+                          width: `${Math.min(100, Math.round(((line.scannedCount || 0) / (line.expectedQuantity || 1)) * 100))}%`, 
+                          backgroundColor: line.status === 'Completed' ? 'var(--success)' : 'var(--primary)' 
+                        }}></div>
                       </div>
-                    </td>
-                    <td data-label="Miktar" style={{ padding: '16px' }}>
-                      <div className="progress-cell-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, width: '100%' }}>
-                          <span style={{ color: '#0284c7' }}>{line.scannedCount?.toLocaleString() || 0}</span>
-                          <span style={{ color: 'var(--text-muted)' }}>{line.expectedQuantity?.toLocaleString() || 0}</span>
-                        </div>
-                        <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
-                          <div style={{ 
-                            height: '100%', 
-                            width: `${Math.min(100, Math.round(((line.scannedCount || 0) / (line.expectedQuantity || 1)) * 100))}%`, 
-                            backgroundColor: line.status === 'Completed' ? '#10b981' : '#3b82f6' 
-                          }}></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td data-label="Durum" style={{ padding: '16px' }}>
-                      {getStatusBadge(line.status)}
-                    </td>
-                    <td data-label="Aksiyon" style={{ padding: '16px', textAlign: 'right' }}>
-                      <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setSelectedLine(line); }}>
-                        Satır Detayı
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </td>
+                  <td data-label="Durum" style={{ padding: '12px 14px' }}>
+                    {getStatusBadge(line.status)}
+                  </td>
+                  <td data-label="Aksiyon" style={{ padding: '12px 14px', textAlign: 'right' }}>
+                    <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8125rem', height: '28px' }} onClick={(e) => { e.stopPropagation(); setSelectedLine(line); }}>
+                      Satır Detayı
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {selectedLine && (

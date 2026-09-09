@@ -109,42 +109,42 @@
 /* KPI Cards */
 .ac-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .ac-kpi-card {
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid var(--border-subtle, var(--border-color));
+  border-radius: var(--radius-md, 8px);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 8px;
+  box-shadow: none;
+  transition: border-color 0.15s ease;
 }
 
 .ac-kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
   border-color: var(--primary);
 }
 
 .ac-kpi-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: var(--text-muted);
-  font-size: 14px;
+  gap: 10px;
+  color: var(--text-secondary, var(--text-muted));
+  font-size: 0.8rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .ac-kpi-icon {
-  padding: 8px;
-  border-radius: 8px;
-  background-color: var(--bg-surface-subtle);
+  padding: 6px;
+  border-radius: 6px;
+  background-color: rgba(59, 130, 246, 0.08);
   color: var(--primary);
   display: flex;
   align-items: center;
@@ -152,70 +152,60 @@
 }
 
 .ac-kpi-value {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--text-main);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, var(--text-main));
   line-height: 1;
 }
 
 /* Filters */
 .ac-filter-card {
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-sm);
-}
-
-.ac-filter-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0 0 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  border: 1px solid var(--border-subtle, var(--border-color));
+  border-radius: var(--radius-md, 8px);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: none;
 }
 
 .ac-filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
   align-items: end;
 }
 
 .ac-filter-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ac-filter-label {
-  font-size: 13px;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-secondary, var(--text-muted));
 }
 
 .ac-input {
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-main);
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-subtle, var(--input-border));
+  border-radius: var(--radius-sm, 6px);
+  font-size: 13px;
+  color: var(--text-primary, var(--text-main));
   background-color: var(--input-bg);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   outline: none;
 }
 
 .ac-input::placeholder {
-  color: var(--input-placeholder);
+  color: var(--text-secondary, var(--input-placeholder));
 }
 
 .ac-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
 select.ac-input {
@@ -223,8 +213,8 @@ select.ac-input {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 8px center;
   background-repeat: no-repeat;
-  background-size: 20px 20px;
-  padding-right: 32px;
+  background-size: 16px 16px;
+  padding-right: 28px;
 }
 
 .ac-filter-actions {
@@ -278,10 +268,10 @@ select.ac-input {
 /* Table Card */
 .ac-table-card {
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle, var(--border-color));
+  border-radius: var(--radius-md, 8px);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
 }
@@ -295,41 +285,40 @@ select.ac-input {
 
 .ac-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   text-align: left;
 }
 
 .ac-table th {
   position: sticky;
   top: 0;
-  background-color: var(--table-header-bg);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
+  background-color: var(--bg-main);
+  color: var(--text-secondary, var(--text-muted));
+  font-size: 0.78rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
+  letter-spacing: 0.04em;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle, var(--border-color));
   z-index: 10;
   white-space: nowrap;
 }
 
 .ac-table td {
-  padding: 16px 20px;
-  font-size: 14px;
-  color: var(--text-main);
-  border-bottom: 1px solid var(--border-color);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: var(--text-primary, var(--text-main));
+  border-bottom: 1px solid var(--border-subtle, var(--border-color));
   white-space: nowrap;
   transition: background-color 0.15s ease;
 }
 
 .ac-table tbody tr {
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .ac-table tbody tr:hover {
-  background-color: var(--table-row-hover);
+  background-color: var(--table-row-hover, rgba(0, 0, 0, 0.02));
 }
 
 /* Badges */

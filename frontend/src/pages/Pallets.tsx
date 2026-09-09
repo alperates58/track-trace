@@ -345,14 +345,14 @@ export const Pallets: React.FC = () => {
         }
       />
       {/* Filter Bar */}
-      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <div className="form-group" style={{ flex: 1, minWidth: '250px', marginBottom: 0 }}>
+      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="form-group" style={{ flex: 1, minWidth: '240px', marginBottom: 0 }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={18} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
+            <Search size={15} style={{ position: 'absolute', left: '10px', color: 'var(--text-muted)' }} />
             <input
               type="text"
               className="form-input"
-              style={{ paddingLeft: '38px', width: '100%' }}
+              style={{ paddingLeft: '32px', width: '100%', height: '36px', fontSize: '0.85rem' }}
               placeholder="Palet No, SSCC veya Sipariş No Ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -362,6 +362,7 @@ export const Pallets: React.FC = () => {
         <div className="form-group" style={{ width: '180px', marginBottom: 0 }}>
           <select
             className="form-input"
+            style={{ height: '36px', fontSize: '0.85rem', padding: '0 10px' }}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -372,7 +373,9 @@ export const Pallets: React.FC = () => {
             <option value="Shipped">Sevk Edildi</option>
           </select>
         </div>
-        <button type="submit" className="btn btn-secondary">Ara</button>
+        <button type="submit" className="btn btn-secondary" style={{ height: '36px', padding: '0 16px', fontSize: '0.85rem' }}>
+          Ara
+        </button>
       </form>
 
       <div className={selectedPallet ? "pallet-split-grid" : ""} style={{ display: selectedPallet ? undefined : 'block' }}>
@@ -397,29 +400,29 @@ export const Pallets: React.FC = () => {
                 <tr><td colSpan={6} style={{ padding: '0' }}><TTEmptyState icon={<Layers size={32} />} title="Palet Bulunamadı" /></td></tr>
               ) : (
                 pallets.map((p) => (
-                  <tr key={p.id} style={{ cursor: 'pointer', backgroundColor: selectedPallet?.id === p.id ? '#f1f5f9' : '' }} onClick={() => handlePalletClick(p)}>
-                    <td style={{ fontWeight: 600 }}>{p.palletNo}</td>
-                    <td>{p.orderNo}</td>
-                    <td><code style={{ fontSize: '0.85rem' }}>{p.sscc}</code></td>
-                    <td><span style={{ fontWeight: 700, color: 'var(--primary)' }}>{p.cartonCount}</span></td>
+                  <tr key={p.id} style={{ cursor: 'pointer', backgroundColor: selectedPallet?.id === p.id ? 'var(--bg-surface-subtle)' : '' }} onClick={() => handlePalletClick(p)} className="hover-row">
+                    <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{p.palletNo}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)' }} className="tabular-nums">{p.orderNo}</td>
+                    <td><code className="tabular-nums" style={{ fontSize: '0.8125rem' }}>{p.sscc}</code></td>
+                    <td><span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--primary)' }}>{p.cartonCount}</span></td>
                     <td>
-                      <span className={`badge badge-${p.status.toLowerCase()}`}>
+                      <span className={`tt-badge ${p.status === 'Open' ? 'tt-badge-warning' : p.status === 'Closed' ? 'tt-badge-success' : p.status === 'Printed' ? 'tt-badge-primary' : 'tt-badge-neutral'}`}>
                         {p.status === 'Open' ? 'Açık' : p.status === 'Closed' ? 'Kapalı' : p.status === 'Printed' ? 'Yazdırıldı' : 'Sevk Edildi'}
                       </span>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button className="btn btn-secondary" style={{ padding: '6px 10px' }} onClick={() => handlePalletClick(p)} title="Detay Göster">
-                          <Eye size={14} />
+                        <button className="btn btn-secondary" style={{ padding: '4px 8px', height: '28px', fontSize: '0.8125rem' }} onClick={() => handlePalletClick(p)} title="Detay Göster">
+                          <Eye size={13} />
                         </button>
                         {hasPermission('pallets.print') && (
-                          <button className="btn btn-primary" style={{ padding: '6px 10px' }} onClick={() => handlePrintPdf(p.id)} title="PDF Etiketi İndir">
-                            <Printer size={14} />
+                          <button className="btn btn-primary" style={{ padding: '4px 8px', height: '28px', fontSize: '0.8125rem' }} onClick={() => handlePrintPdf(p.id)} title="PDF Etiketi İndir">
+                            <Printer size={13} />
                           </button>
                         )}
                         {hasPermission('pallets.create') && p.status !== 'Shipped' && (
-                          <button className="btn btn-secondary" style={{ padding: '6px 10px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5' }} onClick={() => handleDeletePallet(p.id)} title="Paleti Sil (Boz)">
-                            <Trash2 size={14} />
+                          <button className="btn btn-danger" style={{ padding: '4px 8px', height: '28px', fontSize: '0.8125rem' }} onClick={() => handleDeletePallet(p.id)} title="Paleti Sil (Boz)">
+                            <Trash2 size={13} />
                           </button>
                         )}
                       </div>
@@ -430,33 +433,38 @@ export const Pallets: React.FC = () => {
             </tbody>
           </table>
           <div className="pagination">
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Toplam: {totalCount} palet</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Toplam: <strong className="tabular-nums">{totalCount}</strong> palet</span>
             <div className="pagination-buttons">
-              <button className="btn btn-secondary" style={{ padding: '6px 12px' }} disabled={page === 1} onClick={() => setPage(p => p - 1)}>Önceki</button>
-              <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', fontSize: '0.9rem', fontWeight: 600 }}>{page}</span>
-              <button className="btn btn-secondary" style={{ padding: '6px 12px' }} disabled={page * 10 >= totalCount} onClick={() => setPage(p => p + 1)}>Sonraki</button>
+              <button className="btn btn-secondary" style={{ padding: '4px 10px', height: '28px', fontSize: '0.8125rem' }} disabled={page === 1} onClick={() => setPage(p => p - 1)}>Önceki</button>
+              <span className="tabular-nums" style={{ display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: '0.8125rem', fontWeight: 600 }}>{page}</span>
+              <button className="btn btn-secondary" style={{ padding: '4px 10px', height: '28px', fontSize: '0.8125rem' }} disabled={page * 10 >= totalCount} onClick={() => setPage(p => p + 1)}>Sonraki</button>
             </div>
           </div>
         </div>
 
         {/* Pallet Detail & Adding carton */}
         {selectedPallet && (
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignSelf: 'start' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignSelf: 'start', padding: '16px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem' }}>{selectedPallet.palletNo} Detayları</h3>
-                <code style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SSCC: {selectedPallet.sscc}</code>
+                <h3 style={{ fontSize: '1.0625rem', fontWeight: 600, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Layers size={18} color="var(--primary)" />
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>{selectedPallet.palletNo}</span> Detayları
+                </h3>
+                <code className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '2px', display: 'inline-block' }}>SSCC: {selectedPallet.sscc}</code>
               </div>
-              <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem', marginLeft: 'auto' }} onClick={() => setSelectedPallet(null)}>Kapat</button>
+              <button className="btn btn-secondary btn-icon" style={{ width: '28px', height: '28px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedPallet(null)} aria-label="Kapat">
+                <X size={15} />
+              </button>
             </div>
 
             {hasPermission('pallets.print') && (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handlePrintPdf(selectedPallet.id)}>
-                  <Printer size={16} /> PDF Etiketi İndir
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-primary" style={{ flex: 1, height: '36px', fontSize: '0.8125rem' }} onClick={() => handlePrintPdf(selectedPallet.id)}>
+                  <Printer size={15} /> PDF Etiketi İndir
                 </button>
-                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handlePrintZpl(selectedPallet.id)}>
-                  <Barcode size={16} /> ZPL Kodu Üret
+                <button className="btn btn-secondary" style={{ flex: 1, height: '36px', fontSize: '0.8125rem' }} onClick={() => handlePrintZpl(selectedPallet.id)}>
+                  <Barcode size={15} /> ZPL Kodu Üret
                 </button>
               </div>
             )}
@@ -464,13 +472,14 @@ export const Pallets: React.FC = () => {
             {/* ZPL Code */}
             {zplOutput && (
               <pre style={{
-                backgroundColor: '#0f172a',
-                color: '#38bdf8',
+                backgroundColor: 'var(--bg-canvas)',
+                color: 'var(--primary)',
                 padding: '12px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-sm)',
                 fontSize: '0.75rem',
                 overflowX: 'auto',
-                fontFamily: 'monospace'
+                fontFamily: 'var(--font-mono)',
+                border: '1px solid var(--border-subtle)'
               }}>
                 {zplOutput}
               </pre>
@@ -478,48 +487,48 @@ export const Pallets: React.FC = () => {
 
             {/* Scan Carton to Pallet Form */}
             {selectedPallet.status === 'Open' && hasPermission('pallets.create') ? (
-              <form onSubmit={handleAddCarton} className="card" style={{ padding: '16px', backgroundColor: 'var(--primary-light)', border: '1px solid #bfdbfe' }}>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '8px', color: 'var(--primary)' }}>Koli Ekle (SSCC Okutun)</h4>
+              <form onSubmit={handleAddCarton} className="card" style={{ padding: '14px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', boxShadow: 'none' }}>
+                <h4 style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '8px', color: 'var(--text-main)' }}>Koli Ekle (SSCC Okutun)</h4>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="text"
-                    className="form-input"
+                    className="form-input tabular-nums"
                     required
-                    style={{ flex: 1, height: '40px' }}
+                    style={{ flex: 1, height: '36px', fontSize: '0.8125rem' }}
                     placeholder="34630477370000..."
                     value={cartonSSCCInput}
                     onChange={(e) => setCartonSSCCInput(e.target.value)}
                   />
-                  <button type="submit" className="btn btn-primary" style={{ height: '40px' }}>Ekle</button>
+                  <button type="submit" className="btn btn-primary" style={{ height: '36px', padding: '0 16px', fontSize: '0.8125rem' }}>Ekle</button>
                 </div>
               </form>
             ) : selectedPallet.status === 'Open' && !hasPermission('pallets.create') ? null : (
-              <div style={{ padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '4px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <div style={{ padding: '10px 14px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-sm)', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
                 Bu palet kapatıldığı için yeni koli ekleme yapılamaz.
               </div>
             )}
 
             {/* Manual Close Pallet Action */}
             {selectedPallet.status === 'Open' && hasPermission('pallets.close') && (
-              <button className="btn btn-danger" style={{ width: '100%', height: '42px' }} onClick={() => handleClosePallet(selectedPallet.id)}>
+              <button className="btn btn-warning" style={{ width: '100%', height: '36px', fontSize: '0.8125rem' }} onClick={() => handleClosePallet(selectedPallet.id)}>
                 Paleti Kapat (Closed)
               </button>
             )}
 
             {/* Delete Pallet Action */}
             {selectedPallet.status !== 'Shipped' && hasPermission('pallets.create') && (
-              <button className="btn btn-secondary" style={{ width: '100%', height: '42px', backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => handleDeletePallet(selectedPallet.id)}>
-                <Trash2 size={16} /> Paleti Sil (Boz)
+              <button className="btn btn-danger" style={{ width: '100%', height: '36px', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => handleDeletePallet(selectedPallet.id)}>
+                <Trash2 size={15} /> Paleti Sil (Boz)
               </button>
             )}
 
             {/* Cartons List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <h4 style={{ fontSize: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
-                Palet İçindeki Koliler ({selectedPallet.cartonCount})
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px', margin: 0, color: 'var(--text-main)' }}>
+                Palet İçindeki Koliler (<span className="tabular-nums">{selectedPallet.cartonCount}</span>)
               </h4>
               {cartonsLoading ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Koli listesi yükleniyor...</div>
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Koli listesi yükleniyor...</div>
               ) : palletCartons.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Bu palete henüz koli eklenmemiş.</div>
               ) : (
@@ -530,21 +539,21 @@ export const Pallets: React.FC = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       backgroundColor: 'var(--bg-surface-subtle)',
-                      padding: '10px',
-                      borderRadius: '4px',
-                      fontSize: '0.8rem',
-                      border: '1px solid var(--border-color)'
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.8125rem',
+                      border: '1px solid var(--border-subtle)'
                     }}>
                       <div>
-                        <strong>{c.cartonNo}</strong>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SSCC: {c.sscc}</div>
+                        <strong style={{ fontFamily: 'var(--font-mono)' }}>{c.cartonNo}</strong>
+                        <div className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SSCC: {c.sscc}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontWeight: 600 }}>{c.actualQuantity} adet</span>
+                        <span className="tabular-nums" style={{ fontWeight: 600 }}>{c.actualQuantity} adet</span>
                         {hasPermission('pallets.create') && (
                           <button 
                             className="btn btn-secondary" 
-                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                            style={{ padding: '3px 8px', fontSize: '0.75rem', height: '24px' }}
                             onClick={() => handleOpenTransferModal(c)}
                           >
                             Taşı
@@ -578,48 +587,50 @@ export const Pallets: React.FC = () => {
         {showCreateDrawer && (
           <>
             {/* Header */}
-            <div className="drawer-header">
+            <div className="drawer-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
               <div className="drawer-header-title-area">
-                <h3 id="drawer-title">Yeni Palet</h3>
-                <span className="drawer-header-subtitle">Aktif bir sipariş seçerek yeni bir palet oluşturun.</span>
+                <h3 id="drawer-title" style={{ fontSize: '1.0625rem', fontWeight: 600, margin: 0 }}>Yeni Palet Aç</h3>
+                <span className="drawer-header-subtitle" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Aktif bir sipariş seçerek yeni bir palet oluşturun.</span>
               </div>
               <button 
                 type="button" 
-                className="drawer-close-btn" 
+                className="btn btn-secondary btn-icon" 
+                style={{ width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onClick={() => setShowCreateDrawer(false)}
                 aria-label="Kapat"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             {/* Step Indicator */}
-            <div className="drawer-steps">
+            <div className="drawer-steps" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <div className={`drawer-step-item ${createStep === 1 ? 'active' : createStep > 1 ? 'completed' : ''}`}>
                 <div className="drawer-step-number">{createStep > 1 ? <Check size={12} strokeWidth={3} /> : '1'}</div>
-                <span>Sipariş Seç</span>
+                <span style={{ fontSize: '0.8125rem' }}>Sipariş Seç</span>
               </div>
               <div className={`drawer-step-divider ${createStep > 1 ? (createStep > 2 ? 'completed' : 'active') : ''}`} />
               <div className={`drawer-step-item ${createStep === 2 ? 'active' : createStep > 2 ? 'completed' : ''}`}>
                 <div className="drawer-step-number">{createStep > 2 ? <Check size={12} strokeWidth={3} /> : '2'}</div>
-                <span>Onay</span>
+                <span style={{ fontSize: '0.8125rem' }}>Onay</span>
               </div>
               <div className={`drawer-step-divider ${createStep > 2 ? 'completed' : ''}`} />
               <div className={`drawer-step-item ${createStep === 3 ? 'completed' : ''}`}>
                 <div className="drawer-step-number">3</div>
-                <span>Tamamlandı</span>
+                <span style={{ fontSize: '0.8125rem' }}>Tamamlandı</span>
               </div>
             </div>
 
             {/* Body */}
-            <div className="drawer-body">
+            <div className="drawer-body" style={{ padding: '16px 20px' }}>
               {createStep === 1 && (
                 <>
-                  <div className="drawer-search-wrapper">
-                    <Search size={18} className="drawer-search-icon" />
+                  <div className="drawer-search-wrapper" style={{ marginBottom: '16px' }}>
+                    <Search size={16} className="drawer-search-icon" style={{ color: 'var(--text-muted)' }} />
                     <input
                       type="text"
-                      className="drawer-search-input"
+                      className="drawer-search-input form-input"
+                      style={{ height: '36px', fontSize: '0.85rem' }}
                       placeholder="Sipariş No, Müşteri veya Stok Kodu Ara..."
                       value={drawerSearch}
                       onChange={(e) => setDrawerSearch(e.target.value)}
@@ -660,7 +671,7 @@ export const Pallets: React.FC = () => {
 
                         if (filtered.length === 0) {
                           return (
-                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                               Aktif sipariş bulunamadı.
                             </div>
                           );
@@ -696,11 +707,11 @@ export const Pallets: React.FC = () => {
                             >
                               <div className="order-select-card-header">
                                 <div style={{ flex: 1 }}>
-                                  <div className="order-select-card-no">
-                                    {order.orderNo}
-                                    <span className="badge badge-active" style={{ fontSize: '0.7rem', padding: '2px 6px', margin: 0, backgroundColor: '#eff6ff', color: '#2563eb' }}>Aktif</span>
+                                  <div className="order-select-card-no" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontFamily: 'var(--font-mono)' }}>{order.orderNo}</span>
+                                    <span className="tt-badge tt-badge-primary" style={{ fontSize: '0.6875rem' }}>Aktif</span>
                                   </div>
-                                  <div className="order-select-card-customer">{order.customerName}</div>
+                                  <div className="order-select-card-customer" style={{ fontSize: '0.8125rem' }}>{order.customerName}</div>
                                 </div>
                                 <div className="order-select-card-check">
                                   <Check size={12} strokeWidth={3} />
@@ -710,32 +721,32 @@ export const Pallets: React.FC = () => {
                               <div className="order-select-card-metrics-grid">
                                 <div className="order-select-card-metric">
                                   <span className="order-select-card-metric-label">Toplam Koli</span>
-                                  <span className="order-select-card-metric-value">
+                                  <span className="order-select-card-metric-value tabular-nums">
                                     {isCartonsLoading ? <span className="shimmer skeleton-text-sm" /> : totalCartons}
                                   </span>
                                 </div>
                                 <div className="order-select-card-metric">
                                   <span className="order-select-card-metric-label">Açık Koli</span>
-                                  <span className="order-select-card-metric-value" style={{ color: '#2563eb' }}>
+                                  <span className="order-select-card-metric-value tabular-nums" style={{ color: 'var(--warning-text)' }}>
                                     {isCartonsLoading ? <span className="shimmer skeleton-text-sm" /> : openCount}
                                   </span>
                                 </div>
                                 <div className="order-select-card-metric">
                                   <span className="order-select-card-metric-label">Kapanan</span>
-                                  <span className="order-select-card-metric-value" style={{ color: '#10b981' }}>
+                                  <span className="order-select-card-metric-value tabular-nums" style={{ color: 'var(--success)' }}>
                                     {isCartonsLoading ? <span className="shimmer skeleton-text-sm" /> : completedCount}
                                   </span>
                                 </div>
                               </div>
 
                               <div className="order-select-card-footer">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}>
                                   <Clock size={12} />
-                                  Son İşlem: {lastActivityFormatted}
+                                  Son İşlem: <span className="tabular-nums">{lastActivityFormatted}</span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}>
                                   <Package size={12} />
-                                  Ürün: {order.scannedCount} / {order.expectedQuantity}
+                                  Ürün: <span className="tabular-nums">{order.scannedCount} / {order.expectedQuantity}</span>
                                 </div>
                               </div>
                             </div>
@@ -748,82 +759,80 @@ export const Pallets: React.FC = () => {
               )}
 
               {createStep === 2 && selectedOrder && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {/* Live Summary */}
-                  <div className="live-summary-container">
-                    <div className="live-summary-title">Seçilen Sipariş Özeti</div>
-                    <div className="live-summary-row">
-                      <span className="live-summary-label">Sipariş Numarası</span>
-                      <span className="live-summary-value">{selectedOrder.orderNo}</span>
+                  <div className="live-summary-container" style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                    <div className="live-summary-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '12px' }}>Seçilen Sipariş Özeti</div>
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="live-summary-label" style={{ color: 'var(--text-muted)' }}>Sipariş Numarası</span>
+                      <span className="live-summary-value tabular-nums" style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{selectedOrder.orderNo}</span>
                     </div>
-                    <div className="live-summary-row">
-                      <span className="live-summary-label">Müşteri</span>
-                      <span className="live-summary-value">{selectedOrder.customerName}</span>
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="live-summary-label" style={{ color: 'var(--text-muted)' }}>Müşteri</span>
+                      <span className="live-summary-value" style={{ fontWeight: 500 }}>{selectedOrder.customerName}</span>
                     </div>
-                    <div className="live-summary-row">
-                      <span className="live-summary-label">Toplam Koli</span>
-                      <span className="live-summary-value">{(orderCartons[selectedOrder.id] || []).length}</span>
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="live-summary-label" style={{ color: 'var(--text-muted)' }}>Toplam Koli</span>
+                      <span className="live-summary-value tabular-nums" style={{ fontWeight: 600 }}>{(orderCartons[selectedOrder.id] || []).length}</span>
                     </div>
-                    <div className="live-summary-row">
-                      <span className="live-summary-label">Açık Koliler</span>
-                      <span className="live-summary-value" style={{ color: '#2563eb' }}>
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="live-summary-label" style={{ color: 'var(--text-muted)' }}>Açık Koliler</span>
+                      <span className="live-summary-value tabular-nums" style={{ color: 'var(--warning-text)', fontWeight: 600 }}>
                         {(orderCartons[selectedOrder.id] || []).filter(c => c.status === 'Open').length}
                       </span>
                     </div>
-                    <div className="live-summary-row">
-                      <span className="live-summary-label">Tamamlanan Koliler</span>
-                      <span className="live-summary-value" style={{ color: '#10b981' }}>
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="live-summary-label" style={{ color: 'var(--text-muted)' }}>Tamamlanan Koliler</span>
+                      <span className="live-summary-value tabular-nums" style={{ color: 'var(--success)', fontWeight: 600 }}>
                         {(orderCartons[selectedOrder.id] || []).filter(c => c.status === 'Closed' || c.status === 'Printed' || c.status === 'Palletized').length}
                       </span>
                     </div>
-                    <div className="live-summary-row">
-                      <span className="live-summary-label">Ürün Adet (Okutulan / Hedef)</span>
-                      <span className="live-summary-value">{selectedOrder.scannedCount} / {selectedOrder.expectedQuantity}</span>
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="live-summary-label" style={{ color: 'var(--text-muted)' }}>Ürün Adet (Okutulan / Hedef)</span>
+                      <span className="live-summary-value tabular-nums" style={{ fontWeight: 600 }}>{selectedOrder.scannedCount} / {selectedOrder.expectedQuantity}</span>
                     </div>
-                    <div className="live-summary-row" style={{ borderTop: '1px solid #cbd5e1', paddingTop: '12px', marginTop: '4px' }}>
-                      <span className="live-summary-label" style={{ fontWeight: 700 }}>Tahmini Palet Sayısı</span>
-                      <span className="live-summary-value" style={{ fontSize: '1rem', color: '#2563eb', fontWeight: 800 }}>
-                        {Math.ceil((orderCartons[selectedOrder.id] || []).length / selectedOrder.cartonPerPallet)}
+                    <div className="live-summary-row" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', marginTop: '4px' }}>
+                      <span className="live-summary-label" style={{ fontWeight: 600, fontSize: '0.8125rem' }}>Tahmini Palet Sayısı</span>
+                      <span className="live-summary-value tabular-nums" style={{ fontSize: '0.9375rem', color: 'var(--primary)', fontWeight: 700 }}>
+                        {Math.ceil((orderCartons[selectedOrder.id] || []).length / (selectedOrder.cartonPerPallet || 1))}
                       </span>
                     </div>
                   </div>
 
                   {/* System Information */}
-                  <div className="system-info-container">
-                    <div className="system-info-title">Sistem Bilgileri (Readonly)</div>
-                    <div className="system-info-row">
-                      <span className="system-info-label">Palet Numarası</span>
-                      <span className="system-info-value">Otomatik oluşturulur</span>
+                  <div className="system-info-container" style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                    <div className="system-info-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '12px' }}>Sistem Bilgileri (Readonly)</div>
+                    <div className="system-info-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="system-info-label" style={{ color: 'var(--text-muted)' }}>Palet Numarası</span>
+                      <span className="system-info-value" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>Otomatik oluşturulur</span>
                     </div>
-                    <div className="system-info-row">
-                      <span className="system-info-label">SSCC (18 Hane)</span>
-                      <span className="system-info-value">Otomatik oluşturulur</span>
+                    <div className="system-info-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '8px' }}>
+                      <span className="system-info-label" style={{ color: 'var(--text-muted)' }}>SSCC (18 Hane)</span>
+                      <span className="system-info-value" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>Otomatik oluşturulur</span>
                     </div>
-                    <div className="system-info-row">
-                      <span className="system-info-label">Üretim Yöntemi</span>
-                      <span className="system-info-badge">Database Sequence</span>
+                    <div className="system-info-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
+                      <span className="system-info-label" style={{ color: 'var(--text-muted)' }}>Üretim Yöntemi</span>
+                      <span className="tt-badge tt-badge-neutral">Database Sequence</span>
                     </div>
                   </div>
                 </div>
               )}
 
               {createStep === 3 && (
-                <div className="success-screen">
-                  <div className="success-icon-wrapper">
-                    <svg className="success-icon-svg" viewBox="0 0 100 100">
-                      <circle className="success-icon-circle" cx="50" cy="50" r="40" />
-                      <path className="success-icon-check" d="M30,50 L45,65 L70,35" />
-                    </svg>
+                <div className="success-screen" style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <div className="success-icon-wrapper" style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'var(--success-bg)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+                    <Check size={28} strokeWidth={2.5} />
                   </div>
-                  <h3 className="success-heading">Palet Başarıyla Açıldı</h3>
-                  <p className="success-sub">
-                    <strong>{newlyCreatedPallet?.palletNo}</strong> numaralı palet ve <code>{newlyCreatedPallet?.sscc}</code> SSCC barkodu başarıyla üretildi.
+                  <h3 className="success-heading" style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '8px' }}>Palet Başarıyla Açıldı</h3>
+                  <p className="success-sub" style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    <strong style={{ fontFamily: 'var(--font-mono)' }}>{newlyCreatedPallet?.palletNo}</strong> numaralı palet ve <code className="tabular-nums">{newlyCreatedPallet?.sscc}</code> SSCC barkodu başarıyla üretildi.
                   </p>
                   
-                  <div className="success-actions-container" style={{ marginTop: '16px' }}>
+                  <div className="success-actions-container" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <button 
                       type="button" 
-                      className="btn btn-primary drawer-btn-full success-btn-scanning" 
+                      className="btn btn-primary" 
+                      style={{ height: '38px' }}
                       onClick={() => {
                         if (newlyCreatedPallet) {
                           handlePalletClick(newlyCreatedPallet);
@@ -835,7 +844,8 @@ export const Pallets: React.FC = () => {
                     </button>
                     <button 
                       type="button" 
-                      className="btn success-btn-list drawer-btn-full" 
+                      className="btn btn-secondary" 
+                      style={{ height: '38px' }}
                       onClick={() => {
                         setShowCreateDrawer(false);
                       }}
@@ -849,24 +859,25 @@ export const Pallets: React.FC = () => {
 
             {/* Footer */}
             {createStep === 1 && (
-              <div className="drawer-footer">
+              <div className="drawer-footer" style={{ padding: '14px 20px', borderTop: '1px solid var(--border-subtle)' }}>
                 <button
                   type="button"
-                  className="btn btn-primary drawer-btn-full"
+                  className="btn btn-primary"
+                  style={{ width: '100%', height: '38px' }}
                   disabled={!selectedOrder}
                   onClick={() => setCreateStep(2)}
                 >
-                  Devam Et <ArrowRight size={16} />
+                  Devam Et <ArrowRight size={15} />
                 </button>
               </div>
             )}
 
             {createStep === 2 && selectedOrder && (
-              <div className="drawer-footer" style={{ display: 'flex', gap: '12px' }}>
+              <div className="drawer-footer" style={{ display: 'flex', gap: '10px', padding: '14px 20px', borderTop: '1px solid var(--border-subtle)' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  style={{ flex: 1, height: '48px', fontWeight: 600 }}
+                  style={{ flex: 1, height: '38px', fontWeight: 600 }}
                   disabled={palletCreationLoading}
                   onClick={() => setCreateStep(1)}
                 >
@@ -875,11 +886,11 @@ export const Pallets: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  style={{ flex: 2, height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 600 }}
+                  style={{ flex: 2, height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 600 }}
                   disabled={palletCreationLoading}
                   onClick={handleCreatePallet}
                 >
-                  {palletCreationLoading ? <Loader2 size={16} className="spinner" /> : 'Palet Oluştur'}
+                  {palletCreationLoading ? <Loader2 size={15} className="spinner" /> : 'Palet Oluştur'}
                 </button>
               </div>
             )}
@@ -889,17 +900,23 @@ export const Pallets: React.FC = () => {
 
       {/* --- TRANSFER CARTON MODAL --- */}
       {showTransferModal && cartonToTransfer && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div className="card" style={{ width: '100%', maxWidth: '450px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              Koli Taşı: {cartonToTransfer.cartonNo}
-            </h3>
-            <form onSubmit={handleTransferCarton}>
-              <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label className="form-label">Hedef Palet Seçin (Açık Paletler) *</label>
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '460px' }}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 600 }}>
+                Koli Taşı: <span style={{ fontFamily: 'var(--font-mono)' }}>{cartonToTransfer.cartonNo}</span>
+              </h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => { setShowTransferModal(false); setCartonToTransfer(null); }}>
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleTransferCarton} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Hedef Palet Seçin (Açık Paletler) <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <select
                   className="form-input"
                   required
+                  style={{ height: '36px', fontSize: '0.85rem' }}
                   value={destinationPalletId}
                   onChange={(e) => setDestinationPalletId(e.target.value)}
                 >
@@ -909,14 +926,18 @@ export const Pallets: React.FC = () => {
                   ))}
                 </select>
                 {openPallets.length === 0 && (
-                  <p style={{ color: 'var(--danger-text)', fontSize: '0.8rem', marginTop: '8px' }}>
+                  <p style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '6px', marginBottom: 0 }}>
                     Bu siparişe ait başka açık palet bulunmamaktadır. Lütfen önce yeni bir palet açın.
                   </p>
                 )}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowTransferModal(false); setCartonToTransfer(null); }}>İptal</button>
-                <button type="submit" className="btn btn-primary" disabled={!destinationPalletId}>Koli Taşı</button>
+              <div className="modal-footer" style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button type="button" className="btn btn-secondary" style={{ height: '36px', padding: '0 16px' }} onClick={() => { setShowTransferModal(false); setCartonToTransfer(null); }}>
+                  İptal
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ height: '36px', padding: '0 16px' }} disabled={!destinationPalletId}>
+                  Koli Taşı
+                </button>
               </div>
             </form>
           </div>

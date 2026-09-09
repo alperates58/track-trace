@@ -327,11 +327,11 @@ export const Shipments: React.FC = () => {
                       {detail.items.map(item => (
                         <tr key={item.id}>
                           <td><TTBadge variant={item.itemType === 'Pallet' ? 'primary' : 'info'} size="sm">{item.itemType === 'Pallet' ? 'Palet' : 'Koli'}</TTBadge></td>
-                          <td><strong>{item.entityNo}</strong><small>{item.sscc}</small></td>
-                          <td>{item.orderNo}</td>
-                          <td>{item.cartonCount} koli · {item.productCount} ürün</td>
+                          <td><strong style={{ fontFamily: 'var(--font-mono)' }} className="tabular-nums">{item.entityNo}</strong><small>{item.sscc}</small></td>
+                          <td style={{ fontFamily: 'var(--font-mono)' }} className="tabular-nums">{item.orderNo}</td>
+                          <td className="tabular-nums">{item.cartonCount} koli · {item.productCount} ürün</td>
                           <td>{item.scannedBy || '-'}<small>{new Date(item.scannedAt).toLocaleTimeString('tr-TR')}</small></td>
-                          {isDraft && <td>{hasPermission('shipments.scan') && <button className="shipment-remove-button" onClick={() => removeItem(item)} title="Çıkar"><Trash2 size={17} /></button>}</td>}
+                          {isDraft && <td>{hasPermission('shipments.scan') && <button className="shipment-remove-button" onClick={() => removeItem(item)} title="Çıkar"><Trash2 size={16} /></button>}</td>}
                         </tr>
                       ))}
                     </tbody>

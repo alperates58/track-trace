@@ -260,74 +260,64 @@ export const PrintSettings: React.FC = () => {
   }
 
   return (
-    <div className="page-container print-settings-page">
+    <div className="page-container print-settings-page" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       <TTPageHeader 
         title="Yazdırma Ayarları" 
-        description="Sistem genelinde kullanılacak çoklu yazdırma modu ve etiket yapılandırmaları" 
+        description="Sistem genelinde kullanılacak çoklu yazdırma modu, yerel agent ve etiket yapılandırmaları" 
       />
 
-      <div className="print-settings-summary" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <TTCard>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Ayar Kaynağı</div>
-            <div style={{ fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', color: isUsingLocalOverride ? 'var(--warning)' : 'var(--primary)' }}>
-              {isUsingLocalOverride ? 'Local Override (Bu PC)' : 'Global Default'}
-            </div>
-            {isUsingLocalOverride && (
-              <button 
-                onClick={clearLocalOverride}
-                style={{ fontSize: '0.75rem', color: 'var(--danger)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginTop: '4px' }}
-              >
-                Yerel ayarı temizle
-              </button>
-            )}
+      <div className="print-settings-summary" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Ayar Kaynağı</div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: isUsingLocalOverride ? '#d97706' : 'var(--primary)' }}>
+            {isUsingLocalOverride ? 'Local Override (Bu PC)' : 'Global Default'}
           </div>
-        </TTCard>
+          {isUsingLocalOverride && (
+            <button 
+              onClick={clearLocalOverride}
+              style={{ fontSize: '0.75rem', color: '#dc2626', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginTop: '6px', fontWeight: 600 }}
+            >
+              Yerel ayarı temizle
+            </button>
+          )}
+        </div>
 
-        <TTCard>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Aktif Yazdırma Modu</div>
-            <div style={{ fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {config.printMode === 'browser' && <><MonitorPlay size={18} className="text-primary" /> Browser Auto Print</>}
-              {config.printMode === 'pdf' && <><FileDown size={18} className="text-primary" /> PDF Download</>}
-              {config.printMode === 'zpl' && <><FileDown size={18} className="text-primary" /> ZPL Download</>}
-              {config.printMode === 'agent' && <><Server size={18} className="text-primary" /> Local Agent</>}
-            </div>
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Aktif Yazdırma Modu</div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary, var(--text-main))' }}>
+            {config.printMode === 'browser' && <><MonitorPlay size={16} style={{ color: 'var(--primary)' }} /> Browser Auto Print</>}
+            {config.printMode === 'pdf' && <><FileDown size={16} style={{ color: 'var(--primary)' }} /> PDF Download</>}
+            {config.printMode === 'zpl' && <><FileDown size={16} style={{ color: 'var(--primary)' }} /> ZPL Download</>}
+            {config.printMode === 'agent' && <><Server size={16} style={{ color: 'var(--primary)' }} /> Local Agent</>}
           </div>
-        </TTCard>
+        </div>
         
-        <TTCard>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Varsayılan Etiket Formatı</div>
-            <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{config.defaultFormat.toUpperCase()}</div>
-          </div>
-        </TTCard>
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Varsayılan Etiket</div>
+          <div className="font-mono" style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary, var(--text-main))' }}>{config.defaultFormat.toUpperCase()}</div>
+        </div>
 
-        <TTCard>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Otomatik Yazdırma</div>
-            <div style={{ fontWeight: 600, fontSize: '1.1rem', color: config.autoPrintCarton ? 'var(--success)' : 'var(--text-muted)' }}>
-              {config.autoPrintCarton ? 'Aktif (Koli)' : 'Pasif'}
-            </div>
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Otomatik Yazdırma</div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: config.autoPrintCarton ? '#10b981' : 'var(--text-secondary, var(--text-muted))' }}>
+            {config.autoPrintCarton ? 'Aktif (Koli)' : 'Pasif'}
           </div>
-        </TTCard>
+        </div>
 
-        <TTCard>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Son Baskı Durumu</div>
-            <div style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--success)' }}>Başarılı</div>
-          </div>
-        </TTCard>
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Son Baskı Durumu</div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#10b981' }}>Başarılı</div>
+        </div>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
-        <div className="print-settings-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
+      <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle, var(--border-color))', borderRadius: 'var(--radius-md, 8px)', overflow: 'hidden' }}>
+        <div className="print-settings-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle, var(--border-color))', overflowX: 'auto', padding: '0 8px' }}>
           {[
-            { id: 'general', label: 'Genel Ayarlar', icon: <Settings size={16} /> },
-            { id: 'browser', label: 'Browser Auto Print', icon: <MonitorPlay size={16} /> },
-            { id: 'pdfzpl', label: 'PDF / ZPL', icon: <FileDown size={16} /> },
-            { id: 'agent', label: 'Local Agent', icon: <Server size={16} /> },
-            { id: 'guide', label: 'Kurulum Rehberi', icon: <Info size={16} /> }
+            { id: 'general', label: 'Genel Ayarlar', icon: <Settings size={15} /> },
+            { id: 'browser', label: 'Browser Auto Print', icon: <MonitorPlay size={15} /> },
+            { id: 'pdfzpl', label: 'PDF / ZPL', icon: <FileDown size={15} /> },
+            { id: 'agent', label: 'Local Agent', icon: <Server size={15} /> },
+            { id: 'guide', label: 'Kurulum Rehberi', icon: <Info size={15} /> }
           ].map(tab => (
             <button
               key={tab.id}
@@ -336,14 +326,16 @@ export const PrintSettings: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '16px 24px',
+                padding: '12px 18px',
                 background: 'none',
                 border: 'none',
                 borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
-                color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-secondary, var(--text-muted))',
                 fontWeight: activeTab === tab.id ? 600 : 500,
+                fontSize: '0.86rem',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease'
               }}
             >
               {tab.icon} {tab.label}
@@ -353,35 +345,37 @@ export const PrintSettings: React.FC = () => {
 
         <div className="print-settings-content" style={{ padding: '24px' }}>
           {activeTab === 'general' && (
-            <div style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="form-group">
-                <label>Varsayılan Yazdırma Modu</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', marginBottom: '6px', display: 'block' }}>Varsayılan Yazdırma Modu</label>
                 <select 
                   className="form-input" 
                   value={config.printMode} 
                   onChange={(e) => handleSaveLocal({ printMode: e.target.value as any })}
+                  style={{ height: '36px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
                 >
                   <option value="browser">Browser Auto Print</option>
                   <option value="pdf">PDF Download</option>
                   <option value="zpl">ZPL Download</option>
                   <option value="agent" disabled={!agentToken}>Local Print Agent</option>
                 </select>
-                <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                <small style={{ color: 'var(--text-secondary, var(--text-muted))', marginTop: '4px', display: 'block', fontSize: '0.78rem' }}>
                   Bu ayar tarayıcı bazlıdır ve o anki cihazın davranışını belirler.
                 </small>
                 {!agentToken && (
-                  <small style={{ color: 'var(--warning)', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#d97706', marginTop: '4px', display: 'block', fontSize: '0.78rem' }}>
                     Local Print Agent modunu seçebilmek için 'Local Agent' sekmesinden Pairing Token girmelisiniz.
                   </small>
                 )}
               </div>
 
               <div className="form-group">
-                <label>Varsayılan Etiket Tipi</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', marginBottom: '6px', display: 'block' }}>Varsayılan Etiket Tipi</label>
                 <select 
                   className="form-input" 
                   value={config.defaultLabelType}
                   onChange={(e) => handleSaveLocal({ defaultLabelType: e.target.value as any })}
+                  style={{ height: '36px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
                 >
                   <option value="carton">Koli Etiketi</option>
                   <option value="pallet">Palet Etiketi</option>
@@ -389,73 +383,79 @@ export const PrintSettings: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label>Varsayılan Format</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', marginBottom: '6px', display: 'block' }}>Varsayılan Format</label>
                 <select 
                   className="form-input" 
                   value={config.defaultFormat}
                   onChange={(e) => handleSaveLocal({ defaultFormat: e.target.value as any })}
+                  style={{ height: '36px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
                 >
                   <option value="pdf">PDF</option>
                   <option value="zpl">ZPL</option>
                 </select>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: config.printMode === 'pdf' ? 'not-allowed' : 'pointer', opacity: config.printMode === 'pdf' ? 0.6 : 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: config.printMode === 'pdf' ? 'not-allowed' : 'pointer', opacity: config.printMode === 'pdf' ? 0.6 : 1, fontSize: '0.85rem' }}>
                   <input 
                     type="checkbox" 
                     checked={config.printMode === 'pdf' ? false : config.autoPrintCarton}
                     disabled={config.printMode === 'pdf'}
                     onChange={(e) => handleSaveLocal({ autoPrintCarton: e.target.checked })}
+                    style={{ accentColor: 'var(--primary)' }}
                   />
                   Koli tamamlanınca otomatik yazdır
                 </label>
                 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: config.printMode === 'pdf' ? 'not-allowed' : 'pointer', opacity: config.printMode === 'pdf' ? 0.6 : 1 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: config.printMode === 'pdf' ? 'not-allowed' : 'pointer', opacity: config.printMode === 'pdf' ? 0.6 : 1, fontSize: '0.85rem' }}>
                   <input 
                     type="checkbox" 
                     checked={config.printMode === 'pdf' ? false : config.autoPrintPallet}
                     disabled={config.printMode === 'pdf'}
                     onChange={(e) => handleSaveLocal({ autoPrintPallet: e.target.checked })}
+                    style={{ accentColor: 'var(--primary)' }}
                   />
                   Palet kapatılınca otomatik yazdır
                 </label>
                 
                 {config.printMode === 'pdf' && (
-                  <div style={{ fontSize: '0.85rem', color: 'var(--warning)', marginTop: '-4px', marginLeft: '24px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#d97706', marginTop: '-4px', marginLeft: '24px' }}>
                     PDF Download modunda otomatik yazdırma desteklenmez. Etiketi manuel olarak indirip yazdırın.
                   </div>
                 )}
                 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
                   <input 
                     type="checkbox" 
                     checked={config.showNotification}
                     onChange={(e) => handleSaveLocal({ showNotification: e.target.checked })}
+                    style={{ accentColor: 'var(--primary)' }}
                   />
                   Yazdırma sonrası bildirim göster
                 </label>
               </div>
 
-              <div className="print-settings-actions" style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+              <div className="print-settings-actions" style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                 <TTButton 
                   variant="primary" 
+                  size="md"
                   onClick={() => handleSaveGlobal(config)}
-                  icon={<Save size={16} />}
+                  icon={<Save size={14} />}
                 >
-                  Şu Anki Ayarları Global Olarak Kaydet
+                  Global Olarak Kaydet
                 </TTButton>
                 <TTButton 
                   variant="secondary" 
+                  size="md"
                   onClick={handleTestPrint}
-                  icon={<Printer size={16} />}
+                  icon={<Printer size={14} />}
                 >
                   Test Etiketi Yazdır
                 </TTButton>
               </div>
 
               {testMessage && (
-                <div style={{ padding: '12px', marginTop: '12px', borderRadius: '6px', backgroundColor: testMessage.type === 'success' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${testMessage.type === 'success' ? '#bbf7d0' : '#fecaca'}`, color: testMessage.type === 'success' ? '#16a34a' : '#ef4444' }}>
+                <div style={{ padding: '10px 14px', marginTop: '12px', borderRadius: 'var(--radius-sm, 6px)', backgroundColor: testMessage.type === 'success' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${testMessage.type === 'success' ? '#bbf7d0' : '#fecaca'}`, color: testMessage.type === 'success' ? '#16a34a' : '#ef4444', fontSize: '0.85rem' }}>
                   {testMessage.text}
                 </div>
               )}
@@ -464,15 +464,15 @@ export const PrintSettings: React.FC = () => {
 
           {activeTab === 'browser' && (
             <div>
-              <h3 style={{ marginBottom: '16px' }}>Browser Auto Print</h3>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>Browser Auto Print</h3>
+              <p style={{ color: 'var(--text-secondary, var(--text-muted))', marginBottom: '20px', fontSize: '0.85rem' }}>
                 Bu yöntem Chrome'un otomatik yazdırma modu ve varsayılan yazıcı ayarı ile çalışır. 
                 TrackTrace etiketi tarayıcıda açar, Chrome otomatik olarak seçili yazıcıya gönderir.
               </p>
 
-              <div style={{ background: 'var(--bg-body)', padding: '20px', borderRadius: '8px', marginBottom: '24px' }}>
-                <h4 style={{ marginBottom: '12px' }}>Kurulum Adımları</h4>
-                <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ background: 'var(--bg-main)', padding: '16px', borderRadius: 'var(--radius-md, 8px)', marginBottom: '20px', border: '1px solid var(--border-subtle, var(--border-color))' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>Kurulum Adımları</h4>
+                <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem', color: 'var(--text-secondary, var(--text-muted))' }}>
                   <li>Argox / Zebra yazıcı sürücüsünü kur.</li>
                   <li>Argox Printer Tool veya üreticinin yazıcı aracını kur.</li>
                   <li>Windows'ta ilgili yazıcıyı varsayılan yazıcı yap.</li>
@@ -480,22 +480,25 @@ export const PrintSettings: React.FC = () => {
                   <li>Chrome kısayol hedef alanına aşağıdaki parametreleri ekle:</li>
                 </ol>
                 
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px', background: 'var(--bg-card)', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', alignItems: 'center' }}>
-                  <code style={{ flex: 1, wordBreak: 'break-all' }}>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', background: 'var(--bg-card)', padding: '10px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))', alignItems: 'center' }}>
+                  <code className="font-mono" style={{ flex: 1, wordBreak: 'break-all', fontSize: '0.78rem' }}>
                     "C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk-printing --disable-print-preview --printer="ARGOX CP-2140"
                   </code>
-                  <button className="btn btn-secondary btn-icon" onClick={() => copyToClipboard('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk-printing --disable-print-preview --printer="ARGOX CP-2140"')}>
-                    {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
+                  <button 
+                    onClick={() => copyToClipboard('"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk-printing --disable-print-preview --printer="ARGOX CP-2140"')}
+                    style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, var(--text-muted))' }}
+                  >
+                    {copied ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
                   </button>
                 </div>
-                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '8px' }}>
+                <small style={{ color: 'var(--text-secondary, var(--text-muted))', display: 'block', marginTop: '8px', fontSize: '0.75rem' }}>
                   Not: Bazı Chrome sürümlerinde --printer parametresi çalışmayabilir. Bu durumda Windows varsayılan yazıcısı kullanılmalıdır.
                 </small>
               </div>
 
-              <div style={{ padding: '16px', borderLeft: '4px solid var(--warning)', background: 'var(--bg-body)' }}>
-                <h4 style={{ margin: '0 0 8px 0', color: 'var(--warning)' }}>Uyarılar</h4>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-muted)' }}>
+              <div style={{ padding: '14px', borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '0 6px 6px 0' }}>
+                <h4 style={{ margin: '0 0 6px 0', color: '#b45309', fontSize: '0.85rem', fontWeight: 700 }}>Uyarılar</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.8rem' }}>
                   <li>Yazıcı adı Windows'taki tam yazıcı adıyla aynı olmalı.</li>
                   <li>Chrome arka planda açık kalmışsa kapatıp yeniden aç.</li>
                   <li>Varsayılan yazıcı değişirse otomatik baskı farklı yazıcıya gidebilir.</li>
@@ -506,12 +509,12 @@ export const PrintSettings: React.FC = () => {
           )}
 
           {activeTab === 'pdfzpl' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px' }}>
-                <h3 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FileDown size={20} className="text-primary" /> PDF Download
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              <div style={{ background: 'var(--bg-main)', padding: '20px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))' }}>
+                <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                  <FileDown size={18} style={{ color: 'var(--primary)' }} /> PDF Download
                 </h3>
-                <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--text-muted)' }}>
+                <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.82rem' }}>
                   <li>Kullanıcı etiketi PDF olarak indirir.</li>
                   <li>Kendi PDF görüntüleyicisi üzerinden manuel yazdırır.</li>
                   <li>En güvenli ve donanım bağımsız (en uyumlu) yöntemdir.</li>
@@ -519,11 +522,11 @@ export const PrintSettings: React.FC = () => {
                 </ul>
               </div>
 
-              <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px' }}>
-                <h3 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FileDown size={20} className="text-primary" /> ZPL Download
+              <div style={{ background: 'var(--bg-main)', padding: '20px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))' }}>
+                <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                  <FileDown size={18} style={{ color: 'var(--primary)' }} /> ZPL Download
                 </h3>
-                <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--text-muted)' }}>
+                <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px', color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.82rem' }}>
                   <li>Zebra / Argox PPLZ destekli cihazlar için ham ZPL çıktısı alınır.</li>
                   <li>Teknik kullanıcılar için uygundur.</li>
                   <li>ZPL Viewer veya üretici aracı ile test edilebilir.</li>
@@ -535,20 +538,18 @@ export const PrintSettings: React.FC = () => {
 
           {activeTab === 'agent' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <h3 style={{ margin: 0 }}>Local Print Agent</h3>
-                </div>
-                <button 
-                  className="btn btn-primary"
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>Local Print Agent</h3>
+                <TTButton 
+                  variant="primary"
+                  size="md"
                   onClick={handleDownloadAgent}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', padding: '10px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                  icon={<FileDown size={16} />}
                 >
-                  <FileDown size={18} />
                   GitHub'dan Agent İndir
-                </button>
+                </TTButton>
               </div>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
+              <p style={{ color: 'var(--text-secondary, var(--text-muted))', marginBottom: '16px', fontSize: '0.85rem' }}>
                 Tarayıcı kısıtlarından bağımsız olarak yerel yazıcınıza doğrudan yazdırmak için kullanılır. 
                 Bilgisayarınızda çalışan TrackTrace Local Agent ile güvenli haberleşme sağlar.
                 <strong> Her yazdırma bilgisayarına Local Agent ayrı kurulmalıdır. </strong>
@@ -557,21 +558,23 @@ export const PrintSettings: React.FC = () => {
 
               {downloadMessage && (
                 <div style={{
-                  padding: '10px 12px',
+                  padding: '10px 14px',
                   marginBottom: '16px',
-                  borderRadius: '6px',
+                  borderRadius: 'var(--radius-sm, 6px)',
                   backgroundColor: downloadMessage.type === 'success' ? '#f0fdf4' : downloadMessage.type === 'error' ? '#fef2f2' : '#eff6ff',
                   border: `1px solid ${downloadMessage.type === 'success' ? '#bbf7d0' : downloadMessage.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
-                  color: downloadMessage.type === 'success' ? '#16a34a' : downloadMessage.type === 'error' ? '#ef4444' : '#2563eb'
+                  color: downloadMessage.type === 'success' ? '#16a34a' : downloadMessage.type === 'error' ? '#ef4444' : '#2563eb',
+                  fontSize: '0.82rem'
                 }}>
                   {downloadMessage.text}
                 </div>
               )}
 
-              <div style={{ background: 'var(--bg-body)', padding: '24px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                
-                <div className="form-group" style={{ marginBottom: '24px' }}>
-                  <label>Agent Pairing Token <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <div style={{ background: 'var(--bg-main)', padding: '20px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))' }}>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', marginBottom: '6px', display: 'block' }}>
+                    Agent Pairing Token <span style={{ color: 'var(--danger)' }}>*</span>
+                  </label>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <input
                       type="password"
@@ -579,41 +582,42 @@ export const PrintSettings: React.FC = () => {
                       placeholder="Local Agent kurulumu bittiğinde ekranda gösterilen token'ı buraya yapıştırın"
                       value={agentToken}
                       onChange={(e) => handleTokenChange(e.target.value)}
-                      style={{ flex: '1 1 320px' }}
+                      style={{ flex: '1 1 320px', height: '36px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
                     />
-                    <button
+                    <TTButton
                       type="button"
-                      className="btn btn-primary"
+                      variant="primary"
+                      size="md"
                       onClick={handleSaveAgentToken}
-                      style={{ padding: '10px 16px', borderRadius: '6px', fontWeight: 600 }}
                     >
                       Kaydet
-                    </button>
+                    </TTButton>
                   </div>
                   {tokenSaveMessage && (
                     <small style={{
-                      color: tokenSaveMessage.includes('kaydedildi') ? 'var(--success)' : 'var(--danger)',
+                      color: tokenSaveMessage.includes('kaydedildi') ? '#10b981' : '#dc2626',
                       marginTop: '6px',
                       display: 'block',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      fontSize: '0.78rem'
                     }}>
                       {tokenSaveMessage}
                     </small>
                   )}
-                  <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: 'var(--text-secondary, var(--text-muted))', marginTop: '6px', display: 'block', fontSize: '0.75rem' }}>
                     Agent ile güvenli bağlantı kurmak için zorunludur. Local Agent kurulumunu tamamladığınızda son ekranda karşınıza çıkan Pairing Token değerini kopyalayıp buraya yapıştırın. Bu işlem cihaz başına bir kez yapılır.
                   </small>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '16px', background: 'var(--bg-card)', borderRadius: '6px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', padding: '16px', background: 'var(--bg-card)', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))', flexWrap: 'wrap' }}>
                   <div>
-                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>Agent Bağlantı Durumu</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: agentStatusView.color }}></div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-primary, var(--text-main))' }}>Agent Bağlantı Durumu</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.82rem' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: agentStatusView.color }}></div>
                       {agentStatusView.text}
                     </div>
                     {agentStatusDetail && (
-                      <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                      <small style={{ color: 'var(--text-secondary, var(--text-muted))', marginTop: '4px', display: 'block', fontSize: '0.75rem' }}>
                         {agentStatusDetail}
                       </small>
                     )}
@@ -621,7 +625,7 @@ export const PrintSettings: React.FC = () => {
                       <div style={{ marginTop: '8px' }}>
                         <select 
                           className="form-input" 
-                          style={{ width: '100%', maxWidth: '250px', padding: '6px', fontSize: '0.85rem' }}
+                          style={{ width: '100%', maxWidth: '250px', height: '32px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }}
                           value={selectedAgentPrinter}
                           onChange={(e) => handleUpdateAgentPrinter(e.target.value)}
                         >
@@ -633,18 +637,18 @@ export const PrintSettings: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>Port</div>
-                    <div style={{ color: 'var(--text-muted)' }}>127.0.0.1:5000</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-primary, var(--text-main))' }}>Port</div>
+                    <div className="font-mono" style={{ color: 'var(--text-secondary, var(--text-muted))', fontSize: '0.82rem' }}>127.0.0.1:5000</div>
                   </div>
-                  <button
+                  <TTButton
                     type="button"
-                    className="btn btn-secondary"
+                    variant="secondary"
+                    size="md"
                     onClick={handleTestAgentConnection}
                     disabled={agentStatus === 'testing'}
-                    style={{ padding: '10px 16px', borderRadius: '6px', fontWeight: 600, cursor: agentStatus === 'testing' ? 'wait' : 'pointer' }}
                   >
                     {agentStatus === 'testing' ? 'Test ediliyor...' : 'Bağlantıyı Test Et'}
-                  </button>
+                  </TTButton>
                 </div>
               </div>
             </div>

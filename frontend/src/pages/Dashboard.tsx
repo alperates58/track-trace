@@ -168,59 +168,59 @@ export const Dashboard: React.FC = () => {
       />
 
       {/* TOP KPI STATS GRID */}
-      <div className="stats-grid" style={{ marginBottom: '28px' }}>
+      <div className="stats-grid" style={{ marginBottom: '24px' }}>
         <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Aktif Siparişler</span>
-            <span className="stat-value">{data?.activeOrdersCount ?? 0}</span>
+            <span className="stat-value tabular-nums">{(data?.activeOrdersCount ?? 0).toLocaleString('tr-TR')}</span>
             <span className="stat-subtext">Üretim bandında açık</span>
           </div>
           <div className="stat-icon-wrapper stat-blue">
-            <Package size={22} />
+            <Package size={20} />
           </div>
         </div>
 
         <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Açık Koliler</span>
-            <span className="stat-value">{data?.openCartonsCount ?? 0}</span>
+            <span className="stat-value tabular-nums">{(data?.openCartonsCount ?? 0).toLocaleString('tr-TR')}</span>
             <span className="stat-subtext">Dolumu süren aktif koli</span>
           </div>
           <div className="stat-icon-wrapper stat-yellow">
-            <Inbox size={22} />
+            <Inbox size={20} />
           </div>
         </div>
 
         <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Açık Paletler</span>
-            <span className="stat-value">{data?.openPalletsCount ?? 0}</span>
+            <span className="stat-value tabular-nums">{(data?.openPalletsCount ?? 0).toLocaleString('tr-TR')}</span>
             <span className="stat-subtext">Dizilimi devam eden</span>
           </div>
           <div className="stat-icon-wrapper stat-purple">
-            <Layers size={22} />
+            <Layers size={20} />
           </div>
         </div>
 
         <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Bugün Okutulan</span>
-            <span className="stat-value">{data?.scannedTodayCount?.toLocaleString('tr-TR') ?? 0}</span>
+            <span className="stat-value tabular-nums">{data?.scannedTodayCount?.toLocaleString('tr-TR') ?? 0}</span>
             <span className="stat-subtext">Toplam tekil ürün</span>
           </div>
           <div className="stat-icon-wrapper stat-green">
-            <CheckCircle size={22} />
+            <CheckCircle size={20} />
           </div>
         </div>
       </div>
 
       {/* CANLI İSTASYON İZLEME BANDI (LIVE STATIONS MONITOR) */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Server size={18} color="var(--primary)" /> Canlı İstasyon Durumları
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Server size={16} color="var(--primary)" /> Canlı İstasyon Durumları
           </h3>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }} className="tabular-nums">
             Son Güncelleme: {lastUpdated.toLocaleTimeString('tr-TR')}
           </span>
         </div>
@@ -230,7 +230,7 @@ export const Dashboard: React.FC = () => {
             Sistemde kayıtlı aktif istasyon bulunamadı.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
             {liveFeed.activeStations.map(st => {
               const isActive = st.status === 'Active';
               const progressPct = Math.min(100, Math.round((st.cartonCurrentQty / Math.max(1, st.cartonTargetQty)) * 100));
@@ -242,10 +242,10 @@ export const Dashboard: React.FC = () => {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-main)' }}>
                         {st.stationName}
                       </h4>
-                      <span className="station-code-chip">
+                      <span className="station-code-chip tabular-nums">
                         {st.stationCode}
                       </span>
                     </div>
@@ -255,48 +255,48 @@ export const Dashboard: React.FC = () => {
                         width: '6px', 
                         height: '6px', 
                         borderRadius: '50%', 
-                        backgroundColor: isActive ? '#10b981' : 'var(--text-muted)',
-                        boxShadow: isActive ? '0 0 6px #10b981' : 'none'
+                        backgroundColor: isActive ? 'var(--success)' : 'var(--text-muted)',
+                        boxShadow: isActive ? '0 0 6px var(--success)' : 'none'
                       }} />
                       {isActive ? 'PAKETLENİYOR' : 'BEKLEMEDE'}
                     </span>
                   </div>
 
                   {isActive ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ fontSize: '0.8125rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Sipariş No:</span>
-                        <strong style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', letterSpacing: '0.02em' }}>
+                        <strong className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontWeight: 600 }}>
                           {st.currentOrderNo}
                         </strong>
                       </div>
                       
-                      <div style={{ fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.8125rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Stok Kodu:</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-main)' }}>
+                        <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-main)' }}>
                           {st.currentStockCode}
                         </span>
                       </div>
 
-                      <div style={{ fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.8125rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Ürün Adı:</span>
-                        <span style={{ fontWeight: 600, color: 'var(--text-main)', textAlign: 'right', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={st.currentProductName}>
+                        <span style={{ fontWeight: 500, color: 'var(--text-main)', textAlign: 'right', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={st.currentProductName}>
                           {st.currentProductName || '-'}
                         </span>
                       </div>
 
-                      <div style={{ fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.8125rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Operatör:</span>
-                        <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-main)' }}>
+                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-main)' }}>
                           <User size={13} color="var(--primary)" /> {st.operatorName || 'Operatör'}
                         </span>
                       </div>
 
                       {/* Live Carton Progress */}
                       <div className="station-progress-box">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 600 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600 }}>
                           <span style={{ color: 'var(--text-muted)' }}>Aktif Koli ({st.currentCartonNo})</span>
-                          <span style={{ color: progressPct === 100 ? '#10b981' : 'var(--primary)' }}>
+                          <span className="tabular-nums" style={{ color: progressPct === 100 ? 'var(--success)' : 'var(--primary)' }}>
                             {st.cartonCurrentQty} / {st.cartonTargetQty} ({progressPct}%)
                           </span>
                         </div>
@@ -308,17 +308,17 @@ export const Dashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
-                        <span>Bugün: <strong style={{ color: 'var(--text-main)' }}>{st.itemsScannedToday || 0} Ürün</strong></span>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginTop: '2px' }} className="tabular-nums">
+                        <span>Bugün: <strong style={{ color: 'var(--text-main)', fontWeight: 600 }}>{st.itemsScannedToday || 0} Ürün</strong></span>
                         <span>Son: {getRelativeSeconds(st.lastScannedAt) || 'Az önce'} {st.stationPaceSecondsPerItem ? `• ⚡ ${st.stationPaceSecondsPerItem.toFixed(1)} sn` : ''}</span>
                       </div>
                     </div>
                   ) : (
                     <div style={{ padding: '20px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                         İstasyon hazır • Barkod bekleniyor
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600 }}>
+                      <span className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
                         Bugün Toplam: {st.itemsScannedToday || 0} Ürün
                       </span>
                     </div>
@@ -335,26 +335,26 @@ export const Dashboard: React.FC = () => {
         {/* CANLI QR OKUTMA AKIŞI (LIVE STREAM FEED) */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
-              <Zap size={18} color="#10b981" /> Canlı QR Okutma Akışı
+            <h3 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+              <Zap size={16} color="var(--success)" /> Canlı QR Okutma Akışı
             </h3>
-            <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700, backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '3px 9px', borderRadius: '20px' }}>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--success)', fontWeight: 600, backgroundColor: 'var(--success-bg)', border: '1px solid var(--success-border)', padding: '2px 8px', borderRadius: 'var(--radius-xs)' }}>
               Anlık Yayın
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
             {!liveFeed?.recentScansFeed || liveFeed.recentScansFeed.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', textAlign: 'center', padding: '36px' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', textAlign: 'center', padding: '36px' }}>
                 Henüz canlı okutma akışı bulunmuyor.
               </p>
             ) : (
               liveFeed.recentScansFeed.map((item) => (
                 <div key={item.id} className="feed-item scan-item">
                   <div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)' }}>{item.orderNo}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>| Koli: {item.cartonNo}</span>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)' }}>{item.orderNo}</span>
+                      <span className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>| Koli: {item.cartonNo}</span>
                     </div>
                     <div className="feed-item-subtext">
                       Stok: {item.stockCode} — {item.stationName} ({item.operatorName})
@@ -362,10 +362,10 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontWeight: 700, color: '#10b981', fontSize: '0.78rem', display: 'block' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--success)', fontSize: '0.75rem', display: 'block' }}>
                       ✓ OKUNDU
                     </span>
-                    <span className="feed-item-time">
+                    <span className="feed-item-time tabular-nums">
                       {new Date(item.scannedAt).toLocaleTimeString('tr-TR')}
                     </span>
                   </div>
@@ -378,17 +378,17 @@ export const Dashboard: React.FC = () => {
         {/* RECENT AUDIT ACTIVITIES */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
-              <Activity size={18} color="var(--primary)" /> Son İşlemler (Audit Feed)
+            <h3 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+              <Activity size={16} color="var(--primary)" /> Son İşlemler (Audit Feed)
             </h3>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', fontWeight: 500 }}>
               Sistem Günlüğü
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
             {!data?.recentActivities || data.recentActivities.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', textAlign: 'center', padding: '36px' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', textAlign: 'center', padding: '36px' }}>
                 Henüz kayıtlı bir işlem yok.
               </p>
             ) : (
@@ -402,7 +402,7 @@ export const Dashboard: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <span className="feed-item-time">
+                  <span className="feed-item-time tabular-nums">
                     {new Date(act.createdAt).toLocaleTimeString('tr-TR')}
                   </span>
                 </div>

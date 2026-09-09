@@ -345,21 +345,21 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Draft': return <span className="badge badge-gray">Taslak</span>;
-      case 'Active': return <span className="badge badge-blue">Aktif</span>;
-      case 'Completed': return <span className="badge badge-green">Tamamlandı</span>;
-      case 'Cancelled': return <span className="badge badge-red">İptal</span>;
-      default: return <span className="badge">{status}</span>;
+      case 'Draft': return <span className="tt-badge tt-badge-neutral">Taslak</span>;
+      case 'Active': return <span className="tt-badge tt-badge-primary">Aktif</span>;
+      case 'Completed': return <span className="tt-badge tt-badge-success">Tamamlandı</span>;
+      case 'Cancelled': return <span className="tt-badge tt-badge-danger">İptal</span>;
+      default: return <span className="tt-badge tt-badge-neutral">{status}</span>;
     }
   };
 
   const getCartonStatusBadge = (status: string) => {
     switch (status) {
-      case 'Open': return <span className="badge badge-blue">Açık</span>;
-      case 'Closed': return <span className="badge badge-purple">Kapalı</span>;
-      case 'Printed': return <span className="badge badge-cyan">Yazdırıldı</span>;
-      case 'Palletized': return <span className="badge badge-green">Paletlendi</span>;
-      default: return <span className="badge">{status}</span>;
+      case 'Open': return <span className="tt-badge tt-badge-primary">Açık</span>;
+      case 'Closed': return <span className="tt-badge tt-badge-neutral">Kapalı</span>;
+      case 'Printed': return <span className="tt-badge tt-badge-info">Yazdırıldı</span>;
+      case 'Palletized': return <span className="tt-badge tt-badge-success">Paletlendi</span>;
+      default: return <span className="tt-badge tt-badge-neutral">{status}</span>;
     }
   };
 
@@ -376,7 +376,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
   return (
     <div className="order-line-modal-overlay" style={{
       position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
+      inset: 0,
       backgroundColor: 'rgba(15, 23, 42, 0.6)',
       backdropFilter: 'blur(4px)',
       zIndex: 100,
@@ -389,75 +389,80 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
         width: '100%',
         maxWidth: '1200px',
         height: '85vh',
-        backgroundColor: 'var(--modal-bg)',
-        borderRadius: '16px',
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-xl)',
+        border: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         animation: 'fadeIn 0.2s ease-out'
       }} onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="order-line-modal-header" style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: 'var(--bg-surface-subtle)' }}>
+        <div className="order-line-modal-header" style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface-subtle)' }}>
           <div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              Sipariş Satırı Detayı 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                Sipariş Satırı Detayı: <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>{selectedOrder.orderNo}</span>
+              </h3>
               {getStatusBadge(selectedOrder.status)}
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0, fontWeight: 600 }}>{selectedOrder.orderNo} / {selectedOrder.customerName} — <span style={{ color: 'var(--text-main)' }}>{selectedOrder.productName || '-'}</span></p>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: 0 }}>
+              {selectedOrder.customerName} — <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{selectedOrder.productName || '-'}</span>
+            </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {hasPermission('orders.delete') && (
               <button 
                 className="btn" 
-                style={{ padding: '8px 16px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', fontWeight: 700, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem' }}
+                style={{ padding: '6px 12px', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)', fontWeight: 500, fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 onClick={handleDeleteOrder}
                 title="Bu Sipariş Satırını Sil"
               >
-                <Trash2 size={16} /> Sipariş Satırını Sil
+                <Trash2 size={14} /> Sipariş Satırını Sil
               </button>
             )}
-            <button className="btn btn-secondary" style={{ padding: '8px', borderRadius: '50%', border: 'none' }} onClick={onClose}>
-              <X size={20} />
+            <button className="btn btn-secondary" style={{ padding: '6px', border: 'none', background: 'transparent' }} onClick={onClose}>
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="order-line-modal-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 24px', backgroundColor: 'var(--bg-card)' }}>
+        <div className="order-line-modal-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 20px', backgroundColor: 'var(--bg-surface)', gap: '4px' }}>
           <button
-            style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'summary' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'summary' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'summary' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'summary' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'summary' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
             onClick={() => setActiveTab('summary')}
           >
-            <FileText size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+            <FileText size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
             Özet
           </button>
           <button
-            style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'cartons' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'cartons' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'cartons' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'cartons' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'cartons' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
             onClick={() => setActiveTab('cartons')}
           >
-            <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+            <Barcode size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
             Koliler ({cartonsTotal || cartons.length})
           </button>
           <button
-            style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'pallets' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'pallets' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'pallets' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'pallets' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'pallets' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
             onClick={() => setActiveTab('pallets')}
           >
-            <Layers size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+            <Layers size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
             Paletler ({palletsTotal})
           </button>
           <button 
-            style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'codes' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'codes' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'codes' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'codes' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'codes' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
             onClick={() => setActiveTab('codes')}
           >
-            <Barcode size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+            <Barcode size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
             Kodlar ({codesTotal})
           </button>
-          <button
-            style={{ padding: '16px 24px', border: 'none', background: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', borderBottom: activeTab === 'imports' ? '3px solid #3b82f6' : '3px solid transparent', color: activeTab === 'imports' ? '#3b82f6' : '#64748b', transition: 'all 0.2s' }}
+          <button 
+            style={{ padding: '12px 16px', border: 'none', background: 'none', fontWeight: activeTab === 'imports' ? 600 : 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: activeTab === 'imports' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'imports' ? 'var(--primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}
             onClick={() => setActiveTab('imports')}
           >
-            <Archive size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'text-bottom' }} />
+            <Archive size={15} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
             Yüklemeler ({importBatches.length})
           </button>
         </div>
@@ -853,16 +858,16 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
         {/* Modal Footer Actions */}
         {activeTab === 'summary' && (
-          <div className="order-line-modal-footer" style={{ padding: '20px 24px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <div className="order-line-modal-footer" style={{ padding: '12px 20px', backgroundColor: 'var(--bg-surface-subtle)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
             {selectedOrder.status === 'Draft' && (
               <>
                 {hasPermission('orders.edit') && (
                   <>
                     <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
+                      <Upload size={15} style={{ marginRight: '6px' }}/> Kod Yükle
                     </button>
                     <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <Play size={16} style={{ marginRight: '6px' }}/> Aktifleştir
+                      <Play size={15} style={{ marginRight: '6px' }}/> Aktifleştir
                     </button>
                   </>
                 )}
@@ -872,23 +877,23 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             {selectedOrder.status === 'Active' && (
               <>
                 {hasPermission('orders.edit') && (
-                  <button className="btn btn-danger" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
-                    <XCircle size={16} style={{ marginRight: '6px' }}/> İptal Et
+                  <button className="btn" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid var(--danger-border)', fontWeight: 500 }} onClick={() => handleStatusChange(selectedOrder.id, 'cancel')}>
+                    <XCircle size={15} style={{ marginRight: '6px' }}/> İptal Et
                   </button>
                 )}
                 {user?.role !== 'Viewer' && (
                   <>
                     <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => { setError(null); setShowPrintModal(true); }}>
-                      <Printer size={16} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
+                      <Printer size={15} style={{ marginRight: '6px' }}/> Kod Sayfası PDF Üret
                     </button>
-                    <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#0ea5e9' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
-                      <Barcode size={16} style={{ marginRight: '6px' }}/> Scan Ekranına Git
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', color: 'var(--primary)' }} onClick={() => window.location.href = `/scan?orderId=${selectedOrder.id}`}>
+                      <Barcode size={15} style={{ marginRight: '6px' }}/> Scan Ekranına Git
                     </button>
                   </>
                 )}
                 {hasPermission('orders.edit') && (
-                  <button className="btn btn-primary" style={{ backgroundColor: '#10b981', display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
-                    <CheckCircle2 size={16} style={{ marginRight: '6px' }}/> Tamamla
+                  <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'complete')}>
+                    <CheckCircle2 size={15} style={{ marginRight: '6px' }}/> Tamamla
                   </button>
                 )}
               </>
@@ -899,13 +904,13 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 {hasPermission('orders.edit') && (
                   <>
                     <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setActiveTab('imports')}>
-                      <Archive size={16} style={{ marginRight: '6px' }}/> Yüklemeleri Yönet
+                      <Archive size={15} style={{ marginRight: '6px' }}/> Yüklemeleri Yönet
                     </button>
                     <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setShowImportModal(true)}>
-                      <Upload size={16} style={{ marginRight: '6px' }}/> Kod Yükle
+                      <Upload size={15} style={{ marginRight: '6px' }}/> Kod Yükle
                     </button>
                     <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleStatusChange(selectedOrder.id, 'activate')}>
-                      <RotateCcw size={16} style={{ marginRight: '6px' }}/> Tekrar Aktifleştir
+                      <RotateCcw size={15} style={{ marginRight: '6px' }}/> Tekrar Aktifleştir
                     </button>
                   </>
                 )}
@@ -919,9 +924,9 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
       {selectedCartonForItems && (
         <div style={{
           position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(15,23,42,0.6)',
-          backdropFilter: 'blur(2px)',
+          inset: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
           zIndex: 200,
           display: 'flex',
           alignItems: 'center',
@@ -932,51 +937,54 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
             width: '100%',
             maxWidth: '650px',
             maxHeight: '75vh',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-xl)',
-            padding: '24px',
-            backgroundColor: 'var(--modal-bg)',
+            padding: 0,
+            backgroundColor: 'var(--bg-surface)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            overflow: 'hidden'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
-                Koli İçeriği ({selectedCartonForItems.cartonNo})
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '16px 20px', backgroundColor: 'var(--bg-surface-subtle)' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                Koli İçeriği: <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>{selectedCartonForItems.cartonNo}</span>
               </h3>
-              <button className="btn btn-secondary" style={{ padding: '6px', borderRadius: '50%', border: 'none' }} onClick={() => setSelectedCartonForItems(null)}>
+              <button className="btn btn-secondary" style={{ padding: '4px', border: 'none', background: 'transparent' }} onClick={() => setSelectedCartonForItems(null)}>
                 <X size={18} />
               </button>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
               {cartonItemsLoading ? (
                 <div style={{ textAlign: 'center', padding: '30px' }}><Loader2 className="spinner" size={24} style={{ margin: '0 auto' }} /></div>
               ) : cartonItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>Bu kolide henüz okutulmuş ürün bulunmuyor.</div>
+                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Bu kolide henüz okutulmuş ürün bulunmuyor.</div>
               ) : (
-                <table className="data-table" style={{ margin: 0 }}>
-                  <thead style={{ backgroundColor: 'var(--table-header-bg)' }}>
-                    <tr>
-                      <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Barkod / Datamatrix</th>
-                      <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Seri No</th>
-                      <th style={{ padding: '8px 12px', fontSize: '0.85rem' }}>Okunma Tarihi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cartonItems.map((item: any, idx: number) => (
-                      <tr key={idx}>
-                        <td style={{ padding: '8px 12px', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>{item.rawCode}</td>
-                        <td style={{ padding: '8px 12px', fontSize: '0.85rem' }}>{item.serialNo || '-'}</td>
-                        <td style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                          {item.scannedAt ? new Date(item.scannedAt).toLocaleString('tr-TR') : '-'}
-                        </td>
+                <div className="table-container">
+                  <table className="data-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ padding: '8px 12px', fontSize: '0.75rem' }}>Barkod / Datamatrix</th>
+                        <th style={{ padding: '8px 12px', fontSize: '0.75rem' }}>Seri No</th>
+                        <th style={{ padding: '8px 12px', fontSize: '0.75rem' }}>Okunma Tarihi</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {cartonItems.map((item: any, idx: number) => (
+                        <tr key={idx}>
+                          <td className="tabular-nums" style={{ padding: '8px 12px', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>{item.rawCode}</td>
+                          <td style={{ padding: '8px 12px', fontSize: '0.8125rem' }}>{item.serialNo || '-'}</td>
+                          <td className="tabular-nums" style={{ padding: '8px 12px', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                            {item.scannedAt ? new Date(item.scannedAt).toLocaleString('tr-TR') : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', padding: '12px 20px', backgroundColor: 'var(--bg-surface-subtle)' }}>
               <button className="btn btn-secondary" onClick={() => setSelectedCartonForItems(null)}>Kapat</button>
             </div>
           </div>
@@ -985,10 +993,10 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
       {/* --- PRINT PDF MODAL --- */}
       {showPrintModal && (
-        <div data-testid="print-pdf-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={e => e.stopPropagation()}>
-          <div role="dialog" aria-modal="true" aria-labelledby="print-pdf-title" className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <h3 id="print-pdf-title" style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-main)' }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
+        <div data-testid="print-pdf-overlay" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-labelledby="print-pdf-title" className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', boxShadow: 'var(--shadow-xl)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 id="print-pdf-title" style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>DataMatrix Barkod Sayfası PDF Oluştur</h3>
               <button
                 type="button"
                 aria-label="PDF penceresini kapat"
@@ -996,15 +1004,15 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 disabled={printingPdf}
                 onClick={() => { setShowPrintModal(false); setError(null); }}
                 className="btn btn-secondary"
-                style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', border: 'none', cursor: printingPdf ? 'not-allowed' : 'pointer' }}
+                style={{ width: 32, height: 32, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: 'var(--radius-xs)', border: 'none', background: 'transparent', cursor: printingPdf ? 'not-allowed' : 'pointer' }}
               >
-                <X size={19} />
+                <X size={18} />
               </button>
             </div>
-            {error && <div style={{ color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>{error}</div>}
-            <form onSubmit={(e) => { e.preventDefault(); handlePrintCodes(); }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {error && <div style={{ color: 'var(--danger)', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)', padding: '10px 12px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.8125rem' }}>{error}</div>}
+            <form onSubmit={(e) => { e.preventDefault(); handlePrintCodes(); }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="form-group">
-                <label className="form-label" style={{ marginBottom: '8px' }}>PDF Kod Kapsamı</label>
+                <label className="form-label" style={{ marginBottom: '6px' }}>PDF Kod Kapsamı</label>
                 <div role="radiogroup" aria-label="PDF kod kapsamı" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <button
                     type="button"
@@ -1012,10 +1020,10 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     aria-checked={printCodeScope === 'all'}
                     data-testid="print-scope-all"
                     onClick={() => setPrintCodeScope('all')}
-                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'all' ? '2px solid #2563eb' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'all' ? 'rgba(37, 99, 235, 0.12)' : 'var(--bg-card)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '12px', borderRadius: 'var(--radius-sm)', border: printCodeScope === 'all' ? '2px solid var(--primary)' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'all' ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-surface)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Barcode size={17} color={printCodeScope === 'all' ? '#2563eb' : 'var(--text-muted)'} /> Tüm QR Kodları</span>
-                    <small style={{ display: 'block', marginTop: '5px', color: 'var(--text-muted)', lineHeight: 1.35 }}>Siparişe yüklenen bütün kodları üretir.</small>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.875rem' }}><Barcode size={15} color={printCodeScope === 'all' ? 'var(--primary)' : 'var(--text-muted)'} /> Tüm QR Kodları</span>
+                    <small style={{ display: 'block', marginTop: '4px', color: 'var(--text-muted)', lineHeight: 1.3, fontSize: '0.75rem' }}>Siparişe yüklenen bütün kodları üretir.</small>
                   </button>
                   <button
                     type="button"
@@ -1023,15 +1031,15 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                     aria-checked={printCodeScope === 'unassigned'}
                     data-testid="print-scope-unassigned"
                     onClick={() => setPrintCodeScope('unassigned')}
-                    style={{ padding: '13px', borderRadius: '10px', border: printCodeScope === 'unassigned' ? '2px solid #d97706' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'unassigned' ? 'rgba(217, 119, 6, 0.12)' : 'var(--bg-card)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
+                    style={{ padding: '12px', borderRadius: 'var(--radius-sm)', border: printCodeScope === 'unassigned' ? '2px solid var(--warning)' : '1px solid var(--border-color)', backgroundColor: printCodeScope === 'unassigned' ? 'rgba(217, 119, 6, 0.08)' : 'var(--bg-surface)', color: 'var(--text-main)', textAlign: 'left', cursor: 'pointer' }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontWeight: 800 }}><Archive size={17} color={printCodeScope === 'unassigned' ? '#d97706' : 'var(--text-muted)'} /> Sadece Açıkta Kalanlar</span>
-                    <small style={{ display: 'block', marginTop: '5px', color: 'var(--text-muted)', lineHeight: 1.35 }}>Hiç okutulmamış ve hiçbir koliye girmemiş kodlar.</small>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.875rem' }}><Archive size={15} color={printCodeScope === 'unassigned' ? 'var(--warning)' : 'var(--text-muted)'} /> Sadece Açıkta Kalanlar</span>
+                    <small style={{ display: 'block', marginTop: '4px', color: 'var(--text-muted)', lineHeight: 1.3, fontSize: '0.75rem' }}>Hiç okutulmamış ve koliye girmemiş kodlar.</small>
                   </button>
                 </div>
               </div>
               {printCodeScope === 'unassigned' && (
-                <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning-text)', fontSize: '0.82rem', lineHeight: 1.45 }}>
+                <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning)', fontSize: '0.8125rem', lineHeight: 1.45 }}>
                   PDF yalnızca okutma zamanı olmayan ve herhangi bir koliye bağlanmamış açıkta kalan QR kodlarından oluşturulacak.
                 </div>
               )}
@@ -1051,7 +1059,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
               </div>
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input type="checkbox" id="addText" checked={printAddText} onChange={e => setPrintAddText(e.target.checked)} />
-                <label htmlFor="addText" style={{ cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500 }}>Barkod Yanına Yazı Ekle</label>
+                <label htmlFor="addText" style={{ cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>Barkod Yanına Yazı Ekle</label>
               </div>
               {printAddText && (
                 <>
@@ -1065,7 +1073,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                   </div>
                   <div className="form-group">
                     <label className="form-label">Yazı Konumu</label>
-                    <select className="form-input" value={printLabelBelow ? 'below' : 'above'} onChange={e => setPrintLabelBelow(e.target.value === 'below')}>
+                    <select className="form-select" value={printLabelBelow ? 'below' : 'above'} onChange={e => setPrintLabelBelow(e.target.value === 'below')}>
                       <option value="above">Barkodun Üzerinde</option>
                       <option value="below">Barkodun Altında</option>
                     </select>
@@ -1076,7 +1084,7 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
                 <label className="form-label">PDF Parçalama (Split Size)</label>
                 <input type="number" className="form-input" min="0" placeholder="0 (Parçalama yok)" value={printSplitSize === 0 ? '' : printSplitSize} onChange={e => setPrintSplitSize(parseInt(e.target.value) || 0)} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '14px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowPrintModal(false); setError(null); }} disabled={printingPdf}>İptal</button>
                 <button type="submit" className="btn btn-primary" disabled={printingPdf}>
                   {printingPdf ? 'PDF Üretiliyor...' : printCodeScope === 'unassigned' ? 'Açıkta Kalanları Üret & İndir' : 'Yazdır & İndir'}
@@ -1089,27 +1097,34 @@ export const OrderLineDetailModal: React.FC<OrderLineDetailModalProps> = ({ sele
 
       {/* --- IMPORT MODAL --- */}
       {showImportModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={(e) => { e.stopPropagation(); setShowImportModal(false); setImportResult(null); setFile(null); }}>
-          <div className="card" style={{ width: '100%', maxWidth: '550px' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>Barkod Yükleme ({selectedOrder.orderNo})</h3>
-            {error && <div style={{ color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '0.85rem' }}>{error}</div>}
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={(e) => { e.stopPropagation(); setShowImportModal(false); setImportResult(null); setFile(null); }}>
+          <div className="card" style={{ width: '100%', maxWidth: '550px', padding: '24px', boxShadow: 'var(--shadow-xl)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
+                Barkod Yükleme ({selectedOrder.orderNo})
+              </h3>
+              <button className="btn btn-secondary" style={{ padding: '4px', border: 'none', background: 'transparent' }} onClick={() => { setShowImportModal(false); setImportResult(null); setFile(null); }}>
+                <X size={18} />
+              </button>
+            </div>
+            {error && <div style={{ color: 'var(--danger)', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)', padding: '10px 12px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.8125rem' }}>{error}</div>}
             <form onSubmit={handleImportSubmit}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.5 }}>
                 Sipariş İş Emri No ({selectedOrder.gtin}) ile uyumlu Rusya Kozmetik GS1 DataMatrix kodlarını içeren <strong>.txt</strong>, <strong>.csv</strong> veya <strong>.xlsx</strong> dosyasını yükleyin.
               </p>
-              <div className="form-group" style={{ marginBottom: '20px' }}>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
                 <input type="file" accept=".txt,.csv,.xlsx" className="form-input" required onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </div>
               {importResult && (
-                <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.85rem' }}>
-                  <h4 style={{ fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Yükleme Sonucu:</h4>
-                  <div style={{ color: 'var(--text-main)' }}>Toplam Satır: <strong style={{ float: 'right' }}>{importResult.totalRows}</strong></div>
-                  <div style={{ color: 'var(--success-text)' }}>İçe Aktarılan: <strong style={{ float: 'right' }}>{importResult.importedCount}</strong></div>
-                  <div style={{ color: 'var(--warning-text)' }}>Mükerrer: <strong style={{ float: 'right' }}>{importResult.duplicateCount}</strong></div>
-                  <div style={{ color: 'var(--danger-text)' }}>Hatalı/Geçersiz: <strong style={{ float: 'right' }}>{importResult.invalidCount}</strong></div>
+                <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', padding: '14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '0.8125rem' }}>
+                  <h4 style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--text-main)' }}>Yükleme Sonucu:</h4>
+                  <div className="tabular-nums" style={{ color: 'var(--text-main)' }}>Toplam Satır: <strong style={{ float: 'right' }}>{importResult.totalRows}</strong></div>
+                  <div className="tabular-nums" style={{ color: 'var(--success)' }}>İçe Aktarılan: <strong style={{ float: 'right' }}>{importResult.importedCount}</strong></div>
+                  <div className="tabular-nums" style={{ color: 'var(--warning)' }}>Mükerrer: <strong style={{ float: 'right' }}>{importResult.duplicateCount}</strong></div>
+                  <div className="tabular-nums" style={{ color: 'var(--danger)' }}>Hatalı/Geçersiz: <strong style={{ float: 'right' }}>{importResult.invalidCount}</strong></div>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowImportModal(false); setImportResult(null); setFile(null); }} disabled={importing}>Kapat</button>
                 <button type="submit" className="btn btn-primary" disabled={importing || !file}>
                   {importing ? 'İçe Aktarılıyor...' : 'Yükle & Çözümle'}

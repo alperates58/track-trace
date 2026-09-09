@@ -218,68 +218,75 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '500px',
-        backgroundColor: '#1e293b',
-        borderRadius: '16px',
+        maxWidth: '520px',
+        backgroundColor: 'var(--bg-card, #1e293b)',
+        borderRadius: 'var(--radius-lg, 10px)',
+        border: '1px solid var(--border-subtle, #334155)',
         overflow: 'hidden',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.5)',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '90vh'
       }}>
         {/* Header */}
-        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', flexShrink: 0 }}>
-          <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-            <Camera size={20} />
+        <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle, #334155)', flexShrink: 0, backgroundColor: 'var(--bg-card, #1e293b)' }}>
+          <h3 style={{ margin: 0, color: 'var(--text-primary, #ffffff)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 600 }}>
+            <Camera size={18} className="text-primary" />
             Kamera ile Okutma
           </h3>
           <button 
             onClick={handleClose}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+            className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition-colors"
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <X size={24} />
+            <X size={18} />
           </button>
         </div>
 
         {/* PWA Warning */}
         {debugInfo.isStandalone && (
-          <div style={{ backgroundColor: '#f59e0b', color: '#fff', padding: '10px 16px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Info size={16} />
+          <div style={{ backgroundColor: '#f59e0b', color: '#fff', padding: '8px 14px', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Info size={14} />
             iOS Ana Ekran modunda kamera çalışmayabilir. Sorun yaşarsanız Safari içinde açın.
           </div>
         )}
 
         {/* Scanner View / Start Button */}
-        <div style={{ position: 'relative', width: '100%', minHeight: '300px', backgroundColor: 'black', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', width: '100%', minHeight: '300px', backgroundColor: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           
           {errorMsg ? (
-            <div style={{ color: '#f87171', textAlign: 'center', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', zIndex: 5 }}>
-              <AlertCircle size={48} />
-              <p style={{ margin: 0, fontWeight: 500 }}>{errorMsg}</p>
+            <div style={{ color: '#f87171', textAlign: 'center', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', zIndex: 5 }}>
+              <AlertCircle size={40} />
+              <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500 }}>{errorMsg}</p>
               <button 
-                className="btn" 
+                className="btn btn-primary" 
                 onClick={startScanner}
-                style={{ marginTop: '12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 600 }}
+                style={{ marginTop: '8px', height: '34px', padding: '0 16px', borderRadius: 'var(--radius-sm, 6px)', fontWeight: 600, fontSize: '0.85rem' }}
               >
                 Tekrar Dene
               </button>
             </div>
           ) : !isScannerRunning ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', zIndex: 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', zIndex: 5, padding: '24px' }}>
               <button 
                 onClick={startScanner}
+                className="btn btn-primary"
                 style={{
-                  backgroundColor: '#10b981', color: 'white', border: 'none', 
-                  padding: '16px 32px', borderRadius: '12px', fontSize: '1.1rem', 
-                  fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '12px',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+                  height: '42px',
+                  padding: '0 24px',
+                  borderRadius: 'var(--radius-md, 8px)',
+                  fontSize: '0.95rem', 
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
                 }}
               >
-                <Camera size={24} />
+                <Camera size={20} />
                 Kamerayı Başlat
               </button>
-              <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>İzin istendiğinde lütfen onay verin.</span>
+              <span style={{ color: 'var(--text-secondary, #94a3b8)', fontSize: '0.8rem' }}>İzin istendiğinde lütfen kamera erişimine onay verin.</span>
             </div>
           ) : null}
 
@@ -294,9 +301,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               alignItems: 'center', justifyContent: 'center', color: 'white', zIndex: 10,
               animation: 'fadeIn 0.2s ease-out'
             }}>
-              <CheckCircle2 size={64} style={{ marginBottom: '16px' }} />
-              <span style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '8px' }}>Başarılı!</span>
-              <code style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: '8px 16px', borderRadius: '8px', fontSize: '1.1rem' }}>
+              <CheckCircle2 size={52} style={{ marginBottom: '12px' }} />
+              <span style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>Başarılı!</span>
+              <code className="tabular-nums font-mono" style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: '6px 14px', borderRadius: 'var(--radius-sm, 6px)', fontSize: '0.95rem' }}>
                 {lastScanned}
               </code>
             </div>
@@ -304,32 +311,32 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         </div>
 
         {/* Controls Panel */}
-        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#0f172a', overflowY: 'auto' }}>
+        <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: 'var(--bg-main, #0f172a)', borderTop: '1px solid var(--border-subtle, #334155)', overflowY: 'auto' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
             <button 
-              className="btn"
+              type="button"
+              className={isContinuous ? "btn btn-primary" : "btn btn-secondary"}
               onClick={() => setIsContinuous(!isContinuous)}
               style={{ 
-                flex: 1, backgroundColor: isContinuous ? '#3b82f6' : '#334155', color: 'white',
-                border: 'none', padding: '12px', borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', gap: '8px', fontWeight: 600
+                flex: 1, height: '36px', borderRadius: 'var(--radius-sm, 6px)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: '8px', fontWeight: 600, fontSize: '0.85rem'
               }}
             >
-              {isContinuous ? <PlayCircle size={18} /> : <Maximize size={18} />}
+              {isContinuous ? <PlayCircle size={16} /> : <Maximize size={16} />}
               {isContinuous ? 'Sürekli Mod' : 'Tek Okutma'}
             </button>
             
             <button
-              className="btn"
+              type="button"
+              className="btn btn-secondary"
               onClick={() => fileInputRef.current?.click()}
               style={{ 
-                flex: 1, backgroundColor: '#334155', color: 'white',
-                border: 'none', padding: '12px', borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', gap: '8px', fontWeight: 600
+                flex: 1, height: '36px', borderRadius: 'var(--radius-sm, 6px)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: '8px', fontWeight: 600, fontSize: '0.85rem'
               }}
             >
-              <Upload size={18} />
+              <Upload size={16} />
               Fotoğraf Seç
             </button>
             {/* Hidden file input for native camera fallback */}
@@ -344,23 +351,24 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           </div>
 
           {/* Technical Details Accordion */}
-          <div style={{ marginTop: '8px', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+          <div style={{ marginTop: '4px', borderTop: '1px solid var(--border-subtle, #1e293b)', paddingTop: '10px' }}>
             <button
               onClick={() => setShowDebug(!showDebug)}
               style={{ 
-                background: 'none', border: 'none', color: '#94a3b8', width: '100%', 
+                background: 'none', border: 'none', color: 'var(--text-secondary, #94a3b8)', width: '100%', 
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                fontSize: '0.85rem', fontWeight: 600, padding: '4px 0', cursor: 'pointer'
+                fontSize: '0.8rem', fontWeight: 600, padding: '2px 0', cursor: 'pointer'
               }}
             >
               Teknik Detaylar (Debug)
-              {showDebug ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {showDebug ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
             
             {showDebug && (
               <div style={{ 
-                marginTop: '12px', padding: '12px', backgroundColor: '#000', 
-                borderRadius: '8px', fontSize: '0.7rem', color: '#10b981', 
+                marginTop: '8px', padding: '10px', backgroundColor: 'var(--bg-card, #1e293b)', 
+                borderRadius: 'var(--radius-sm, 6px)', fontSize: '0.72rem', color: '#10b981', 
+                border: '1px solid var(--border-subtle, #334155)',
                 fontFamily: 'monospace', wordBreak: 'break-all', display: 'flex', flexDirection: 'column', gap: '4px'
               }}>
                 <div><strong>HTTPS:</strong> {debugInfo.isSecureContext ? 'Evet' : 'HAYIR'}</div>

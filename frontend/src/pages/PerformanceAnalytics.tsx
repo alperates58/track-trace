@@ -287,17 +287,17 @@ export const PerformanceAnalytics: React.FC = () => {
         flexWrap: 'wrap', 
         gap: '12px',
         backgroundColor: 'var(--bg-card)', 
-        border: '1px solid var(--border-color)', 
-        borderRadius: 'var(--radius-md)', 
+        border: '1px solid var(--border-subtle, var(--border-color))', 
+        borderRadius: 'var(--radius-md, 8px)', 
         padding: '10px 16px',
-        marginBottom: '20px'
+        marginBottom: '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Calendar size={16} color="var(--primary)" />
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>Zaman Filtresi:</span>
+          <Calendar size={15} style={{ color: 'var(--primary)' }} />
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Zaman Aralığı:</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'inline-flex', gap: '4px', backgroundColor: 'var(--bg-main)', padding: '3px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}>
           {(
             [
               { key: 'all', label: 'Tüm Zamanlar' },
@@ -314,14 +314,15 @@ export const PerformanceAnalytics: React.FC = () => {
                 type="button"
                 onClick={() => handleDateFilterChange(filter.key)}
                 style={{
-                  padding: '6px 14px',
-                  fontSize: '0.82rem',
-                  fontWeight: isActive ? 700 : 500,
-                  backgroundColor: isActive ? 'var(--primary)' : 'var(--bg-main)',
-                  color: isActive ? '#ffffff' : 'var(--text-main)',
-                  border: `1px solid ${isActive ? 'var(--primary)' : 'var(--border-color)'}`,
-                  borderRadius: '6px',
+                  padding: '5px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: isActive ? 600 : 500,
+                  backgroundColor: isActive ? 'var(--bg-card)' : 'transparent',
+                  color: isActive ? 'var(--text-primary, var(--text-main))' : 'var(--text-secondary, var(--text-muted))',
+                  border: isActive ? '1px solid var(--border-subtle, var(--border-color))' : '1px solid transparent',
+                  borderRadius: 'var(--radius-xs, 4px)',
                   cursor: 'pointer',
+                  boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -333,36 +334,51 @@ export const PerformanceAnalytics: React.FC = () => {
       </div>
 
       {/* KPI STAT CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-        <TTStatCard
-          title="Net Ort. Koli Dolumu"
-          value={formatDuration(summary?.overallAvgSecondsPerCarton || 0)}
-          icon={<Clock size={20} />}
-          color="var(--primary)"
-        />
-        <TTStatCard
-          title="Ort. Ürün Okuma Hızı"
-          value={summary?.overallAvgSecondsPerItem ? `${summary.overallAvgSecondsPerItem.toFixed(1)} sn / ürün` : '0 sn'}
-          icon={<Zap size={20} />}
-          color="#16a34a"
-        />
-        <TTStatCard
-          title="En Hızlı Tamamlanan"
-          value={summary?.fastestOrderNo || '-'}
-          icon={<Award size={20} />}
-          color="#0284c7"
-        />
-        <TTStatCard
-          title="Analiz Edilen Koli"
-          value={`${summary?.totalScannedCartons || 0} Koli`}
-          icon={<Package size={20} />}
-          color="#8b5cf6"
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Net Ort. Koli Dolumu</span>
+            <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(59, 130, 246, 0.08)', color: 'var(--primary)' }}><Clock size={16} /></span>
+          </div>
+          <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+            {formatDuration(summary?.overallAvgSecondsPerCarton || 0)}
+          </div>
+        </div>
+
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ort. Ürün Okuma Hızı</span>
+            <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#10b981' }}><Zap size={16} /></span>
+          </div>
+          <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+            {summary?.overallAvgSecondsPerItem ? `${summary.overallAvgSecondsPerItem.toFixed(1)} sn/ürün` : '0 sn'}
+          </div>
+        </div>
+
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>En Hızlı Sipariş</span>
+            <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(14, 165, 233, 0.08)', color: '#0ea5e9' }}><Award size={16} /></span>
+          </div>
+          <div className="tabular-nums font-mono" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {summary?.fastestOrderNo || '-'}
+          </div>
+        </div>
+
+        <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Analiz Edilen Koli</span>
+            <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6' }}><Package size={16} /></span>
+          </div>
+          <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+            {summary?.totalScannedCartons?.toLocaleString() || 0} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary, var(--text-muted))' }}>Koli</span>
+          </div>
+        </div>
       </div>
 
       {/* DOWNTIME / SHIFT BREAK CALLOUT BANNER IF DETECTED */}
       {summary?.totalIdlePauseSeconds && summary.totalIdlePauseSeconds > 600 ? (
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '16px' }}>
           <TTAlert variant="info" title="Net Süre Ayrıştırması Aktif">
             Vardiya sonu, gece molası ve 10 dakikadan uzun duruşlar ({formatDuration(summary.totalIdlePauseSeconds)}) otomatik tespit edilerek 
             net koli dolum hızından düşülmüştür. Bu sayede ertesi güne sarkan siparişler gerçekçi hızla ölçülür.
@@ -373,57 +389,59 @@ export const PerformanceAnalytics: React.FC = () => {
       {/* NAVIGATION TABS */}
       <div style={{ 
         display: 'flex', 
-        borderBottom: '1px solid var(--border-color)', 
-        marginBottom: '20px', 
-        backgroundColor: 'var(--bg-card)', 
-        borderRadius: 'var(--radius-md)', 
-        padding: '4px 8px' 
+        gap: '4px',
+        borderBottom: '1px solid var(--border-subtle, var(--border-color))', 
+        marginBottom: '16px', 
+        padding: '0 4px'
       }}>
         <button
           style={{
-            padding: '12px 24px',
+            padding: '10px 18px',
             border: 'none',
             background: 'none',
-            fontWeight: 700,
-            fontSize: '0.92rem',
+            fontWeight: 600,
+            fontSize: '0.86rem',
             cursor: 'pointer',
-            borderBottom: activeTab === 'orders' ? '3px solid var(--primary)' : '3px solid transparent',
-            color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-muted)',
+            borderBottom: activeTab === 'orders' ? '2px solid var(--primary)' : '2px solid transparent',
+            color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-secondary, var(--text-muted))',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            transition: 'all 0.15s ease'
           }}
           onClick={() => handleTabChange('orders')}
         >
-          <Clock size={16} />
+          <Clock size={15} />
           Sipariş & Hız Analizi
         </button>
         <button
           style={{
-            padding: '12px 24px',
+            padding: '10px 18px',
             border: 'none',
             background: 'none',
-            fontWeight: 700,
-            fontSize: '0.92rem',
+            fontWeight: 600,
+            fontSize: '0.86rem',
             cursor: 'pointer',
-            borderBottom: activeTab === 'operators' ? '3px solid var(--primary)' : '3px solid transparent',
-            color: activeTab === 'operators' ? 'var(--primary)' : 'var(--text-muted)',
+            borderBottom: activeTab === 'operators' ? '2px solid var(--primary)' : '2px solid transparent',
+            color: activeTab === 'operators' ? 'var(--primary)' : 'var(--text-secondary, var(--text-muted))',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            transition: 'all 0.15s ease'
           }}
           onClick={() => handleTabChange('operators')}
         >
-          <User size={16} />
+          <User size={15} />
           Operatör Verimlilik Matrisi
         </button>
       </div>
 
+
       {/* TAB 1: ORDERS PERFORMANCE */}
       {activeTab === 'orders' && (
-        <TTCard padding="lg">
+        <TTCard padding="none" style={{ overflow: 'hidden', border: '1px solid var(--border-subtle, var(--border-color))' }}>
           {/* Search bar */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', padding: '14px 16px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ flex: 1, minWidth: '260px', position: 'relative' }}>
               <input
                 type="text"
@@ -432,15 +450,15 @@ export const PerformanceAnalytics: React.FC = () => {
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') fetchOrders(dateFilter, orderSearch); }}
-                style={{ padding: '10px 14px 10px 38px', width: '100%' }}
+                style={{ height: '36px', padding: '0 12px 0 36px', width: '100%', borderRadius: 'var(--radius-sm, 6px)' }}
               />
-              <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={15} style={{ color: 'var(--text-secondary, var(--text-muted))', position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
-            <TTButton variant="primary" onClick={() => fetchOrders(dateFilter, orderSearch)}>
+            <TTButton variant="primary" size="md" onClick={() => fetchOrders(dateFilter, orderSearch)}>
               Ara
             </TTButton>
             {orderSearch && (
-              <TTButton variant="secondary" onClick={() => { setOrderSearch(''); fetchOrders(dateFilter, ''); }}>
+              <TTButton variant="secondary" size="md" onClick={() => { setOrderSearch(''); fetchOrders(dateFilter, ''); }}>
                 Temizle
               </TTButton>
             )}
@@ -448,25 +466,29 @@ export const PerformanceAnalytics: React.FC = () => {
 
           {/* Table */}
           {loadingOrders ? (
-            <TTLoadingState text="Sipariş performans verileri hesaplanıyor..." />
+            <div style={{ padding: '32px' }}>
+              <TTLoadingState text="Sipariş performans verileri hesaplanıyor..." />
+            </div>
           ) : orders.length === 0 ? (
-            <TTEmptyState
-              icon={<Layers size={40} color="var(--text-muted)" />}
-              title="Performans Verisi Bulunamadı"
-              description="Seçilen tarih aralığında ve arama kriterlerinde okutma verisi bulunan sipariş bulunmamaktadır."
-            />
+            <div style={{ padding: '32px' }}>
+              <TTEmptyState
+                icon={<Layers size={36} color="var(--text-muted)" />}
+                title="Performans Verisi Bulunamadı"
+                description="Seçilen tarih aralığında ve arama kriterlerinde okutma verisi bulunan sipariş bulunmamaktadır."
+              />
+            </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
-                    <th style={{ padding: '12px 16px' }}>Sipariş & Müşteri</th>
-                    <th style={{ padding: '12px 16px' }}>İlerleme & Koliler</th>
-                    <th style={{ padding: '12px 16px' }}>Tarih Aralığı</th>
-                    <th style={{ padding: '12px 16px' }}>Net Çalışma Süresi</th>
-                    <th style={{ padding: '12px 16px' }}>Koli Başına Hız</th>
-                    <th style={{ padding: '12px 16px' }}>Tempo</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right' }}>Aksiyon</th>
+                  <tr style={{ backgroundColor: 'var(--bg-main)', borderBottom: '1px solid var(--border-subtle, var(--border-color))', textAlign: 'left' }}>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Sipariş & Müşteri</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>İlerleme & Koliler</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Tarih Aralığı</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Net Çalışma Süresi</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Koli Başına Hız</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Tempo</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textAlign: 'right' }}>Aksiyon</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -492,19 +514,19 @@ export const PerformanceAnalytics: React.FC = () => {
                     return (
                       <tr 
                         key={o.orderId || o.orderNo} 
-                        style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
+                        style={{ borderBottom: '1px solid var(--border-subtle, var(--border-color))', cursor: 'pointer' }}
                         onClick={() => handleOpenDrawer(o)}
                       >
                         {/* 1. Sipariş & Müşteri */}
-                        <td style={{ padding: '14px 16px' }}>
-                          <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div className="tabular-nums font-mono" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>
                             {o.orderNo}
                           </div>
-                          <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', marginTop: '2px', fontWeight: 600 }}>
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-primary, var(--text-main))', marginTop: '2px', fontWeight: 600 }}>
                             {o.customerName}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{o.stockCode}</span>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="tabular-nums font-mono" style={{ fontWeight: 600, color: 'var(--primary)' }}>{o.stockCode}</span>
                             <span style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={o.productName}>
                               {o.productName}
                             </span>
@@ -512,23 +534,23 @@ export const PerformanceAnalytics: React.FC = () => {
                         </td>
 
                         {/* 2. İlerleme & Koliler */}
-                        <td style={{ padding: '14px 16px', minWidth: '160px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
-                            <span>{o.totalScanned.toLocaleString()} / {o.expectedQuantity.toLocaleString()}</span>
-                            <span style={{ color: 'var(--text-muted)' }}>{o.totalCartons} Koli</span>
+                        <td style={{ padding: '12px 16px', minWidth: '160px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>
+                            <span className="tabular-nums font-mono">{o.totalScanned.toLocaleString()} / {o.expectedQuantity.toLocaleString()}</span>
+                            <span className="tabular-nums font-mono" style={{ color: 'var(--text-secondary, var(--text-muted))' }}>{o.totalCartons} Koli</span>
                           </div>
-                          <TTProgressBar progress={progressPct} color={progressPct === 100 ? '#16a34a' : 'var(--primary)'} />
+                          <TTProgressBar progress={progressPct} color={progressPct === 100 ? '#10b981' : 'var(--primary)'} />
                         </td>
 
                         {/* 3. Tarih Aralığı */}
-                        <td style={{ padding: '14px 16px', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                          <div><strong style={{ color: 'var(--text-main)' }}>İlk:</strong> {formatShortDate(o.firstScannedAt)}</div>
-                          <div style={{ marginTop: '2px' }}><strong style={{ color: 'var(--text-main)' }}>Son:</strong> {formatShortDate(o.lastScannedAt)}</div>
+                        <td style={{ padding: '12px 16px', fontSize: '0.8rem', color: 'var(--text-secondary, var(--text-muted))', whiteSpace: 'nowrap' }}>
+                          <div><strong style={{ color: 'var(--text-primary, var(--text-main))' }}>İlk:</strong> <span className="tabular-nums font-mono">{formatShortDate(o.firstScannedAt)}</span></div>
+                          <div style={{ marginTop: '2px' }}><strong style={{ color: 'var(--text-primary, var(--text-main))' }}>Son:</strong> <span className="tabular-nums font-mono">{formatShortDate(o.lastScannedAt)}</span></div>
                         </td>
 
                         {/* 4. Net Çalışma Süresi */}
-                        <td style={{ padding: '14px 16px' }}>
-                          <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div className="tabular-nums font-mono" style={{ fontWeight: 700, color: 'var(--text-primary, var(--text-main))', fontSize: '0.9rem' }}>
                             {formatDuration(o.netDurationSeconds)}
                           </div>
                           {o.hasPauseBreak && (
@@ -548,32 +570,32 @@ export const PerformanceAnalytics: React.FC = () => {
                               }}
                             >
                               <Coffee size={12} />
-                              +{formatDuration(o.idlePauseSeconds)} mola/gece
+                              <span className="tabular-nums font-mono">+{formatDuration(o.idlePauseSeconds)} mola</span>
                             </div>
                           )}
                         </td>
 
                         {/* 5. Koli Başına Hız */}
-                        <td style={{ padding: '14px 16px' }}>
-                          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: hasScanned ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div className="tabular-nums font-mono" style={{ fontWeight: 600, fontSize: '0.88rem', color: hasScanned ? 'var(--text-primary, var(--text-main))' : 'var(--text-secondary, var(--text-muted))' }}>
                             {hasScanned ? `${formatDuration(o.avgSecondsPerCarton)} / koli` : '-'}
                           </div>
                           {hasScanned && o.avgSecondsPerItem > 0 && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            <div className="tabular-nums font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))', marginTop: '2px' }}>
                               ({o.avgSecondsPerItem.toFixed(1)} sn / adet)
                             </div>
                           )}
                         </td>
 
                         {/* 6. Tempo */}
-                        <td style={{ padding: '14px 16px' }}>
+                        <td style={{ padding: '12px 16px' }}>
                           <TTBadge variant={paceVariant} size="sm">
                             {paceLabel}
                           </TTBadge>
                         </td>
 
                         {/* 7. Aksiyon */}
-                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                           <TTButton
                             variant="secondary"
                             size="sm"
@@ -598,69 +620,73 @@ export const PerformanceAnalytics: React.FC = () => {
 
       {/* TAB 2: OPERATORS MATRIX */}
       {activeTab === 'operators' && (
-        <TTCard padding="lg">
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+        <TTCard padding="none" style={{ overflow: 'hidden', border: '1px solid var(--border-subtle, var(--border-color))' }}>
+          <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle, var(--border-color))' }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary, var(--text-main))' }}>
               Operatör Performans & Benchmark Skorları
             </h4>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary, var(--text-muted))' }}>
               En yüksek koli dolum hızına sahip operatör <strong>100 Puan (Benchmark Lideri)</strong> kabul edilir. Gece duruşları süreden düşülerek net aktif okuma hızı hesaplanır.
             </p>
           </div>
 
           {loadingOperators ? (
-            <TTLoadingState text="Operatör verileri yükleniyor..." />
+            <div style={{ padding: '32px' }}>
+              <TTLoadingState text="Operatör verileri yükleniyor..." />
+            </div>
           ) : operators.length === 0 ? (
-            <TTEmptyState
-              icon={<User size={40} color="var(--text-muted)" />}
-              title="Operatör Verisi Bulunamadı"
-              description="Seçilen tarih aralığında operatör okutma kaydı bulunamadı."
-            />
+            <div style={{ padding: '32px' }}>
+              <TTEmptyState
+                icon={<User size={36} color="var(--text-muted)" />}
+                title="Operatör Verisi Bulunamadı"
+                description="Seçilen tarih aralığında operatör okutma kaydı bulunamadı."
+              />
+            </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
-                    <th style={{ padding: '12px 16px' }}>Operatör Adı</th>
-                    <th style={{ padding: '12px 16px', minWidth: '190px' }}>Benchmark Skoru (100 Puan)</th>
-                    <th style={{ padding: '12px 16px' }}>Okutulan Koli</th>
-                    <th style={{ padding: '12px 16px' }}>Okutulan QR</th>
-                    <th style={{ padding: '12px 16px' }}>Dakikadaki Okutma Hızı</th>
-                    <th style={{ padding: '12px 16px' }}>Ort. Koli Süresi</th>
-                    <th style={{ padding: '12px 16px' }}>Performans Durumu</th>
+                  <tr style={{ backgroundColor: 'var(--bg-main)', borderBottom: '1px solid var(--border-subtle, var(--border-color))', textAlign: 'left' }}>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Operatör Adı</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', minWidth: '190px' }}>Benchmark Skoru (100 Puan)</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Okutulan Koli</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Okutulan QR</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Dakikadaki Okutma Hızı</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Ort. Koli Süresi</th>
+                    <th style={{ padding: '10px 16px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))' }}>Performans Durumu</th>
                   </tr>
                 </thead>
                 <tbody>
                   {operators.map((op, idx) => {
                     const isLeader = op.isBenchmarkLeader || op.score === 100;
-                    const scoreColor = isLeader ? '#d97706' : op.score >= 80 ? '#16a34a' : op.score >= 60 ? '#0284c7' : op.score >= 40 ? '#eab308' : '#dc2626';
+                    const scoreColor = isLeader ? '#d97706' : op.score >= 80 ? '#10b981' : op.score >= 60 ? '#0ea5e9' : op.score >= 40 ? '#eab308' : '#ef4444';
 
                     return (
-                      <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: isLeader ? '#fefce8' : 'transparent' }}>
-                        <td style={{ padding: '14px 16px', fontWeight: 700 }}>
+                      <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: isLeader ? 'rgba(234, 179, 8, 0.04)' : 'transparent' }}>
+                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {isLeader ? (
-                              <span style={{ fontSize: '1.2rem' }} title="Benchmark Lideri">🏆</span>
+                              <span style={{ fontSize: '1.1rem' }} title="Benchmark Lideri">🏆</span>
                             ) : (
-                              <User size={16} color="var(--primary)" />
+                              <User size={15} style={{ color: 'var(--primary)' }} />
                             )}
-                            <span style={{ color: isLeader ? '#854d0e' : 'var(--text-main)' }}>{op.operatorName}</span>
+                            <span style={{ color: isLeader ? '#b45309' : 'var(--text-primary, var(--text-main))' }}>{op.operatorName}</span>
                           </span>
                         </td>
 
                         {/* Benchmark Bar */}
-                        <td style={{ padding: '14px 16px' }}>
+                        <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <strong style={{ fontSize: '0.95rem', color: scoreColor, width: '65px' }}>
+                            <strong className="tabular-nums font-mono" style={{ fontSize: '0.9rem', color: scoreColor, width: '65px' }}>
                               {op.score ? op.score.toFixed(1) : '0'} / 100
                             </strong>
-                            <div style={{ flex: 1, height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--border-subtle, #e2e8f0)', borderRadius: '3px', overflow: 'hidden' }}>
                               <div 
                                 style={{ 
                                   height: '100%', 
                                   width: `${Math.min(100, op.score || 0)}%`, 
                                   backgroundColor: scoreColor, 
-                                  borderRadius: '4px', 
+                                  borderRadius: '3px', 
                                   transition: 'width 0.4s ease' 
                                 }} 
                               />
@@ -668,24 +694,24 @@ export const PerformanceAnalytics: React.FC = () => {
                           </div>
                         </td>
 
-                        <td style={{ padding: '14px 16px', fontWeight: 600 }}>
+                        <td className="tabular-nums font-mono" style={{ padding: '12px 16px', fontWeight: 600 }}>
                           {op.totalCartons} Koli
                         </td>
-                        <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--primary)' }}>
+                        <td className="tabular-nums font-mono" style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--primary)' }}>
                           {op.totalScannedItems.toLocaleString()} QR
                         </td>
-                        <td style={{ padding: '14px 16px', fontWeight: 700, color: '#16a34a' }}>
+                        <td className="tabular-nums font-mono" style={{ padding: '12px 16px', fontWeight: 700, color: '#10b981' }}>
                           {op.itemsPerMinute} Ürün / dk
                         </td>
-                        <td style={{ padding: '14px 16px', fontWeight: 600 }}>
+                        <td className="tabular-nums font-mono" style={{ padding: '12px 16px', fontWeight: 600 }}>
                           {formatDuration(op.avgSecondsPerCarton)} / koli
                         </td>
-                        <td style={{ padding: '14px 16px' }}>
+                        <td style={{ padding: '12px 16px' }}>
                           <span style={{
-                            padding: '4px 12px',
+                            padding: '3px 10px',
                             borderRadius: '12px',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
                             backgroundColor: `${scoreColor}15`,
                             color: scoreColor,
                             border: `1px solid ${scoreColor}30`
@@ -700,7 +726,6 @@ export const PerformanceAnalytics: React.FC = () => {
               </table>
             </div>
           )}
-        </TTCard>
       )}
 
       {/* DRAWER: Koli Zaman Çizelgesi & Detay */}
@@ -713,14 +738,14 @@ export const PerformanceAnalytics: React.FC = () => {
         {selectedOrder && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Header info */}
-            <div style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+            <div style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-subtle, var(--border-color))', borderRadius: 'var(--radius-md, 8px)', padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
                     {selectedOrder.customerName}
                   </h4>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    {selectedOrder.stockCode} - {selectedOrder.productName}
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, var(--text-muted))', marginTop: '2px' }}>
+                    <span className="tabular-nums font-mono">{selectedOrder.stockCode}</span> - {selectedOrder.productName}
                   </div>
                 </div>
                 <TTBadge variant={selectedOrder.status === 'Completed' ? 'success' : 'info'}>
@@ -729,17 +754,17 @@ export const PerformanceAnalytics: React.FC = () => {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginTop: '12px', fontSize: '0.82rem' }}>
-                <div><strong>Koli Adedi:</strong> {selectedOrder.totalCartons} Koli</div>
-                <div><strong>Ürün Adedi:</strong> {selectedOrder.totalScanned} / {selectedOrder.expectedQuantity}</div>
-                <div><strong>Net Çalışma Süresi:</strong> {formatDuration(selectedOrder.netDurationSeconds)}</div>
-                <div><strong>Koli Başına Hız:</strong> {formatDuration(selectedOrder.avgSecondsPerCarton)} / koli</div>
+                <div><strong>Koli Adedi:</strong> <span className="tabular-nums font-mono">{selectedOrder.totalCartons} Koli</span></div>
+                <div><strong>Ürün Adedi:</strong> <span className="tabular-nums font-mono">{selectedOrder.totalScanned} / {selectedOrder.expectedQuantity}</span></div>
+                <div><strong>Net Çalışma Süresi:</strong> <span className="tabular-nums font-mono">{formatDuration(selectedOrder.netDurationSeconds)}</span></div>
+                <div><strong>Koli Başına Hız:</strong> <span className="tabular-nums font-mono">{formatDuration(selectedOrder.avgSecondsPerCarton)} / koli</span></div>
               </div>
             </div>
 
             {/* Shift break alert banner */}
             {selectedOrder.hasPauseBreak && (
               <TTAlert variant="warning" title="Vardiya / Gece Duruşu Tespit Edildi">
-                Bu siparişte toplam <strong>{formatDuration(selectedOrder.idlePauseSeconds)}</strong> süren duruş veya vardiya molası 
+                Bu siparişte toplam <strong className="tabular-nums font-mono">{formatDuration(selectedOrder.idlePauseSeconds)}</strong> süren duruş veya vardiya molası 
                 tespit edildi ve koli dolum hızını yanıltmaması için net süreden düşüldü.
               </TTAlert>
             )}
@@ -747,10 +772,10 @@ export const PerformanceAnalytics: React.FC = () => {
             {/* Carton Timeline Cards */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <h5 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                  Koli Bazlı Dolum Sıralaması ({cartonDetails.length} Koli)
+                <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                  Koli Bazlı Dolum Sıralaması (<span className="tabular-nums font-mono">{cartonDetails.length}</span> Koli)
                 </h5>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Kronolojik Sıra</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }}>Kronolojik Sıra</span>
               </div>
 
               {loadingCartons ? (
@@ -774,8 +799,8 @@ export const PerformanceAnalytics: React.FC = () => {
                       }
                     }
 
-                    const scoreColor = isBest ? '#d97706' : score >= 80 ? '#16a34a' : score >= 60 ? '#0284c7' : score >= 40 ? '#eab308' : '#dc2626';
-                    const paceColor = c.paceCategory === 'Hızlı' ? '#16a34a' : c.paceCategory === 'Normal' ? '#0284c7' : '#dc2626';
+                    const scoreColor = isBest ? '#d97706' : score >= 80 ? '#10b981' : score >= 60 ? '#0ea5e9' : score >= 40 ? '#eab308' : '#ef4444';
+                    const paceColor = c.paceCategory === 'Hızlı' ? '#10b981' : c.paceCategory === 'Normal' ? '#0ea5e9' : '#ef4444';
 
                     return (
                       <React.Fragment key={c.cartonId || idx}>
@@ -784,37 +809,37 @@ export const PerformanceAnalytics: React.FC = () => {
                           <div style={{
                             margin: '8px 0',
                             padding: '10px 14px',
-                            backgroundColor: '#fef3c7',
-                            border: '1px dashed #f59e0b',
-                            borderRadius: '8px',
+                            backgroundColor: 'rgba(234, 179, 8, 0.08)',
+                            border: '1px dashed var(--border-subtle, #f59e0b)',
+                            borderRadius: 'var(--radius-sm, 6px)',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
                             fontSize: '0.8rem',
-                            color: '#92400e',
-                            fontWeight: 700
+                            color: '#b45309',
+                            fontWeight: 600
                           }}>
-                            <Coffee size={16} />
-                            <span>☕ Vardiya / Duruş Molası: {formatDuration(c.idleSecondsFromPrevious)} (Net süreden düşüldü)</span>
+                            <Coffee size={15} />
+                            <span>Vardiya / Duruş Molası: <strong className="tabular-nums font-mono">{formatDuration(c.idleSecondsFromPrevious)}</strong> (Net süreden düşüldü)</span>
                           </div>
                         ) : c.idleSecondsFromPrevious > 0 ? (
                           <div style={{
                             margin: '2px 0 2px 16px',
                             fontSize: '0.72rem',
-                            color: 'var(--text-muted)',
+                            color: 'var(--text-secondary, var(--text-muted))',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px'
                           }}>
-                            <span>↓ Geçiş süresi: {formatDuration(c.idleSecondsFromPrevious)}</span>
+                            <span>↓ Geçiş süresi: <strong className="tabular-nums font-mono">{formatDuration(c.idleSecondsFromPrevious)}</strong></span>
                           </div>
                         ) : null}
 
                         {/* Carton Card */}
                         <div style={{
-                          backgroundColor: isBest ? '#fefce8' : 'var(--bg-card)',
-                          border: `1px solid ${isBest ? '#fef08a' : 'var(--border-color)'}`,
-                          borderRadius: '8px',
+                          backgroundColor: isBest ? 'rgba(234, 179, 8, 0.04)' : 'var(--bg-card)',
+                          border: `1px solid ${isBest ? 'rgba(234, 179, 8, 0.3)' : 'var(--border-subtle, var(--border-color))'}`,
+                          borderRadius: 'var(--radius-sm, 6px)',
                           padding: '12px 14px',
                           display: 'flex',
                           flexDirection: 'column',
@@ -823,16 +848,16 @@ export const PerformanceAnalytics: React.FC = () => {
                           {/* Header row */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                                {isBest && '🏆 '}Koli #{c.cartonNo}
+                              <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary, var(--text-main))' }}>
+                                {isBest && '🏆 '}Koli #<span className="tabular-nums font-mono">{c.cartonNo}</span>
                               </span>
-                              <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
+                              <span className="tabular-nums font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }}>
                                 {c.sscc}
                               </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               {isBest && (
-                                <span style={{ fontSize: '0.72rem', backgroundColor: '#fef08a', color: '#854d0e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                <span style={{ fontSize: '0.72rem', backgroundColor: '#fef08a', color: '#854d0e', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
                                   En Hızlı
                                 </span>
                               )}
@@ -840,7 +865,7 @@ export const PerformanceAnalytics: React.FC = () => {
                                 padding: '2px 8px',
                                 borderRadius: '10px',
                                 fontSize: '0.72rem',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 backgroundColor: `${paceColor}15`,
                                 color: paceColor
                               }}>
@@ -852,23 +877,23 @@ export const PerformanceAnalytics: React.FC = () => {
                           {/* Metrics row */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginTop: '2px' }}>
                             <div>
-                              <strong>{c.actualQuantity}</strong> Adet Ürün
+                              <strong className="tabular-nums font-mono">{c.actualQuantity}</strong> Adet Ürün
                             </div>
                             <div>
-                              Dolum Süresi: <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>{formatDuration(c.fillDurationSeconds)}</strong>
+                              Dolum Süresi: <strong className="tabular-nums font-mono" style={{ color: 'var(--primary)', fontSize: '0.88rem' }}>{formatDuration(c.fillDurationSeconds)}</strong>
                             </div>
                             {score > 0 && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontWeight: 700, color: scoreColor, fontSize: '0.8rem' }}>{score.toFixed(1)} Puan</span>
+                                <span className="tabular-nums font-mono" style={{ fontWeight: 600, color: scoreColor, fontSize: '0.8rem' }}>{score.toFixed(1)} Puan</span>
                               </div>
                             )}
                           </div>
 
                           {/* Footer row */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '6px', marginTop: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary, var(--text-muted))', borderTop: '1px solid var(--border-subtle, var(--border-color))', paddingTop: '6px', marginTop: '4px' }}>
                             <div>
-                              Saat: {c.firstScannedAt ? new Date(c.firstScannedAt).toLocaleTimeString('tr-TR') : '-'}
-                              {c.lastScannedAt ? ` - ${new Date(c.lastScannedAt).toLocaleTimeString('tr-TR')}` : ''}
+                              Saat: <span className="tabular-nums font-mono">{c.firstScannedAt ? new Date(c.firstScannedAt).toLocaleTimeString('tr-TR') : '-'}
+                              {c.lastScannedAt ? ` - ${new Date(c.lastScannedAt).toLocaleTimeString('tr-TR')}` : ''}</span>
                             </div>
                             <div>
                               Okutan: <strong>{c.operatorName || 'Operatör'}</strong>

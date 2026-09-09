@@ -17,6 +17,7 @@ import {
 import { api } from '../services/api';
 import { digiEyeAgent, DigiEyeConfig, DigiEyeEvent, DigiEyeStatus } from '../services/digiEyeAgent';
 import { digiEyeBackend, DigiEyeBackendConnectionError } from '../services/digiEyeBackend';
+import { TTPageHeader } from '../components/common';
 
 interface Station {
   id: string;
@@ -365,65 +366,75 @@ export const DigiEyeScan: React.FC = () => {
 
   const progress = session.targetQty > 0 ? Math.min(100, (session.currentQty / session.targetQty) * 100) : 0;
   const connected = Boolean(agentStatus?.cameraConnected);
-  const statusColor = connected ? '#166534' : agentStatus ? '#9a3412' : '#991b1b';
-  const statusBackground = connected ? '#f0fdf4' : agentStatus ? '#fff7ed' : '#fef2f2';
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: 1280, margin: '0 auto', fontFamily: 'var(--font-primary)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700 }}>
-            <Camera size={26} color="var(--primary)" /> Endüstriyel Kamera Bant Okutma
-          </h1>
-          <p style={{ color: 'var(--text-muted)', margin: '5px 0 0', fontSize: '0.875rem' }}>
-            Koli etiketi → ürünler → sıradaki koli akışını Local Agent otomatik yönetir.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 20, background: statusBackground, color: statusColor, border: `1px solid ${connected ? 'var(--success-border)' : 'var(--warning-border)'}`, fontWeight: 700, fontSize: '0.82rem' }}>
-            {connected ? <Wifi size={16} /> : <WifiOff size={16} />}
-            {connected ? `Kamera bağlı · ${agentStatus?.captureFramesPerSecond || 0} FPS` : agentStatus ? 'Agent bağlı · kamera bekleniyor' : 'Local Agent kapalı'}
+    <div style={{ maxWidth: 1280, margin: '0 auto', paddingBottom: '30px' }}>
+      {/* Top Header */}
+      <TTPageHeader
+        title="Endüstriyel Kamera Bant Okutma"
+        description="Koli etiketi → ürünler → sıradaki koli akışını Local Agent otomatik yönetir."
+        breadcrumb="Üretim / Terminal"
+        actions={
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span 
+              className={`tt-badge ${connected ? 'tt-badge-success' : agentStatus ? 'tt-badge-warning' : 'tt-badge-danger'}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', height: '32px', padding: '0 10px' }}
+            >
+              {connected ? <Wifi size={14} /> : <WifiOff size={14} />}
+              {connected ? `Kamera Bağlı · ${agentStatus?.captureFramesPerSecond || 0} FPS` : agentStatus ? 'Agent Bağlı · Kamera Bekleniyor' : 'Local Agent Kapalı'}
+            </span>
+            <button 
+              className="btn btn-sm btn-secondary" 
+              type="button" 
+              onClick={() => { soundEnabledRef.current = !soundEnabled; setSoundEnabled(!soundEnabled); }} 
+              style={{ height: '32px', padding: '0 10px', borderRadius: 'var(--radius-sm)' }}
+              title={soundEnabled ? 'Sesi Kapat' : 'Sesi Aç'}
+            >
+              {soundEnabled ? <Volume2 size={15} style={{ color: 'var(--primary)' }} /> : <VolumeX size={15} />}
+            </button>
+            <button 
+              className="btn btn-sm btn-secondary" 
+              type="button" 
+              onClick={() => void openConfig()} 
+              style={{ height: '32px', padding: '0 12px', borderRadius: 'var(--radius-sm)', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.82rem' }}
+            >
+              <Settings size={14} /> Ayarlar
+            </button>
           </div>
-          <button className="btn" type="button" onClick={() => { soundEnabledRef.current = !soundEnabled; setSoundEnabled(!soundEnabled); }} style={{ border: '1px solid var(--border-color)', background: 'var(--btn-secondary-bg)', color: soundEnabled ? 'var(--primary)' : 'var(--text-muted)' }}>
-            {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-          </button>
-          <button className="btn" type="button" onClick={() => void openConfig()} style={{ border: '1px solid var(--border-color)', background: 'var(--btn-secondary-bg)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600 }}>
-            <Settings size={16} /> Ayarlar
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {(agentError || backendError) && (
-        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', fontWeight: 600, fontSize: '0.875rem' }}>
+        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', fontWeight: 600, fontSize: '0.84rem' }}>
           {backendError || agentError}
           {agentStatus?.pendingEvents ? ` · ${agentStatus.pendingEvents} kod güvenli kuyrukta bekliyor.` : ''}
         </div>
       )}
 
       {agentStatus?.shadowMode && (
-        <div style={{ padding: '12px 16px', borderRadius: 10, marginBottom: 18, background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning-text)', fontWeight: 600, fontSize: '0.875rem' }}>
+        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning-text)', fontWeight: 600, fontSize: '0.84rem' }}>
           Gölge test modu açık: kamera kodları çözüyor ancak backend’e okutma göndermiyor.
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: 24, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 390px', gap: '20px', marginBottom: '20px' }}>
         <div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-sm)', marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', marginBottom: 18 }}>
+          {/* Step 1 & 2 Active Carton Status Card */}
+          <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '18px 20px', boxShadow: 'var(--shadow-xs)', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
               <div>
-                <span style={{ display: 'inline-block', padding: '4px 9px', borderRadius: 6, color: '#fff', background: session.cartonNo ? 'var(--success)' : 'var(--primary)', fontSize: '0.75rem', fontWeight: 800 }}>
+                <span className={`tt-badge ${session.cartonNo ? 'tt-badge-success' : 'tt-badge-primary'}`} style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px' }}>
                   {session.cartonNo ? '2 · ÜRÜNLERİ OKUT' : '1 · KOLİ ETİKETİNİ OKUT'}
                 </span>
-                <h2 style={{ margin: '10px 0 2px', color: 'var(--text-main)', fontSize: '1.35rem', fontWeight: 700 }}>{session.cartonNo || 'Koli bekleniyor'}</h2>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+                <h2 style={{ margin: '8px 0 2px', color: 'var(--text-main)', fontSize: '1.25rem', fontWeight: 800 }}>{session.cartonNo || 'Koli bekleniyor'}</h2>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                   {session.cartonNo ? `${session.orderNo}${session.productName ? ` · ${session.productName}` : ''}` : 'Ön etiketli koliyi görüş alanına gönderin.'}
                 </div>
               </div>
-              <div style={{ minWidth: 170 }}>
-                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, marginBottom: 5 }}>İSTASYON</label>
+              <div style={{ minWidth: '180px' }}>
+                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>İSTASYON</label>
                 <select
-                  className="form-control"
+                  className="form-input"
                   value={selectedStationId}
                   disabled={Boolean(session.cartonNo || processingEvent)}
                   onChange={event => {
@@ -431,67 +442,109 @@ export const DigiEyeScan: React.FC = () => {
                     setSelectedStationId(event.target.value);
                     localStorage.setItem('trackTrace_selectedStation', event.target.value);
                   }}
-                  style={{ borderRadius: 8, fontWeight: 600 }}
+                  style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', fontSize: '0.82rem', fontWeight: 600, backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}
                 >
                   {stations.map(station => <option key={station.id} value={station.id}>{station.name}</option>)}
                 </select>
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.84rem', fontWeight: 700 }}>Koli doluluğu</span>
-              <strong style={{ color: 'var(--text-main)', fontSize: '1.1rem' }}>{session.currentQty} / {session.targetQty || '-'}</strong>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 600 }}>Koli Doluluğu</span>
+              <strong style={{ color: 'var(--text-main)', fontSize: '1rem' }} className="tabular-nums font-mono">{session.currentQty} / {session.targetQty || '-'}</strong>
             </div>
-            <div style={{ height: 12, borderRadius: 999, background: 'var(--border-color)', overflow: 'hidden' }}>
+            <div style={{ height: '8px', borderRadius: '999px', background: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${progress}%`, background: progress >= 100 ? 'var(--success)' : 'var(--primary)', transition: 'width .15s ease' }} />
             </div>
           </div>
 
-          <div style={{ borderRadius: 16, padding: 24, minHeight: 172, display: 'flex', alignItems: 'center', gap: 18, background: workflowStatus === 'error' ? 'var(--danger-bg)' : workflowStatus === 'cartonClosed' ? 'var(--success-bg)' : 'var(--primary-light)', border: `1px solid ${workflowStatus === 'error' ? 'var(--danger-border)' : workflowStatus === 'cartonClosed' ? 'var(--success-border)' : 'rgba(59, 130, 246, 0.3)'}` }}>
-            {workflowStatus === 'error' ? <XCircle size={50} color="var(--danger)" /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={50} color="var(--success)" /> : processingEvent ? <Clock3 size={50} color="var(--primary)" /> : <Barcode size={50} color="var(--primary)" />}
+          {/* Large Workflow Status Banner Card */}
+          <div 
+            style={{ 
+              borderRadius: 'var(--radius-lg)', 
+              padding: '20px', 
+              minHeight: '160px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '16px', 
+              background: workflowStatus === 'error' ? 'var(--danger-bg)' : workflowStatus === 'cartonClosed' ? 'var(--success-bg)' : 'var(--primary-light)', 
+              border: `1px solid ${workflowStatus === 'error' ? 'var(--danger-border)' : workflowStatus === 'cartonClosed' ? 'var(--success-border)' : 'var(--border-subtle)'}`,
+              boxShadow: 'var(--shadow-xs)'
+            }}
+          >
+            {workflowStatus === 'error' ? <XCircle size={44} style={{ color: 'var(--danger)', shrink: 0 }} /> : workflowStatus === 'cartonClosed' ? <CheckCircle2 size={44} style={{ color: 'var(--success)', shrink: 0 }} /> : processingEvent ? <Clock3 size={44} style={{ color: 'var(--primary)', shrink: 0 }} /> : <Barcode size={44} style={{ color: 'var(--primary)', shrink: 0 }} />}
             <div>
-              <div style={{ color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 800, marginBottom: 5 }}>
+              <div style={{ color: 'var(--text-main)', fontSize: '1.15rem', fontWeight: 800, marginBottom: '4px' }}>
                 {processingEvent ? 'Kod işleniyor…' : workflowStatus === 'error' ? 'Okutma reddedildi' : workflowStatus === 'cartonClosed' ? 'Koli tamamlandı' : 'Bant akışı hazır'}
               </div>
-              <div style={{ color: workflowStatus === 'error' ? 'var(--danger-text)' : 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>{message}</div>
-              {lastScannedBarcode && <code style={{ display: 'block', marginTop: 9, color: 'var(--text-main)', wordBreak: 'break-all' }}>{lastScannedBarcode}</code>}
-              {lastClosedCartonNo && workflowStatus === 'cartonClosed' && <div style={{ marginTop: 8, color: 'var(--success-text)', fontWeight: 700 }}>Son koli: {lastClosedCartonNo}</div>}
+              <div style={{ color: workflowStatus === 'error' ? 'var(--danger-text)' : 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.4 }}>{message}</div>
+              {lastScannedBarcode && (
+                <div style={{ marginTop: '8px', display: 'inline-block', padding: '4px 10px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                  <code style={{ color: 'var(--text-main)', wordBreak: 'break-all', fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 700 }} className="tabular-nums">
+                    {lastScannedBarcode}
+                  </code>
+                </div>
+              )}
+              {lastClosedCartonNo && workflowStatus === 'cartonClosed' && (
+                <div style={{ marginTop: '6px', color: 'var(--success-text)', fontWeight: 700, fontSize: '0.82rem' }}>
+                  Son koli: <strong className="tabular-nums font-mono">{lastClosedCartonNo}</strong>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div style={{ background: '#0f172a', borderRadius: 16, overflow: 'hidden', color: '#fff', minHeight: 410, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '13px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}><Eye size={17} /> Agent kamera önizleme</span>
-            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>2 FPS önizleme</span>
+        {/* Camera Preview Side Card */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-xs)' }}>
+          <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-subtle)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.82rem', color: 'var(--text-main)' }}>
+              <Eye size={15} style={{ color: 'var(--primary)' }} /> Kamera Önizleme
+            </span>
+            <span className="tt-badge tt-badge-neutral" style={{ fontSize: '0.7rem' }}>2 FPS</span>
           </div>
-          <div style={{ flex: 1, minHeight: 270, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#020617' }}>
-            {previewUrl ? <img src={previewUrl} alt="Endüstriyel kamera son karesi" style={{ width: '100%', maxHeight: 300, objectFit: 'contain' }} /> : <Camera size={48} color="#475569" />}
+          <div style={{ flex: 1, minHeight: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#020617' }}>
+            {previewUrl ? <img src={previewUrl} alt="Endüstriyel kamera son karesi" style={{ width: '100%', maxHeight: 240, objectFit: 'contain' }} /> : <Camera size={40} color="#475569" />}
           </div>
-          <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: '0.78rem' }}>
-            <Stat icon={<Gauge size={14} />} label="Yakalama" value={`${agentStatus?.captureFramesPerSecond || 0} FPS`} />
-            <Stat icon={<Clock3 size={14} />} label="Çözümleme" value={`${agentStatus?.lastDecodeMilliseconds || 0} ms`} />
-            <Stat icon={<ShieldCheck size={14} />} label="Kuyruk" value={`${agentStatus?.pendingEvents || 0} kod`} />
-            <Stat icon={<Barcode size={14} />} label="Algılanan" value={`${agentStatus?.detectedCodes || 0}`} />
+          <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem' }}>
+            <Stat icon={<Gauge size={13} />} label="Yakalama" value={`${agentStatus?.captureFramesPerSecond || 0} FPS`} />
+            <Stat icon={<Clock3 size={13} />} label="Çözümleme" value={`${agentStatus?.lastDecodeMilliseconds || 0} ms`} />
+            <Stat icon={<ShieldCheck size={13} />} label="Kuyruk" value={`${agentStatus?.pendingEvents || 0} kod`} />
+            <Stat icon={<Barcode size={13} />} label="Algılanan" value={`${agentStatus?.detectedCodes || 0}`} />
           </div>
         </div>
       </div>
 
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)', fontWeight: 800, color: 'var(--text-main)' }}>Son kamera okumaları</div>
+      {/* Real-time Scan Table */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-xs)' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Son Kamera Okumaları</span>
+          <span className="tt-badge tt-badge-neutral" style={{ fontSize: '0.72rem' }}>Canlı Akış</span>
+        </div>
         {scanHistory.length === 0 ? (
-          <div style={{ padding: 26, textAlign: 'center', color: 'var(--text-muted)' }}>Henüz kod işlenmedi.</div>
+          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Henüz kod işlenmedi.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-              <thead><tr style={{ background: 'var(--table-header-bg)', color: 'var(--text-muted)', textAlign: 'left' }}><th style={cell}>Saat</th><th style={cell}>Kod</th><th style={cell}>Format</th><th style={cell}>Koli</th><th style={cell}>Sonuç</th></tr></thead>
+            <table className="table-modern" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-surface-subtle)', color: 'var(--text-muted)', textAlign: 'left' }}>
+                  <th style={cell}>Saat</th>
+                  <th style={cell}>Kod</th>
+                  <th style={cell}>Format</th>
+                  <th style={cell}>Koli</th>
+                  <th style={cell}>Sonuç</th>
+                </tr>
+              </thead>
               <tbody>{scanHistory.map(item => (
-                <tr key={item.sequence} style={{ borderTop: '1px solid var(--border-color)' }}>
-                  <td style={cell}>{item.timestamp}</td>
-                  <td style={{ ...cell, maxWidth: 410, wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>{item.rawCode}</td>
-                  <td style={cell}>{item.format}</td>
-                  <td style={cell}>{item.cartonNo}</td>
-                  <td style={{ ...cell, color: item.success ? 'var(--success)' : 'var(--danger)', fontWeight: 700 }}>{item.status}</td>
+                <tr key={item.sequence} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                  <td style={{ ...cell, color: 'var(--text-muted)' }} className="tabular-nums">{item.timestamp}</td>
+                  <td style={{ ...cell, maxWidth: 410, wordBreak: 'break-all', fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-main)' }} className="tabular-nums">{item.rawCode}</td>
+                  <td style={{ ...cell, color: 'var(--text-muted)' }}>{item.format}</td>
+                  <td style={{ ...cell, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{item.cartonNo}</td>
+                  <td style={cell}>
+                    <span className={`tt-badge ${item.success ? 'tt-badge-success' : 'tt-badge-danger'}`} style={{ fontSize: '0.72rem', padding: '1px 6px' }}>
+                      {item.status}
+                    </span>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
@@ -500,25 +553,25 @@ export const DigiEyeScan: React.FC = () => {
       </div>
 
       {showConfig && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-          <div style={{ width: 'min(620px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'var(--modal-bg)', borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-color)' }}>
-            <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.25rem' }}>Endüstriyel Kamera Ayarları</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5 }}>Kamera bu bilgisayarda çalıştığı için adres varsayılan olarak localhost’tur. ROI değerleri yalnızca etiketin geçtiği alanı tarayarak hızı artırır.</p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+          <div style={{ width: 'min(580px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'var(--modal-bg)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-subtle)' }}>
+            <h2 style={{ margin: '0 0 4px', color: 'var(--text-main)', fontSize: '1.15rem', fontWeight: 800 }}>Endüstriyel Kamera Ayarları</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: 1.4, margin: '0 0 16px' }}>Kamera bu bilgisayarda çalıştığı için adres varsayılan olarak localhost’tur. ROI değerleri yalnızca etiketin geçtiği alanı tarayarak hızı artırır.</p>
 
-            {configError && <div style={{ padding: 10, background: '#fef2f2', color: '#991b1b', borderRadius: 8, marginBottom: 12 }}>{configError}</div>}
+            {configError && <div style={{ padding: '8px 12px', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', borderRadius: 'var(--radius-sm)', marginBottom: '12px', fontSize: '0.82rem' }}>{configError}</div>}
             {draftConfig ? (
-              <div style={{ display: 'grid', gap: 15 }}>
+              <div style={{ display: 'grid', gap: '12px' }}>
                 <Toggle label="Kamera taramasını etkinleştir" checked={draftConfig.enabled} onChange={enabled => setDraftConfig({ ...draftConfig, enabled })} />
                 <Toggle label="Gölge test modu (backend’e gönderme)" checked={draftConfig.shadowMode} onChange={shadowMode => setDraftConfig({ ...draftConfig, shadowMode })} />
-                <Field label="Kamera son görüntü adresi"><input className="form-control" value={draftConfig.cameraUrl} onChange={event => setDraftConfig({ ...draftConfig, cameraUrl: event.target.value })} /></Field>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <Field label="Kamera son görüntü adresi"><input className="form-input" style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', border: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }} value={draftConfig.cameraUrl} onChange={event => setDraftConfig({ ...draftConfig, cameraUrl: event.target.value })} /></Field>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <NumberField label="Kare aralığı (ms)" value={draftConfig.pollIntervalMs} min={40} max={1000} onChange={pollIntervalMs => setDraftConfig({ ...draftConfig, pollIntervalMs })} />
                   <NumberField label="Zaman aşımı (ms)" value={draftConfig.requestTimeoutMs} min={250} max={5000} onChange={requestTimeoutMs => setDraftConfig({ ...draftConfig, requestTimeoutMs })} />
                 </div>
                 <NumberField label="Aynı kodu yeniden kurma için boş kare" value={draftConfig.releaseAfterMissedFrames} min={1} max={20} onChange={releaseAfterMissedFrames => setDraftConfig({ ...draftConfig, releaseAfterMissedFrames })} />
                 <div>
-                  <div style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '0.8rem', marginBottom: 7 }}>Tarama alanı ROI (%)</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                  <div style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '0.78rem', marginBottom: '6px' }}>Tarama Alanı ROI (%)</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                     <NumberField label="Sol" value={draftConfig.roiXPercent} min={0} max={99} onChange={roiXPercent => setDraftConfig({ ...draftConfig, roiXPercent })} />
                     <NumberField label="Üst" value={draftConfig.roiYPercent} min={0} max={99} onChange={roiYPercent => setDraftConfig({ ...draftConfig, roiYPercent })} />
                     <NumberField label="Genişlik" value={draftConfig.roiWidthPercent} min={1} max={100} onChange={roiWidthPercent => setDraftConfig({ ...draftConfig, roiWidthPercent })} />
@@ -526,11 +579,11 @@ export const DigiEyeScan: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ) : <div style={{ padding: 20, color: 'var(--text-muted)' }}>Ayarlar yükleniyor…</div>}
+            ) : <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Ayarlar yükleniyor…</div>}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px solid var(--border-color)' }}>
-              <button className="btn btn-secondary" type="button" onClick={() => { setShowConfig(false); setDraftConfig(config); }}>Vazgeç</button>
-              <button className="btn btn-primary" type="button" disabled={!draftConfig || savingConfig} onClick={() => void saveConfig()}>{savingConfig ? 'Kaydediliyor…' : 'Kaydet'}</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '18px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+              <button className="btn btn-sm btn-secondary" type="button" style={{ height: '34px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.82rem' }} onClick={() => { setShowConfig(false); setDraftConfig(config); }}>Vazgeç</button>
+              <button className="btn btn-sm btn-primary" type="button" style={{ height: '34px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.82rem' }} disabled={!draftConfig || savingConfig} onClick={() => void saveConfig()}>{savingConfig ? 'Kaydediliyor…' : 'Kaydet'}</button>
             </div>
           </div>
         </div>
@@ -539,26 +592,26 @@ export const DigiEyeScan: React.FC = () => {
   );
 };
 
-const cell: React.CSSProperties = { padding: '11px 14px', verticalAlign: 'top' };
+const cell: React.CSSProperties = { padding: '9px 12px', verticalAlign: 'middle' };
 
 const Stat: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-  <div style={{ background: 'var(--bg-surface-subtle)', borderRadius: 8, padding: '8px 10px', border: '1px solid var(--border-color)' }}>
-    <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>{icon}{label}</div>
-    <div style={{ color: 'var(--text-main)', fontWeight: 800, marginTop: 3 }}>{value}</div>
+  <div style={{ background: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-sm)', padding: '6px 8px', border: '1px solid var(--border-subtle)' }}>
+    <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem' }}>{icon}{label}</div>
+    <div style={{ color: 'var(--text-main)', fontWeight: 700, marginTop: '2px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }} className="tabular-nums">{value}</div>
   </div>
 );
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <label><span style={{ display: 'block', color: 'var(--text-main)', fontWeight: 700, fontSize: '0.8rem', marginBottom: 6 }}>{label}</span>{children}</label>
+  <label><span style={{ display: 'block', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.78rem', marginBottom: '4px' }}>{label}</span>{children}</label>
 );
 
 const NumberField: React.FC<{ label: string; value: number; min: number; max: number; onChange: (value: number) => void }> = ({ label, value, min, max, onChange }) => (
-  <Field label={label}><input className="form-control" type="number" value={value} min={min} max={max} onChange={event => onChange(Number(event.target.value))} /></Field>
+  <Field label={label}><input className="form-input" style={{ width: '100%', height: '34px', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', border: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }} type="number" value={value} min={min} max={max} onChange={event => onChange(Number(event.target.value))} /></Field>
 );
 
 const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: boolean) => void }> = ({ label, checked, onChange }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: 9, color: 'var(--text-main)', fontWeight: 650, fontSize: '0.86rem' }}>
-    <input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} style={{ width: 17, height: 17 }} />{label}
+  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>
+    <input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} style={{ width: '15px', height: '15px' }} />{label}
   </label>
 );
 

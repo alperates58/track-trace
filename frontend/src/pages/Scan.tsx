@@ -647,23 +647,25 @@ export const Scan: React.FC = () => {
 
         {/* Yazıcı Hata Kurtarma Bildirimi */}
         {printError && lastClosedCartonId && (
-          <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm shadow-sm animate-pulse">
+          <div className="flex items-center justify-between p-3 border shadow-xs animate-pulse" style={{ backgroundColor: 'var(--danger-bg)', borderColor: 'var(--danger-border)', color: 'var(--danger-text)', borderRadius: 'var(--radius-md)' }}>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
-              <span className="font-semibold">{printError}</span>
+              <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: 'var(--danger)' }} />
+              <span className="font-semibold text-xs md:text-sm">{printError}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleRetryPrint}
                 disabled={isReprinting}
-                className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+                className="btn btn-sm btn-primary flex items-center gap-1.5 text-xs font-semibold"
+                style={{ height: '30px', borderRadius: 'var(--radius-sm)' }}
               >
                 <Printer className="w-3.5 h-3.5" />
                 {isReprinting ? 'Yazdırılıyor...' : 'Tekrar Yazdır'}
               </button>
               <button
                 onClick={() => printPDFDirectly(lastClosedCartonId)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                className="btn btn-sm btn-secondary flex items-center gap-1.5 text-xs font-semibold"
+                style={{ height: '30px', borderRadius: 'var(--radius-sm)' }}
               >
                 <FileDown className="w-3.5 h-3.5" />
                 PDF İndir
@@ -674,17 +676,18 @@ export const Scan: React.FC = () => {
 
         {/* Koli Kapandı / Aşırı Dolum Koruma Bildirimi */}
         {status === 'cartonClosed' && (
-          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl text-green-900 text-sm shadow-sm">
+          <div className="flex items-center justify-between p-3 border shadow-xs" style={{ backgroundColor: 'var(--success-bg)', borderColor: 'var(--success-border)', color: 'var(--success-text)', borderRadius: 'var(--radius-md)' }}>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
-              <span className="font-bold">Koli Tamamlandı ({lastClosedCartonNo || 'Son Koli'}). Lütfen yeni koliye geçin. Sıradaki barkod yeni koliye eklenecektir.</span>
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping shrink-0" />
+              <span className="font-semibold text-xs md:text-sm">Koli Tamamlandı ({lastClosedCartonNo || 'Son Koli'}). Sıradaki barkod yeni koliye eklenecektir.</span>
             </div>
             {lastClosedCartonId && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleRetryPrint}
                   disabled={isReprinting}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold"
+                  className="btn btn-sm btn-primary flex items-center gap-1.5 text-xs font-semibold"
+                  style={{ height: '30px', borderRadius: 'var(--radius-sm)' }}
                 >
                   <Printer className="w-3.5 h-3.5" />
                   Etiketi Yazdır
@@ -736,8 +739,8 @@ export const Scan: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.4)',
-            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -748,17 +751,17 @@ export const Scan: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: 'var(--modal-bg)',
-              borderRadius: '16px',
+              borderRadius: 'var(--radius-lg)',
               width: '90%',
-              maxWidth: '500px',
-              padding: '24px',
+              maxWidth: '480px',
+              padding: '20px 24px',
               boxShadow: 'var(--shadow-xl)',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-subtle)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Printer size={20} style={{ color: 'var(--primary)' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Printer size={18} style={{ color: 'var(--primary)' }} />
                 Yazıcı Ayarları
               </h3>
               <button 
@@ -766,11 +769,10 @@ export const Scan: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '1.5rem',
-                  fontWeight: 'bold',
+                  fontSize: '1.25rem',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
-                  padding: '4px',
+                  padding: '2px 6px',
                   lineHeight: 1
                 }}
               >
@@ -778,14 +780,14 @@ export const Scan: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '5px' }}>
                   Yazdırma Yöntemi (Baskı Modu)
                 </label>
                 <select
                   className="form-input"
-                  style={{ width: '100%', height: '40px' }}
+                  style={{ width: '100%', height: '36px', fontSize: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)' }}
                   value={printMode}
                   onChange={(e) => setPrintMode(e.target.value)}
                 >
@@ -798,45 +800,45 @@ export const Scan: React.FC = () => {
 
               {printMode === 'browser' && (
                 <>
-                  <div style={{ backgroundColor: 'var(--bg-surface-subtle)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                  <div style={{ backgroundColor: 'var(--bg-surface-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0 0 10px 0', lineHeight: '1.4' }}>
                       Bilgisayarınızda kurulu olan <strong>Zebra Browser Print</strong> uygulaması aracılığıyla, varsayılan yazıcınıza doğrudan çıktı gönderilir.
                     </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch("https://localhost:9101/default?type=printer");
-                            const rawText = await res.text();
-                            const deviceObj = JSON.parse(rawText);
-                            const displayName = deviceObj.name || deviceObj.uid || "Bilinmeyen Yazıcı";
-                            alert(`Varsayılan Yazıcı: ${displayName} (${deviceObj.connection})`);
-                          } catch (e: any) {
-                            alert("Zebra Browser Print bağlantı hatası! Lütfen uygulamanın çalıştığından emin olun ve https://localhost:9101 adresindeki SSL sertifikasına güven izni verin.");
-                          }
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Bağlı Yazıcıyı Sorgula
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("https://localhost:9101/default?type=printer");
+                          const rawText = await res.text();
+                          const deviceObj = JSON.parse(rawText);
+                          const displayName = deviceObj.name || deviceObj.uid || "Bilinmeyen Yazıcı";
+                          alert(`Varsayılan Yazıcı: ${displayName} (${deviceObj.connection})`);
+                        } catch (e: any) {
+                          alert("Zebra Browser Print bağlantı hatası! Lütfen uygulamanın çalıştığından emin olun ve https://localhost:9101 adresindeki SSL sertifikasına güven izni verin.");
+                        }
+                      }}
+                      style={{
+                        height: '32px',
+                        padding: '0 12px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        borderRadius: 'var(--radius-sm)'
+                      }}
+                    >
+                      Bağlı Yazıcıyı Sorgula
+                    </button>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-surface-subtle)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-surface-subtle)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                     <input
                       type="checkbox"
                       id="autoPrintCheckbox"
                       checked={autoPrintEnabled}
                       onChange={(e) => setAutoPrintEnabled(e.target.checked)}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      style={{ width: '15px', height: '15px', cursor: 'pointer' }}
                     />
-                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
+                    <label htmlFor="autoPrintCheckbox" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
                       Koli Tamamlanınca Otomatik Barkod Bas
                     </label>
                   </div>
@@ -844,13 +846,15 @@ export const Scan: React.FC = () => {
                   <div>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-sm btn-secondary"
                       disabled={isTestingConnection}
                       onClick={handleTestPrint}
                       style={{
                         width: '100%',
-                        height: '38px',
-                        fontSize: '0.85rem',
+                        height: '34px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        borderRadius: 'var(--radius-sm)'
                       }}
                     >
                       {isTestingConnection ? 'Bağlantı Test Ediliyor...' : 'Test Et (ZPL Barkodu Bas)'}
@@ -858,13 +862,13 @@ export const Scan: React.FC = () => {
                     {testMessage && (
                       <div style={{
                         marginTop: '8px',
-                        fontSize: '0.8rem',
+                        fontSize: '0.78rem',
                         fontWeight: 600,
                         color: testMessage.type === 'success' ? 'var(--success-text)' : 'var(--danger-text)',
                         backgroundColor: testMessage.type === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)',
                         border: `1px solid ${testMessage.type === 'success' ? 'var(--success-border)' : 'var(--danger-border)'}`,
-                        padding: '8px 12px',
-                        borderRadius: '6px'
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius-sm)'
                       }}>
                         {testMessage.text}
                       </div>
@@ -875,24 +879,24 @@ export const Scan: React.FC = () => {
 
               {printMode === 'kiosk' && (
                 <>
-                  <div style={{ backgroundColor: 'var(--success-bg)', padding: '14px', borderRadius: '8px', border: '1px solid var(--success-border)' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--success-text)', margin: '0 0 8px 0', lineHeight: '1.4', fontWeight: 600 }}>
+                  <div style={{ backgroundColor: 'var(--success-bg)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success-border)' }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--success-text)', margin: '0 0 6px 0', lineHeight: '1.4', fontWeight: 600 }}>
                       ✓ Bu mod, Argox dahil TÜM marka yazıcıları destekler.
                     </p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--success-text)', margin: 0, lineHeight: '1.4', opacity: 0.9 }}>
-                      Bunun için etiket yazıcınızı Windows üzerinde <strong>Varsayılan Yazıcı</strong> yapmalısınız. Otomatik (onay penceresiz) baskı almak istiyorsanız, Google Chrome tarayıcınızı <code>--kiosk-printing</code> parametresi ile başlatmalısınız.
+                    <p style={{ fontSize: '0.72rem', color: 'var(--success-text)', margin: 0, lineHeight: '1.4', opacity: 0.9 }}>
+                      Bunun için etiket yazıcınızı Windows üzerinde <strong>Varsayılan Yazıcı</strong> yapmalısınız. Chrome tarayıcınızı <code>--kiosk-printing</code> parametresi ile başlatarak otomatik baskı alabilirsiniz.
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-surface-subtle)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--bg-surface-subtle)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                     <input
                       type="checkbox"
                       id="autoPrintCheckboxKiosk"
                       checked={autoPrintEnabled}
                       onChange={(e) => setAutoPrintEnabled(e.target.checked)}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      style={{ width: '15px', height: '15px', cursor: 'pointer' }}
                     />
-                    <label htmlFor="autoPrintCheckboxKiosk" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
+                    <label htmlFor="autoPrintCheckboxKiosk" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', userSelect: 'none' }}>
                       Koli Tamamlanınca Otomatik Barkod Bas
                     </label>
                   </div>
@@ -900,7 +904,7 @@ export const Scan: React.FC = () => {
                   <div>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-sm btn-secondary"
                       disabled={isTestingConnection}
                       onClick={async () => {
                         if (lastClosedCartonId) {
@@ -916,8 +920,10 @@ export const Scan: React.FC = () => {
                       }}
                       style={{
                         width: '100%',
-                        height: '38px',
-                        fontSize: '0.85rem',
+                        height: '34px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        borderRadius: 'var(--radius-sm)'
                       }}
                     >
                       {isTestingConnection ? 'Yazdırılıyor...' : 'Test Et (Mevcut Koliyi Yazdır)'}
@@ -927,17 +933,17 @@ export const Scan: React.FC = () => {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '18px', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px', justifyContent: 'flex-end' }}>
               <button
-                className="btn btn-secondary"
-                style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600 }}
+                className="btn btn-sm btn-secondary"
+                style={{ height: '34px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.82rem' }}
                 onClick={() => setIsSettingsModalOpen(false)}
               >
                 Vazgeç
               </button>
               <button
-                className="btn btn-primary"
-                style={{ height: '40px', padding: '0 16px', borderRadius: '8px', fontWeight: 600 }}
+                className="btn btn-sm btn-primary"
+                style={{ height: '34px', padding: '0 14px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.82rem' }}
                 onClick={() => handleSaveSettings(printMode, autoPrintEnabled)}
               >
                 Ayarları Kaydet

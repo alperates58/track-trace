@@ -15,6 +15,7 @@ import {
   ChevronRight, 
   SlidersHorizontal 
 } from 'lucide-react';
+import { TTPageHeader, TTButton } from '../components/common';
 
 interface PrintJob {
   id: string;
@@ -64,18 +65,18 @@ interface Pallet {
 
 const FullnessIndicator: React.FC<{ actual: number; target: number }> = ({ actual, target }) => {
   const percentage = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
-  let color = 'var(--danger)';
-  if (percentage >= 100) color = 'var(--success)';
-  else if (percentage >= 50) color = 'var(--warning)';
+  let color = 'var(--color-danger, #ef4444)';
+  if (percentage >= 100) color = 'var(--color-success, #10b981)';
+  else if (percentage >= 50) color = 'var(--color-warning, #f59e0b)';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '90px', maxWidth: '120px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: '90px', maxWidth: '120px' }}>
+      <div className="tabular-nums font-mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
         <span>{actual} / {target}</span>
         <span>%{percentage}</span>
       </div>
-      <div style={{ width: '100%', height: '4px', backgroundColor: '#cbd5e1', borderRadius: '2px', overflow: 'hidden' }}>
-        <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: color }} />
+      <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--border-subtle, #334155)', borderRadius: '2px', overflow: 'hidden' }}>
+        <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: color, transition: 'width 0.2s' }} />
       </div>
     </div>
   );
@@ -500,44 +501,41 @@ export const TraceabilityCenter: React.FC = () => {
   };
 
   return (
-    <div className="traceability-page">
+    <div className="traceability-page" style={{ padding: '0px' }}>
       {/* Title */}
-      <div className="traceability-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>İzlenebilirlik Merkezi</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Ürün, koli, palet ve sipariş ilişkilerini sorgulayın ve baskı geçmişini denetleyin.</p>
-        </div>
-        <button 
-          className="btn btn-secondary" 
-          disabled={loading || refreshing} 
-          onClick={() => loadCenterData(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-          {refreshing ? 'Güncelleniyor...' : 'Verileri Yenile'}
-        </button>
-      </div>
+      <TTPageHeader
+        title="İzlenebilirlik Merkezi"
+        description="Ürün, koli, palet ve sipariş ilişkilerini sorgulayın ve baskı geçmişini denetleyin."
+        actions={
+          <TTButton 
+            variant="secondary" 
+            disabled={loading || refreshing} 
+            onClick={() => loadCenterData(true)}
+            icon={<RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />}
+          >
+            {refreshing ? 'Güncelleniyor...' : 'Verileri Yenile'}
+          </TTButton>
+        }
+      />
 
       {/* Giant Search Block */}
-      <div className="card" style={{ padding: '32px', marginBottom: '28px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-        <form className="traceability-search-form" onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '12px', maxWidth: '800px', margin: '0 auto' }}>
-          <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Search size={22} style={{ position: 'absolute', left: '16px', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                className="form-input"
-                style={{ paddingLeft: '50px', height: '52px', fontSize: '1.05rem', width: '100%', borderRadius: 'var(--radius-md)' }}
-                placeholder="Barkod, SSCC, Koli No, Palet No veya Sipariş No girin..."
-                value={queryCode}
-                onChange={(e) => setQueryCode(e.target.value)}
-              />
-            </div>
+      <div style={{ padding: '24px 28px', marginBottom: '24px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)' }}>
+        <form className="traceability-search-form" onSubmit={handleTraceSearch} style={{ display: 'flex', gap: '10px', maxWidth: '820px', margin: '0 auto' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <input
+              type="text"
+              className="input-field"
+              style={{ paddingLeft: '42px', height: '42px', fontSize: '0.95rem', width: '100%', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle)' }}
+              placeholder="Barkod, SSCC, Koli No, Palet No veya Sipariş No girin..."
+              value={queryCode}
+              onChange={(e) => setQueryCode(e.target.value)}
+            />
           </div>
           <button 
             type="submit" 
             className="btn btn-primary" 
-            style={{ padding: '0 32px', height: '52px', fontSize: '1rem', borderRadius: 'var(--radius-md)' }} 
+            style={{ padding: '0 24px', height: '42px', fontSize: '0.9rem', fontWeight: 600, borderRadius: 'var(--radius-sm, 6px)' }} 
             disabled={searchLoading}
           >
             {searchLoading ? 'Sorgulanıyor...' : 'Sorgula'}
@@ -547,11 +545,11 @@ export const TraceabilityCenter: React.FC = () => {
 
       {/* Error notification */}
       {searchError && (
-        <div className="card" style={{ textAlign: 'center', padding: '32px', marginBottom: '24px', color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)' }}>
-          <AlertCircle size={32} style={{ margin: '0 auto 12px' }} />
-          <h3 style={{ fontSize: '1.15rem', marginBottom: '4px' }}>Eşleşme Bulunamadı</h3>
-          <p style={{ fontSize: '0.9rem' }}>{searchError}</p>
-          <button className="btn btn-secondary" style={{ marginTop: '16px', padding: '6px 16px' }} onClick={handleClearSearch}>Aramayı Temizle</button>
+        <div style={{ textAlign: 'center', padding: '24px', marginBottom: '24px', color: '#f87171', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: 'var(--radius-md, 8px)' }}>
+          <AlertCircle size={28} style={{ margin: '0 auto 10px' }} />
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Eşleşme Bulunamadı</h3>
+          <p style={{ fontSize: '0.85rem', margin: '0 0 14px', color: 'var(--text-secondary)' }}>{searchError}</p>
+          <button className="btn btn-secondary" style={{ height: '32px', padding: '0 16px', fontSize: '0.82rem', borderRadius: 'var(--radius-sm, 6px)' }} onClick={handleClearSearch}>Aramayı Temizle</button>
         </div>
       )}
 
@@ -559,71 +557,73 @@ export const TraceabilityCenter: React.FC = () => {
       {searchResult && (
         <div style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Sorgu Sonuç Detayı</h3>
-            <button className="btn btn-secondary" onClick={handleClearSearch}>Temizle / Geri Dön</button>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Sorgu Sonuç Detayı</h3>
+            <button className="btn btn-secondary" onClick={handleClearSearch} style={{ height: '32px', padding: '0 14px', fontSize: '0.82rem', borderRadius: 'var(--radius-sm, 6px)' }}>
+              Temizle / Geri Dön
+            </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }} className="two-column-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '20px' }} className="two-column-grid">
             
             {/* Left side: Hierarchical Card list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <h4 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Agregasyon Hiyerarşisi</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>Agregasyon Hiyerarşisi</h4>
 
               {/* Order Node */}
-              <div className="card" style={{ borderLeft: '4px solid #6b21a8' }}>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Adım 4: Sipariş</span>
-                <h5 style={{ fontSize: '1.05rem', margin: '4px 0 8px' }}>
-                  {searchResult.type === 'order' ? <strong>{searchResult.data.orderNo}</strong> : searchResult.data.orderNo || '-'} Siparişi
+              <div style={{ padding: '14px 16px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid #8b5cf6', borderRadius: 'var(--radius-md, 8px)' }}>
+                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Adım 4: Sipariş</span>
+                <h5 style={{ fontSize: '0.98rem', margin: '4px 0 6px', color: 'var(--text-primary)' }}>
+                  {searchResult.type === 'order' ? <strong className="font-mono text-primary">{searchResult.data.orderNo}</strong> : <span className="font-mono">{searchResult.data.orderNo || '-'}</span>} Siparişi
                 </h5>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  <span>Müşteri: <strong>{searchResult.data.customerName || '-'}</strong></span>
-                  <span>Ürün: <strong>{searchResult.data.productName || '-'}</strong></span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <span>Müşteri: <strong className="text-slate-200">{searchResult.data.customerName || '-'}</strong></span>
+                  <span>Ürün: <strong className="text-slate-200">{searchResult.data.productName || '-'}</strong></span>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', margin: '-4px 0' }}><ArrowDown size={20} color="var(--text-muted)" /></div>
+              <div style={{ textAlign: 'center', margin: '-4px 0' }}><ArrowDown size={18} color="var(--text-secondary)" /></div>
 
               {/* Pallet Node */}
-              <div className="card" style={{ borderLeft: '4px solid var(--primary)', backgroundColor: searchResult.type === 'pallet' ? 'var(--primary-light)' : '' }}>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Adım 3: Palet</span>
-                <h5 style={{ fontSize: '1.05rem', margin: '4px 0 8px' }}>
+              <div style={{ padding: '14px 16px', backgroundColor: searchResult.type === 'pallet' ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid var(--primary)', borderRadius: 'var(--radius-md, 8px)' }}>
+                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Adım 3: Palet</span>
+                <h5 style={{ fontSize: '0.98rem', margin: '4px 0 6px', color: 'var(--text-primary)' }}>
                   {searchResult.data.palletNo ? `Palet No: ${searchResult.data.palletNo}` : 'Palete Yüklenmedi'}
                 </h5>
                 {searchResult.data.palletNo && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <span>Palet SSCC: <code>{searchResult.data.palletSSCC || '-'}</code></span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <span>Palet SSCC: <code className="font-mono text-slate-300">{searchResult.data.palletSSCC || '-'}</code></span>
                   </div>
                 )}
               </div>
 
-              <div style={{ textAlign: 'center', margin: '-4px 0' }}><ArrowDown size={20} color="var(--text-muted)" /></div>
+              <div style={{ textAlign: 'center', margin: '-4px 0' }}><ArrowDown size={18} color="var(--text-secondary)" /></div>
 
               {/* Carton Node */}
-              <div className="card" style={{ borderLeft: '4px solid var(--warning)', backgroundColor: searchResult.type === 'carton' ? 'var(--primary-light)' : '' }}>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Adım 2: Koli</span>
-                <h5 style={{ fontSize: '1.05rem', margin: '4px 0 8px' }}>
+              <div style={{ padding: '14px 16px', backgroundColor: searchResult.type === 'carton' ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid #f59e0b', borderRadius: 'var(--radius-md, 8px)' }}>
+                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Adım 2: Koli</span>
+                <h5 style={{ fontSize: '0.98rem', margin: '4px 0 6px', color: 'var(--text-primary)' }}>
                   {searchResult.data.cartonNo ? `Koli No: ${searchResult.data.cartonNo}` : 'Koliye Eklenmedi'}
                 </h5>
                 {searchResult.data.cartonNo && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <span>Koli SSCC: <code>{searchResult.data.cartonSSCC || '-'}</code></span>
-                    <span>Durum: <strong>{searchResult.data.status || 'Kayıtlı'}</strong></span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <span>Koli SSCC: <code className="font-mono text-slate-300">{searchResult.data.cartonSSCC || '-'}</code></span>
+                    <span>Durum: <strong className="text-slate-200">{searchResult.data.status || 'Kayıtlı'}</strong></span>
                   </div>
                 )}
               </div>
 
-              <div style={{ textAlign: 'center', margin: '-4px 0' }}><ArrowDown size={20} color="var(--text-muted)" /></div>
+              <div style={{ textAlign: 'center', margin: '-4px 0' }}><ArrowDown size={18} color="var(--text-secondary)" /></div>
 
               {/* Product Code Node */}
-              <div className="card" style={{ borderLeft: '4px solid var(--success)', backgroundColor: searchResult.type === 'product' ? 'var(--primary-light)' : '' }}>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Adım 1: Ürün Barkodu</span>
-                <h5 style={{ fontSize: '1.05rem', margin: '4px 0 8px', wordBreak: 'break-all' }}>
-                  {searchResult.type === 'product' ? <code>{searchResult.data.rawCode}</code> : (searchResult.data.serialNo ? `S/N: ${searchResult.data.serialNo}` : 'Koli içi tekil barkod')}
+              <div style={{ padding: '14px 16px', backgroundColor: searchResult.type === 'product' ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: '4px solid #10b981', borderRadius: 'var(--radius-md, 8px)' }}>
+                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 600 }}>Adım 1: Ürün Barkodu</span>
+                <h5 style={{ fontSize: '0.95rem', margin: '4px 0 6px', wordBreak: 'break-all', color: 'var(--text-primary)' }}>
+                  {searchResult.type === 'product' ? <code className="font-mono text-xs text-primary">{searchResult.data.rawCode}</code> : (searchResult.data.serialNo ? `S/N: ${searchResult.data.serialNo}` : 'Koli içi tekil barkod')}
                 </h5>
                 {searchResult.data.serialNo && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <span>GTIN: <code>{searchResult.data.gtin || '-'}</code></span>
-                    <span>Seri No: <code>{searchResult.data.serialNo}</code></span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <span>GTIN: <code className="font-mono text-slate-300">{searchResult.data.gtin || '-'}</code></span>
+                    <span>Seri No: <code className="font-mono text-slate-300">{searchResult.data.serialNo}</code></span>
                   </div>
                 )}
               </div>
@@ -631,33 +631,33 @@ export const TraceabilityCenter: React.FC = () => {
             </div>
 
             {/* Right side: Event history timeline */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="card" style={{ height: '100%' }}>
-                <h4 style={{ fontSize: '1.1rem', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>Olay Geçmişi (Zaman Tüneli)</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ padding: '18px 20px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md, 8px)', height: '100%' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '16px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px', color: 'var(--text-primary)' }}>Olay Geçmişi (Zaman Tüneli)</h4>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative', paddingLeft: '24px', borderLeft: '2px solid var(--border-color)', margin: '10px 0 10px 8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', paddingLeft: '24px', borderLeft: '2px solid var(--border-subtle)', margin: '10px 0 10px 8px' }}>
                   {searchTimeline.map((evt, idx) => (
                     <div key={idx} style={{ position: 'relative' }}>
                       {/* Node Bullet */}
                       <div style={{
-                        position: 'absolute', left: '-33px', top: '2px', width: '16px', height: '16px', borderRadius: '50%',
-                        backgroundColor: evt.status === 'success' ? 'var(--success)' : evt.status === 'info' ? 'var(--primary)' : 'var(--warning)',
-                        border: '3px solid #ffffff', boxShadow: '0 0 0 1px #cbd5e1'
+                        position: 'absolute', left: '-31px', top: '2px', width: '12px', height: '12px', borderRadius: '50%',
+                        backgroundColor: evt.status === 'success' ? '#10b981' : evt.status === 'info' ? 'var(--primary)' : '#f59e0b',
+                        border: '2px solid var(--bg-card)', boxShadow: '0 0 0 1px var(--border-subtle)'
                       }} />
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>{evt.time}</div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)', marginTop: '2px' }}>{evt.title}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{evt.description}</div>
+                      <div className="tabular-nums font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{evt.time}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)', marginTop: '2px' }}>{evt.title}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{evt.description}</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Carton Item Codes raw block */}
                 {searchResult.type === 'carton' && searchResult.data.cartonItems && (
-                  <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '8px' }}>Koli İçi Barkod Listesi ({searchResult.data.cartonItems.length} Ürün):</span>
-                    <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ marginTop: '18px', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>Koli İçi Barkod Listesi (<strong className="tabular-nums">{searchResult.data.cartonItems.length}</strong> Ürün):</span>
+                    <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {searchResult.data.cartonItems.map((item: string, idx: number) => (
-                        <div key={idx} style={{ padding: '6px 10px', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
+                        <div key={idx} style={{ padding: '5px 8px', backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm, 6px)', fontSize: '0.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                           {idx + 1}. {item}
                         </div>
                       ))}
@@ -667,9 +667,9 @@ export const TraceabilityCenter: React.FC = () => {
 
                 {/* Product RawCode text box */}
                 {searchResult.type === 'product' && (
-                  <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '8px' }}>Ham Barkod Verisi (RawCode):</span>
-                    <textarea readOnly className="form-input" style={{ width: '100%', height: '80px', backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-main)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', resize: 'none' }} value={searchResult.data.rawCode} />
+                  <div style={{ marginTop: '18px', borderTop: '1px solid var(--border-subtle)', paddingTop: '14px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>Ham Barkod Verisi (RawCode):</span>
+                    <textarea readOnly className="input-field" style={{ width: '100%', height: '70px', backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: '0.78rem', resize: 'none', padding: '8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm, 6px)' }} value={searchResult.data.rawCode} />
                   </div>
                 )}
               </div>
@@ -683,58 +683,88 @@ export const TraceabilityCenter: React.FC = () => {
       {!searchResult && (
         <>
           {/* Tab Header buttons */}
-          <div style={{ display: 'flex', borderBottom: '2px solid var(--border-color)', marginBottom: '24px', flexWrap: 'wrap', gap: '2px' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '20px', flexWrap: 'wrap', gap: '4px', overflowX: 'auto' }}>
             <button 
               onClick={() => handleTabChange('overview')}
-              className={`btn`} 
               style={{
-                borderRadius: 0, borderBottom: activeTab === 'overview' ? '3px solid var(--primary)' : '3px solid transparent',
-                backgroundColor: 'transparent', color: activeTab === 'overview' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: 700, padding: '12px 20px', fontSize: '0.95rem'
+                borderRadius: 0, 
+                border: 'none',
+                borderBottom: activeTab === 'overview' ? '2px solid var(--primary)' : '2px solid transparent',
+                backgroundColor: 'transparent', 
+                color: activeTab === 'overview' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, 
+                padding: '10px 18px', 
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Genel Bakış
             </button>
             <button 
               onClick={() => handleTabChange('prints')}
-              className={`btn`} 
               style={{
-                borderRadius: 0, borderBottom: activeTab === 'prints' ? '3px solid var(--primary)' : '3px solid transparent',
-                backgroundColor: 'transparent', color: activeTab === 'prints' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: 700, padding: '12px 20px', fontSize: '0.95rem'
+                borderRadius: 0, 
+                border: 'none',
+                borderBottom: activeTab === 'prints' ? '2px solid var(--primary)' : '2px solid transparent',
+                backgroundColor: 'transparent', 
+                color: activeTab === 'prints' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, 
+                padding: '10px 18px', 
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Son Baskılar
             </button>
             <button 
               onClick={() => handleTabChange('scans')}
-              className={`btn`} 
               style={{
-                borderRadius: 0, borderBottom: activeTab === 'scans' ? '3px solid var(--primary)' : '3px solid transparent',
-                backgroundColor: 'transparent', color: activeTab === 'scans' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: 700, padding: '12px 20px', fontSize: '0.95rem'
+                borderRadius: 0, 
+                border: 'none',
+                borderBottom: activeTab === 'scans' ? '2px solid var(--primary)' : '2px solid transparent',
+                backgroundColor: 'transparent', 
+                color: activeTab === 'scans' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, 
+                padding: '10px 18px', 
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Son Okutmalar
             </button>
             <button 
               onClick={() => handleTabChange('cartons')}
-              className={`btn`} 
               style={{
-                borderRadius: 0, borderBottom: activeTab === 'cartons' ? '3px solid var(--primary)' : '3px solid transparent',
-                backgroundColor: 'transparent', color: activeTab === 'cartons' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: 700, padding: '12px 20px', fontSize: '0.95rem'
+                borderRadius: 0, 
+                border: 'none',
+                borderBottom: activeTab === 'cartons' ? '2px solid var(--primary)' : '2px solid transparent',
+                backgroundColor: 'transparent', 
+                color: activeTab === 'cartons' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, 
+                padding: '10px 18px', 
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Son Koliler
             </button>
             <button 
               onClick={() => handleTabChange('pallets')}
-              className={`btn`} 
               style={{
-                borderRadius: 0, borderBottom: activeTab === 'pallets' ? '3px solid var(--primary)' : '3px solid transparent',
-                backgroundColor: 'transparent', color: activeTab === 'pallets' ? 'var(--primary)' : 'var(--text-muted)',
-                fontWeight: 700, padding: '12px 20px', fontSize: '0.95rem'
+                borderRadius: 0, 
+                border: 'none',
+                borderBottom: activeTab === 'pallets' ? '2px solid var(--primary)' : '2px solid transparent',
+                backgroundColor: 'transparent', 
+                color: activeTab === 'pallets' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, 
+                padding: '10px 18px', 
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Son Paletler
@@ -743,69 +773,69 @@ export const TraceabilityCenter: React.FC = () => {
 
           {/* Loader */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ color: 'var(--primary)', marginBottom: '10px' }} />
-              <div style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>İzlenebilirlik verileri yükleniyor...</div>
+            <div style={{ textAlign: 'center', padding: '60px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg, 10px)', border: '1px solid var(--border-subtle)' }}>
+              <RefreshCw size={22} className="animate-spin" style={{ color: 'var(--primary)', marginBottom: '10px' }} />
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>İzlenebilirlik verileri yükleniyor...</div>
             </div>
           ) : (
             <div>
               
               {/* TAB 1: Genel Bakış */}
               {activeTab === 'overview' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* Summary Cards */}
-                  <div className="stats-grid" style={{ marginBottom: 0 }}>
-                    <div className="card stat-card" style={{ borderLeft: '4px solid var(--success)' }}>
-                      <div className="stat-info">
-                        <span className="stat-title">Bugün Okutulan Ürün</span>
-                        <span className="stat-value">{summaryData?.scannedTodayCount || 0}</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: 0 }}>
+                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px 18px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bugün Okutulan Ürün</span>
+                        <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, marginTop: '4px', color: '#10b981' }}>{summaryData?.scannedTodayCount || 0}</div>
                       </div>
-                      <div className="stat-icon stat-green"><Barcode size={24} /></div>
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}><Barcode size={20} /></div>
                     </div>
-                    <div className="card stat-card" style={{ borderLeft: '4px solid #0369a1' }}>
-                      <div className="stat-info">
-                        <span className="stat-title">Bugün Basılan Etiket</span>
-                        <span className="stat-value">{printCountToday}</span>
+                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px 18px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bugün Basılan Etiket</span>
+                        <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, marginTop: '4px', color: 'var(--primary)' }}>{printCountToday}</div>
                       </div>
-                      <div className="stat-icon stat-blue"><Printer size={24} /></div>
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)' }}><Printer size={20} /></div>
                     </div>
-                    <div className="card stat-card" style={{ borderLeft: '4px solid var(--warning)' }}>
-                      <div className="stat-info">
-                        <span className="stat-title">Toplam Açık Koli</span>
-                        <span className="stat-value">{summaryData?.openCartonsCount || 0}</span>
+                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px 18px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Toplam Açık Koli</span>
+                        <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, marginTop: '4px', color: '#f59e0b' }}>{summaryData?.openCartonsCount || 0}</div>
                       </div>
-                      <div className="stat-icon stat-yellow"><Inbox size={24} /></div>
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}><Inbox size={20} /></div>
                     </div>
-                    <div className="card stat-card" style={{ borderLeft: '4px solid #6b21a8' }}>
-                      <div className="stat-info">
-                        <span className="stat-title">Toplam Açık Palet</span>
-                        <span className="stat-value">{summaryData?.openPalletsCount || 0}</span>
+                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '16px 18px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Toplam Açık Palet</span>
+                        <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, marginTop: '4px', color: '#8b5cf6' }}>{summaryData?.openPalletsCount || 0}</div>
                       </div>
-                      <div className="stat-icon stat-purple"><Layers size={24} /></div>
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}><Layers size={20} /></div>
                     </div>
                   </div>
 
                   {/* Recent activities log */}
-                  <div className="card">
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Info size={18} color="var(--primary)" /> Son Sistem Aktiviteleri
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)', padding: '18px 20px' }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Info size={16} className="text-primary" /> Son Sistem Aktiviteleri
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {summaryData?.recentActivities && summaryData.recentActivities.length > 0 ? (
                         summaryData.recentActivities.map((act: any, idx: number) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem' }}>
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.82rem', borderRadius: 'var(--radius-sm, 6px)' }}>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <ChevronRight size={14} color="var(--text-muted)" />
-                              <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{act.message}</span>
+                              <ChevronRight size={13} color="var(--text-secondary)" />
+                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{act.message}</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '12px', color: 'var(--text-muted)' }}>
+                            <div style={{ display: 'flex', gap: '14px', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><User size={12} /> {act.user}</span>
-                              <span>{new Date(act.createdAt).toLocaleString('tr-TR')}</span>
+                              <span className="tabular-nums font-mono">{new Date(act.createdAt).toLocaleString('tr-TR')}</span>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Son aktivite kaydı bulunamadı.</div>
+                        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Son aktivite kaydı bulunamadı.</div>
                       )}
                     </div>
                   </div>
@@ -816,41 +846,41 @@ export const TraceabilityCenter: React.FC = () => {
               {activeTab === 'prints' && (
                 <div>
                   {/* Advanced Filters */}
-                  <div className="card" style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}><SlidersHorizontal size={14} /> Baskı Geçmişi Filtreleri</span>
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)', padding: '16px 18px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><SlidersHorizontal size={14} className="text-primary" /> Baskı Geçmişi Filtreleri</span>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Etiket Tipi</label>
-                        <select className="form-input" style={{ fontSize: '0.8rem', height: '36px', padding: '0 8px' }} value={printTypeFilter} onChange={e => setPrintTypeFilter(e.target.value)}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Etiket Tipi</label>
+                        <select className="input-field" style={{ fontSize: '0.82rem', height: '36px', padding: '0 8px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle)' }} value={printTypeFilter} onChange={e => setPrintTypeFilter(e.target.value)}>
                           <option value="">Tümü</option>
                           <option value="Carton">Koli Etiketi</option>
                           <option value="Pallet">Palet Etiketi</option>
                         </select>
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Format</label>
-                        <select className="form-input" style={{ fontSize: '0.8rem', height: '36px', padding: '0 8px' }} value={printFormatFilter} onChange={e => setPrintFormatFilter(e.target.value)}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Format</label>
+                        <select className="input-field" style={{ fontSize: '0.82rem', height: '36px', padding: '0 8px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle)' }} value={printFormatFilter} onChange={e => setPrintFormatFilter(e.target.value)}>
                           <option value="">Tümü</option>
                           <option value="PDF">PDF</option>
                           <option value="ZPL">ZPL</option>
                         </select>
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Yazdıran Operatör</label>
-                        <input type="text" className="form-input" style={{ fontSize: '0.8rem', height: '36px' }} placeholder="Kullanıcı adı..." value={printUserFilter} onChange={e => setPrintUserFilter(e.target.value)} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Yazdıran Operatör</label>
+                        <input type="text" className="input-field" style={{ fontSize: '0.82rem', height: '36px', padding: '0 10px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle)' }} placeholder="Kullanıcı adı..." value={printUserFilter} onChange={e => setPrintUserFilter(e.target.value)} />
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Başlangıç</label>
-                        <input type="date" className="form-input" style={{ fontSize: '0.8rem', height: '36px' }} value={printStartDate} onChange={e => setPrintStartDate(e.target.value)} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Başlangıç</label>
+                        <input type="date" className="input-field" style={{ fontSize: '0.82rem', height: '36px', padding: '0 10px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle)' }} value={printStartDate} onChange={e => setPrintStartDate(e.target.value)} />
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>Bitiş</label>
-                        <input type="date" className="form-input" style={{ fontSize: '0.8rem', height: '36px' }} value={printEndDate} onChange={e => setPrintEndDate(e.target.value)} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Bitiş</label>
+                        <input type="date" className="input-field" style={{ fontSize: '0.82rem', height: '36px', padding: '0 10px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle)' }} value={printEndDate} onChange={e => setPrintEndDate(e.target.value)} />
                       </div>
                     </div>
                   </div>
 
-                  <div className="table-container">
+                  <div className="table-container" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)', overflow: 'hidden' }}>
                     <table className="data-table responsive-table-desktop">
                       <thead>
                         <tr>
@@ -865,23 +895,23 @@ export const TraceabilityCenter: React.FC = () => {
                       </thead>
                       <tbody>
                         {paginatedPrints.length === 0 ? (
-                          <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>Filtrelere uygun baskı kaydı bulunamadı.</td></tr>
+                          <tr><td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>Filtrelere uygun baskı kaydı bulunamadı.</td></tr>
                         ) : (
                           paginatedPrints.map((job) => (
                             <tr key={job.id}>
                               <td>
-                                <span className={`badge ${job.labelType === 'Carton' ? 'badge-printed' : 'badge-palletized'}`}>
+                                <span className={`tt-badge ${job.labelType === 'Carton' ? 'tt-badge-neutral' : 'tt-badge-info'}`}>
                                   {job.labelType === 'Carton' ? 'Koli Etiketi' : 'Palet Etiketi'}
                                 </span>
                               </td>
-                              <td style={{ fontWeight: 700 }}>{job.entityNo}</td>
-                              <td><code>{job.format}</code></td>
-                              <td>{job.printCount}</td>
+                              <td><strong className="font-mono">{job.entityNo}</strong></td>
+                              <td><code className="font-mono text-xs">{job.format}</code></td>
+                              <td className="tabular-nums font-mono">{job.printCount}</td>
                               <td>{job.printedBy || 'Sistem'}</td>
-                              <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(job.createdAt).toLocaleString('tr-TR')}</td>
+                              <td className="tabular-nums font-mono" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{new Date(job.createdAt).toLocaleString('tr-TR')}</td>
                               <td>
                                 {hasPermission('traceability.print') && (
-                                  <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleReprint(job)}>
+                                  <button className="btn btn-secondary" style={{ height: '28px', padding: '0 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderRadius: 'var(--radius-sm, 6px)' }} onClick={() => handleReprint(job)}>
                                     <Printer size={12} /> Tekrar Yazdır
                                   </button>
                                 )}
@@ -895,28 +925,28 @@ export const TraceabilityCenter: React.FC = () => {
                     {/* Prints Mobile cards */}
                     <div className="responsive-cards-mobile" style={{ display: 'none', padding: '12px' }}>
                       {paginatedPrints.map((job) => (
-                        <div key={job.id} className="mobile-card">
-                          <div className="mobile-card-row">
-                            <span style={{ fontWeight: 700 }}>{job.entityNo}</span>
-                            <span className={`badge ${job.labelType === 'Carton' ? 'badge-printed' : 'badge-palletized'}`}>
+                        <div key={job.id} className="mobile-card" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md, 8px)', padding: '12px', marginBottom: '8px' }}>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span className="font-mono font-bold">{job.entityNo}</span>
+                            <span className={`tt-badge ${job.labelType === 'Carton' ? 'tt-badge-neutral' : 'tt-badge-info'}`}>
                               {job.labelType === 'Carton' ? 'Koli' : 'Palet'}
                             </span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Format:</span>
-                            <span className="mobile-card-value"><code>{job.format}</code> (x{job.printCount})</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            <span>Format:</span>
+                            <span className="font-mono text-slate-300"><code>{job.format}</code> (x{job.printCount})</span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Operatör:</span>
-                            <span className="mobile-card-value">{job.printedBy || 'Sistem'}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            <span>Operatör:</span>
+                            <span className="text-slate-300">{job.printedBy || 'Sistem'}</span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Tarih:</span>
-                            <span className="mobile-card-value" style={{ fontSize: '0.75rem' }}>{new Date(job.createdAt).toLocaleString('tr-TR')}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                            <span>Tarih:</span>
+                            <span className="tabular-nums font-mono">{new Date(job.createdAt).toLocaleString('tr-TR')}</span>
                           </div>
                           {hasPermission('traceability.print') && (
-                            <button className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem', padding: '8px', marginTop: '4px' }} onClick={() => handleReprint(job)}>
-                              <Printer size={12} /> Tekrar Yazdır
+                            <button className="btn btn-secondary" style={{ width: '100%', height: '32px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={() => handleReprint(job)}>
+                              <Printer size={13} /> Tekrar Yazdır
                             </button>
                           )}
                         </div>
@@ -925,12 +955,12 @@ export const TraceabilityCenter: React.FC = () => {
                   </div>
 
                   {filteredPrintJobs.length > 10 && (
-                    <div className="pagination" style={{ marginTop: '16px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Toplam: {filteredPrintJobs.length} baskı</span>
-                      <div className="pagination-buttons">
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={printPage === 1} onClick={() => setPrintPage(p => p - 1)}>Önceki</button>
-                        <span style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{printPage}</span>
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={printPage * 10 >= filteredPrintJobs.length} onClick={() => setPrintPage(p => p + 1)}>Sonraki</button>
+                    <div className="pagination" style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toplam: <strong className="tabular-nums text-slate-200">{filteredPrintJobs.length}</strong> baskı</span>
+                      <div className="pagination-buttons" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={printPage === 1} onClick={() => setPrintPage(p => p - 1)}>Önceki</button>
+                        <span className="tabular-nums" style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{printPage}</span>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={printPage * 10 >= filteredPrintJobs.length} onClick={() => setPrintPage(p => p + 1)}>Sonraki</button>
                       </div>
                     </div>
                   )}
@@ -940,7 +970,7 @@ export const TraceabilityCenter: React.FC = () => {
               {/* TAB 3: Son Okutmalar */}
               {activeTab === 'scans' && (
                 <div>
-                  <div className="table-container">
+                  <div className="table-container" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)', overflow: 'hidden' }}>
                     <table className="data-table responsive-table-desktop">
                       <thead>
                         <tr>
@@ -952,14 +982,14 @@ export const TraceabilityCenter: React.FC = () => {
                       </thead>
                       <tbody>
                         {paginatedScans.length === 0 ? (
-                          <tr><td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>Henüz okutulmuş barkod bulunamadı.</td></tr>
+                          <tr><td colSpan={4} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>Henüz okutulmuş barkod bulunamadı.</td></tr>
                         ) : (
                           paginatedScans.map((scan, idx) => (
                             <tr key={idx}>
-                              <td style={{ fontWeight: 600, wordBreak: 'break-all', fontFamily: 'monospace', fontSize: '0.85rem' }}>{scan.rawCode}</td>
-                              <td style={{ fontWeight: 700 }}>{scan.cartonNo}</td>
+                              <td><code className="font-mono text-xs text-slate-300" style={{ wordBreak: 'break-all' }}>{scan.rawCode}</code></td>
+                              <td><strong className="font-mono">{scan.cartonNo}</strong></td>
                               <td>{scan.scannedBy || 'Sistem'}</td>
-                              <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{scan.scannedAt ? new Date(scan.scannedAt).toLocaleString('tr-TR') : '-'}</td>
+                              <td className="tabular-nums font-mono" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{scan.scannedAt ? new Date(scan.scannedAt).toLocaleString('tr-TR') : '-'}</td>
                             </tr>
                           ))
                         )}
@@ -969,19 +999,19 @@ export const TraceabilityCenter: React.FC = () => {
                     {/* Scans Mobile cards */}
                     <div className="responsive-cards-mobile" style={{ display: 'none', padding: '12px' }}>
                       {paginatedScans.map((scan, idx) => (
-                        <div key={idx} className="mobile-card">
-                          <div style={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>{scan.rawCode}</div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Koli No:</span>
-                            <span className="mobile-card-value">{scan.cartonNo}</span>
+                        <div key={idx} className="mobile-card" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md, 8px)', padding: '12px', marginBottom: '8px' }}>
+                          <div style={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.78rem', wordBreak: 'break-all', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px', marginBottom: '6px', color: 'var(--text-primary)' }}>{scan.rawCode}</div>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            <span>Koli No:</span>
+                            <span className="font-mono font-bold text-slate-200">{scan.cartonNo}</span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Operatör:</span>
-                            <span className="mobile-card-value">{scan.scannedBy}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            <span>Operatör:</span>
+                            <span className="text-slate-300">{scan.scannedBy}</span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Tarih:</span>
-                            <span className="mobile-card-value" style={{ fontSize: '0.75rem' }}>{scan.scannedAt ? new Date(scan.scannedAt).toLocaleString('tr-TR') : '-'}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            <span>Tarih:</span>
+                            <span className="tabular-nums font-mono">{scan.scannedAt ? new Date(scan.scannedAt).toLocaleString('tr-TR') : '-'}</span>
                           </div>
                         </div>
                       ))}
@@ -989,12 +1019,12 @@ export const TraceabilityCenter: React.FC = () => {
                   </div>
 
                   {recentScans.length > 10 && (
-                    <div className="pagination" style={{ marginTop: '16px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Toplam: {recentScans.length} okutma</span>
-                      <div className="pagination-buttons">
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={scanPage === 1} onClick={() => setScanPage(p => p - 1)}>Önceki</button>
-                        <span style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{scanPage}</span>
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={scanPage * 10 >= recentScans.length} onClick={() => setScanPage(p => p + 1)}>Sonraki</button>
+                    <div className="pagination" style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toplam: <strong className="tabular-nums text-slate-200">{recentScans.length}</strong> okutma</span>
+                      <div className="pagination-buttons" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={scanPage === 1} onClick={() => setScanPage(p => p - 1)}>Önceki</button>
+                        <span className="tabular-nums" style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{scanPage}</span>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={scanPage * 10 >= recentScans.length} onClick={() => setScanPage(p => p + 1)}>Sonraki</button>
                       </div>
                     </div>
                   )}
@@ -1004,7 +1034,7 @@ export const TraceabilityCenter: React.FC = () => {
               {/* TAB 4: Son Koliler */}
               {activeTab === 'cartons' && (
                 <div>
-                  <div className="table-container">
+                  <div className="table-container" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)', overflow: 'hidden' }}>
                     <table className="data-table responsive-table-desktop">
                       <thead>
                         <tr>
@@ -1018,20 +1048,20 @@ export const TraceabilityCenter: React.FC = () => {
                       </thead>
                       <tbody>
                         {paginatedCartons.length === 0 ? (
-                          <tr><td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>Oluşturulmuş koli bulunamadı.</td></tr>
+                          <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>Oluşturulmuş koli bulunamadı.</td></tr>
                         ) : (
                           paginatedCartons.map((c) => (
                             <tr key={c.id}>
-                              <td style={{ fontWeight: 700 }}>{c.cartonNo}</td>
-                              <td>{c.orderNo}</td>
-                              <td><code style={{ fontSize: '0.85rem' }}>{c.sscc}</code></td>
+                              <td><strong className="font-mono">{c.cartonNo}</strong></td>
+                              <td><code className="font-mono text-xs">{c.orderNo}</code></td>
+                              <td><code className="font-mono text-xs text-slate-300">{c.sscc}</code></td>
                               <td><FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} /></td>
                               <td>
-                                <span className={`badge badge-${c.status.toLowerCase()}`}>
+                                <span className={`tt-badge ${c.status === 'Open' ? 'tt-badge-active' : c.status === 'Closed' ? 'tt-badge-neutral' : c.status === 'Printed' ? 'tt-badge-info' : 'tt-badge-neutral'}`}>
                                   {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
                                 </span>
                               </td>
-                              <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(c.createdAt).toLocaleString('tr-TR')}</td>
+                              <td className="tabular-nums font-mono" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{new Date(c.createdAt).toLocaleString('tr-TR')}</td>
                             </tr>
                           ))
                         )}
@@ -1041,26 +1071,24 @@ export const TraceabilityCenter: React.FC = () => {
                     {/* Cartons Mobile cards */}
                     <div className="responsive-cards-mobile" style={{ display: 'none', padding: '12px' }}>
                       {paginatedCartons.map((c) => (
-                        <div key={c.id} className="mobile-card">
-                          <div className="mobile-card-row">
-                            <span style={{ fontWeight: 700 }}>{c.cartonNo}</span>
-                            <span className={`badge badge-${c.status.toLowerCase()}`}>
-                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status}
+                        <div key={c.id} className="mobile-card" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md, 8px)', padding: '12px', marginBottom: '8px' }}>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span className="font-mono font-bold">{c.cartonNo}</span>
+                            <span className={`tt-badge ${c.status === 'Open' ? 'tt-badge-active' : 'tt-badge-neutral'}`}>
+                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status}
                             </span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Sipariş No:</span>
-                            <span className="mobile-card-value">{c.orderNo}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            <span>Sipariş No:</span>
+                            <span className="font-mono text-slate-300">{c.orderNo}</span>
                           </div>
-                          <div className="mobile-card-row" style={{ alignItems: 'flex-start' }}>
-                            <span className="mobile-card-label">Doluluk:</span>
-                            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                              <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
-                            </div>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Doluluk:</span>
+                            <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Tarih:</span>
-                            <span className="mobile-card-value" style={{ fontSize: '0.75rem' }}>{new Date(c.createdAt).toLocaleString('tr-TR')}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            <span>Tarih:</span>
+                            <span className="tabular-nums font-mono">{new Date(c.createdAt).toLocaleString('tr-TR')}</span>
                           </div>
                         </div>
                       ))}
@@ -1068,12 +1096,12 @@ export const TraceabilityCenter: React.FC = () => {
                   </div>
 
                   {cartons.length > 10 && (
-                    <div className="pagination" style={{ marginTop: '16px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Toplam: {cartons.length} koli</span>
-                      <div className="pagination-buttons">
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={cartonPage === 1} onClick={() => setCartonPage(p => p - 1)}>Önceki</button>
-                        <span style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{cartonPage}</span>
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={cartonPage * 10 >= cartons.length} onClick={() => setCartonPage(p => p + 1)}>Sonraki</button>
+                    <div className="pagination" style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toplam: <strong className="tabular-nums text-slate-200">{cartons.length}</strong> koli</span>
+                      <div className="pagination-buttons" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={cartonPage === 1} onClick={() => setCartonPage(p => p - 1)}>Önceki</button>
+                        <span className="tabular-nums" style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{cartonPage}</span>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={cartonPage * 10 >= cartons.length} onClick={() => setCartonPage(p => p + 1)}>Sonraki</button>
                       </div>
                     </div>
                   )}
@@ -1083,7 +1111,7 @@ export const TraceabilityCenter: React.FC = () => {
               {/* TAB 5: Son Paletler */}
               {activeTab === 'pallets' && (
                 <div>
-                  <div className="table-container">
+                  <div className="table-container" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg, 10px)', overflow: 'hidden' }}>
                     <table className="data-table responsive-table-desktop">
                       <thead>
                         <tr>
@@ -1095,18 +1123,18 @@ export const TraceabilityCenter: React.FC = () => {
                       </thead>
                       <tbody>
                         {paginatedPallets.length === 0 ? (
-                          <tr><td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>Oluşturulmuş palet bulunamadı.</td></tr>
+                          <tr><td colSpan={4} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>Oluşturulmuş palet bulunamadı.</td></tr>
                         ) : (
                           paginatedPallets.map((p) => (
                             <tr key={p.id}>
-                              <td style={{ fontWeight: 700 }}>{p.palletNo}</td>
-                              <td><code style={{ fontSize: '0.85rem' }}>{p.sscc}</code></td>
+                              <td><strong className="font-mono">{p.palletNo}</strong></td>
+                              <td><code className="font-mono text-xs text-slate-300">{p.sscc}</code></td>
                               <td>
-                                <span className={`badge badge-${p.status.toLowerCase()}`}>
+                                <span className={`tt-badge ${p.status === 'Open' ? 'tt-badge-active' : p.status === 'Closed' ? 'tt-badge-neutral' : p.status === 'Printed' ? 'tt-badge-info' : 'tt-badge-neutral'}`}>
                                   {p.status === 'Open' ? 'Açık' : p.status === 'Closed' ? 'Kapalı' : p.status === 'Printed' ? 'Yazdırıldı' : 'Sevk Edildi'}
                                 </span>
                               </td>
-                              <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(p.createdAt).toLocaleString('tr-TR')}</td>
+                              <td className="tabular-nums font-mono" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{new Date(p.createdAt).toLocaleString('tr-TR')}</td>
                             </tr>
                           ))
                         )}
@@ -1116,20 +1144,20 @@ export const TraceabilityCenter: React.FC = () => {
                     {/* Pallets Mobile cards */}
                     <div className="responsive-cards-mobile" style={{ display: 'none', padding: '12px' }}>
                       {paginatedPallets.map((p) => (
-                        <div key={p.id} className="mobile-card">
-                          <div className="mobile-card-row">
-                            <span style={{ fontWeight: 700 }}>{p.palletNo}</span>
-                            <span className={`badge badge-${p.status.toLowerCase()}`}>
+                        <div key={p.id} className="mobile-card" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md, 8px)', padding: '12px', marginBottom: '8px' }}>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span className="font-mono font-bold">{p.palletNo}</span>
+                            <span className={`tt-badge ${p.status === 'Open' ? 'tt-badge-active' : 'tt-badge-neutral'}`}>
                               {p.status === 'Open' ? 'Açık' : p.status === 'Closed' ? 'Kapalı' : p.status === 'Printed' ? 'Yazdırıldı' : 'Sevk'}
                             </span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">SSCC:</span>
-                            <span className="mobile-card-value" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.sscc}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            <span>SSCC:</span>
+                            <span className="font-mono text-slate-300" style={{ fontSize: '0.75rem' }}>{p.sscc}</span>
                           </div>
-                          <div className="mobile-card-row">
-                            <span className="mobile-card-label">Oluşturma:</span>
-                            <span className="mobile-card-value" style={{ fontSize: '0.75rem' }}>{new Date(p.createdAt).toLocaleString('tr-TR')}</span>
+                          <div className="mobile-card-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            <span>Oluşturma:</span>
+                            <span className="tabular-nums font-mono">{new Date(p.createdAt).toLocaleString('tr-TR')}</span>
                           </div>
                         </div>
                       ))}
@@ -1137,12 +1165,12 @@ export const TraceabilityCenter: React.FC = () => {
                   </div>
 
                   {pallets.length > 10 && (
-                    <div className="pagination" style={{ marginTop: '16px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Toplam: {pallets.length} palet</span>
-                      <div className="pagination-buttons">
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={palletPage === 1} onClick={() => setPalletPage(p => p - 1)}>Önceki</button>
-                        <span style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{palletPage}</span>
-                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} disabled={palletPage * 10 >= pallets.length} onClick={() => setPalletPage(p => p + 1)}>Sonraki</button>
+                    <div className="pagination" style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Toplam: <strong className="tabular-nums text-slate-200">{pallets.length}</strong> palet</span>
+                      <div className="pagination-buttons" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={palletPage === 1} onClick={() => setPalletPage(p => p - 1)}>Önceki</button>
+                        <span className="tabular-nums" style={{ padding: '0 8px', fontSize: '0.85rem', fontWeight: 600 }}>{palletPage}</span>
+                        <button className="btn btn-secondary" style={{ height: '30px', padding: '0 10px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm, 6px)' }} disabled={palletPage * 10 >= pallets.length} onClick={() => setPalletPage(p => p + 1)}>Sonraki</button>
                       </div>
                     </div>
                   )}

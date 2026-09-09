@@ -957,27 +957,27 @@ export const DataMatrixCreator: React.FC = () => {
       )}
 
       {/* Main Grid */}
-      <div className="datamatrix-creator-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="datamatrix-creator-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }}>
         
         {/* Left Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* File Upload Box */}
-          <div className="card" style={{ padding: '24px' }}>
-            <div className="datamatrix-upload-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} color="var(--primary)" />
+          <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div className="datamatrix-upload-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+                <FileText size={16} color="var(--primary)" />
                 Girdi Dosyası Seçimi
               </h3>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Doğrulama Profili:</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>Doğrulama Profili:</label>
                 <select 
                   className="form-input" 
                   value={profile} 
                   onChange={(e) => handleProfileChange(e.target.value)} 
                   disabled={analyzing || generating}
-                  style={{ width: 'auto', padding: '4px 8px', fontSize: '0.85rem', margin: 0 }}
+                  style={{ width: 'auto', padding: '0 8px', height: '32px', fontSize: '0.8rem', margin: 0, borderRadius: 'var(--radius-sm)' }}
                 >
                   <option value="Auto">Otomatik Algıla</option>
                   <option value="Gs1">Standart GS1</option>
@@ -995,13 +995,13 @@ export const DataMatrixCreator: React.FC = () => {
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  border: '2px dashed var(--border-color)',
+                  border: '1px dashed var(--border-color)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '36px 20px',
+                  padding: '30px 16px',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  transition: 'var(--transition)',
-                  backgroundColor: 'var(--bg-primary)'
+                  transition: 'border-color 0.15s ease',
+                  backgroundColor: 'var(--bg-surface-subtle)'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
@@ -1013,38 +1013,38 @@ export const DataMatrixCreator: React.FC = () => {
                   accept=".txt,.csv" 
                   style={{ display: 'none' }} 
                 />
-                <Upload size={32} color="var(--text-muted)" style={{ marginBottom: '10px', opacity: 0.7 }} />
-                <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>
+                <Upload size={28} color="var(--text-muted)" style={{ marginBottom: '8px', opacity: 0.7 }} />
+                <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '2px', color: 'var(--text-main)' }}>
                   Dosya seçmek için tıklayın veya buraya sürükleyin
                 </p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>
                   Sadece .txt ve .csv dosyaları desteklenir. UTF-8 formatında büyük hacimli kodlar anında doğrulanır.
                 </p>
               </div>
             ) : (
               <div style={{
-                backgroundColor: 'var(--primary-light)',
-                border: '1px solid var(--primary)',
-                borderRadius: 'var(--radius-md)',
-                padding: '12px 16px',
+                backgroundColor: 'var(--bg-surface-subtle)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <FileText size={24} color="var(--primary)" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FileText size={20} color="var(--primary)" />
                   <div>
-                    <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)', margin: 0 }}>{file.name}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                    <p style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)', margin: 0 }}>{file.name}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }} className="tabular-nums font-mono">
                       {(file.size / 1024).toFixed(1)} KB | {fileCodes.length.toLocaleString()} geçerli kod
                     </p>
                   </div>
                 </div>
                 <button 
-                  className="btn btn-secondary" 
+                  className="btn btn-secondary btn-sm" 
                   onClick={resetCreator}
                   disabled={analyzing || generating}
-                  style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                  style={{ padding: '0 10px', height: '28px', fontSize: '0.75rem', borderRadius: 'var(--radius-xs)' }}
                 >
                   Sıfırla
                 </button>
@@ -1052,12 +1052,12 @@ export const DataMatrixCreator: React.FC = () => {
             )}
 
             {analyzing && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
-                  <RefreshCw size={16} className="animate-spin" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{progressStage}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)' }}>
+                  <RefreshCw size={14} className="animate-spin" />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{progressStage}</span>
                 </div>
-                <div style={{ height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '4px', backgroundColor: 'var(--border-color)', borderRadius: '2px', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: 'var(--primary)', transition: 'width 0.1s ease' }}></div>
                 </div>
               </div>
@@ -1065,31 +1065,32 @@ export const DataMatrixCreator: React.FC = () => {
           </div>
 
           {/* Configuration Settings */}
-          <div className="card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Settings size={18} color="var(--primary)" />
+          <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+              <Settings size={16} color="var(--primary)" />
               Şablon ve Düzen Yapılandırması
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
               <div>
-                <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>Çıktı Formatı</label>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
+                <label className="form-label" style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '6px' }}>Çıktı Formatı</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <label style={{
                     flex: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
-                    padding: '10px',
-                    borderRadius: 'var(--radius-md)',
-                    border: format === 'PDF' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                    gap: '6px',
+                    padding: '8px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: format === 'PDF' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                     backgroundColor: format === 'PDF' ? 'var(--primary-light)' : 'var(--bg-card)',
+                    color: format === 'PDF' ? 'var(--primary)' : 'var(--text-main)',
                     cursor: 'pointer',
                     fontWeight: 600,
-                    fontSize: '0.9rem',
-                    transition: 'var(--transition)'
+                    fontSize: '0.85rem',
+                    transition: 'all 0.15s ease'
                   }}>
                     <input 
                       type="radio" 
@@ -1106,15 +1107,16 @@ export const DataMatrixCreator: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
-                    padding: '10px',
-                    borderRadius: 'var(--radius-md)',
-                    border: format === 'PNG' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                    gap: '6px',
+                    padding: '8px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: format === 'PNG' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                     backgroundColor: format === 'PNG' ? 'var(--primary-light)' : 'var(--bg-card)',
+                    color: format === 'PNG' ? 'var(--primary)' : 'var(--text-main)',
                     cursor: 'pointer',
                     fontWeight: 600,
-                    fontSize: '0.9rem',
-                    transition: 'var(--transition)'
+                    fontSize: '0.85rem',
+                    transition: 'all 0.15s ease'
                   }}>
                     <input 
                       type="radio" 
@@ -1131,8 +1133,8 @@ export const DataMatrixCreator: React.FC = () => {
 
               {format === 'PDF' && (
                 <div>
-                  <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>Hazır Şablon Düzenleri</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '6px' }}>Hazır Şablon Düzenleri</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {[
                       { id: '4x6', label: '4x6 (Varsayılan)' },
                       { id: '3x8', label: '3x8' },
@@ -1144,9 +1146,9 @@ export const DataMatrixCreator: React.FC = () => {
                       <button
                         key={p.id}
                         type="button"
-                        className={`btn ${preset === p.id ? 'btn-primary' : 'btn-secondary'}`}
+                        className={`btn btn-sm ${preset === p.id ? 'btn-primary' : 'btn-secondary'}`}
                         onClick={() => handlePresetChange(p.id)}
-                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                        style={{ height: '30px', padding: '0 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-xs)' }}
                       >
                         {p.label}
                       </button>
@@ -1159,14 +1161,14 @@ export const DataMatrixCreator: React.FC = () => {
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  padding: '16px',
-                  backgroundColor: 'var(--bg-primary)',
-                  borderRadius: 'var(--radius-md)',
+                  gap: '10px',
+                  padding: '14px',
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-color)'
                 }}>
                   <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Sütun Sayısı (Cols)</label>
+                    <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Sütun Sayısı (Cols)</label>
                     <input 
                       type="number" 
                       className="form-input" 
@@ -1177,10 +1179,11 @@ export const DataMatrixCreator: React.FC = () => {
                         setCols(Math.max(1, parseInt(e.target.value) || 1));
                         setPreset('custom');
                       }} 
+                      style={{ height: '34px', fontSize: '0.85rem' }}
                     />
                   </div>
                   <div>
-                    <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Satır Sayısı (Rows)</label>
+                    <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Satır Sayısı (Rows)</label>
                     <input 
                       type="number" 
                       className="form-input" 
@@ -1191,12 +1194,13 @@ export const DataMatrixCreator: React.FC = () => {
                         setRows(Math.max(1, parseInt(e.target.value) || 1));
                         setPreset('custom');
                       }} 
+                      style={{ height: '34px', fontSize: '0.85rem' }}
                     />
                   </div>
-                  <div style={{ gridColumn: 'span 2', marginTop: '6px' }}>
-                    <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
                       <span>Barkod Boyutu (Punto)</span>
-                      <strong>{size} pt</strong>
+                      <strong className="tabular-nums font-mono">{size} pt</strong>
                     </label>
                     <input 
                       type="range" 
@@ -1208,7 +1212,7 @@ export const DataMatrixCreator: React.FC = () => {
                         setSize(parseInt(e.target.value));
                         setPreset('custom');
                       }} 
-                      style={{ width: '100%', accentColor: 'var(--primary)', marginTop: '4px' }}
+                      style={{ width: '100%', accentColor: 'var(--primary)', marginTop: '2px' }}
                     />
                   </div>
                 </div>
@@ -1216,47 +1220,49 @@ export const DataMatrixCreator: React.FC = () => {
 
               {format === 'PDF' && (
                 <div style={{
-                  padding: '16px',
-                  backgroundColor: 'var(--bg-primary)',
-                  borderRadius: 'var(--radius-md)',
+                  padding: '14px',
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-color)'
                 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-main)' }}>
                     <input 
                       type="checkbox" 
                       checked={addText} 
                       onChange={(e) => setAddText(e.target.checked)} 
-                      style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
+                      style={{ accentColor: 'var(--primary)', width: '15px', height: '15px' }}
                     />
                     Barkoda Metin Açıklaması Ekle
                   </label>
 
                   {addText && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
                       <div>
-                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Metin Satırı 1 (Kalın)</label>
+                        <label className="form-label" style={{ fontSize: '0.72rem', fontWeight: 600 }}>Metin Satırı 1 (Kalın)</label>
                         <input 
                           type="text" 
                           className="form-input" 
                           placeholder="Örn: Kozmetik Ürünü A" 
                           value={line1} 
                           onChange={(e) => setLine1(e.target.value)} 
+                          style={{ height: '34px', fontSize: '0.85rem' }}
                         />
                       </div>
                       <div>
-                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Metin Satırı 2 (Normal)</label>
+                        <label className="form-label" style={{ fontSize: '0.72rem', fontWeight: 600 }}>Metin Satırı 2 (Normal)</label>
                         <input 
                           type="text" 
                           className="form-input" 
                           placeholder="Örn: LOT: 123 / SKT: 2029" 
                           value={line2} 
                           onChange={(e) => setLine2(e.target.value)} 
+                          style={{ height: '34px', fontSize: '0.85rem' }}
                         />
                       </div>
                       <div>
-                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Metin Konumu</label>
-                        <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <label className="form-label" style={{ fontSize: '0.72rem', fontWeight: 600 }}>Metin Konumu</label>
+                        <div style={{ display: 'flex', gap: '16px', marginTop: '2px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>
                             <input 
                               type="radio" 
                               name="labelPos" 
@@ -1266,7 +1272,7 @@ export const DataMatrixCreator: React.FC = () => {
                             />
                             Barkodun Üstünde
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>
                             <input 
                               type="radio" 
                               name="labelPos" 
@@ -1279,12 +1285,12 @@ export const DataMatrixCreator: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Yazı Boyutu (Punto)</label>
+                        <label className="form-label" style={{ fontSize: '0.72rem', fontWeight: 600 }}>Yazı Boyutu (Punto)</label>
                         <select 
                           className="form-input" 
                           value={fontSize} 
                           onChange={(e) => setFontSize(parseInt(e.target.value))}
-                          style={{ marginTop: '4px' }}
+                          style={{ height: '34px', fontSize: '0.85rem' }}
                         >
                           <option value="6">6 pt</option>
                           <option value="7">7 pt</option>
@@ -1312,21 +1318,21 @@ export const DataMatrixCreator: React.FC = () => {
 
               {format === 'PDF' && (
                 <div style={{
-                  padding: '16px',
-                  backgroundColor: 'var(--bg-primary)',
-                  borderRadius: 'var(--radius-md)',
+                  padding: '14px',
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-color)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '8px'
+                  gap: '6px'
                 }}>
-                  <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>PDF Bölme (Segmentasyon)</label>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: '0.8rem' }}>PDF Bölme (Segmentasyon)</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <select 
                       className="form-input" 
                       value={splitOption} 
                       onChange={(e) => setSplitOption(e.target.value)}
-                      style={{ margin: 0, flex: 1 }}
+                      style={{ margin: 0, flex: 1, height: '34px', fontSize: '0.85rem' }}
                     >
                       <option value="none">Bölme Yok (Tek PDF)</option>
                       <option value="500">Her 500 kodda bir</option>
@@ -1341,11 +1347,11 @@ export const DataMatrixCreator: React.FC = () => {
                         className="form-input" 
                         value={customSplitVal} 
                         onChange={(e) => setCustomSplitVal(Math.max(10, parseInt(e.target.value) || 1000))} 
-                        style={{ width: '100px', margin: 0 }} 
+                        style={{ width: '90px', margin: 0, height: '34px', fontSize: '0.85rem' }} 
                       />
                     )}
                   </div>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.72rem', margin: '2px 0 0' }}>
                     Çok büyük dosyalarda (25.000+) tarayıcının ve sunucunun donmaması için etiketlerinizi parçalı PDF'lere ayırabilirsiniz. Parçalar ZIP arşivi olarak indirilir.
                   </p>
                 </div>
@@ -1361,20 +1367,21 @@ export const DataMatrixCreator: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    padding: '12px',
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    marginTop: '8px'
+                    height: '42px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    borderRadius: 'var(--radius-sm)',
+                    marginTop: '6px'
                   }}
                 >
                   {generating ? (
                     <>
-                      <RefreshCw size={16} className="animate-spin" />
+                      <RefreshCw size={15} className="animate-spin" />
                       Belgeler Üretiliyor...
                     </>
                   ) : (
                     <>
-                      <Download size={16} />
+                      <Download size={15} />
                       {format === 'PDF' ? 'Şablon İndir (PDF)' : 'ZIP formatında PNG\'leri İndir'}
                     </>
                   )}
@@ -1382,12 +1389,12 @@ export const DataMatrixCreator: React.FC = () => {
               )}
 
               {generating && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 600 }}>
                     <span style={{ color: 'var(--primary)' }}>{progressStage}</span>
-                    <span>{progressPercent}%</span>
+                    <span className="tabular-nums font-mono">{progressPercent}%</span>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: 'var(--primary)', transition: 'width 0.2s ease-out' }}></div>
                   </div>
                 </div>
@@ -1397,29 +1404,29 @@ export const DataMatrixCreator: React.FC = () => {
         </div>
 
         {/* Right Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Live Preview Panel */}
-          <div className="card" style={{ padding: '24px', minHeight: '380px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Layers size={18} color="var(--primary)" />
+          <div className="card" style={{ padding: '20px', minHeight: '380px', display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+                <Layers size={16} color="var(--primary)" />
                 Etiket Canlı Önizleme
               </h3>
               
               <div style={{ display: 'flex', gap: '4px' }}>
                 <button 
-                  className={`btn ${previewTab === 'layout' ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`btn btn-sm ${previewTab === 'layout' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => setPreviewTab('layout')}
-                  style={{ padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                  style={{ padding: '0 8px', height: '28px', fontSize: '0.75rem', borderRadius: 'var(--radius-xs)' }}
                 >
                   Sayfa Düzeni
                 </button>
                 <button 
-                  className={`btn ${previewTab === 'single' ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`btn btn-sm ${previewTab === 'single' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => setPreviewTab('single')}
                   disabled={!previewUrl}
-                  style={{ padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                  style={{ padding: '0 8px', height: '28px', fontSize: '0.75rem', borderRadius: 'var(--radius-xs)' }}
                 >
                   Tekil Barkod
                 </button>
@@ -1433,23 +1440,23 @@ export const DataMatrixCreator: React.FC = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'var(--bg-primary)',
+                backgroundColor: 'var(--bg-surface-subtle)',
                 border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '20px',
+                borderRadius: 'var(--radius-sm)',
+                padding: '16px',
                 overflow: 'auto',
-                maxHeight: '400px'
+                maxHeight: '380px'
               }} className="layout-preview-box">
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '10px', textAlign: 'center' }}>
                   Aşağıdaki ızgara PDF belgenizin sayfa düzenini temsil eder. (Önizleme amacıyla max 4x4 hücre gösterilir)
                 </p>
                 <div style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #cbd5e1',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                  padding: '12px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: 'var(--shadow-sm)',
+                  padding: '10px',
                   width: '100%',
-                  maxWidth: '300px',
+                  maxWidth: '280px',
                   aspectRatio: '1',
                   display: 'grid',
                   gridTemplateColumns: `repeat(${Math.min(cols, 4)}, 1fr)`,
@@ -1461,7 +1468,7 @@ export const DataMatrixCreator: React.FC = () => {
                     <div 
                       key={idx} 
                       style={{
-                        border: '1px dashed #e2e8f0',
+                        border: '1px dashed #cbd5e1',
                         borderRadius: '2px',
                         display: 'flex',
                         flexDirection: labelBelow ? 'column' : 'column-reverse',
@@ -1480,7 +1487,7 @@ export const DataMatrixCreator: React.FC = () => {
                         </div>
                       )}
                       
-                      <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" style={{ margin: '1px 0' }}>
+                      <svg width="22px" height="22px" viewBox="0 0 24 24" fill="none" style={{ margin: '1px 0' }}>
                         <rect x="2" y="2" width="20" height="20" fill="none" stroke="#000" strokeWidth="2" />
                         <rect x="4" y="4" width="4" height="4" fill="#000" />
                         <rect x="4" y="10" width="4" height="2" fill="#000" />
@@ -1502,7 +1509,7 @@ export const DataMatrixCreator: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <div style={{ marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-muted)' }} className="tabular-nums font-mono">
                   Sayfa Düzeni: {cols} sütun x {rows} satır | Boyut: {size} pt
                 </div>
               </div>
@@ -1513,14 +1520,14 @@ export const DataMatrixCreator: React.FC = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'var(--bg-primary)',
+                backgroundColor: 'var(--bg-surface-subtle)',
                 border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '24px',
+                borderRadius: 'var(--radius-sm)',
+                padding: '20px',
                 textAlign: 'center'
               }}>
                 {previewUrl ? (() => {
-                  const PAGE_SIZE = 595.0; // PDF page width/height in points
+                  const PAGE_SIZE = 595.0;
                   const PAGE_MARGIN = 20.0;
                   const FOOTER_HEIGHT = 18.0;
                   const GRID_SPACING = 6.0;
@@ -1538,9 +1545,8 @@ export const DataMatrixCreator: React.FC = () => {
 
                   const barcodeSize = Math.max(20, Math.min(cellWidth, cellHeight - labelHeight) - 4);
 
-                  // Scale factor to fit max 230px container nicely
-                  const maxPreviewW = 230;
-                  const maxPreviewH = 230;
+                  const maxPreviewW = 220;
+                  const maxPreviewH = 220;
                   const scale = Math.min(maxPreviewW / cellWidth, maxPreviewH / cellHeight);
 
                   const previewCellWidth = cellWidth * scale;
@@ -1554,8 +1560,8 @@ export const DataMatrixCreator: React.FC = () => {
                       <div style={{ 
                         width: `${previewCellWidth}px`,
                         height: `${previewCellHeight}px`,
-                        backgroundColor: 'white', 
-                        borderRadius: 'var(--radius-sm)', 
+                        backgroundColor: '#ffffff', 
+                        borderRadius: 'var(--radius-xs)', 
                         boxShadow: 'var(--shadow-sm)', 
                         border: '1px solid var(--border-color)',
                         display: 'flex',
@@ -1611,7 +1617,7 @@ export const DataMatrixCreator: React.FC = () => {
                               width: `${previewBarcodeSize}px`, 
                               height: `${previewBarcodeSize}px`, 
                               objectFit: 'contain', 
-                              backgroundColor: 'white', 
+                              backgroundColor: '#ffffff', 
                             }}
                           />
                           {addText && labelBelow && (
@@ -1645,16 +1651,16 @@ export const DataMatrixCreator: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', width: '100%', maxWidth: '250px', wordBreak: 'break-all' }}>
-                        <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px', fontSize: '0.85rem' }}>Listenin İlk Geçerli Kodu:</p>
-                        <code style={{ fontSize: '0.75rem', backgroundColor: 'rgba(0,0,0,0.05)', padding: '2px 4px', borderRadius: '3px' }}>
+                      <div style={{ marginTop: '10px', fontSize: '0.78rem', color: 'var(--text-muted)', width: '100%', maxWidth: '250px', wordBreak: 'break-all' }}>
+                        <p style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '2px', fontSize: '0.8rem' }}>Listenin İlk Geçerli Kodu:</p>
+                        <code style={{ fontSize: '0.72rem', backgroundColor: 'var(--bg-surface-subtle)', padding: '2px 4px', borderRadius: '3px', fontFamily: 'var(--font-mono)' }}>
                           {analysis?.previewCodes[0]}
                         </code>
                       </div>
                     </div>
                   );
                 })() : (
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     Lütfen dosya yükleyin. İlk geçerli barkodun sunucu görüntüsü burada görünecektir.
                   </div>
                 )}
@@ -1664,39 +1670,39 @@ export const DataMatrixCreator: React.FC = () => {
 
           {/* Analysis Summary Info */}
           {analysis && (
-            <div className="card" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Database size={18} color="var(--success)" />
+            <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+                <Database size={16} color="var(--success)" />
                 Yüklenen Dosya Üretim Özeti
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div style={{ padding: '12px', backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>TOPLAM SATIR</span>
-                  <p style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>{analysis.totalLines.toLocaleString()}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                <div className="stat-card-modern" style={{ padding: '10px 14px' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>TOPLAM SATIR</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0', color: 'var(--text-main)' }} className="tabular-nums font-mono">{analysis.totalLines.toLocaleString()}</div>
                 </div>
-                <div style={{ padding: '12px', backgroundColor: 'var(--success-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--success-border)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--success-text)', fontWeight: 600 }}>GEÇERLİ KOD</span>
-                  <p style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--success-text)' }}>{analysis.validCount.toLocaleString()}</p>
+                <div className="stat-card-modern" style={{ padding: '10px 14px', borderLeft: '3px solid var(--success)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--success-text)', fontWeight: 600, letterSpacing: '0.04em' }}>GEÇERLİ KOD</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0', color: 'var(--success-text)' }} className="tabular-nums font-mono">{analysis.validCount.toLocaleString()}</div>
                 </div>
-                <div style={{ padding: '12px', backgroundColor: analysis.invalidCount > 0 ? 'var(--danger-bg)' : 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: analysis.invalidCount > 0 ? '1px solid var(--danger-border)' : '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: analysis.invalidCount > 0 ? 'var(--danger-text)' : 'var(--text-muted)', fontWeight: 600 }}>HATALI SATIR</span>
-                  <p style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, color: analysis.invalidCount > 0 ? 'var(--danger-text)' : 'var(--text-main)' }}>{analysis.invalidCount.toLocaleString()}</p>
+                <div className="stat-card-modern" style={{ padding: '10px 14px', borderLeft: analysis.invalidCount > 0 ? '3px solid var(--danger)' : undefined }}>
+                  <div style={{ fontSize: '0.7rem', color: analysis.invalidCount > 0 ? 'var(--danger-text)' : 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>HATALI SATIR</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0', color: analysis.invalidCount > 0 ? 'var(--danger-text)' : 'var(--text-main)' }} className="tabular-nums font-mono">{analysis.invalidCount.toLocaleString()}</div>
                 </div>
-                <div style={{ padding: '12px', backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>TAHMİNİ PDF SAYFASI</span>
-                  <p style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>{getEstimatedPages().toLocaleString()}</p>
+                <div className="stat-card-modern" style={{ padding: '10px 14px' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.04em' }}>TAHMİNİ SAYFA</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0', color: 'var(--text-main)' }} className="tabular-nums font-mono">{getEstimatedPages().toLocaleString()}</div>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Tahmini PDF Boyutu:</span>
-                  <strong style={{ color: 'var(--text-main)' }}>{getEstimatedSize()}</strong>
+                  <strong style={{ color: 'var(--text-main)' }} className="tabular-nums font-mono">{getEstimatedSize()}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Uygulanan Şablon Düzeni:</span>
-                  <strong style={{ color: 'var(--text-main)' }}>{cols} Sütun x {rows} Satır</strong>
+                  <strong style={{ color: 'var(--text-main)' }} className="tabular-nums font-mono">{cols} Sütun x {rows} Satır</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Hedef Çıktı Formatı:</span>
@@ -1710,14 +1716,14 @@ export const DataMatrixCreator: React.FC = () => {
 
       {/* Terminal Log Console */}
       {logs.length > 0 && (
-        <div className="card" style={{ padding: '16px', backgroundColor: '#0f172a', color: '#38bdf8', fontFamily: 'monospace', borderRadius: 'var(--radius-md)', border: '1px solid #1e293b' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #1e293b', paddingBottom: '8px', marginBottom: '8px', color: '#94a3b8' }}>
+        <div style={{ padding: '14px', backgroundColor: '#090d16', color: '#38bdf8', fontFamily: 'var(--font-mono)', borderRadius: 'var(--radius-md)', border: '1px solid #1e293b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '8px', color: '#94a3b8' }}>
             <Terminal size={14} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>İşlem Günlüğü (Console Log)</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>İşlem Günlüğü (Console Log)</span>
           </div>
           <div 
             ref={logContainerRef}
-            style={{ maxHeight: '120px', overflowY: 'auto', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '4px', color: '#a5f3fc' }}
+            style={{ maxHeight: '110px', overflowY: 'auto', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '3px', color: '#a5f3fc' }}
           >
             {logs.map((log, idx) => (
               <div key={idx}>{log}</div>
@@ -1728,46 +1734,46 @@ export const DataMatrixCreator: React.FC = () => {
 
       {/* Error / Warning Report Panel */}
       {analysis && (analysis.invalidCount > 0 || analysis.warningCount > 0) && (
-        <div className="card" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <h3 style={{ 
-              fontSize: '1.1rem', 
+              fontSize: '0.95rem', 
               margin: 0, 
               color: analysis.invalidCount > 0 ? 'var(--danger-text)' : 'var(--warning-text)', 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '8px' 
+              gap: '6px' 
             }}>
-              {analysis.invalidCount > 0 ? <AlertCircle size={18} /> : <AlertTriangle size={18} color="var(--warning)" />}
+              {analysis.invalidCount > 0 ? <AlertCircle size={16} /> : <AlertTriangle size={16} color="var(--warning)" />}
               GS1 Doğrulama Raporu ({analysis.invalidCount > 0 ? `${analysis.invalidCount} hata` : ''} {analysis.invalidCount > 0 && analysis.warningCount > 0 ? 've' : ''} {analysis.warningCount > 0 ? `${analysis.warningCount} uyarı` : ''} tespit edildi)
             </h3>
             
             {hasPermission('generator.export') && (
               <button 
-                className="btn btn-secondary" 
+                className="btn btn-secondary btn-sm" 
                 onClick={downloadErrorsCSV}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '0.8rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '30px', padding: '0 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-xs)' }}
               >
-                <FileSpreadsheet size={16} />
-                Hatalı / Uyarılı Satırları CSV Olarak İndir
+                <FileSpreadsheet size={14} />
+                Hatalı / Uyarılı Satırları CSV İndir
               </button>
             )}
           </div>
 
           <div style={{
-            maxHeight: '300px',
+            maxHeight: '280px',
             overflowY: 'auto',
             border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-md)'
+            borderRadius: 'var(--radius-sm)'
           }}>
-            <table className="data-table" style={{ margin: 0, width: '100%', fontSize: '0.85rem' }}>
+            <table className="data-table" style={{ margin: 0, width: '100%', fontSize: '0.8rem' }}>
               <thead>
-                <tr style={{ backgroundColor: 'var(--bg-primary)', position: 'sticky', top: 0, zIndex: 1 }}>
-                  <th style={{ width: '80px', padding: '10px' }}>Satır No</th>
-                  <th style={{ width: '250px', padding: '10px' }}>Kod Önizleme</th>
-                  <th style={{ width: '150px', padding: '10px' }}>Hata/Uyarı Tipi</th>
-                  <th style={{ padding: '10px' }}>Açıklama</th>
-                  <th style={{ width: '220px', padding: '10px' }}>Önerilen Düzeltme</th>
+                <tr style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                  <th style={{ width: '70px', padding: '8px 12px' }}>Satır No</th>
+                  <th style={{ width: '220px', padding: '8px 12px' }}>Kod Önizleme</th>
+                  <th style={{ width: '140px', padding: '8px 12px' }}>Hata/Uyarı Tipi</th>
+                  <th style={{ padding: '8px 12px' }}>Açıklama</th>
+                  <th style={{ width: '200px', padding: '8px 12px' }}>Önerilen Düzeltme</th>
                 </tr>
               </thead>
               <tbody>
@@ -1775,11 +1781,11 @@ export const DataMatrixCreator: React.FC = () => {
                   const isWarn = err.isWarning;
                   return (
                     <tr key={idx} style={{ backgroundColor: isWarn ? 'var(--warning-bg)' : 'var(--danger-bg)' }}>
-                      <td style={{ fontWeight: 'bold', color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', padding: '10px' }}>{err.rowNo}</td>
-                      <td style={{ fontFamily: 'monospace', wordBreak: 'break-all', padding: '10px', color: isWarn ? 'var(--warning-text)' : 'var(--text-main)' }}>{err.rawLine}</td>
-                      <td style={{ color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', fontWeight: 600, padding: '10px' }}>{err.errorType}</td>
-                      <td style={{ color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', padding: '10px' }}>{err.errorMessage}</td>
-                      <td style={{ color: 'var(--text-main)', fontSize: '0.8rem', padding: '10px', backgroundColor: 'rgba(255,255,255,0.4)' }}>{err.suggestedFix}</td>
+                      <td style={{ fontWeight: 600, color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', padding: '8px 12px' }} className="tabular-nums font-mono">{err.rowNo}</td>
+                      <td style={{ fontFamily: 'var(--font-mono)', wordBreak: 'break-all', padding: '8px 12px', color: isWarn ? 'var(--warning-text)' : 'var(--text-main)', fontSize: '0.75rem' }}>{err.rawLine}</td>
+                      <td style={{ color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', fontWeight: 600, padding: '8px 12px' }}>{err.errorType}</td>
+                      <td style={{ color: isWarn ? 'var(--warning-text)' : 'var(--danger-text)', padding: '8px 12px' }}>{err.errorMessage}</td>
+                      <td style={{ color: 'var(--text-main)', fontSize: '0.75rem', padding: '8px 12px', opacity: 0.9 }}>{err.suggestedFix}</td>
                     </tr>
                   );
                 })}
@@ -1790,65 +1796,57 @@ export const DataMatrixCreator: React.FC = () => {
       )}
 
       {/* History log panel */}
-      <div className="card" style={{ padding: '24px' }}>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <History size={18} color="var(--primary)" />
+      <div className="card" style={{ padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+          <History size={16} color="var(--primary)" />
           Son İşlemler ve Geçmiş
         </h3>
 
         {historyList.length === 0 ? (
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-md)' }}>
+          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-sm)' }}>
             Henüz yapılmış bir DataMatrix üretimi bulunmamaktadır.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ margin: 0, width: '100%', fontSize: '0.85rem' }}>
+            <table className="data-table" style={{ margin: 0, width: '100%', fontSize: '0.8rem' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '10px' }}>Tarih</th>
-                  <th style={{ padding: '10px' }}>Kod Sayısı</th>
-                  <th style={{ padding: '10px' }}>Format</th>
-                  <th style={{ padding: '10px' }}>Düzen</th>
-                  <th style={{ padding: '10px' }}>Parçalama Boyutu</th>
-                  <th style={{ padding: '10px' }}>Dosya Boyutu</th>
-                  <th style={{ padding: '10px' }}>Durum</th>
-                  <th style={{ padding: '10px' }}>Kullanıcı</th>
-                  <th style={{ padding: '10px', textAlign: 'center' }}>İşlemler</th>
+                  <th style={{ padding: '8px 12px' }}>Tarih</th>
+                  <th style={{ padding: '8px 12px' }}>Kod Sayısı</th>
+                  <th style={{ padding: '8px 12px' }}>Format</th>
+                  <th style={{ padding: '8px 12px' }}>Düzen</th>
+                  <th style={{ padding: '8px 12px' }}>Parçalama Boyutu</th>
+                  <th style={{ padding: '8px 12px' }}>Dosya Boyutu</th>
+                  <th style={{ padding: '8px 12px' }}>Durum</th>
+                  <th style={{ padding: '8px 12px' }}>Kullanıcı</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
                 {historyList.map((item, idx) => (
                   <tr key={idx}>
-                    <td style={{ whiteSpace: 'nowrap', padding: '10px' }}>{item.date}</td>
-                    <td style={{ fontWeight: 600, padding: '10px' }}>
-                      {item.validCount.toLocaleString()} {item.invalidCount > 0 && <span style={{ color: 'var(--danger-text)', fontSize: '0.75rem' }}>({item.invalidCount} Hatalı)</span>}
+                    <td style={{ whiteSpace: 'nowrap', padding: '8px 12px' }} className="tabular-nums">{item.date}</td>
+                    <td style={{ fontWeight: 600, padding: '8px 12px' }} className="tabular-nums font-mono">
+                      {item.validCount.toLocaleString()} {item.invalidCount > 0 && <span style={{ color: 'var(--danger-text)', fontSize: '0.72rem' }}>({item.invalidCount} Hatalı)</span>}
                     </td>
-                    <td style={{ padding: '10px' }}>{item.format}</td>
-                    <td style={{ padding: '10px' }}>{item.cols}x{item.rows} ({item.size}pt)</td>
-                    <td style={{ padding: '10px' }}>{item.splitSize}</td>
-                    <td style={{ padding: '10px' }}>{item.fileSizeStr}</td>
-                    <td style={{ padding: '10px' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        backgroundColor: item.status === 'Tamamlandı' ? 'var(--success-bg)' : 'var(--danger-bg)',
-                        color: item.status === 'Tamamlandı' ? 'var(--success-text)' : 'var(--danger-text)'
-                      }}>
+                    <td style={{ padding: '8px 12px' }}>{item.format}</td>
+                    <td style={{ padding: '8px 12px' }} className="tabular-nums font-mono">{item.cols}x{item.rows} ({item.size}pt)</td>
+                    <td style={{ padding: '8px 12px' }}>{item.splitSize}</td>
+                    <td style={{ padding: '8px 12px' }} className="tabular-nums font-mono">{item.fileSizeStr}</td>
+                    <td style={{ padding: '8px 12px' }}>
+                      <span className={`badge ${item.status === 'Tamamlandı' ? 'badge-completed' : 'badge-danger'}`} style={{ fontSize: '0.72rem', padding: '2px 6px' }}>
                         {item.status}
                       </span>
                     </td>
-                    <td style={{ padding: '10px' }}>{item.username}</td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>
+                    <td style={{ padding: '8px 12px' }} className="font-mono">{item.username}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                       {hasPermission('generator.create') && (
                         <button 
-                          className="btn btn-secondary" 
+                          className="btn btn-secondary btn-sm" 
                           onClick={() => handleReDownload(item)}
-                          style={{ padding: '3px 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          style={{ padding: '0 8px', height: '26px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderRadius: 'var(--radius-xs)' }}
                         >
-                          <Clock size={12} />
+                          <Clock size={11} />
                           Tekrar Yükle
                         </button>
                       )}

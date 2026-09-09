@@ -181,60 +181,77 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   };
 
   return (
-    <div className="scan-product-selector flex flex-col gap-1 flex-1 min-w-[200px] md:min-w-[300px] relative" ref={containerRef} onKeyDown={handleKeyDown} style={{ zIndex: 10000 }}>
-      <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider ml-1 flex items-center gap-1">
+    <div className="scan-product-selector flex flex-col gap-1 flex-1 min-w-[220px] md:min-w-[320px] relative" ref={containerRef} onKeyDown={handleKeyDown} style={{ zIndex: 10000 }}>
+      <label className="text-[10px] font-bold uppercase tracking-wider ml-1 flex items-center gap-1" style={{ color: 'var(--primary)' }}>
         <span>Aktif Ürün</span>
         <div className="group relative flex items-center justify-center">
-          <Info className="w-3 h-3 text-blue-400" />
+          <Info className="w-3 h-3 opacity-60" />
         </div>
       </label>
 
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`border-2 rounded-lg p-2 flex items-center justify-between transition-colors ${
-          disabled ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-70' :
-          isOpen ? 'bg-blue-50 border-blue-500 shadow-[0_0_0_2px_rgba(59,130,246,0.2)] cursor-pointer' : 
-          'bg-white border-gray-300 hover:border-blue-400 cursor-pointer'
+        className={`border h-9 px-3 flex items-center justify-between transition-colors ${
+          disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
         }`}
+        style={{
+          borderRadius: 'var(--radius-sm)',
+          backgroundColor: disabled ? 'var(--bg-surface-subtle)' : isOpen ? 'var(--primary-light)' : 'var(--input-bg)',
+          borderColor: isOpen ? 'var(--primary)' : 'var(--border-subtle)',
+          color: 'var(--text-main)'
+        }}
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         tabIndex={disabled ? -1 : 0}
       >
-        <div className="flex flex-col min-w-0 pr-4">
+        <div className="flex items-center min-w-0 pr-2 gap-2 flex-1">
           {selectedProduct ? (
             <>
-              <span className="text-base font-bold text-blue-900 line-clamp-2 break-words whitespace-normal" title={selectedProduct.productName}>
+              <span className="text-xs md:text-sm font-semibold truncate flex-1" style={{ color: 'var(--text-main)' }} title={selectedProduct.productName}>
                 {selectedProduct.productName}
               </span>
-              <span className="text-xs text-blue-600 font-medium truncate" title={selectedProduct.stockCode}>
+              <span className="text-xs font-mono font-medium shrink-0 px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface-subtle)', color: 'var(--text-muted)' }} title={selectedProduct.stockCode}>
                 {selectedProduct.stockCode}
               </span>
             </>
           ) : (
-            <span className="text-base font-medium text-gray-400">
-              {products.length === 0 ? 'Önce sipariş seçin' : '-- ÜRÜN / STOK KODU SEÇİN --'}
+            <span className="text-xs md:text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+              {products.length === 0 ? 'Önce sipariş seçin' : '-- Ürün / Stok Kodu Seçin --'}
             </span>
           )}
         </div>
-        <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180 text-blue-500' : 'text-gray-400'}`} />
+        <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${isOpen ? 'rotate-180 text-blue-500' : 'text-gray-400'}`} />
       </div>
 
       {isOpen && (
         <div 
-          className="absolute left-0 w-full bg-white border border-blue-200 rounded-xl shadow-xl z-50 flex flex-col"
-          style={{ ...dropdownStyle, zIndex: 10001 }}
+          className="absolute left-0 w-full flex flex-col shadow-xl"
+          style={{
+            ...dropdownStyle,
+            zIndex: 10001,
+            backgroundColor: 'var(--modal-bg)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-lg)'
+          }}
         >
-          <div className="p-2 border-b border-gray-100 shrink-0">
+          <div className="p-2 border-b shrink-0" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" />
               <input 
                 ref={searchInputRef}
                 type="text" 
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Ürün adı, gtin veya kod ara..." 
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                placeholder="Ürün adı, GTIN veya stok kodu ara..." 
+                className="w-full text-xs font-medium pl-8 pr-3 h-8 focus:outline-none"
+                style={{
+                  backgroundColor: 'var(--bg-surface-subtle)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-main)'
+                }}
                 aria-autocomplete="list"
               />
             </div>
@@ -242,11 +259,11 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
           
           <div 
             ref={listRef}
-            className="overflow-y-auto p-2 flex-1 relative no-scrollbar"
+            className="overflow-y-auto p-1.5 flex-1 relative no-scrollbar"
             role="listbox"
           >
             {filteredProducts.length === 0 ? (
-              <div className="flex items-center justify-center h-20 text-sm text-gray-500">
+              <div className="flex items-center justify-center h-20 text-xs" style={{ color: 'var(--text-muted)' }}>
                 Eşleşen ürün bulunamadı.
               </div>
             ) : (
@@ -271,27 +288,29 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
                         height: `${virtualRow.size}px`,
                         transform: `translateY(${virtualRow.start}px)`
                       }}
-                      className={`p-0`}
+                      className="p-0"
                     >
-                      <div className={`
-                        h-[56px] mx-1 mt-1 p-2 border rounded-lg cursor-pointer flex flex-col justify-center
-                        ${isSelected ? 'bg-blue-50 border-blue-200' : 
-                          isHighlighted ? 'bg-gray-50 border-gray-300' : 'bg-transparent border-transparent hover:bg-gray-50'
-                        }
-                      `}>
+                      <div 
+                        className="h-[56px] mx-0.5 mt-0.5 p-2 border cursor-pointer flex flex-col justify-center transition-colors"
+                        style={{
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: isSelected ? 'var(--primary-light)' : isHighlighted ? 'var(--bg-surface-subtle)' : 'transparent',
+                          borderColor: isSelected ? 'var(--primary)' : isHighlighted ? 'var(--border-subtle)' : 'transparent'
+                        }}
+                      >
                         <div className="flex justify-between items-start gap-2">
-                          <span className={`font-bold text-sm leading-tight line-clamp-2 break-words whitespace-normal flex-1 ${isSelected ? 'text-blue-900' : 'text-gray-800'}`} title={product.productName}>
+                          <span className="font-semibold text-xs leading-tight line-clamp-1 break-words flex-1" style={{ color: isSelected ? 'var(--primary)' : 'var(--text-main)' }} title={product.productName}>
                             {product.productName}
                           </span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded shrink-0 ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded shrink-0 tabular-nums" style={{ backgroundColor: isSelected ? 'var(--primary)' : 'var(--bg-surface-subtle)', color: isSelected ? '#fff' : 'var(--text-muted)' }}>
                             {product.scannedCount} / {product.expectedQuantity}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center mt-0.5">
-                          <span className={`text-xs font-mono truncate ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} title={product.stockCode}>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-[11px] font-mono truncate" style={{ color: 'var(--text-muted)' }} title={product.stockCode}>
                             {product.stockCode}
                           </span>
-                          <span className={`text-[10px] font-semibold ${isSelected ? 'text-blue-500' : 'text-gray-400'}`}>
+                          <span className="text-[10px] font-mono font-medium" style={{ color: 'var(--text-muted)' }}>
                             {product.gtin}
                           </span>
                         </div>

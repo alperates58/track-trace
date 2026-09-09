@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { TTPageHeader, TTCard, TTButton } from '../components/common';
-import { Check, Minus, ShieldAlert, Save, RefreshCw } from 'lucide-react';
+import { TTPageHeader, TTCard, TTButton, TTLoadingState, TTAlert } from '../components/common';
+import { Check, Minus, ShieldAlert, Save, RefreshCw, Shield } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-const CheckIcon = () => <Check size={18} style={{ color: '#10b981', margin: '0 auto' }} />;
-const CrossIcon = () => <Minus size={18} style={{ color: '#64748b', margin: '0 auto', opacity: 0.5 }} />;
+const CheckIcon = () => <Check size={16} style={{ color: '#10b981', margin: '0 auto' }} />;
+const CrossIcon = () => <Minus size={16} style={{ color: 'var(--text-secondary, #64748b)', margin: '0 auto', opacity: 0.3 }} />;
 
 interface Permission {
   key: string;
@@ -68,7 +67,6 @@ export const PermissionMatrix: React.FC = () => {
       setSaving(true);
       setError(null);
       await api.post('/api/permissions/matrix', { assignments: rolePermissions });
-      // Show success somehow (toast etc if available, or just reload)
       await fetchMatrix();
     } catch (err: any) {
       setError(err.message || 'Kaydetme sırasında hata oluştu.');
@@ -82,72 +80,75 @@ export const PermissionMatrix: React.FC = () => {
   const actionsList = ['view', 'create', 'edit', 'delete', 'print', 'export', 'manage'];
 
   if (loading) {
-    return <div style={{ padding: '20px' }}>Yükleniyor...</div>;
+    return (
+      <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
+        <TTLoadingState text="Yetki matrisi yükleniyor..." />
+      </div>
+    );
   }
 
   return (
-    <div className="permission-matrix-page">
+    <div className="permission-matrix-page" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       <TTPageHeader
-        title="Yetki Matrisi"
-        description="Sistemdeki tüm modüller için rol bazlı yetkilerin genel görünümü."
+        title="Rol ve Yetki Matrisi"
+        description="Sistemdeki tüm modüller için rol bazlı granular yetkilerin genel görünümü ve atamaları."
         actions={isAdmin ? (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <TTButton onClick={fetchMatrix} disabled={saving} variant="secondary" icon={<RefreshCw size={16} />}>
+            <TTButton onClick={fetchMatrix} disabled={saving} variant="secondary" size="md" icon={<RefreshCw size={14} />}>
               Yenile
             </TTButton>
-            <TTButton onClick={saveMatrix} disabled={saving} variant="primary" icon={<Save size={16} />}>
-              {saving ? 'Kaydediliyor...' : 'Kaydet'}
+            <TTButton onClick={saveMatrix} disabled={saving} variant="primary" size="md" icon={<Save size={14} />}>
+              {saving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
             </TTButton>
           </div>
         ) : undefined}
       />
 
       {error && (
-        <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
-          {error}
+        <div style={{ marginBottom: '16px' }}>
+          <TTAlert variant="danger" title="Hata">
+            {error}
+          </TTAlert>
         </div>
       )}
 
       <div style={{
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        border: '1px solid rgba(59, 130, 246, 0.2)',
-        borderRadius: '8px',
-        padding: '16px',
-        marginBottom: '24px',
+        backgroundColor: 'rgba(59, 130, 246, 0.05)',
+        border: '1px solid var(--border-subtle, rgba(59, 130, 246, 0.2))',
+        borderRadius: 'var(--radius-sm, 6px)',
+        padding: '12px 16px',
+        marginBottom: '16px',
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px'
+        alignItems: 'center',
+        gap: '10px'
       }}>
-        <ShieldAlert size={20} style={{ color: '#3b82f6', flexShrink: 0, marginTop: '2px' }} />
-        <div>
-          <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-main)', fontSize: '0.95rem' }}>Bilgilendirme</h4>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-            Bu ekran dinamik yetki matrisini gösterir. Yalnızca Admin rolüne sahip kullanıcılar değişiklik yapabilir.
-          </p>
-        </div>
+        <Shield size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary, var(--text-muted))', lineHeight: 1.4 }}>
+          Bu ekran dinamik yetki matrisini gösterir. Yalnızca <strong>Yönetici (Admin)</strong> rolüne sahip kullanıcılar yetkilerde değişiklik yapabilir. Admin rolü tüm yetkilere doğal olarak sahiptir.
+        </span>
       </div>
 
-      <TTCard padding="none">
+      <TTCard padding="none" style={{ overflow: 'hidden', border: '1px solid var(--border-subtle, var(--border-color))' }}>
         <div className="permission-matrix-scroll" style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.85rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.82rem' }}>
           <thead>
             <tr>
-              <th rowSpan={2} style={{ padding: '16px', borderBottom: '2px solid var(--border-color)', borderRight: '1px solid var(--border-color)', textAlign: 'left', backgroundColor: 'var(--bg-secondary)', width: '200px' }}>Modül</th>
-              <th colSpan={7} style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>Admin (Yönetici)</th>
-              <th colSpan={7} style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>Operator (Operatör)</th>
-              <th colSpan={7} style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>Viewer (İzleyici)</th>
+              <th rowSpan={2} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', textAlign: 'left', backgroundColor: 'var(--bg-main)', width: '200px', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Modül</th>
+              <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Admin (Yönetici)</th>
+              <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Operator (Operatör)</th>
+              <th colSpan={7} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, color: 'var(--text-primary, var(--text-main))' }}>Viewer (İzleyici)</th>
             </tr>
             <tr>
               {/* Actions Header for each role */}
               {[...Array(3)].map((_, i) => (
                 <React.Fragment key={i}>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Görüntüleme">Gör.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Oluşturma">Oluş.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Düzenleme">Düz.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Silme">Sil.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Yazdırma">Yaz.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Dışa Aktarma">Exp.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '2px solid var(--border-color)', borderRight: i < 2 ? '1px solid var(--border-color)' : 'none', backgroundColor: 'var(--bg-secondary)', fontWeight: 500 }} title="Yönetim">Yön.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Görüntüleme">Gör.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Oluşturma">Oluş.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Düzenleme">Düz.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Silme">Sil.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Yazdırma">Yaz.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Dışa Aktarma">Exp.</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', borderRight: i < 2 ? '1px solid var(--border-subtle, var(--border-color))' : 'none', backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary, var(--text-muted))' }} title="Yönetim">Yön.</th>
                 </React.Fragment>
               ))}
             </tr>
@@ -158,8 +159,8 @@ export const PermissionMatrix: React.FC = () => {
               const getPermKey = (action: string) => modulePerms.find(p => p.action === action)?.key;
 
               return (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)' }}>
-                  <td style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 500, borderRight: '1px solid var(--border-color)' }}>{moduleName}</td>
+                <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle, var(--border-color))' }}>
+                  <td style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--text-primary, var(--text-main))', borderRight: '1px solid var(--border-subtle, var(--border-color))' }}>{moduleName}</td>
                   
                   {['Admin', 'Operator', 'Viewer'].map((role, roleIdx) => (
                     <React.Fragment key={role}>
@@ -169,7 +170,7 @@ export const PermissionMatrix: React.FC = () => {
                         const isLast = actionIdx === actionsList.length - 1;
                         
                         return (
-                          <td key={action} style={{ padding: '8px', borderRight: isLast && roleIdx < 2 ? '1px solid var(--border-color)' : 'none', textAlign: 'center' }}>
+                          <td key={action} style={{ padding: '8px 6px', borderRight: isLast && roleIdx < 2 ? '1px solid var(--border-subtle, var(--border-color))' : 'none', textAlign: 'center' }}>
                             {pKey ? (
                               role === 'Admin' ? (
                                 <input 
@@ -190,7 +191,7 @@ export const PermissionMatrix: React.FC = () => {
                                 isChecked ? <CheckIcon /> : <CrossIcon />
                               )
                             ) : (
-                              <span style={{ color: '#ccc' }}>-</span>
+                              <span style={{ color: 'var(--text-secondary, #94a3b8)', opacity: 0.4 }}>-</span>
                             )}
                           </td>
                         );

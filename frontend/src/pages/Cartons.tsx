@@ -73,11 +73,11 @@ const FullnessIndicator: React.FC<{ actual: number; target: number }> = ({ actua
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '110px', maxWidth: '160px', width: '100%' }} onClick={e => e.stopPropagation()}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
+      <div className="tabular-nums" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600 }}>
         <span style={{ color: 'var(--text-main)' }}>{actual} / {target}</span>
         <span style={{ color: color }}>%{percentage}</span>
       </div>
-      <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+      <div style={{ width: '100%', height: '5px', backgroundColor: 'var(--border-subtle)', borderRadius: '3px', overflow: 'hidden' }}>
         <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: color, borderRadius: '3px', transition: 'width 0.3s ease' }} />
       </div>
     </div>
@@ -89,19 +89,19 @@ export const FormattedBarcode: React.FC<{ code: string }> = ({ code }) => {
   // Remove AIM identifiers and split by Group Separator
   const parts = code.replace(/^\]d2/, '').replace(/^\]C1/, '').split('\x1D');
   return (
-    <span style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+    <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', wordBreak: 'break-all', fontSize: '0.8125rem' }}>
       {parts.map((part, i) => (
         <React.Fragment key={i}>
           {part}
           {i < parts.length - 1 && (
             <span style={{ 
-              backgroundColor: '#e0e7ff', 
-              color: '#4338ca', 
+              backgroundColor: 'rgba(37, 99, 235, 0.1)', 
+              color: 'var(--primary)', 
               fontSize: '0.65rem', 
               padding: '2px 4px', 
-              borderRadius: '4px', 
+              borderRadius: 'var(--radius-xs)', 
               margin: '0 2px',
-              fontWeight: 700 
+              fontWeight: 600 
             }}>GS</span>
           )}
         </React.Fragment>
@@ -121,41 +121,56 @@ const CartonTableRow: React.FC<{
   const sonIslemDate = c.printedAt || c.closedAt || c.createdAt;
   const sonIslemFormatted = sonIslemDate ? new Date(sonIslemDate).toLocaleString('tr-TR') : '-';
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Open': return <span className="tt-badge tt-badge-primary">Açık</span>;
+      case 'Closed': return <span className="tt-badge tt-badge-neutral">Kapalı</span>;
+      case 'Printed': return <span className="tt-badge tt-badge-info">Yazdırıldı</span>;
+      case 'PrePrinted': return <span className="tt-badge tt-badge-primary">Ön Etiket</span>;
+      case 'Filling': return <span className="tt-badge tt-badge-warning">Dolduruluyor</span>;
+      case 'Palletized': return <span className="tt-badge tt-badge-success">Paletlendi</span>;
+      case 'Shipped': return <span className="tt-badge tt-badge-neutral">Sevk Edildi</span>;
+      default: return <span className="tt-badge tt-badge-neutral">{status}</span>;
+    }
+  };
+
   return (
-    <tr style={{ cursor: 'pointer', backgroundColor: isSelected ? 'var(--primary-light)' : '' }} onClick={onSelect}>
-      <td style={{ fontWeight: 600 }}>{c.cartonNo}</td>
-      <td>{c.orderNo}</td>
+    <tr style={{ cursor: 'pointer', backgroundColor: isSelected ? 'var(--bg-surface-subtle)' : '' }} onClick={onSelect} className="hover-row">
+      <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+        <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>{c.cartonNo}</span>
+      </td>
+      <td>
+        <span className="tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}>{c.orderNo}</span>
+      </td>
       <td><span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>{orderStockCode || '-'}</span></td>
       <td>{c.stationName || 'Ana İstasyon'}</td>
-      <td><code style={{ fontSize: '0.85rem' }}>{c.sscc}</code></td>
+      <td><code className="tabular-nums" style={{ fontSize: '0.8125rem' }}>{c.sscc}</code></td>
       <td>
         <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
       </td>
       <td>
-        <span className={`badge badge-${c.status.toLowerCase()}`}>
-          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
-        </span>
+        {getStatusBadge(c.status)}
       </td>
       <td>
         {c.mode === 'PrePrinted' ? (
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#4338ca' }}>Ön Etiketli</span>
+          <span className="tt-badge tt-badge-primary">Ön Etiketli</span>
         ) : (
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#475569' }}>Oto Koli</span>
+          <span className="tt-badge tt-badge-neutral">Oto Koli</span>
         )}
       </td>
       <td>
-        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: c.printCount ? '#059669' : '#94a3b8' }}>
+        <span className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 600, color: c.printCount ? 'var(--success)' : 'var(--text-muted)' }}>
           {c.printCount || 0}
         </span>
       </td>
-      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{sonIslemFormatted}</td>
+      <td className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{sonIslemFormatted}</td>
       <td onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', gap: '6px' }}>
-          <button className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={onSelect}>
-            <Eye size={14} /> Detay
+          <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8125rem', height: '28px' }} onClick={onSelect}>
+            <Eye size={13} /> Detay
           </button>
-          <button className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={onPrint}>
-            <Printer size={14} /> PDF
+          <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.8125rem', height: '28px' }} onClick={onPrint}>
+            <Printer size={13} /> PDF
           </button>
         </div>
       </td>
@@ -173,13 +188,24 @@ const CartonMobileCard: React.FC<{
   const sonIslemDate = c.printedAt || c.closedAt || c.createdAt;
   const sonIslemFormatted = sonIslemDate ? new Date(sonIslemDate).toLocaleString('tr-TR') : '-';
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Open': return <span className="tt-badge tt-badge-warning">Açık</span>;
+      case 'Closed': return <span className="tt-badge tt-badge-success">Kapalı</span>;
+      case 'Printed': return <span className="tt-badge tt-badge-primary">Yazdırıldı</span>;
+      case 'PrePrinted': return <span className="tt-badge tt-badge-primary">Ön Etiket</span>;
+      case 'Filling': return <span className="tt-badge tt-badge-warning">Dolduruluyor</span>;
+      case 'Palletized': return <span className="tt-badge tt-badge-success">Paletlendi</span>;
+      case 'Shipped': return <span className="tt-badge tt-badge-neutral">Sevk Edildi</span>;
+      default: return <span className="tt-badge tt-badge-neutral">{status}</span>;
+    }
+  };
+
   return (
     <div className="mobile-card" onClick={onSelect} style={{ cursor: 'pointer' }}>
       <div className="mobile-card-row" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', marginBottom: '4px' }}>
         <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>{c.cartonNo}</span>
-        <span className={`badge badge-${c.status.toLowerCase()}`}>
-          {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
-        </span>
+        {getStatusBadge(c.status)}
       </div>
       
       <div className="mobile-card-row">
@@ -753,103 +779,113 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
       />
 
       {/* KPI Cards Grid */}
-      <div className="stats-grid">
-        <div className="card stat-card" style={{ borderLeft: '4px solid var(--primary)' }}>
+      <div className="stats-grid" style={{ marginBottom: '20px' }}>
+        <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Toplam Koli</span>
-            <span className="stat-value">{kpis.total}</span>
+            <span className="stat-value tabular-nums">{kpis.total.toLocaleString('tr-TR')}</span>
+            <span className="stat-subtext">Sistemde kayıtlı</span>
           </div>
-          <div className="stat-icon stat-blue">
-            <Package size={24} />
+          <div className="stat-icon-wrapper stat-blue">
+            <Package size={20} />
           </div>
         </div>
 
-        <div className="card stat-card" style={{ borderLeft: '4px solid var(--warning)' }}>
+        <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Açık Koli (Doluyor)</span>
-            <span className="stat-value">{kpis.open}</span>
+            <span className="stat-value tabular-nums">{kpis.open.toLocaleString('tr-TR')}</span>
+            <span className="stat-subtext">Dolumu süren</span>
           </div>
-          <div className="stat-icon stat-yellow">
-            <Inbox size={24} />
+          <div className="stat-icon-wrapper stat-yellow">
+            <Inbox size={20} />
           </div>
         </div>
 
-        <div className="card stat-card" style={{ borderLeft: '4px solid var(--success)' }}>
+        <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Dolan Koli</span>
-            <span className="stat-value">{kpis.closed}</span>
+            <span className="stat-value tabular-nums">{kpis.closed.toLocaleString('tr-TR')}</span>
+            <span className="stat-subtext">Hedef adede ulaştı</span>
           </div>
-          <div className="stat-icon stat-green">
-            <CheckCircle size={24} />
+          <div className="stat-icon-wrapper stat-green">
+            <CheckCircle size={20} />
           </div>
         </div>
 
-        <div className="card stat-card" style={{ borderLeft: '4px solid #0369a1' }}>
+        <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Yazdırılan Koli</span>
-            <span className="stat-value">{kpis.printed}</span>
+            <span className="stat-value tabular-nums">{kpis.printed.toLocaleString('tr-TR')}</span>
+            <span className="stat-subtext">Etiketi basıldı</span>
           </div>
-          <div className="stat-icon stat-blue">
-            <Printer size={24} />
+          <div className="stat-icon-wrapper stat-blue">
+            <Printer size={20} />
           </div>
         </div>
 
-        <div className="card stat-card" style={{ borderLeft: '4px solid var(--danger)' }}>
+        <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">İptal Edilen Koli</span>
-            <span className="stat-value">{kpis.cancelled}</span>
+            <span className="stat-value tabular-nums">{kpis.cancelled.toLocaleString('tr-TR')}</span>
+            <span className="stat-subtext">Bozulan / İptal</span>
           </div>
-          <div className="stat-icon" style={{ backgroundColor: '#fef2f2', color: '#ef4444' }}>
-            <Trash2 size={24} />
+          <div className="stat-icon-wrapper" style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            <Trash2 size={20} />
           </div>
         </div>
 
-        <div className="card stat-card" style={{ borderLeft: '4px solid #6b21a8' }}>
+        <div className="stat-card-modern">
           <div className="stat-info">
             <span className="stat-title">Bugün Oluşturulan</span>
-            <span className="stat-value">{kpis.today}</span>
+            <span className="stat-value tabular-nums">{kpis.today.toLocaleString('tr-TR')}</span>
+            <span className="stat-subtext">Günlük koli üretimi</span>
           </div>
-          <div className="stat-icon stat-purple">
-            <Calendar size={24} />
+          <div className="stat-icon-wrapper stat-purple">
+            <Calendar size={20} />
           </div>
         </div>
       </div>
 
       {/* Advanced Filters Panel */}
-      <div className="card" style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <SlidersHorizontal size={18} /> Gelişmiş Filtre ve Görünüm Seçenekleri
+      <div className="card" style={{ marginBottom: '20px', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-main)' }}>
+            <SlidersHorizontal size={16} color="var(--primary)" /> Gelişmiş Filtre ve Görünüm Seçenekleri
           </h3>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Görünüm:</span>
-            <button 
-              className={`btn ${isGroupedByOrder ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-              onClick={() => setIsGroupedByOrder(true)}
-            >
-              Sipariş Gruplu
-            </button>
-            <button 
-              className={`btn ${!isGroupedByOrder ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-              onClick={() => setIsGroupedByOrder(false)}
-            >
-              Düz Liste
-            </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Görünüm:</span>
+            <div style={{ display: 'inline-flex', padding: '2px', background: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+              <button 
+                type="button"
+                className={`btn ${isGroupedByOrder ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '4px 12px', fontSize: '0.8125rem', height: '28px', border: 'none' }}
+                onClick={() => setIsGroupedByOrder(true)}
+              >
+                Sipariş Gruplu
+              </button>
+              <button 
+                type="button"
+                className={`btn ${!isGroupedByOrder ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '4px 12px', fontSize: '0.8125rem', height: '28px', border: 'none' }}
+                onClick={() => setIsGroupedByOrder(false)}
+              >
+                Düz Liste
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Input Controls */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Genel Arama</label>
+            <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Genel Arama</label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Search size={16} style={{ position: 'absolute', left: '10px', color: 'var(--text-muted)' }} />
+              <Search size={15} style={{ position: 'absolute', left: '10px', color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 className="form-input"
-                style={{ paddingLeft: '32px', width: '100%', fontSize: '0.85rem', height: '38px' }}
+                style={{ paddingLeft: '32px', width: '100%', fontSize: '0.85rem', height: '36px' }}
                 placeholder="Koli No, SSCC veya Sipariş No..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -858,11 +894,11 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Sipariş No</label>
+            <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Sipariş No</label>
             <input
               type="text"
               className="form-input"
-              style={{ width: '100%', fontSize: '0.85rem', height: '38px' }}
+              style={{ width: '100%', fontSize: '0.85rem', height: '36px' }}
               placeholder="Sipariş No yazın..."
               value={orderNoFilter}
               onChange={(e) => setOrderNoFilter(e.target.value)}
@@ -870,10 +906,10 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Stok Kodu</label>
+            <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Stok Kodu</label>
             <select
               className="form-input"
-              style={{ width: '100%', fontSize: '0.85rem', height: '38px', padding: '0 10px' }}
+              style={{ width: '100%', fontSize: '0.85rem', height: '36px', padding: '0 10px' }}
               value={stockCodeFilter}
               onChange={(e) => setStockCodeFilter(e.target.value)}
             >
@@ -885,10 +921,10 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Durum</label>
+            <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Durum</label>
             <select
               className="form-input"
-              style={{ width: '100%', fontSize: '0.85rem', height: '38px', padding: '0 10px' }}
+              style={{ width: '100%', fontSize: '0.85rem', height: '36px', padding: '0 10px' }}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -902,22 +938,22 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Başlangıç Tarihi</label>
+            <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Başlangıç Tarihi</label>
             <input
               type="date"
               className="form-input"
-              style={{ width: '100%', fontSize: '0.85rem', height: '38px' }}
+              style={{ width: '100%', fontSize: '0.85rem', height: '36px' }}
               value={startDateFilter}
               onChange={(e) => setStartDateFilter(e.target.value)}
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Bitiş Tarihi</label>
+            <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Bitiş Tarihi</label>
             <input
               type="date"
               className="form-input"
-              style={{ width: '100%', fontSize: '0.85rem', height: '38px' }}
+              style={{ width: '100%', fontSize: '0.85rem', height: '36px' }}
               value={endDateFilter}
               onChange={(e) => setEndDateFilter(e.target.value)}
             />
@@ -925,7 +961,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
         </div>
 
         {/* Checkbox Switches */}
-        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid var(--border-subtle)' }}>
           <label className="switch-container">
             <input
               type="checkbox"
@@ -934,7 +970,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               onChange={(e) => setOnlyOpenToggle(e.target.checked)}
             />
             <span className="switch-slider"></span>
-            <span>Sadece Açık Koliler</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-main)' }}>Sadece Açık Koliler</span>
           </label>
 
           <label className="switch-container">
@@ -945,7 +981,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               onChange={(e) => setOnlyPartialToggle(e.target.checked)}
             />
             <span className="switch-slider"></span>
-            <span>Sadece Eksik Doluluktaki Koliler</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-main)' }}>Sadece Eksik Doluluktaki Koliler</span>
           </label>
         </div>
       </div>
@@ -965,7 +1001,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
           <table className="data-table responsive-table-desktop">
             <thead>
               <tr>
-                <th style={{ width: '48px' }}></th>
+                <th style={{ width: '40px' }}></th>
                 <th>Sipariş No</th>
                 <th>Stok Kodu / Ürün Adı</th>
                 <th>Toplam Koli</th>
@@ -982,40 +1018,41 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                     <tr 
                       className={`order-group-row ${isExpanded ? 'order-group-expanded' : ''}`}
                       onClick={() => setExpandedOrders(prev => ({ ...prev, [g.orderId]: !prev[g.orderId] }))}
+                      style={{ cursor: 'pointer' }}
                     >
                       <td style={{ textAlign: 'center' }}>
-                        {isExpanded ? <ChevronDown size={18} color="var(--primary)" /> : <ChevronRight size={18} />}
+                        {isExpanded ? <ChevronDown size={16} color="var(--primary)" /> : <ChevronRight size={16} />}
                       </td>
-                      <td style={{ fontWeight: 700 }}>{g.orderNo}</td>
+                      <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{g.orderNo}</td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{g.order?.stockCode || '-'}</span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.order?.productName || '-'}</span>
                         </div>
                       </td>
-                      <td><strong>{g.totalCartons}</strong> koli</td>
+                      <td><span className="tabular-nums" style={{ fontWeight: 600 }}>{g.totalCartons}</span> koli</td>
                       <td>
                         <FullnessIndicator actual={g.totalActual} target={g.totalTarget} />
                       </td>
                       <td>
-                        <span className={`badge ${g.openCartonsCount > 0 ? 'badge-open' : 'badge-closed'}`}>
+                        <span className={`tt-badge ${g.openCartonsCount > 0 ? 'tt-badge-warning' : 'tt-badge-success'}`}>
                           {g.openCartonsCount} Açık
                         </span>
                       </td>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{g.sonIslem}</td>
+                      <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{g.sonIslem}</td>
                     </tr>
 
                     {/* Subtable of Cartons */}
                     {isExpanded && (
                       <tr>
                         <td colSpan={7} style={{ padding: 0 }}>
-                          <div className="sub-table-container">
+                          <div className="sub-table-container" style={{ padding: '12px 16px', backgroundColor: 'var(--bg-surface-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                              <h4 style={{ fontSize: '0.9rem', color: 'var(--text-main)', margin: 0 }}>
-                                <strong>{g.orderNo}</strong> Siparişine Ait Koliler ({g.cartons.length})
+                              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                                <span style={{ fontFamily: 'var(--font-mono)' }}>{g.orderNo}</span> Siparişine Ait Koliler ({g.cartons.length})
                               </h4>
                             </div>
-                            <table className="data-table" style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                            <table className="data-table" style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                               <thead>
                                 <tr>
                                   <th>Koli No</th>
@@ -1030,26 +1067,43 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                               </thead>
                               <tbody>
                                 {g.cartons.map(c => (
-                                  <tr key={c.id} style={{ cursor: 'pointer', backgroundColor: selectedCarton?.id === c.id ? 'var(--primary-light)' : '' }} onClick={() => handleCartonClick(c)}>
-                                    <td style={{ fontWeight: 600 }}>{c.cartonNo}</td>
-                                    <td><code style={{ fontSize: '0.85rem' }}>{c.sscc}</code></td>
+                                  <tr key={c.id} style={{ cursor: 'pointer', backgroundColor: selectedCarton?.id === c.id ? 'var(--bg-surface-subtle)' : '' }} onClick={() => handleCartonClick(c)}>
+                                    <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{c.cartonNo}</td>
+                                    <td><code className="tabular-nums" style={{ fontSize: '0.8125rem' }}>{c.sscc}</code></td>
                                     <td>
                                       <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
                                     </td>
                                     <td>
-                                      <span className={`badge badge-${c.status.toLowerCase()}`}>
-                                        {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
+                                      {c.status === 'Open' ? <span className="tt-badge tt-badge-warning">Açık</span> :
+                                       c.status === 'Closed' ? <span className="tt-badge tt-badge-success">Kapalı</span> :
+                                       c.status === 'Printed' ? <span className="tt-badge tt-badge-primary">Yazdırıldı</span> :
+                                       c.status === 'PrePrinted' ? <span className="tt-badge tt-badge-primary">Ön Etiket</span> :
+                                       c.status === 'Filling' ? <span className="tt-badge tt-badge-warning">Dolduruluyor</span> :
+                                       c.status === 'Palletized' ? <span className="tt-badge tt-badge-success">Paletlendi</span> :
+                                       c.status === 'Shipped' ? <span className="tt-badge tt-badge-neutral">Sevk Edildi</span> :
+                                       <span className="tt-badge tt-badge-neutral">{c.status}</span>}
+                                    </td>
+                                    <td>
+                                      {c.mode === 'PrePrinted' ? (
+                                        <span className="tt-badge tt-badge-primary">Ön Etiket</span>
+                                      ) : (
+                                        <span className="tt-badge tt-badge-neutral">Oto Koli</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <span className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 600, color: c.printCount ? 'var(--success)' : 'var(--text-muted)' }}>
+                                        {c.printCount || 0}
                                       </span>
                                     </td>
-                                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                    <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                                       {c.printedAt || c.closedAt || c.createdAt ? new Date(c.printedAt || c.closedAt || c.createdAt).toLocaleString('tr-TR') : '-'}
                                     </td>
                                     <td onClick={(e) => e.stopPropagation()}>
                                       <div style={{ display: 'flex', gap: '6px' }}>
-                                        <button className="btn btn-secondary" style={{ padding: '5px 10px', fontSize: '0.75rem' }} onClick={() => handleCartonClick(c)}>
+                                        <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} onClick={() => handleCartonClick(c)}>
                                           <Eye size={12} /> Detay
                                         </button>
-                                        <button className="btn btn-primary" style={{ padding: '5px 10px', fontSize: '0.75rem' }} onClick={() => handlePrintPdf(c.id)}>
+                                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} onClick={() => handlePrintPdf(c.id)}>
                                           <Printer size={12} /> PDF
                                         </button>
                                       </div>
@@ -1228,46 +1282,47 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
         {selectedCarton && (
           <>
             {/* Drawer Header */}
-            <div className="drawer-header">
+            <div className="drawer-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                  <Package size={20} color="var(--primary)" /> {selectedCarton.cartonNo}
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--text-main)' }}>
+                  <Package size={18} color="var(--primary)" /> <span style={{ fontFamily: 'var(--font-mono)' }}>{selectedCarton.cartonNo}</span>
                 </h3>
-                <code style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SSCC: {selectedCarton.sscc}</code>
+                <code className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '2px', display: 'inline-block' }}>SSCC: {selectedCarton.sscc}</code>
               </div>
               <button 
-                className="btn btn-secondary" 
-                style={{ padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                className="btn btn-secondary btn-icon" 
+                style={{ width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
                 onClick={() => setSelectedCarton(null)}
+                aria-label="Kapat"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             {/* Drawer Scrollable Body */}
-            <div className="drawer-body">
+            <div className="drawer-body" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Carton Details Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '16px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '16px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Sipariş No</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedCarton.orderNo}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block' }}>Sipariş No</span>
+                  <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem', fontFamily: 'var(--font-mono)' }}>{selectedCarton.orderNo}</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Stok Kodu</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{orders.find(o => o.id === selectedCarton.orderId)?.stockCode || '-'}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block' }}>Stok Kodu</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem' }}>{orders.find(o => o.id === selectedCarton.orderId)?.stockCode || '-'}</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>İstasyon</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{selectedCarton.stationName || 'Ana İstasyon'}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block' }}>İstasyon</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem' }}>{selectedCarton.stationName || 'Ana İstasyon'}</span>
                 </div>
-                <div style={{ marginTop: '8px' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Durum</span>
-                  <span className={`badge badge-${selectedCarton.status.toLowerCase()}`}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Durum</span>
+                  <span className={`tt-badge ${selectedCarton.status === 'Open' ? 'tt-badge-warning' : selectedCarton.status === 'Closed' ? 'tt-badge-success' : selectedCarton.status === 'Printed' ? 'tt-badge-primary' : 'tt-badge-neutral'}`}>
                     {selectedCarton.status === 'Open' ? 'Açık' : selectedCarton.status === 'Closed' ? 'Kapalı' : selectedCarton.status === 'Printed' ? 'Yazdırıldı' : selectedCarton.status === 'PrePrinted' ? 'Ön Etiket' : selectedCarton.status === 'Filling' ? 'Dolduruluyor' : selectedCarton.status === 'Palletized' ? 'Paletlendi' : selectedCarton.status === 'Shipped' ? 'Sevk Edildi' : selectedCarton.status}
                   </span>
                 </div>
-                <div style={{ marginTop: '8px' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Doluluk</span>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Doluluk</span>
                   <FullnessIndicator actual={selectedCarton.actualQuantity} target={selectedCarton.targetQuantity} />
                 </div>
               </div>
@@ -1275,32 +1330,33 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               {/* Action Buttons & Document Printing */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {hasPermission('cartons.print') && (
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => handlePrintPdf(selectedCarton.id)}>
-                      <FileText size={16} /> PDF Etiketi
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    <button className="btn btn-primary" style={{ padding: '8px 12px', height: '36px', fontSize: '0.8125rem' }} onClick={() => handlePrintPdf(selectedCarton.id)}>
+                      <FileText size={15} /> PDF
                     </button>
-                    <button className="btn btn-secondary" style={{ flex: 1, padding: '8px' }} onClick={() => handlePrintZpl(selectedCarton.id)}>
-                      <Barcode size={16} /> ZPL Üret
+                    <button className="btn btn-secondary" style={{ padding: '8px 12px', height: '36px', fontSize: '0.8125rem' }} onClick={() => handlePrintZpl(selectedCarton.id)}>
+                      <Barcode size={15} /> ZPL
                     </button>
                     <button 
                       className="btn btn-secondary"
-                      style={{ flex: 1, padding: '8px' }} 
+                      style={{ padding: '8px 12px', height: '36px', fontSize: '0.8125rem' }} 
                       disabled={printLoading}
                       onClick={() => handleUnifiedPrint(selectedCarton.id)}
                     >
-                      <Printer size={16} /> {printLoading ? 'Yazdırılıyor...' : 'Yazdır'}
+                      <Printer size={15} /> {printLoading ? 'Yazdırılıyor...' : 'Yazdır'}
                     </button>
                   </div>
                 )}
 
                 {/* Transfer action */}
                 {user?.role === 'Admin' && (selectedCarton.status === 'Open' || selectedCarton.status === 'Filling') && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Koli Devir İşlemleri</span>
                     {/* Station Transfer */}
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <select
                         className="form-input"
-                        style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
+                        style={{ flex: 1, height: '34px', fontSize: '0.8125rem' }}
                         value={transferStationId}
                         onChange={(e) => setTransferStationId(e.target.value)}
                       >
@@ -1311,7 +1367,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                       </select>
                       <button 
                         className="btn btn-primary"
-                        style={{ padding: '8px 16px', height: '36px' }}
+                        style={{ padding: '0 14px', height: '34px', fontSize: '0.8125rem' }}
                         onClick={async () => {
                           if (!transferStationId) {
                               alert("Lütfen devredilecek istasyonu seçin.");
@@ -1337,7 +1393,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <select
                         className="form-input"
-                        style={{ flex: 1, height: '36px', fontSize: '0.85rem' }}
+                        style={{ flex: 1, height: '34px', fontSize: '0.8125rem' }}
                         value={transferUserId}
                         onChange={(e) => setTransferUserId(e.target.value)}
                       >
@@ -1348,7 +1404,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                       </select>
                       <button 
                         className="btn btn-primary"
-                        style={{ padding: '8px 16px', height: '36px' }}
+                        style={{ padding: '0 14px', height: '34px', fontSize: '0.8125rem' }}
                         onClick={async () => {
                           if (!transferUserId) {
                               alert("Lütfen devredilecek kullanıcıyı seçin.");
@@ -1376,7 +1432,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 {hasPermission('cartons.create') && selectedCarton.actualQuantity > 0 && selectedCarton.status !== 'Shipped' && (
                   <button 
                     className="btn btn-warning" 
-                    style={{ width: '100%', padding: '10px', marginTop: '10px', color: '#fff', backgroundColor: '#f59e0b', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }} 
+                    style={{ width: '100%', height: '36px', fontSize: '0.8125rem' }} 
                     onClick={async () => {
                       if (!window.confirm("Bu kolinin içini boşaltmak istediğinize emin misiniz? Kolideki tüm ürünler çıkarılacak ancak koli kaydı silinmeyecektir.")) return;
                       try {
@@ -1397,7 +1453,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 {hasPermission('cartons.create') && selectedCarton.status !== 'Shipped' && (
                   <button 
                     className="btn btn-danger" 
-                    style={{ width: '100%', padding: '10px', marginTop: '10px' }} 
+                    style={{ width: '100%', height: '36px', fontSize: '0.8125rem' }} 
                     onClick={() => handleDecompose(selectedCarton.id)}
                   >
                     Koliyi Boz (İptal Et)
@@ -1408,15 +1464,16 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               {/* ZPL Raw Output Panel */}
               {zplOutput && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Zebra ZPL Template:</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Zebra ZPL Çıktısı:</span>
                   <pre style={{
-                    backgroundColor: '#0f172a',
-                    color: '#38bdf8',
+                    backgroundColor: 'var(--bg-canvas)',
+                    color: 'var(--primary)',
                     padding: '12px',
-                    borderRadius: '6px',
+                    borderRadius: 'var(--radius-sm)',
                     fontSize: '0.75rem',
                     overflowX: 'auto',
-                    fontFamily: 'monospace'
+                    fontFamily: 'var(--font-mono)',
+                    border: '1px solid var(--border-subtle)'
                   }}>
                     {zplOutput}
                   </pre>
@@ -1425,20 +1482,20 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
 
               {/* Scan Barcode Form */}
               {selectedCarton.status === 'Open' && hasPermission('cartons.create') && (
-                <form onSubmit={handleAddProduct} className="card" style={{ padding: '14px', backgroundColor: 'var(--primary-light)', border: '1px solid #bfdbfe', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: 'none' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>Koliye Ürün Ekle (Barkod Okutun)</span>
+                <form onSubmit={handleAddProduct} className="card" style={{ padding: '14px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: 'none' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)' }}>Koliye Ürün Ekle (Barkod Okutun)</span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <input 
                       type="text" 
                       className="form-input" 
-                      style={{ flex: 1, height: '36px', fontSize: '0.85rem' }} 
+                      style={{ flex: 1, height: '34px', fontSize: '0.8125rem' }} 
                       required 
                       placeholder="Ürün barkodunu okutun veya yazın..." 
                       value={newProductBarcode} 
                       onChange={e => setNewProductBarcode(e.target.value)} 
                     />
-                    <button type="submit" className="btn btn-primary" style={{ height: '36px', padding: '0 12px' }}>
-                      <Plus size={16} />
+                    <button type="submit" className="btn btn-primary" style={{ height: '34px', padding: '0 12px' }}>
+                      <Plus size={15} />
                     </button>
                   </div>
                 </form>
@@ -1446,12 +1503,14 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
 
               {/* Scanned Barcodes List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
-                  <h4 style={{ fontSize: '0.95rem', margin: 0, fontWeight: 700 }}>Koli İçi Barkodlar ({cartonItems.length})</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h4 style={{ fontSize: '0.875rem', margin: 0, fontWeight: 600, color: 'var(--text-main)' }}>
+                    Koli İçi Barkodlar (<span className="tabular-nums">{cartonItems.length}</span>)
+                  </h4>
                   <input
                     type="text"
                     className="form-input"
-                    style={{ height: '28px', fontSize: '0.75rem', width: '150px', padding: '4px 8px' }}
+                    style={{ height: '30px', fontSize: '0.75rem', width: '160px', padding: '4px 8px' }}
                     placeholder="Barkodlarda ara..."
                     value={barcodeSearch}
                     onChange={e => {
@@ -1462,21 +1521,21 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 </div>
                 
                 {itemsLoading ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>İçerik yükleniyor...</div>
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>İçerik yükleniyor...</div>
                 ) : cartonItems.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Bu kolide henüz okutulmuş ürün yok.</div>
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Bu kolide henüz okutulmuş ürün yok.</div>
                 ) : paginatedBarcodes.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Arama kriterlerine uygun ürün bulunamadı.</div>
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Arama kriterlerine uygun ürün bulunamadı.</div>
                 ) : (
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {paginatedBarcodes.map((item, idx) => (
                         <div key={idx} style={{
                           backgroundColor: 'var(--bg-surface-subtle)',
-                          padding: '10px',
-                          borderRadius: '4px',
-                          fontSize: '0.8rem',
-                          border: '1px solid var(--border-color)'
+                          padding: '10px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.8125rem',
+                          border: '1px solid var(--border-subtle)'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                             <div style={{ fontWeight: 600, maxWidth: '85%', color: 'var(--text-main)' }}>
@@ -1492,11 +1551,11 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                               </button>
                             )}
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', marginTop: '6px', fontSize: '0.75rem' }} className="tabular-nums">
                             <span>S/N: {item.serialNo}</span>
                             <span>Okuyan: {item.scannedBy}</span>
                           </div>
-                          <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '2px' }}>
+                          <div className="tabular-nums" style={{ color: 'var(--text-muted)', fontSize: '0.6875rem', marginTop: '2px' }}>
                             Okutma Zamanı: {item.scannedAt ? new Date(item.scannedAt).toLocaleString('tr-TR') : '-'}
                           </div>
                         </div>
@@ -1508,18 +1567,18 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                       <div className="pagination" style={{ borderTop: 'none', paddingTop: 0, justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
                         <button 
                           className="btn btn-secondary" 
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
+                          style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} 
                           disabled={barcodePage === 1} 
                           onClick={() => setBarcodePage(p => p - 1)}
                         >
                           Önceki
                         </button>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                        <span className="tabular-nums" style={{ fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
                           {barcodePage} / {totalBarcodePages}
                         </span>
                         <button 
                           className="btn btn-secondary" 
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
+                          style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} 
                           disabled={barcodePage >= totalBarcodePages} 
                           onClick={() => setBarcodePage(p => p + 1)}
                         >
@@ -1540,17 +1599,18 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '500px' }}>
             <div className="modal-header">
-              <h3>Ön Etiket Bas (Boş Koli)</h3>
-              <button className="btn-icon" onClick={() => setIsPrePrintModalOpen(false)}>
-                <X size={20} />
+              <h3 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 600 }}>Ön Etiket Bas (Boş Koli)</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setIsPrePrintModalOpen(false)}>
+                <X size={18} />
               </button>
             </div>
             
-            <form onSubmit={handlePrePrintSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-group">
-                <label>Sipariş Seçin <span style={{ color: 'red' }}>*</span></label>
+            <form onSubmit={handlePrePrintSubmit} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Sipariş Seçin <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <select 
                   className="form-input" 
+                  style={{ height: '36px', fontSize: '0.85rem' }}
                   value={prePrintOrderId} 
                   onChange={(e) => setPrePrintOrderId(e.target.value)}
                   required
@@ -1564,11 +1624,12 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 </select>
               </div>
 
-              <div className="form-group">
-                <label>Basılacak Koli Adedi <span style={{ color: 'red' }}>*</span></label>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Basılacak Koli Adedi <span style={{ color: 'var(--danger)' }}>*</span></label>
                 <input 
                   type="number" 
                   className="form-input" 
+                  style={{ height: '36px', fontSize: '0.85rem' }}
                   min="1" 
                   max="500" 
                   value={prePrintQuantity} 
@@ -1577,10 +1638,11 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 />
               </div>
 
-              <div className="form-group">
-                <label>Çıktı Formatı</label>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Çıktı Formatı</label>
                 <select 
                   className="form-input" 
+                  style={{ height: '36px', fontSize: '0.85rem' }}
                   value={prePrintFormat} 
                   onChange={(e) => setPrePrintFormat(e.target.value)}
                 >
@@ -1590,10 +1652,11 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                 </select>
               </div>
 
-              <div className="form-group">
-                <label>İstasyon (Opsiyonel)</label>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>İstasyon (Opsiyonel)</label>
                 <select 
                   className="form-input" 
+                  style={{ height: '36px', fontSize: '0.85rem' }}
                   value={prePrintStationId} 
                   onChange={(e) => setPrePrintStationId(e.target.value)}
                 >
@@ -1602,16 +1665,16 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
-                <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                   Eğer seçilmezse istasyonsuz (genel) koli olarak basılır.
                 </span>
               </div>
 
-              <div className="modal-footer" style={{ marginTop: '16px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsPrePrintModalOpen(false)} disabled={prePrintSubmitting}>
+              <div className="modal-footer" style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button type="button" className="btn btn-secondary" style={{ height: '36px', padding: '0 16px' }} onClick={() => setIsPrePrintModalOpen(false)} disabled={prePrintSubmitting}>
                   İptal
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={prePrintSubmitting}>
+                <button type="submit" className="btn btn-primary" style={{ height: '36px', padding: '0 16px' }} disabled={prePrintSubmitting}>
                   {prePrintSubmitting ? 'Üretiliyor...' : 'Oluştur ve Yazdır'}
                 </button>
               </div>

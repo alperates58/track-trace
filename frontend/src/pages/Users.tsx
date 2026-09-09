@@ -264,73 +264,90 @@ export const Users: React.FC = () => {
       />
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)' }}>
+      <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--border-subtle, var(--border-color))', marginBottom: '16px' }}>
         <button
           onClick={() => setActiveTab('list')}
           style={{
-            padding: '12px 16px',
+            padding: '10px 18px',
             background: 'none',
             border: 'none',
             borderBottom: activeTab === 'list' ? '2px solid var(--primary)' : '2px solid transparent',
-            color: activeTab === 'list' ? 'var(--primary)' : 'var(--text-muted)',
+            color: activeTab === 'list' ? 'var(--primary)' : 'var(--text-secondary, var(--text-muted))',
             fontWeight: activeTab === 'list' ? 600 : 500,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            fontSize: '0.95rem'
+            fontSize: '0.88rem',
+            transition: 'all 0.15s ease'
           }}
         >
-          <List size={18} /> Kullanıcı Listesi ({users.length})
+          <List size={16} /> Kullanıcı Listesi (<span className="tabular-nums font-mono">{users.length}</span>)
         </button>
         <button
           onClick={() => setActiveTab('matrix')}
           style={{
-            padding: '12px 16px',
+            padding: '10px 18px',
             background: 'none',
             border: 'none',
             borderBottom: activeTab === 'matrix' ? '2px solid var(--primary)' : '2px solid transparent',
-            color: activeTab === 'matrix' ? 'var(--primary)' : 'var(--text-muted)',
+            color: activeTab === 'matrix' ? 'var(--primary)' : 'var(--text-secondary, var(--text-muted))',
             fontWeight: activeTab === 'matrix' ? 600 : 500,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            fontSize: '0.95rem'
+            fontSize: '0.88rem',
+            transition: 'all 0.15s ease'
           }}
         >
-          <LayoutGrid size={18} /> Rol ve Yetki Matrisi
+          <LayoutGrid size={16} /> Rol ve Yetki Matrisi
         </button>
       </div>
 
       {activeTab === 'list' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* KPI Stat Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
-            <TTStatCard
-              title="Toplam Kullanıcı"
-              value={stats.total}
-              icon={<UsersIcon size={20} />}
-              color="#3b82f6"
-            />
-            <TTStatCard
-              title="Aktif Operatörler & Hatlar"
-              value={stats.operators}
-              icon={<Building2 size={20} />}
-              color="#0284c7"
-            />
-            <TTStatCard
-              title="Sistem Yöneticileri"
-              value={stats.admins}
-              icon={<ShieldCheck size={20} />}
-              color="#7c3aed"
-            />
-            <TTStatCard
-              title="Pasif / Askıda Hesaplar"
-              value={stats.inactives}
-              icon={<UserX size={20} />}
-              color="#dc2626"
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
+            <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Toplam Kullanıcı</span>
+                <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(59, 130, 246, 0.08)', color: 'var(--primary)' }}><UsersIcon size={16} /></span>
+              </div>
+              <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                {stats.total}
+              </div>
+            </div>
+
+            <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Aktif Operatörler</span>
+                <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(2, 132, 199, 0.08)', color: '#0284c7' }}><Building2 size={16} /></span>
+              </div>
+              <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                {stats.operators}
+              </div>
+            </div>
+
+            <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sistem Yöneticileri</span>
+                <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(124, 58, 237, 0.08)', color: '#7c3aed' }}><ShieldCheck size={16} /></span>
+              </div>
+              <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                {stats.admins}
+              </div>
+            </div>
+
+            <div className="stat-card-modern" style={{ padding: '16px', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-subtle, var(--border-color))', backgroundColor: 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary, var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pasif Hesaplar</span>
+                <span style={{ padding: '6px', borderRadius: '6px', backgroundColor: 'rgba(220, 38, 38, 0.08)', color: '#dc2626' }}><UserX size={16} /></span>
+              </div>
+              <div className="tabular-nums font-mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary, var(--text-main))' }}>
+                {stats.inactives}
+              </div>
+            </div>
           </div>
 
           {/* Filter & Search Bar */}
@@ -357,19 +374,19 @@ export const Users: React.FC = () => {
             }
           >
             <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-              <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
+              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary, var(--text-muted))' }} />
               <input
                 type="text"
                 placeholder="İsim, kullanıcı adı veya hat ara..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="form-input"
-                style={{ paddingLeft: '34px' }}
+                style={{ height: '36px', paddingLeft: '32px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: '10px', top: '9px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
                 >
                   <X size={14} />
                 </button>
@@ -380,7 +397,7 @@ export const Users: React.FC = () => {
               className="form-input"
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value as any)}
-              style={{ width: '160px' }}
+              style={{ width: '160px', height: '36px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
             >
               <option value="all">Tüm Roller</option>
               <option value="Admin">Yöneticiler</option>
@@ -392,7 +409,7 @@ export const Users: React.FC = () => {
               className="form-input"
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as any)}
-              style={{ width: '150px' }}
+              style={{ width: '150px', height: '36px', borderRadius: 'var(--radius-sm, 6px)', border: '1px solid var(--border-subtle, var(--border-color))' }}
             >
               <option value="all">Tüm Durumlar</option>
               <option value="active">Yalnızca Aktif</option>

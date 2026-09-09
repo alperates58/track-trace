@@ -24,22 +24,30 @@ export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({
   activeCartonNo
 }) => {
   return (
-    <div className="scan-history-panel w-full lg:w-[350px] 2xl:w-[450px] bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden shrink-0 h-full">
-      <div className="p-3 md:p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 shrink-0">
+  return (
+    <div 
+      className="scan-history-panel w-full lg:w-[350px] 2xl:w-[420px] flex flex-col overflow-hidden shrink-0 h-full shadow-xs"
+      style={{
+        backgroundColor: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-lg)'
+      }}
+    >
+      <div className="p-3 md:p-3.5 border-b flex justify-between items-center shrink-0" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-surface-subtle)' }}>
         <div className="flex items-center gap-2">
-          <History className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-          <h3 className="font-bold text-gray-800 text-base md:text-lg">Geçmiş</h3>
+          <History className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+          <h3 className="font-bold text-sm md:text-base m-0" style={{ color: 'var(--text-main)' }}>Okutma Geçmişi</h3>
         </div>
-        <span className="text-[10px] md:text-xs font-bold bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-md shadow-sm">
+        <span className="tt-badge tt-badge-neutral text-[11px] font-semibold">
           Son 10 Okuma
         </span>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-2 md:p-3 flex flex-col gap-2 no-scrollbar">
+      <div className="flex-1 overflow-y-auto p-2 md:p-2.5 flex flex-col gap-1.5 no-scrollbar">
         {history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
-            <History className="w-12 h-12 opacity-20" />
-            <span className="text-sm font-medium">Oturumda okuma yapılmadı</span>
+          <div className="flex flex-col items-center justify-center h-full gap-2.5 py-8" style={{ color: 'var(--text-muted)' }}>
+            <History className="w-10 h-10 opacity-30" />
+            <span className="text-xs font-medium">Bu oturumda okuma yapılmadı</span>
           </div>
         ) : (
           history.map((item, idx) => {
@@ -48,10 +56,8 @@ export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({
             const isLatestError = !isSuccess && !isRemoved && idx === 0;
             const canRemove = isSuccess && onRemoveItem && (!activeCartonNo || item.cartonNo === activeCartonNo);
             
-            // Opacity decreases slightly for older items
-            const opacityClass = idx === 0 ? 'opacity-100' : idx < 3 ? 'opacity-90' : idx < 6 ? 'opacity-70' : 'opacity-50';
+            const opacityClass = idx === 0 ? 'opacity-100' : idx < 3 ? 'opacity-90' : idx < 6 ? 'opacity-75' : 'opacity-60';
             
-            // Generate detailed display message
             const displayMsg = isRemoved
               ? 'Koliden Çıkarıldı'
               : !isSuccess 
@@ -61,67 +67,87 @@ export const RecentScanPanel: React.FC<RecentScanPanelProps> = ({
             return (
               <div 
                 key={`${item.rawCode}-${item.timestamp}-${idx}`} 
-                className={`flex items-center gap-3 p-2 md:p-3 rounded-xl shadow-sm border transition-all ${opacityClass} ${
-                  isRemoved
-                    ? 'bg-amber-50/50 border-amber-200'
+                className={`flex items-center gap-2.5 p-2 md:p-2.5 border transition-all ${opacityClass}`}
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: isRemoved 
+                    ? 'var(--warning-bg)' 
                     : isSuccess 
-                      ? idx === 0 ? 'bg-green-50/80 border-green-200' : 'bg-white border-gray-100' 
-                      : isLatestError ? 'bg-red-50 border-red-200' : 'bg-white border-red-100'
-                }`}
+                      ? (idx === 0 ? 'var(--success-bg)' : 'var(--bg-surface-subtle)') 
+                      : 'var(--danger-bg)',
+                  borderColor: isRemoved 
+                    ? 'var(--warning-border)' 
+                    : isSuccess 
+                      ? (idx === 0 ? 'var(--success-border)' : 'var(--border-subtle)') 
+                      : 'var(--danger-border)'
+                }}
               >
-                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  isRemoved
-                    ? 'bg-amber-100 text-amber-600'
-                    : isSuccess 
-                      ? idx === 0 ? 'bg-green-500 text-white shadow-[0_2px_10px_-2px_rgba(34,197,94,0.5)]' : 'bg-gray-100 text-green-500' 
-                      : isLatestError ? 'bg-red-500 text-white shadow-[0_2px_10px_-2px_rgba(239,68,68,0.5)]' : 'bg-red-50 text-red-400'
-                }`}>
+                <div 
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    backgroundColor: isRemoved 
+                      ? 'var(--warning-bg)' 
+                      : isSuccess 
+                        ? 'var(--success)' 
+                        : 'var(--danger)',
+                    color: '#fff'
+                  }}
+                >
                   {isRemoved ? (
-                    <RotateCcw className="w-4 h-4" />
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-800" />
                   ) : isSuccess ? (
-                    <Check className="w-5 h-5 md:w-6 md:h-6 stroke-[3]" />
+                    <Check className="w-4 h-4 stroke-[2.5]" />
                   ) : (
-                    <X className="w-5 h-5 md:w-6 md:h-6 stroke-[3]" />
+                    <X className="w-4 h-4 stroke-[2.5]" />
                   )}
                 </div>
                 
                 <div className="flex flex-col flex-1 min-w-0">
                   <span 
-                    className={`font-mono font-bold text-base md:text-lg lg:text-xl truncate ${
-                      isRemoved
-                        ? 'text-gray-400 line-through'
-                        : isSuccess ? (idx === 0 ? 'text-gray-900' : 'text-gray-600') : (isLatestError ? 'text-red-900 line-through opacity-70' : 'text-gray-500 line-through')
+                    className={`font-mono font-bold text-xs md:text-sm truncate tabular-nums ${
+                      isRemoved ? 'line-through text-muted' : isSuccess ? 'text-main' : 'line-through text-danger'
                     }`}
                     title={item.rawCode}
                   >
                     {item.rawCode}
                   </span>
-                  <span 
-                    className={`text-[10px] md:text-xs font-bold truncate ${
-                      isRemoved
-                        ? 'text-amber-700'
-                        : isSuccess ? (idx === 0 ? 'text-green-700' : 'text-gray-400') : (isLatestError ? 'text-red-700 uppercase tracking-wide' : 'text-red-400')
-                    }`}
-                    title={displayMsg}
-                  >
-                    {displayMsg}
-                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span 
+                      className="text-[10px] md:text-[11px] font-semibold truncate"
+                      style={{
+                        color: isRemoved ? 'var(--warning-text)' : isSuccess ? 'var(--success-text)' : 'var(--danger-text)'
+                      }}
+                      title={displayMsg}
+                    >
+                      {displayMsg}
+                    </span>
+                    {item.cartonNo && item.cartonNo !== '-' && (
+                      <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
+                        · {item.cartonNo}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
                   {canRemove && (
                     <button
                       onClick={() => onRemoveItem(item.rawCode)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-colors"
+                      className="p-1 rounded text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                       title="Bu barkodu koliden çıkar (Geri Al)"
                       aria-label="Koliden çıkar"
                     >
-                      <RotateCcw className="w-4 h-4" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  <span className={`text-xs md:text-sm font-bold bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm ${
-                    isRemoved ? 'text-amber-600' : isSuccess ? 'text-gray-400' : 'text-red-400'
-                  }`}>
+                  <span 
+                    className="text-[10px] md:text-[11px] font-semibold px-1.5 py-0.5 rounded border tabular-nums"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-muted)'
+                    }}
+                  >
                     {item.timestamp}
                   </span>
                 </div>

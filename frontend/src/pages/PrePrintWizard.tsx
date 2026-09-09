@@ -175,7 +175,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
   };
 
   const renderStepIndicator = () => (
-    <div className="preprint-step-scroll" style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px', paddingTop: '10px' }}>
+    <div className="preprint-step-scroll" style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px', paddingTop: '10px' }}>
       <div className="preprint-step-indicator" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {[
           { num: 1, label: 'Sipariş Seç' },
@@ -188,17 +188,19 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
               <div style={{
                 width: '32px', height: '32px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: step > s.num ? 'var(--success)' : step === s.num ? 'var(--primary)' : '#e2e8f0',
-                color: step >= s.num ? '#ffffff' : '#64748b',
-                fontWeight: 700,
-                transition: 'all 0.3s ease',
-                boxShadow: step === s.num ? '0 0 0 4px var(--primary-light)' : 'none'
+                backgroundColor: step > s.num ? 'var(--success)' : step === s.num ? 'var(--primary)' : 'var(--bg-surface-subtle)',
+                color: step > s.num ? '#ffffff' : step === s.num ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.8125rem',
+                border: step >= s.num ? 'none' : '1px solid var(--border-subtle)',
+                transition: 'all 0.2s ease',
+                boxShadow: step === s.num ? '0 0 0 3px var(--primary-light)' : 'none'
               }}>
-                {step > s.num ? <Check size={16} /> : s.num}
+                {step > s.num ? <Check size={14} /> : s.num}
               </div>
               <span style={{ 
-                fontSize: '0.85rem', 
-                fontWeight: step === s.num ? 600 : 400,
+                fontSize: '0.8125rem', 
+                fontWeight: step === s.num ? 600 : 500,
                 color: step >= s.num ? 'var(--text-main)' : 'var(--text-muted)'
               }}>
                 {s.label}
@@ -206,10 +208,10 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
             </div>
             {index < 3 && (
               <div style={{ 
-                width: '60px', height: '3px', 
-                backgroundColor: step > s.num ? 'var(--success)' : '#e2e8f0',
+                width: '56px', height: '2px', 
+                backgroundColor: step > s.num ? 'var(--success)' : 'var(--border-subtle)',
                 marginTop: '-24px',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.2s ease',
                 zIndex: 0
               }} />
             )}
@@ -244,14 +246,14 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
             {/* STEP 1 */}
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', textAlign: 'center' }}>Sipariş Seçimi</h3>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '4px', textAlign: 'center', color: 'var(--text-main)' }}>Sipariş Seçimi</h3>
                 
-                <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontWeight: 600 }}>1. Sipariş No Seçin <span style={{ color: 'red' }}>*</span></label>
+                <div style={{ maxWidth: '560px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontWeight: 500, fontSize: '0.8125rem' }}>1. Sipariş No Seçin <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <select 
                       className="form-input" 
-                      style={{ fontSize: '1.1rem', padding: '12px' }}
+                      style={{ fontSize: '0.9375rem', height: '40px' }}
                       value={selectedOrderNo} 
                       onChange={(e) => {
                          setSelectedOrderNo(e.target.value);
@@ -267,11 +269,11 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                     </select>
                   </div>
 
-                  <div className="form-group" style={{ opacity: selectedOrderNo ? 1 : 0.5, pointerEvents: selectedOrderNo ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
-                    <label className="form-label" style={{ fontWeight: 600 }}>2. Stok Kodu Seçin <span style={{ color: 'red' }}>*</span></label>
+                  <div className="form-group" style={{ marginBottom: 0, opacity: selectedOrderNo ? 1 : 0.5, pointerEvents: selectedOrderNo ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
+                    <label className="form-label" style={{ fontWeight: 500, fontSize: '0.8125rem' }}>2. Stok Kodu Seçin <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <select 
                       className="form-input" 
-                      style={{ fontSize: '1.1rem', padding: '12px' }}
+                      style={{ fontSize: '0.9375rem', height: '40px' }}
                       value={selectedOrderId} 
                       onChange={(e) => setSelectedOrderId(e.target.value)}
                     >
@@ -285,7 +287,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                   </div>
 
                   {orders.length === 0 && (
-                     <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                     <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                        Kayıtlı sipariş bulunamadı.
                      </div>
                   )}
@@ -295,40 +297,40 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
 
             {/* STEP 2 */}
             {step === 2 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '600px', margin: '0 auto' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '4px', textAlign: 'center' }}>Baskı Ayarları</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '580px', margin: '0 auto' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '4px', textAlign: 'center', color: 'var(--text-main)' }}>Baskı Ayarları</h3>
                 
                 {/* PROMINENT SELECTED ORDER & STOCK BANNER */}
                 {selectedOrder && (
-                  <div style={{ backgroundColor: 'var(--primary-light)', border: '1px solid #cbd5e1', borderRadius: 'var(--radius-md)', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
                       <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>SEÇİLEN SİPARİŞ & MÜŞTERİ</span>
-                        <h4 style={{ margin: '2px 0 0 0', fontSize: '1.1rem', color: 'var(--text-main)', fontWeight: 800 }}>
-                          {selectedOrder.orderNo} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({selectedOrder.customerName || 'Müşteri Belirtilmedi'})</span>
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>SEÇİLEN SİPARİŞ</span>
+                        <h4 style={{ margin: '2px 0 0 0', fontSize: '1.0625rem', color: 'var(--text-main)', fontWeight: 700 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)' }}>{selectedOrder.orderNo}</span> <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 400 }}>({selectedOrder.customerName || 'Müşteri Belirtilmedi'})</span>
                         </h4>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>İŞ EMRİ NO</span>
-                        <div style={{ fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: '0.92rem', color: 'var(--text-main)', backgroundColor: 'var(--bg-surface-subtle)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', marginTop: '2px' }}>
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>İŞ EMRİ NO</span>
+                        <div style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: '0.875rem', color: 'var(--text-main)', backgroundColor: 'var(--bg-card)', padding: '2px 8px', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-subtle)', marginTop: '2px' }}>
                           {selectedOrder.gtin || '-'}
                         </div>
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', fontSize: '0.8125rem' }}>
                       <div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Stok Kodu & Adı</span>
                         <strong style={{ color: 'var(--primary)' }}>{selectedOrder.stockCode}</strong>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}>{selectedOrder.productName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{selectedOrder.productName}</div>
                       </div>
                       <div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Koli İçi Adet</span>
-                        <strong>{perCarton} Ürün / Koli</strong>
+                        <strong className="tabular-nums">{perCarton} Ürün / Koli</strong>
                       </div>
                       <div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Toplam Hedef Miktar</span>
-                        <strong>{expectedQty.toLocaleString()} Adet</strong>
+                        <strong className="tabular-nums">{expectedQty.toLocaleString('tr-TR')} Adet</strong>
                       </div>
                     </div>
                   </div>
@@ -336,77 +338,74 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
 
                 {/* KOLİ HESAPLAMA & KOPYA BİLGİ KARTI */}
                 {selectedOrder && (
-                  <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Info size={16} color="var(--primary)" /> Sipariş Koli Hesaplaması & Durum
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Info size={15} color="var(--primary)" /> Sipariş Koli Hesaplaması & Durum
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', backgroundColor: 'var(--badge-neutral-bg)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                      <span className="tt-badge tt-badge-neutral">
                         Hesaplanan Bilgi
                       </span>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '12px' }}>
-                      <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px 6px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Toplam Hedef Koli</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>{totalCartonsNeeded} Koli</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>({expectedQty.toLocaleString()} / {perCarton})</div>
+                        <div className="tabular-nums" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>{totalCartonsNeeded} Koli</div>
+                        <div className="tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>({expectedQty.toLocaleString('tr-TR')} / {perCarton})</div>
                       </div>
 
-                      <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px 6px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Mevcut / Basılan Koli</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                        <div className="tabular-nums" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
                           {loadingCartons ? '...' : `${printedCartons} Koli`}
                         </div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Sistemde kayıtlı</div>
+                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Sistemde kayıtlı</div>
                       </div>
 
-                      <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px 6px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ backgroundColor: 'var(--bg-card)', padding: '10px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Kalan Basılabilir</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: remainingCartons > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                        <div className="tabular-nums" style={{ fontSize: '1rem', fontWeight: 700, color: remainingCartons > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
                           {loadingCartons ? '...' : `${remainingCartons} Koli`}
                         </div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Eksik koli sayısı</div>
+                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Eksik koli sayısı</div>
                       </div>
                     </div>
 
                     {remainingCartons > 0 ? (
                       <button
                         type="button"
-                        className="btn"
+                        className="btn btn-secondary"
                         onClick={() => setQuantity(remainingCartons)}
                         style={{ 
                           width: '100%', 
-                          fontSize: '0.85rem', 
-                          fontWeight: 700, 
+                          fontSize: '0.8125rem', 
+                          fontWeight: 600, 
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center', 
                           gap: '6px', 
-                          padding: '10px 14px', 
-                          backgroundColor: '#e0f2fe', 
-                          color: '#0369a1', 
-                          border: '1px solid #7dd3fc',
-                          borderRadius: '6px',
-                          cursor: 'pointer'
+                          height: '36px',
+                          color: 'var(--primary)',
+                          borderColor: 'var(--primary)'
                         }}
                       >
-                        <Zap size={16} /> Kalan {remainingCartons} Koli İçin Otomatik Doldur ({remainingCartons} Adet)
+                        <Zap size={14} /> Kalan {remainingCartons} Koli İçin Otomatik Doldur
                       </button>
                     ) : (
-                      <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 600, textAlign: 'center', padding: '6px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--success)', fontWeight: 600, textAlign: 'center', padding: '8px', backgroundColor: 'var(--success-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success-border)' }}>
                         ✓ Tüm hedef koli adedi ({totalCartonsNeeded} koli) sistemde zaten oluşturulmuş.
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>Basılacak Koli Adedi <span style={{ color: 'red' }}>*</span></label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: '0.8125rem' }}>Basılacak Koli Adedi <span style={{ color: 'var(--danger)' }}>*</span></label>
                   <input 
                     type="number" 
-                    className="form-input" 
-                    style={{ fontSize: '1.3rem', padding: '12px', textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}
+                    className="form-input tabular-nums" 
+                    style={{ fontSize: '1.25rem', height: '44px', textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}
                     min="1" 
                     max="5000" 
                     value={quantity} 
@@ -414,21 +413,22 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Çıktı Formatı</label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>Çıktı Formatı</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
                     {['PDF', 'ZPL', 'PPLB'].map(fmt => (
                       <div 
                         key={fmt}
                         onClick={() => setFormat(fmt)}
                         style={{
-                          flex: 1, padding: '12px', textAlign: 'center', cursor: 'pointer',
-                          border: `2px solid ${format === fmt ? 'var(--primary)' : 'var(--border-color)'}`,
-                          borderRadius: '8px',
-                          backgroundColor: format === fmt ? 'var(--primary-light)' : '#ffffff',
+                          flex: 1, padding: '10px', textAlign: 'center', cursor: 'pointer',
+                          border: `1.5px solid ${format === fmt ? 'var(--primary)' : 'var(--border-subtle)'}`,
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: format === fmt ? 'var(--primary-light)' : 'var(--bg-card)',
                           color: format === fmt ? 'var(--primary)' : 'var(--text-main)',
-                          fontWeight: format === fmt ? 600 : 400,
-                          transition: 'all 0.2s ease'
+                          fontWeight: format === fmt ? 600 : 500,
+                          fontSize: '0.875rem',
+                          transition: 'all 0.15s ease'
                         }}
                       >
                         {fmt}
@@ -437,10 +437,11 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">İstasyon (Opsiyonel)</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>İstasyon (Opsiyonel)</label>
                   <select 
                     className="form-input" 
+                    style={{ height: '36px', fontSize: '0.85rem' }}
                     value={stationId} 
                     onChange={(e) => setStationId(e.target.value)}
                   >
@@ -449,7 +450,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '6px', display: 'block' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                     Bu seçim yalnızca yazdırma ayarları ve izlenebilirlik için kullanılacaktır.
                   </span>
                 </div>
@@ -458,63 +459,64 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
 
             {/* STEP 3 */}
             {step === 3 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Etiket Önizlemesi</h3>
-                <div style={{ backgroundColor: '#fffbe1', border: '1px solid #fef08a', color: '#854d0e', padding: '10px 16px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>⚠️</span> Temsili Önizleme (Sadece Bilgi Amaçlıdır)
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-main)' }}>Etiket Önizlemesi</h3>
+                <div style={{ backgroundColor: 'var(--warning-bg)', border: '1px solid var(--warning-border)', color: 'var(--warning-text)', padding: '8px 14px', borderRadius: 'var(--radius-sm)', fontSize: '0.8125rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Info size={16} /> Temsili Önizleme (Sadece Bilgi Amaçlıdır)
                 </div>
                 
                 <div className="preprint-label-preview" style={{
-                  width: '350px',
-                  height: '250px',
+                  width: '340px',
+                  height: '240px',
                   backgroundColor: '#ffffff',
+                  color: '#0f172a',
                   border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                  padding: '20px',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-md)',
+                  padding: '16px 20px',
                   display: 'flex',
                   flexDirection: 'column',
                   position: 'relative'
                 }}>
-                  <div style={{ borderBottom: '2px solid #000', paddingBottom: '8px', marginBottom: '12px' }}>
-                    <h4 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'monospace' }}>SSCC</h4>
-                    <div style={{ fontSize: '1.1rem', letterSpacing: '2px', fontFamily: 'monospace', marginTop: '4px' }}>
+                  <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '6px', marginBottom: '10px' }}>
+                    <h4 style={{ margin: 0, fontSize: '1rem', fontFamily: 'monospace', fontWeight: 700 }}>SSCC</h4>
+                    <div style={{ fontSize: '0.9375rem', letterSpacing: '1px', fontFamily: 'monospace', marginTop: '2px' }}>
                       0 {selectedOrder?.gtin?.substring(0, 7) || '8690000'} XXXXXXXX
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '6px' }}>
                     <strong>Ürün:</strong> <span>{selectedOrder?.stockCode || 'XXX'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '8px' }}>
-                    <strong>Sipariş:</strong> <span>{selectedOrder?.orderNo || 'ORD-XXX'}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '6px' }}>
+                    <strong>Sipariş:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedOrder?.orderNo || 'ORD-XXX'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '8px' }}>
-                    <strong>Miktar:</strong> <span>{perCarton} Adet</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '6px' }}>
+                    <strong>Miktar:</strong> <span className="tabular-nums">{perCarton} Adet</span>
                   </div>
                   
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'auto' }}>
-                    <svg width="250" height="50">
-                      <rect width="250" height="50" fill="#f8fafc" />
+                    <svg width="240" height="42">
+                      <rect width="240" height="42" fill="#f8fafc" />
                       {Array.from({ length: 28 }).map((_, i) => (
-                        <rect key={i} x={10 + i * 8.2} y="5" width={Math.random() > 0.5 ? 3 : 1.5} height="40" fill="#0f172a" />
+                        <rect key={i} x={10 + i * 7.8} y="4" width={Math.random() > 0.5 ? 2.5 : 1.2} height="34" fill="#0f172a" />
                       ))}
                     </svg>
                   </div>
                 </div>
 
-                <div className="preprint-preview-summary" style={{ display: 'flex', gap: '32px', marginTop: '16px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', padding: '16px 32px', borderRadius: '12px' }}>
+                <div className="preprint-preview-summary" style={{ display: 'flex', gap: '32px', marginTop: '8px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', padding: '14px 28px', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mevcut Koli</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>{printedCartons}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mevcut Koli</div>
+                    <div className="tabular-nums" style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{printedCartons}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Basılacak Koli</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary)' }}>{quantity}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Basılacak Koli</div>
+                    <div className="tabular-nums" style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--primary)' }}>{quantity}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>İşlem Sonrası Toplam</div>
-                    <div style={{ fontWeight: 700, color: 'var(--success)', fontSize: '1.1rem' }}>{printedCartons + quantity} Koli</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>İşlem Sonrası Toplam</div>
+                    <div className="tabular-nums" style={{ fontWeight: 700, color: 'var(--success)', fontSize: '1rem' }}>{printedCartons + quantity} Koli</div>
                   </div>
                 </div>
               </div>
@@ -522,44 +524,44 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
 
             {/* STEP 4 */}
             {step === 4 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '600px', margin: '0 auto' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', textAlign: 'center', color: 'var(--text-main)' }}>İşlem Onayı</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '580px', margin: '0 auto' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '4px', textAlign: 'center', color: 'var(--text-main)' }}>İşlem Onayı</h3>
                 
-                <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
-                  <div style={{ padding: '16px', backgroundColor: 'var(--primary-light)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                      <FileText size={24} color="var(--primary)" />
+                <div style={{ backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 18px', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ backgroundColor: 'var(--primary-light)', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                      <FileText size={20} color="var(--primary)" />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>{selectedOrder?.orderNo}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{selectedOrder?.productName}</div>
+                      <div className="tabular-nums" style={{ fontWeight: 700, fontSize: '1.0625rem', color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>{selectedOrder?.orderNo}</div>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{selectedOrder?.productName}</div>
                     </div>
                   </div>
                   
-                  <div className="preprint-confirm-grid" style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div className="preprint-confirm-grid" style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Stok Kodu</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder?.stockCode}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Stok Kodu</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem' }}>{selectedOrder?.stockCode}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Müşteri</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{selectedOrder?.customerName || '-'}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Müşteri</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem' }}>{selectedOrder?.customerName || '-'}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>İş Emri No</div>
-                      <div style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}>{selectedOrder?.gtin}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>İş Emri No</div>
+                      <div style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--text-main)', fontSize: '0.875rem' }}>{selectedOrder?.gtin || '-'}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Koli İçi Ürün Adedi</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{perCarton} Adet</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Koli İçi Ürün Adedi</div>
+                      <div className="tabular-nums" style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem' }}>{perCarton} Adet</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Basılacak Koli Adedi</div>
-                      <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.1rem' }}>{quantity} Adet</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Basılacak Koli Adedi</div>
+                      <div className="tabular-nums" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.0625rem' }}>{quantity} Adet</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Çıktı Formatı</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{format}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Çıktı Formatı</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.875rem' }}>{format}</div>
                     </div>
                   </div>
                 </div>
@@ -576,12 +578,11 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
           left: 0,
           right: 0,
           backgroundColor: 'var(--bg-card)',
-          borderTop: '1px solid var(--border-color)',
-          padding: '16px 24px',
+          borderTop: '1px solid var(--border-subtle)',
+          padding: '14px 20px',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: 'var(--shadow-sm)'
+          alignItems: 'center'
         }}>
           {step > 1 ? (
             <TTButton variant="secondary" onClick={handleBack} icon={<ArrowLeft size={16} />}>
@@ -598,7 +599,7 @@ export const PrePrintWizard: React.FC<{ onNavigate?: (tab: string) => void }> = 
               İleri
             </TTButton>
           ) : (
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
               <TTButton 
                 variant="secondary" 
                 onClick={() => handleSubmit(true)} 

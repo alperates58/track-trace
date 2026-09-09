@@ -67,10 +67,10 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
         minHeight: '100vh', backgroundColor: 'var(--bg-primary)', padding: '20px'
       }}>
         <div style={{
-          width: '50px', height: '50px', border: '4px solid var(--border-color)', borderTop: '4px solid var(--primary)',
-          borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '20px'
+          width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTop: '3px solid var(--primary)',
+          borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '16px'
         }} />
-        <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-primary)' }}>Doğrulanıyor...</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Doğrulanıyor...</p>
         <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -85,19 +85,19 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
     return (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh', backgroundColor: 'var(--bg-primary)', padding: '20px', fontFamily: 'var(--font-primary)'
+        minHeight: '100vh', backgroundColor: 'var(--bg-primary)', padding: '20px'
       }}>
         <div style={{
-          backgroundColor: 'var(--bg-card)', borderRadius: '16px', padding: '32px', maxWidth: '440px', width: '100%',
-          boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)', textAlign: 'center'
+          backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', padding: '28px 24px', maxWidth: '420px', width: '100%',
+          boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)', textAlign: 'center'
         }}>
-          <AlertCircle size={48} color="var(--danger)" style={{ marginBottom: '16px' }} />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Doğrulama Başarısız</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.5' }}>
+          <AlertCircle size={40} color="var(--danger)" style={{ marginBottom: '12px' }} />
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>Doğrulama Başarısız</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px', lineHeight: '1.5' }}>
             {error || 'Sorguladığınız koli sistemde bulunamadı.'}
           </p>
-          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Lider Kozmetik Track & Trace</span>
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Lider Kozmetik Track & Trace</span>
           </div>
         </div>
       </div>
@@ -109,60 +109,61 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
 
   return (
     <div style={{
-      backgroundColor: 'var(--bg-primary)', minHeight: '100vh', padding: '16px 16px 40px 16px',
-      fontFamily: 'var(--font-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center'
+      backgroundColor: 'var(--bg-primary)', minHeight: '100vh', padding: '24px 16px 48px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', marginTop: '8px' }}>
-        <ShieldCheck size={24} color="var(--primary)" />
-        <span style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '0.5px', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+        <ShieldCheck size={20} color="var(--primary)" />
+        <span style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '0.04em', color: 'var(--text-main)' }}>
           LİDER KOZMETİK DOĞRULAMA
         </span>
       </div>
 
-      <div style={{ maxWidth: '480px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ maxWidth: '480px', width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <div style={{
-          backgroundColor: 'var(--bg-card)', borderRadius: '16px', padding: '24px',
-          boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-color)'
+          backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', padding: '20px',
+          boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
-            <Package size={24} color="var(--primary)" />
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+            <Package size={20} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
               {isPallet ? 'Palet Doğrulandı' : 'Koli Doğrulandı'}
             </h3>
             <span style={{
-              marginLeft: 'auto', fontSize: '0.8rem', fontWeight: 700, padding: '6px 12px',
-              borderRadius: '9999px', backgroundColor: 'var(--success-bg)', color: 'var(--success-text)'
+              marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 600, padding: '3px 10px',
+              borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--success-bg)', color: 'var(--success-text)',
+              border: '1px solid var(--success-border)'
             }}>
               {result.status}
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.95rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.875rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Sipariş No:</span>
-              <strong style={{ color: 'var(--text-main)', fontSize: '1.05rem' }}>{result.orderNo || '-'}</strong>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Sipariş No:</span>
+              <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }} className="tabular-nums font-mono">{result.orderNo || '-'}</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Ürün:</span>
-              <strong style={{ color: 'var(--text-main)', textAlign: 'right', maxWidth: '60%' }}>{result.productName || '-'}</strong>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Ürün:</span>
+              <strong style={{ color: 'var(--text-main)', textAlign: 'right', maxWidth: '65%' }}>{result.productName || '-'}</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{isPallet ? 'Palet No:' : 'Koli No:'}</span>
-              <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>{result.codeNo || '-'}</strong>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{isPallet ? 'Palet No:' : 'Koli No:'}</span>
+              <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)', fontSize: '0.95rem' }} className="tabular-nums">{result.codeNo || '-'}</strong>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>İçerik Miktarı:</span>
-                <strong style={{ color: 'var(--text-main)' }}>{result.actualQuantity} / {result.targetQuantity} Adet</strong>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>İçerik Miktarı:</span>
+                <strong style={{ color: 'var(--text-main)' }} className="tabular-nums font-mono">{result.actualQuantity} / {result.targetQuantity} Adet</strong>
               </div>
-              <div style={{ width: '100%', height: '10px', backgroundColor: 'var(--bg-surface-subtle)', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.min(100, progressPercent)}%`, backgroundColor: '#3b82f6', transition: 'width 0.5s ease' }}></div>
+              <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.min(100, progressPercent)}%`, backgroundColor: 'var(--primary)', transition: 'width 0.4s ease' }}></div>
               </div>
-              <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                {Math.round(progressPercent)}% Dolu
+              <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-muted)' }} className="tabular-nums font-mono">
+                %{Math.round(progressPercent)} Dolu
               </div>
             </div>
           </div>
@@ -171,49 +172,49 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
         {/* Content list card (Alt Alta Kodlar) */}
         {result.cartonItems && result.cartonItems.length > 0 && (
           <div style={{
-            backgroundColor: 'var(--bg-card)', borderRadius: '16px', padding: '20px',
-            boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-color)'
+            backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', padding: '18px',
+            boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Barcode size={20} color="var(--success)" />
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
-                  İçerik ({result.cartonItems.length} {isPallet ? 'Koli' : 'Ürün'})
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Barcode size={18} color="var(--success)" />
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                  İçerik <span className="tabular-nums font-mono" style={{ color: 'var(--text-muted)' }}>({result.cartonItems.length} {isPallet ? 'Koli' : 'Ürün'})</span>
                 </h3>
               </div>
               <button 
                 onClick={copyAllCodes}
+                className="btn btn-secondary btn-sm"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600,
-                  color: 'var(--primary)', border: '1px solid var(--border-color)', backgroundColor: 'transparent',
-                  padding: '6px 12px', borderRadius: '8px', cursor: 'pointer'
+                  display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 600,
+                  height: '28px', padding: '0 10px', borderRadius: 'var(--radius-xs)'
                 }}
               >
                 {copiedAll ? (
                   <>
-                    <Check size={14} color="var(--success)" /> Kopyalandı
+                    <Check size={12} color="var(--success)" /> Kopyalandı
                   </>
                 ) : (
                   <>
-                    <Copy size={14} /> Tümünü Kopyala
+                    <Copy size={12} /> Tümünü Kopyala
                   </>
                 )}
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {result.cartonItems.map((item, idx) => (
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 14px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)',
-                  borderRadius: '10px'
+                  padding: '8px 12px', backgroundColor: 'var(--bg-surface-subtle)', border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-xs)'
                 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, marginRight: '12px' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, marginRight: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                       {isPallet ? 'Koli' : 'Ürün'} #{idx + 1}
                     </span>
                     <span style={{
-                      fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 600,
+                      fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 500,
                       color: 'var(--text-main)', wordBreak: 'break-all', lineHeight: '1.4'
                     }}>
                       {item}
@@ -221,18 +222,18 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
                   </div>
                   <button 
                     onClick={() => copyToClipboard(item, idx)}
+                    className="btn btn-secondary btn-sm"
                     style={{
-                      border: 'none', backgroundColor: 'var(--bg-card)', width: '32px', height: '32px',
-                      borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--border-color)',
+                      width: '28px', height: '28px', padding: 0,
+                      borderRadius: 'var(--radius-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0
                     }}
                     title="Kopyala"
                   >
                     {copiedIndex === idx ? (
-                      <Check size={14} color="var(--success)" />
+                      <Check size={12} color="var(--success)" />
                     ) : (
-                      <Copy size={14} color="var(--text-muted)" />
+                      <Copy size={12} color="var(--text-muted)" />
                     )}
                   </button>
                 </div>
@@ -241,7 +242,7 @@ export const PublicBarcodeSearch: React.FC<{ code: string }> = ({ code }) => {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: '16px', color: '#94a3b8', fontSize: '0.85rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '12px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
           Lider Kozmetik Track & Trace Güvenli Doğrulama Sistemi
         </div>
       </div>
