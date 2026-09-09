@@ -22,8 +22,11 @@ import {
   Truck,
   TrendingUp,
   CheckSquare,
-  Camera
+  Camera,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useTheme } from './context/ThemeContext';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
 const Orders = React.lazy(() => import('./pages/Orders').then(module => ({ default: module.Orders })));
@@ -63,6 +66,7 @@ const Unauthorized: React.FC = () => (
 
 const AppShell: React.FC = () => {
   const { user, logout, hasPermission } = useAuth();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const showUsers = hasPermission('users.view');
   const showStations = hasPermission('stations.view');
@@ -108,9 +112,11 @@ const AppShell: React.FC = () => {
     ...(showSystemInfo ? ['system'] : [])
   ];
 
+  const getCleanHash = () => window.location.hash.replace(/^#\/?/, '').trim();
+
   // Persistent activeTab using Hash + LocalStorage
   const [activeTab, setActiveTab] = useState(() => {
-    const hash = window.location.hash.replace('#', '').trim();
+    const hash = getCleanHash();
     if (hash && availableTabs.includes(hash)) {
       return hash;
     }
@@ -132,7 +138,7 @@ const AppShell: React.FC = () => {
   useEffect(() => {
     if (activeTab) {
       localStorage.setItem('activeTab', activeTab);
-      if (window.location.hash.replace('#', '').trim() !== activeTab) {
+      if (getCleanHash() !== activeTab) {
         window.location.hash = activeTab;
       }
     }
@@ -140,7 +146,7 @@ const AppShell: React.FC = () => {
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').trim();
+      const hash = getCleanHash();
       if (hash && availableTabs.includes(hash)) {
         setActiveTab(hash);
       }
@@ -176,10 +182,10 @@ const AppShell: React.FC = () => {
   };
   const activePageTitle = pageTitles[activeTab] || activeTab;
   const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'digieye-scan', 'cartons', 'preprint-create', 'qr-verification', 'pallets', 'shipments'].includes(activeTab)
-    ? 'Operations'
+    ? 'Operasyon'
     : ['users', 'stations', 'audit', 'permission-matrix', 'print-settings', 'system'].includes(activeTab)
-      ? 'Administration'
-      : 'Intelligence';
+      ? 'Sistem Yönetimi'
+      : 'Analitik & İzleme';
 
   const renderActivePage = () => {
     switch (activeTab) {
@@ -512,7 +518,19 @@ const AppShell: React.FC = () => {
               </h2>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle-btn"
+              title={resolvedTheme === 'dark' ? 'Açık Temaya Geç (Light Mode)' : 'Koyu Temaya Geç (Dark Mode)'}
+              aria-label="Temayı Değiştir"
+            >
+              {resolvedTheme === 'dark' ? (
+                <Sun size={18} style={{ color: '#fbbf24' }} />
+              ) : (
+                <Moon size={18} style={{ color: '#475569' }} />
+              )}
+            </button>
             <div className="system-status-badge" aria-label="API Online" title="API Online">
               <span className="status-dot-pulse"></span>
               <span className="system-status-label">API Online</span>
