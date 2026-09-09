@@ -344,10 +344,10 @@ public class CartonHandlers :
         using var transaction = connection.BeginTransaction();
         try
         {
-            var order = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "SELECT Id, OrderNo FROM Orders WHERE Id = @OrderId FOR UPDATE",
+            string? orderNo = await connection.QueryFirstOrDefaultAsync<string>(
+                "SELECT OrderNo FROM Orders WHERE Id = @OrderId FOR UPDATE",
                 new { OrderId = request.OrderId }, transaction);
-            if (order == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+            if (orderNo == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
 
             // 1. Unlink any product codes that might point to an empty carton of this order
             const string unlinkProductsSql = @"
@@ -405,7 +405,7 @@ public class CartonHandlers :
                 await _auditLogService.LogAsync("Orders", request.OrderId, "BulkDeleteEmptyCartons", null, new 
                 { 
                     DeletedCount = deletedCount, 
-                    OrderNo = (string)order.orderno 
+                    OrderNo = orderNo 
                 });
             }
 

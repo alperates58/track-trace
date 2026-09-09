@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -331,10 +332,10 @@ public class OrderHandlers :
         using var transaction = connection.BeginTransaction();
         try
         {
-            var existing = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            string? existingStatus = await connection.QueryFirstOrDefaultAsync<string>(
                 "SELECT Status FROM Orders WHERE Id = @Id FOR UPDATE", 
                 new { Id = request.Id }, transaction);
-            if (existing == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
+            if (existingStatus == null) throw new KeyNotFoundException("Sipariş bulunamadı.");
 
             int packedCartonCount = await connection.ExecuteScalarAsync<int>(
                 "SELECT COUNT(*) FROM Cartons WHERE OrderId = @Id AND (ActualQuantity > 0 OR Status = @ShippedStatus)", 
@@ -396,7 +397,7 @@ public class OrderHandlers :
 
             transaction.Commit();
 
-            await _auditLogService.LogAsync("Orders", request.Id, "Delete", existing, new 
+            await _auditLogService.LogAsync("Orders", request.Id, "Delete", existingStatus, new 
             { 
                 Forced = request.Force, 
                 ClearedCartons = cartonCount, 
