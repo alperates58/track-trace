@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:16-alpine
-    container_name: track_trace_db
+    container_name: "track-trace-${DEPLOYMENT_ID:?DEPLOYMENT_ID is required}-db"
     environment:
       POSTGRES_DB: track_trace
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -43,21 +43,21 @@ services:
     labels:
       - "traefik.enable=true"
       # API HTTPS Router
-      - "traefik.http.routers.track-trace-api.entrypoints=https"
-      - "traefik.http.routers.track-trace-api.rule=Host(`${API_HOST}`)"
-      - "traefik.http.routers.track-trace-api.service=track-trace-api"
-      - "traefik.http.routers.track-trace-api.middlewares=crowdsec@file"
-      - "traefik.http.routers.track-trace-api.tls=true"
-      - "traefik.http.routers.track-trace-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.track-trace-api.loadbalancer.server.port=8080"
-      - "traefik.http.services.track-trace-api.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.track-trace-api.loadbalancer.healthcheck.interval=3s"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api.entrypoints=https"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api.service=track-${DEPLOYMENT_ID}-api"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api.middlewares=crowdsec@file"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api.tls=true"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.track-${DEPLOYMENT_ID}-api.loadbalancer.server.port=8080"
+      - "traefik.http.services.track-${DEPLOYMENT_ID}-api.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.track-${DEPLOYMENT_ID}-api.loadbalancer.healthcheck.interval=3s"
       # API HTTP Router & Redirect Middleware
-      - "traefik.http.routers.track-trace-api-http.entrypoints=http"
-      - "traefik.http.routers.track-trace-api-http.rule=Host(`${API_HOST}`)"
-      - "traefik.http.routers.track-trace-api-http.service=track-trace-api"
-      - "traefik.http.routers.track-trace-api-http.middlewares=track-trace-api-https-redirect,crowdsec@file"
-      - "traefik.http.middlewares.track-trace-api-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api-http.entrypoints=http"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api-http.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api-http.service=track-${DEPLOYMENT_ID}-api"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-api-http.middlewares=track-${DEPLOYMENT_ID}-api-https-redirect,crowdsec@file"
+      - "traefik.http.middlewares.track-${DEPLOYMENT_ID}-api-https-redirect.redirectscheme.scheme=https"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
@@ -77,19 +77,19 @@ services:
     labels:
       - "traefik.enable=true"
       # Frontend HTTPS Router
-      - "traefik.http.routers.track-trace-frontend.entrypoints=https"
-      - "traefik.http.routers.track-trace-frontend.rule=Host(`${FRONTEND_HOST}`)"
-      - "traefik.http.routers.track-trace-frontend.service=track-trace-frontend"
-      - "traefik.http.routers.track-trace-frontend.middlewares=crowdsec@file"
-      - "traefik.http.routers.track-trace-frontend.tls=true"
-      - "traefik.http.routers.track-trace-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.track-trace-frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend.entrypoints=https"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend.service=track-${DEPLOYMENT_ID}-frontend"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend.middlewares=crowdsec@file"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend.tls=true"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.track-${DEPLOYMENT_ID}-frontend.loadbalancer.server.port=80"
       # Frontend HTTP Router & Redirect Middleware
-      - "traefik.http.routers.track-trace-frontend-http.entrypoints=http"
-      - "traefik.http.routers.track-trace-frontend-http.rule=Host(`${FRONTEND_HOST}`)"
-      - "traefik.http.routers.track-trace-frontend-http.service=track-trace-frontend"
-      - "traefik.http.routers.track-trace-frontend-http.middlewares=track-trace-frontend-https-redirect,crowdsec@file"
-      - "traefik.http.middlewares.track-trace-frontend-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend-http.entrypoints=http"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend-http.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend-http.service=track-${DEPLOYMENT_ID}-frontend"
+      - "traefik.http.routers.track-${DEPLOYMENT_ID}-frontend-http.middlewares=track-${DEPLOYMENT_ID}-frontend-https-redirect,crowdsec@file"
+      - "traefik.http.middlewares.track-${DEPLOYMENT_ID}-frontend-https-redirect.redirectscheme.scheme=https"
 
 networks:
   coolify:
@@ -97,4 +97,4 @@ networks:
 
 volumes:
   track_trace_pgdata:
-    name: track_trace_pgdata
+    name: "track-trace-${DEPLOYMENT_ID:?DEPLOYMENT_ID is required}-pgdata"

@@ -108,21 +108,34 @@ Coolify UI içinde aşağıdaki environment değişkenleri tanımlanmalıdır.
 Gerçek secret, şifre veya token değerleri GitHub’a yazılmamalıdır.
 
 ```text
+# Multi-deployment izolasyonu için zorunlu ve benzersiz ID (küçük harf, rakam, tire)
+DEPLOYMENT_ID=lider
+
+# Traefik Router Domainleri (protokolsüz)
+FRONTEND_HOST=track.liderkozmetik.com
+API_HOST=track-api.liderkozmetik.com
+
+# Uygulama URL'leri (protokol dahil)
+FRONTEND_URL=https://track.liderkozmetik.com
+API_URL=https://track-api.liderkozmetik.com
+
+# Veritabanı ve Güvenlik
 DB_USER=postgres
 DB_PASSWORD=<set-in-coolify>
 JWT_SECRET=<set-in-coolify-min-32-chars>
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=<set-in-coolify>
+ADMIN_NAME=System Administrator
 APP_VERSION=v0.1.0-mvp
 BUILD_DATE=2026-06-16
 GIT_COMMIT_SHA=<set-by-build-or-manual>
-FRONTEND_URL=https://track.alperates.com.tr
-VITE_API_BASE_URL=https://track-api.alperates.com.tr
 ```
 
 Notlar:
 
 ```text
+DEPLOYMENT_ID Traefik router, service, middleware ve Docker volume isimlerini izole eder.
+Aynı sunucuda birden fazla deployment çakışmadan çalışabilir.
 DB_PASSWORD gerçek PostgreSQL şifresidir.
 JWT_SECRET minimum 32 karakter olmalıdır.
 ADMIN_PASSWORD ilk admin kullanıcısı için başlangıç şifresidir.
@@ -134,12 +147,11 @@ Bu değerler sadece Coolify UI içinde saklanmalıdır.
 ## Container ve Volume İsimleri
 
 ```text
-API container: track_trace_api
-Frontend container: track_trace_frontend
-DB container: track_trace_db
-DB volume: track_trace_pgdata
+DB container: track-trace-${DEPLOYMENT_ID}-db
+DB volume: track-trace-${DEPLOYMENT_ID}-pgdata
 Database adı: track_trace
 Docker network: coolify external
+Traefik router/service: track-${DEPLOYMENT_ID}-api, track-${DEPLOYMENT_ID}-frontend
 ```
 
 ---
