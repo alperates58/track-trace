@@ -7,6 +7,8 @@ interface User {
   username: string;
   role: string;
   isActive: boolean;
+  defaultStationId?: string | null;
+  defaultStationName?: string | null;
 }
 
 interface AuthContextType {

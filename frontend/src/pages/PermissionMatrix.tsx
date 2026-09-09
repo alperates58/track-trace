@@ -52,7 +52,7 @@ export const PermissionMatrix: React.FC = () => {
   };
 
   const togglePermission = (role: string, key: string) => {
-    if (!isAdmin) return;
+    if (!isAdmin || role === 'Admin') return;
     setRolePermissions(prev => {
       const exists = prev.some(rp => rp.role === role && rp.permissionKey === key);
       if (exists) {
@@ -171,12 +171,20 @@ export const PermissionMatrix: React.FC = () => {
                         return (
                           <td key={action} style={{ padding: '8px', borderRight: isLast && roleIdx < 2 ? '1px solid var(--border-color)' : 'none', textAlign: 'center' }}>
                             {pKey ? (
-                              isAdmin ? (
+                              role === 'Admin' ? (
+                                <input 
+                                  type="checkbox" 
+                                  checked={true} 
+                                  disabled={true}
+                                  title="Yönetici (Admin) rolü tüm yetkilere tam erişime sahiptir ve kısıtlanamaz."
+                                  style={{ cursor: 'not-allowed', accentColor: 'var(--primary)' }}
+                                />
+                              ) : isAdmin ? (
                                 <input 
                                   type="checkbox" 
                                   checked={isChecked} 
                                   onChange={() => togglePermission(role, pKey)} 
-                                  style={{ cursor: 'pointer' }}
+                                  style={{ cursor: 'pointer', accentColor: 'var(--primary)' }}
                                 />
                               ) : (
                                 isChecked ? <CheckIcon /> : <CrossIcon />

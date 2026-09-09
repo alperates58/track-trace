@@ -12,10 +12,10 @@ namespace TrackTrace.Application.Features.Users;
 
 public record GetUsersQuery : IRequest<IEnumerable<UserDto>>;
 
-public record CreateUserRequest(string Name, string Username, string Password, string Role);
+public record CreateUserRequest(string Name, string Username, string Password, string Role, Guid? DefaultStationId = null);
 public record CreateUserCommand(CreateUserRequest Request) : IRequest<Guid>;
 
-public record UpdateUserRequest(string Name, string Username, string? Password, string Role, bool IsActive);
+public record UpdateUserRequest(string Name, string Username, string? Password, string Role, bool IsActive, Guid? DefaultStationId = null);
 public record UpdateUserCommand(Guid Id, UpdateUserRequest Request) : IRequest<Unit>;
 
 public record ToggleUserActiveCommand(Guid Id) : IRequest<Unit>;
@@ -63,7 +63,20 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, IEnumerable<U
     public async Task<IEnumerable<UserDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        const string sql = "SELECT Id, Name, Username, Role, IsActive FROM Users ORDER BY CreatedAt DESC";
+        const string sql = @"
+            SELECT 
+                u.Id, 
+                u.Name, 
+                u.Username, 
+                u.Role, 
+                u.IsActive, 
+                u.DefaultStationId, 
+                s.Name AS DefaultStationName, 
+                u.LastLoginAt, 
+                u.CreatedAt 
+            FROM Users u
+            LEFT JOIN Stations s ON u.DefaultStationId = s.Id
+            ORDER BY u.CreatedAt DESC";
         
         var users = await connection.QueryAsync<dynamic>(sql);
         var result = new List<UserDto>();
@@ -75,7 +88,11 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, IEnumerable<U
                 (string)u.name,
                 (string)u.username,
                 (string)u.role,
-                (bool)u.isactive
+                (bool)u.isactive,
+                u.defaultstationid != null ? (Guid?)u.defaultstationid : null,
+                (string?)u.defaultstationname,
+                u.lastloginat != null ? (DateTime?)u.lastloginat : null,
+                u.createdat != null ? (DateTime?)u.createdat : null
             ));
         }
 
@@ -111,8 +128,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
         string passwordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
 
         const string insertSql = @"
-            INSERT INTO Users (Id, Name, Username, PasswordHash, Role, IsActive, CreatedAt)
-            VALUES (@Id, @Name, @Username, @PasswordHash, @Role, TRUE, @CreatedAt)";
+            INSERT INTO Users (Id, Name, Username, PasswordHash, Role, IsActive, DefaultStationId, CreatedAt)
+            VALUES (@Id, @Name, @Username, @PasswordHash, @Role, TRUE, @DefaultStationId, @CreatedAt)";
 
         await connection.ExecuteAsync(insertSql, new
         {
@@ -121,10 +138,11 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
             Username = req.Username,
             PasswordHash = passwordHash,
             Role = req.Role,
+            DefaultStationId = req.DefaultStationId,
             CreatedAt = DateTime.UtcNow
         });
 
-        await _auditLogService.LogAsync("Users", newId, "Create", null, new { Username = req.Username, Role = req.Role });
+        await _auditLogService.LogAsync("Users", newId, "Create", null, new { Username = req.Username, Role = req.Role, DefaultStationId = req.DefaultStationId });
 
         return newId;
     }
@@ -165,6 +183,12 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
             throw new InvalidOperationException("Kendi hesabınızı pasifleştiremezsiniz.");
         }
 
+        // Prevent self-demotion of Admin
+        if (_currentUserService.UserId == request.Id && req.Role != "Admin")
+        {
+            throw new InvalidOperationException("Kendi yönetici rolünüzü değiştiremezsiniz.");
+        }
+
         string updateSql;
         object parameters;
 
@@ -173,7 +197,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
             updateSql = @"
                 UPDATE Users 
-                SET Name = @Name, Username = @Username, PasswordHash = @PasswordHash, Role = @Role, IsActive = @IsActive
+                SET Name = @Name, Username = @Username, PasswordHash = @PasswordHash, Role = @Role, IsActive = @IsActive, DefaultStationId = @DefaultStationId
                 WHERE Id = @Id";
             
             parameters = new
@@ -183,14 +207,15 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
                 Username = req.Username,
                 PasswordHash = passwordHash,
                 Role = req.Role,
-                IsActive = req.IsActive
+                IsActive = req.IsActive,
+                DefaultStationId = req.DefaultStationId
             };
         }
         else
         {
             updateSql = @"
                 UPDATE Users 
-                SET Name = @Name, Username = @Username, Role = @Role, IsActive = @IsActive
+                SET Name = @Name, Username = @Username, Role = @Role, IsActive = @IsActive, DefaultStationId = @DefaultStationId
                 WHERE Id = @Id";
             
             parameters = new
@@ -199,13 +224,14 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
                 Name = req.Name,
                 Username = req.Username,
                 Role = req.Role,
-                IsActive = req.IsActive
+                IsActive = req.IsActive,
+                DefaultStationId = req.DefaultStationId
             };
         }
 
         await connection.ExecuteAsync(updateSql, parameters);
 
-        await _auditLogService.LogAsync("Users", request.Id, "Update", null, new { Username = req.Username, Role = req.Role, IsActive = req.IsActive });
+        await _auditLogService.LogAsync("Users", request.Id, "Update", null, new { Username = req.Username, Role = req.Role, IsActive = req.IsActive, DefaultStationId = req.DefaultStationId });
 
         return Unit.Value;
     }

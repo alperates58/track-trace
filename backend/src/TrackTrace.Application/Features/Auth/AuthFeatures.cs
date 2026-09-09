@@ -40,7 +40,12 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
     public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        const string sql = "SELECT * FROM Users WHERE LOWER(Username) = LOWER(@Username) LIMIT 1";
+        const string sql = @"
+            SELECT u.*, s.Name AS defaultstationname 
+            FROM Users u 
+            LEFT JOIN Stations s ON u.DefaultStationId = s.Id 
+            WHERE LOWER(u.Username) = LOWER(@Username) 
+            LIMIT 1";
         
         var user = await connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Username = request.Username });
         if (user == null)
@@ -67,7 +72,21 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
         
         string token = _jwtTokenGenerator.GenerateToken(userId, username, name, roleStr);
 
-        var userDto = new UserDto(userId, name, username, roleStr, isActive);
+        const string updateLastLoginSql = "UPDATE Users SET LastLoginAt = CURRENT_TIMESTAMP WHERE Id = @UserId";
+        await connection.ExecuteAsync(updateLastLoginSql, new { UserId = userId });
+
+        DateTime now = DateTime.UtcNow;
+        var userDto = new UserDto(
+            userId, 
+            name, 
+            username, 
+            roleStr, 
+            isActive, 
+            user.defaultstationid != null ? (Guid?)user.defaultstationid : null, 
+            (string?)user.defaultstationname, 
+            now, 
+            user.createdat != null ? (DateTime?)user.createdat : null
+        );
 
         await _auditLogService.LogAsync("Users", userId, "Login");
 

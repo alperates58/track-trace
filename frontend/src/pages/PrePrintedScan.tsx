@@ -121,7 +121,9 @@ export const PrePrintedScan: React.FC = () => {
       .then(res => {
         setStations(res);
         const savedStation = localStorage.getItem('trackTrace_selectedStation');
-        if (savedStation && res.some((s: Station) => s.id === savedStation)) {
+        if (user?.defaultStationId && res.some((s: Station) => s.id === user.defaultStationId)) {
+          setSelectedStationId(user.defaultStationId);
+        } else if (savedStation && res.some((s: Station) => s.id === savedStation)) {
           setSelectedStationId(savedStation);
         } else if (res.length > 0) {
           setSelectedStationId(res[0].id);

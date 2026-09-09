@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Shield, CheckCircle, XCircle, Edit, Users as UsersIcon, List, LayoutGrid } from 'lucide-react';
+import { 
+  UserPlus, Shield, CheckCircle, XCircle, Edit, Users as UsersIcon, 
+  List, LayoutGrid, Search, Eye, EyeOff, Building2, Clock, 
+  AlertTriangle, ShieldCheck, UserX, X
+} from 'lucide-react';
 import {
   TTPageHeader,
   TTButton,
@@ -9,9 +13,19 @@ import {
   TTTable,
   TTUserAvatar,
   TTDrawer,
+  TTModal,
   TTLoadingState,
-  TTEmptyState
+  TTEmptyState,
+  TTStatCard,
+  TTFilterBar
 } from '../components/common';
+import { PermissionMatrix } from './PermissionMatrix';
+
+interface Station {
+  id: string;
+  name: string;
+  isActive?: boolean;
+}
 
 interface User {
   id: string;
@@ -19,16 +33,24 @@ interface User {
   username: string;
   role: string;
   isActive: boolean;
+  defaultStationId?: string | null;
+  defaultStationName?: string | null;
+  lastLoginAt?: string | null;
+  createdAt?: string | null;
 }
-
-import { PermissionMatrix } from './PermissionMatrix';
 
 export const Users: React.FC = () => {
   const { user: currentUser, hasPermission } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'list' | 'matrix'>('list');
+
+  // Search & Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'Admin' | 'Operator' | 'Viewer'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Drawer states
   const [showCreateDrawer, setShowCreateDrawer] = useState(false);
@@ -42,6 +64,13 @@ export const Users: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('Viewer');
   const [isActive, setIsActive] = useState(true);
+  const [defaultStationId, setDefaultStationId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Toggle active modal states
+  const [toggleModalUser, setToggleModalUser] = useState<User | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -56,8 +85,18 @@ export const Users: React.FC = () => {
     }
   };
 
+  const fetchStations = async () => {
+    try {
+      const data = await api.get('/api/stations?includeInactive=false');
+      setStations(Array.isArray(data) ? data : []);
+    } catch {
+      setStations([]);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchStations();
   }, []);
 
   const resetForm = () => {
@@ -67,6 +106,9 @@ export const Users: React.FC = () => {
     setConfirmPassword('');
     setRole('Viewer');
     setIsActive(true);
+    setDefaultStationId(null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setError(null);
   };
 
@@ -78,7 +120,13 @@ export const Users: React.FC = () => {
       return;
     }
     try {
-      await api.post('/api/users', { name, username, password, role });
+      await api.post('/api/users', { 
+        name, 
+        username, 
+        password, 
+        role,
+        defaultStationId: defaultStationId || null
+      });
       setShowCreateDrawer(false);
       resetForm();
       fetchUsers();
@@ -95,6 +143,10 @@ export const Users: React.FC = () => {
     setConfirmPassword('');
     setRole(u.role);
     setIsActive(u.isActive);
+    setDefaultStationId(u.defaultStationId || null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setError(null);
     setShowEditDrawer(true);
   };
 
@@ -107,12 +159,13 @@ export const Users: React.FC = () => {
       return;
     }
     try {
-      await api.put(`/api/users/${selectedUser?.id}`, {
+      await api.put(`/api/users/${selectedUser.id}`, {
         name,
         username,
         password: password || null,
         role,
-        isActive
+        isActive,
+        defaultStationId: defaultStationId || null
       });
       setShowEditDrawer(false);
       setSelectedUser(null);
@@ -123,27 +176,80 @@ export const Users: React.FC = () => {
     }
   };
 
-  const handleToggleActive = async (u: User) => {
-    if (currentUser?.id === u.id) {
+  const confirmToggleActive = async () => {
+    if (!toggleModalUser) return;
+    if (currentUser?.id === toggleModalUser.id) {
       alert('Kendi hesabınızı pasifleştiremezsiniz.');
+      setToggleModalUser(null);
       return;
     }
-    if (!confirm(`${u.name} kullanıcısının aktiflik durumunu değiştirmek istediğinize emin misiniz?`)) {
-      return;
-    }
+
+    setIsToggling(true);
     try {
-      await api.post(`/api/users/${u.id}/toggle`, {});
+      await api.post(`/api/users/${toggleModalUser.id}/toggle`, {});
+      setToggleModalUser(null);
       fetchUsers();
     } catch (err: any) {
       alert(err.message || 'Kullanıcı durumu güncellenemedi.');
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  // Filtered list
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return users.filter(u => {
+      const matchesQuery = !q || 
+        u.name.toLowerCase().includes(q) || 
+        u.username.toLowerCase().includes(q) ||
+        (u.defaultStationName && u.defaultStationName.toLowerCase().includes(q));
+
+      const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || 
+        (statusFilter === 'active' && u.isActive) || 
+        (statusFilter === 'inactive' && !u.isActive);
+
+      return matchesQuery && matchesRole && matchesStatus;
+    });
+  }, [users, searchQuery, roleFilter, statusFilter]);
+
+  // KPI calculations
+  const stats = useMemo(() => {
+    const total = users.length;
+    const operators = users.filter(u => u.role === 'Operator' && u.isActive).length;
+    const admins = users.filter(u => u.role === 'Admin' && u.isActive).length;
+    const inactives = users.filter(u => !u.isActive).length;
+    return { total, operators, admins, inactives };
+  }, [users]);
+
+  // Date Formatter
+  const formatDateTime = (isoDate?: string | null) => {
+    if (!isoDate) return 'Henüz giriş yapmadı';
+    try {
+      const date = new Date(isoDate);
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      if (isToday) {
+        return `Bugün ${timeStr}`;
+      }
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      if (date.toDateString() === yesterday.toDateString()) {
+        return `Dün ${timeStr}`;
+      }
+      return `${date.toLocaleDateString('tr-TR')} ${timeStr}`;
+    } catch {
+      return isoDate;
     }
   };
 
   return (
-    <div>
+    <div className="users-page flex flex-col gap-5">
       <TTPageHeader
         title="Kullanıcı Yönetimi"
-        description="Sistem kullanıcılarını ekleyin, rollerini ve erişim yetkilerini yönetin."
+        description="Sistem kullanıcılarını ekleyin, istasyonlarını eşleştirin ve rol bazlı erişim yetkilerini yönetin."
         actions={
           (hasPermission('users.create') || hasPermission('users.manage')) ? (
             <TTButton
@@ -157,7 +263,8 @@ export const Users: React.FC = () => {
         }
       />
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)' }}>
         <button
           onClick={() => setActiveTab('list')}
           style={{
@@ -174,7 +281,7 @@ export const Users: React.FC = () => {
             fontSize: '0.95rem'
           }}
         >
-          <List size={18} /> Kullanıcı Listesi
+          <List size={18} /> Kullanıcı Listesi ({users.length})
         </button>
         <button
           onClick={() => setActiveTab('matrix')}
@@ -197,30 +304,160 @@ export const Users: React.FC = () => {
       </div>
 
       {activeTab === 'list' && (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* KPI Stat Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+            <TTStatCard
+              title="Toplam Kullanıcı"
+              value={stats.total}
+              icon={<UsersIcon size={20} />}
+              color="#3b82f6"
+            />
+            <TTStatCard
+              title="Aktif Operatörler & Hatlar"
+              value={stats.operators}
+              icon={<Building2 size={20} />}
+              color="#0284c7"
+            />
+            <TTStatCard
+              title="Sistem Yöneticileri"
+              value={stats.admins}
+              icon={<ShieldCheck size={20} />}
+              color="#7c3aed"
+            />
+            <TTStatCard
+              title="Pasif / Askıda Hesaplar"
+              value={stats.inactives}
+              icon={<UserX size={20} />}
+              color="#dc2626"
+            />
+          </div>
+
+          {/* Filter & Search Bar */}
+          <TTFilterBar
+            actions={
+              (searchQuery || roleFilter !== 'all' || statusFilter !== 'all') ? (
+                <button
+                  onClick={() => { setSearchQuery(''); setRoleFilter('all'); setStatusFilter('all'); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  <X size={14} /> Filtreleri Sıfırla
+                </button>
+              ) : undefined
+            }
+          >
+            <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+              <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="İsim, kullanıcı adı veya hat ara..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="form-input"
+                style={{ paddingLeft: '34px' }}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: '10px', top: '9px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <select
+              className="form-input"
+              value={roleFilter}
+              onChange={e => setRoleFilter(e.target.value as any)}
+              style={{ width: '160px' }}
+            >
+              <option value="all">Tüm Roller</option>
+              <option value="Admin">Yöneticiler</option>
+              <option value="Operator">Operatörler</option>
+              <option value="Viewer">İzleyiciler</option>
+            </select>
+
+            <select
+              className="form-input"
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as any)}
+              style={{ width: '150px' }}
+            >
+              <option value="all">Tüm Durumlar</option>
+              <option value="active">Yalnızca Aktif</option>
+              <option value="inactive">Yalnızca Pasif</option>
+            </select>
+          </TTFilterBar>
+
+          {/* Users Table */}
           {loading && users.length === 0 ? (
             <TTLoadingState text="Kullanıcılar yükleniyor..." />
-          ) : users.length === 0 ? (
+          ) : filteredUsers.length === 0 ? (
             <TTEmptyState
               icon={<UsersIcon size={32} />}
-              title="Kayıtlı Kullanıcı Yok"
-              description="Sistemde henüz kayıtlı bir kullanıcı bulunmuyor."
+              title={searchQuery || roleFilter !== 'all' || statusFilter !== 'all' ? 'Arama Sonucu Bulunamadı' : 'Kayıtlı Kullanıcı Yok'}
+              description={searchQuery || roleFilter !== 'all' || statusFilter !== 'all' ? 'Seçtiğiniz filtreleme kriterlerine uygun kullanıcı kaydı bulunamadı.' : 'Sistemde henüz kayıtlı bir kullanıcı bulunmuyor.'}
             />
           ) : (
-            <TTTable headers={['Kullanıcı', 'Kullanıcı Adı', 'Rol', 'Durum', 'İşlemler']}>
-              {users.map((u) => (
+            <TTTable headers={['Kullanıcı', 'Kullanıcı Adı', 'Rol', 'Varsayılan İstasyon', 'Son Giriş', 'Durum', 'İşlemler']}>
+              {filteredUsers.map((u) => (
                 <tr key={u.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <TTUserAvatar name={u.name} size="sm" isActive={u.isActive} />
-                      <span style={{ fontWeight: 600 }}>{u.name}</span>
+                      <TTUserAvatar name={u.name} role={u.role} size="sm" />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{u.name}</span>
+                        {currentUser?.id === u.id && (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 700 }}>
+                            (Mevcut Oturum)
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td><span style={{ color: 'var(--text-muted)' }}>@{u.username}</span></td>
                   <td>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)' }}>
-                      <Shield size={14} style={{ color: u.role === 'Admin' ? 'var(--primary)' : 'inherit' }} />
+                    <span style={{ color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 600 }}>
+                      @{u.username}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: u.role === 'Admin' ? '#6d28d9' : u.role === 'Operator' ? '#0369a1' : 'var(--text-muted)'
+                    }}>
+                      <Shield size={14} style={{ color: u.role === 'Admin' ? '#7c3aed' : u.role === 'Operator' ? '#0284c7' : 'inherit' }} />
                       {u.role === 'Admin' ? 'Yönetici' : u.role === 'Operator' ? 'Operatör' : 'İzleyici'}
+                    </span>
+                  </td>
+                  <td>
+                    {u.defaultStationName ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>
+                        <Building2 size={14} style={{ color: '#0284c7' }} />
+                        {u.defaultStationName}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: u.lastLoginAt ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                      <Clock size={13} style={{ color: '#94a3b8' }} />
+                      {formatDateTime(u.lastLoginAt)}
                     </span>
                   </td>
                   <td>
@@ -231,7 +468,12 @@ export const Users: React.FC = () => {
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {(hasPermission('users.edit') || hasPermission('users.manage')) && (
-                        <TTButton variant="secondary" size="sm" icon={<Edit size={14} />} onClick={() => handleEditOpen(u)}>
+                        <TTButton 
+                          variant="secondary" 
+                          size="sm" 
+                          icon={<Edit size={14} />} 
+                          onClick={() => handleEditOpen(u)}
+                        >
                           Düzenle
                         </TTButton>
                       )}
@@ -241,7 +483,8 @@ export const Users: React.FC = () => {
                           size="sm"
                           icon={u.isActive ? <XCircle size={14} /> : <CheckCircle size={14} />}
                           disabled={currentUser?.id === u.id}
-                          onClick={() => handleToggleActive(u)}
+                          onClick={() => setToggleModalUser(u)}
+                          title={currentUser?.id === u.id ? 'Kendi hesabınızı pasifleştiremezsiniz' : undefined}
                         >
                           {u.isActive ? 'Pasif Yap' : 'Aktif Yap'}
                         </TTButton>
@@ -252,14 +495,59 @@ export const Users: React.FC = () => {
               ))}
             </TTTable>
           )}
-        </>
+        </div>
       )}
 
       {activeTab === 'matrix' && (
-        <div style={{ marginTop: '20px' }}>
+        <div style={{ marginTop: '10px' }}>
           <PermissionMatrix />
         </div>
       )}
+
+      {/* CONFIRM TOGGLE STATUS MODAL */}
+      <TTModal
+        isOpen={!!toggleModalUser}
+        onClose={() => setToggleModalUser(null)}
+        title={toggleModalUser?.isActive ? 'Kullanıcı Hesabını Pasifleştir' : 'Kullanıcı Hesabını Aktifleştir'}
+        maxWidth="460px"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <TTButton variant="secondary" onClick={() => setToggleModalUser(null)}>Vazgeç</TTButton>
+            <TTButton 
+              variant={toggleModalUser?.isActive ? 'danger' : 'primary'} 
+              onClick={confirmToggleActive}
+              disabled={isToggling}
+            >
+              {isToggling ? 'İşleniyor...' : toggleModalUser?.isActive ? 'Hesabı Askıya Al (Pasif)' : 'Hesabı Aktifleştir'}
+            </TTButton>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '50%', 
+              backgroundColor: toggleModalUser?.isActive ? '#fee2e2' : '#dcfce7',
+              color: toggleModalUser?.isActive ? '#dc2626' : '#16a34a',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              {toggleModalUser?.isActive ? <AlertTriangle size={24} /> : <CheckCircle size={24} />}
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>{toggleModalUser?.name}</h4>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                @{toggleModalUser?.username} • {toggleModalUser?.role === 'Admin' ? 'Yönetici' : toggleModalUser?.role === 'Operator' ? 'Operatör' : 'İzleyici'}
+              </span>
+            </div>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
+            {toggleModalUser?.isActive 
+              ? 'Bu kullanıcı hesabını pasifleştirmek üzeresiniz. Pasif hesaplar sisteme giriş yapamaz ve paketleme istasyonlarında okutma gerçekleştiremez.' 
+              : 'Bu kullanıcı hesabı tekrar aktif hale getirilecek ve sisteme giriş yapabilecektir.'}
+          </p>
+        </div>
+      </TTModal>
 
       {/* CREATE USER DRAWER */}
       <TTDrawer
@@ -276,20 +564,56 @@ export const Users: React.FC = () => {
         {error && <div style={{ color: 'var(--danger-text)', backgroundColor: 'var(--danger-bg)', padding: '12px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.9rem' }}>{error}</div>}
         <form id="create-user-form" onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="form-group">
-            <label className="form-label">İsim *</label>
-            <input type="text" className="form-input" required value={name} onChange={e => setName(e.target.value)} placeholder="Ahmet Yılmaz" />
+            <label className="form-label">İsim (Şahıs veya İstasyon Adı) *</label>
+            <input type="text" className="form-input" required value={name} onChange={e => setName(e.target.value)} placeholder="Örn: Paketleme Hattı 4 veya Ahmet Yılmaz" />
           </div>
           <div className="form-group">
             <label className="form-label">Kullanıcı Adı *</label>
-            <input type="text" className="form-input" required value={username} onChange={e => setUsername(e.target.value)} placeholder="ahmetyilmaz" />
+            <input type="text" className="form-input" required value={username} onChange={e => setUsername(e.target.value)} placeholder="paketleme4" />
           </div>
           <div className="form-group">
             <label className="form-label">Şifre (Min 6 Karakter) *</label>
-            <input type="password" className="form-input" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                className="form-input" 
+                required 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                placeholder="••••••••" 
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                title={showPassword ? 'Şifreyi Gizle' : 'Şifreyi Göster'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Şifre Tekrarı *</label>
-            <input type="password" className="form-input" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showConfirmPassword ? 'text' : 'password'} 
+                className="form-input" 
+                required 
+                value={confirmPassword} 
+                onChange={e => setConfirmPassword(e.target.value)} 
+                placeholder="••••••••" 
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                title={showConfirmPassword ? 'Şifreyi Gizle' : 'Şifreyi Göster'}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Rol *</label>
@@ -298,6 +622,22 @@ export const Users: React.FC = () => {
               <option value="Operator">Operatör (Operator)</option>
               <option value="Admin">Yönetici (Admin)</option>
             </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Varsayılan İstasyon (Hat Eşleşmesi)</label>
+            <select 
+              className="form-input" 
+              value={defaultStationId || ''} 
+              onChange={e => setDefaultStationId(e.target.value || null)}
+            >
+              <option value="">-- İstasyon Seçilmedi (Esnek Hat) --</option>
+              {stations.map(st => (
+                <option key={st.id} value={st.id}>{st.name}</option>
+              ))}
+            </select>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+              Operatör oturum açtığında paketleme ekranında ilgili istasyon otomatik seçilecektir.
+            </span>
           </div>
         </form>
       </TTDrawer>
@@ -326,19 +666,80 @@ export const Users: React.FC = () => {
           </div>
           <div className="form-group">
             <label className="form-label">Yeni Şifre (Değiştirmek İstemiyorsanız Boş Bırakın)</label>
-            <input type="password" className="form-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                className="form-input" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                placeholder="••••••••" 
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                title={showPassword ? 'Şifreyi Gizle' : 'Şifreyi Göster'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Yeni Şifre Tekrarı {password && '*'}</label>
-            <input type="password" className="form-input" required={!!password} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showConfirmPassword ? 'text' : 'password'} 
+                className="form-input" 
+                required={!!password} 
+                value={confirmPassword} 
+                onChange={e => setConfirmPassword(e.target.value)} 
+                placeholder="••••••••" 
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                title={showConfirmPassword ? 'Şifreyi Gizle' : 'Şifreyi Göster'}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Rol *</label>
-            <select className="form-input" value={role} onChange={e => setRole(e.target.value)}>
+            <select 
+              className="form-input" 
+              value={role} 
+              disabled={currentUser?.id === selectedUser?.id}
+              onChange={e => setRole(e.target.value)}
+            >
               <option value="Viewer">İzleyici (Viewer)</option>
               <option value="Operator">Operatör (Operator)</option>
               <option value="Admin">Yönetici (Admin)</option>
             </select>
+            {currentUser?.id === selectedUser?.id && (
+              <span style={{ fontSize: '0.75rem', color: '#b45309', backgroundColor: '#fef3c7', padding: '4px 8px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
+                Güvenlik: Kendi yönetici rolünüzü değiştiremezsiniz.
+              </span>
+            )}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Varsayılan İstasyon (Hat Eşleşmesi)</label>
+            <select 
+              className="form-input" 
+              value={defaultStationId || ''} 
+              onChange={e => setDefaultStationId(e.target.value || null)}
+            >
+              <option value="">-- İstasyon Seçilmedi (Esnek Hat) --</option>
+              {stations.map(st => (
+                <option key={st.id} value={st.id}>{st.name}</option>
+              ))}
+            </select>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+              Operatör oturum açtığında paketleme ekranında ilgili istasyon otomatik seçilecektir.
+            </span>
           </div>
           <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
             <input

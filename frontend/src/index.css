@@ -1994,23 +1994,41 @@ select:focus-visible {
 /* TTUserAvatar */
 .tt-avatar {
   border-radius: 50%;
-  background: var(--primary-light);
-  color: var(--primary);
+  background-color: #e2e8f0;
+  color: #334155;
+  border: 1.5px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   position: relative;
+  flex-shrink: 0;
+  user-select: none;
 }
-.tt-avatar-sm { width: 32px; height: 32px; font-size: 0.9rem; }
-.tt-avatar-md { width: 40px; height: 40px; font-size: 1.1rem; }
-.tt-avatar-lg { width: 56px; height: 56px; font-size: 1.5rem; }
+.tt-avatar-role-admin {
+  background-color: #ede9fe;
+  color: #6d28d9;
+  border-color: #c4b5fd;
+}
+.tt-avatar-role-operator {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+.tt-avatar-role-viewer {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+.tt-avatar-sm { width: 34px; height: 34px; font-size: 0.85rem; }
+.tt-avatar-md { width: 40px; height: 40px; font-size: 1.05rem; }
+.tt-avatar-lg { width: 56px; height: 56px; font-size: 1.4rem; }
 .tt-avatar-status {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
+  bottom: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   border: 2px solid #fff;
 }
@@ -2196,20 +2214,6 @@ select:focus-visible {
 .tt-modal-close { background: none; border: none; cursor: pointer; color: var(--text-muted); }
 .tt-modal-close:hover { color: var(--text-main); }
 .tt-modal-content { padding: 24px; overflow-y: auto; max-height: 70vh; }
-.tt-avatar-sm { width: 32px; height: 32px; font-size: 0.9rem; }
-.tt-avatar-md { width: 40px; height: 40px; font-size: 1.1rem; }
-.tt-avatar-lg { width: 56px; height: 56px; font-size: 1.5rem; }
-.tt-avatar-status {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-}
-.tt-avatar-status.online { background-color: var(--success); }
-.tt-avatar-status.offline { background-color: #cbd5e1; }
 
 /* TTStatCard */
 .tt-stat-card {
