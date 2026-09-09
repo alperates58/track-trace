@@ -93,116 +93,96 @@ public class PerformanceHandlers :
     public async Task<PerformanceSummaryDto> Handle(GetPerformanceSummaryQuery request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
-        
-        const string sql = @"
-            WITH FilteredProductCodes AS (
-                SELECT Id, CartonId, OrderId, ScannedAt
-                FROM ProductCodes
-                WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL
-                  AND (@From IS NULL OR ScannedAt >= @From)
-                  AND (@To IS NULL OR ScannedAt <= @To)
-            ),
-            CartonDurations AS (
+        var p = new DynamicParameters();
+
+        string dateFilter = "";
+        if (request.From.HasValue)
+        {
+            dateFilter += " AND pc.ScannedAt >= @From ";
+            p.Add("From", request.From.Value);
+        }
+        if (request.To.HasValue)
+        {
+            dateFilter += " AND pc.ScannedAt <= @To ";
+            p.Add("To", request.To.Value);
+        }
+
+        string sql = $@"
+            WITH CartonDurations AS (
                 SELECT 
                     c.Id,
                     GREATEST(5, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt)))) AS DurationSec,
                     COUNT(pc.Id) AS ItemCount
                 FROM Cartons c
-                INNER JOIN FilteredProductCodes pc ON c.Id = pc.CartonId
+                INNER JOIN ProductCodes pc ON c.Id = pc.CartonId
+                WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL {dateFilter}
                 GROUP BY c.Id
                 HAVING COUNT(pc.Id) > 0
-            ),
-            CartonGaps AS (
-                SELECT 
-                    c.OrderId,
-                    c.Id AS CartonId,
-                    MIN(pc.ScannedAt) AS FirstScan,
-                    MAX(pc.ScannedAt) AS LastScan,
-                    LAG(MAX(pc.ScannedAt)) OVER (PARTITION BY c.OrderId ORDER BY MIN(pc.ScannedAt) ASC) AS PrevLastScan
-                FROM Cartons c
-                INNER JOIN FilteredProductCodes pc ON c.Id = pc.CartonId
-                GROUP BY c.OrderId, c.Id
-            ),
-            OrderIdlePauses AS (
-                SELECT 
-                    OrderId,
-                    SUM(CASE 
-                        WHEN PrevLastScan IS NOT NULL AND FirstScan > PrevLastScan AND EXTRACT(EPOCH FROM (FirstScan - PrevLastScan)) > 600 
-                        THEN EXTRACT(EPOCH FROM (FirstScan - PrevLastScan)) 
-                        ELSE 0 
-                    END) AS TotalIdlePauseSec
-                FROM CartonGaps
-                GROUP BY OrderId
-            ),
-            OrderDurations AS (
-                SELECT 
-                    o.OrderNo,
-                    GREATEST(0, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt))) - COALESCE(p.TotalIdlePauseSec, 0)) AS NetOrderSec
-                FROM Orders o
-                INNER JOIN FilteredProductCodes pc ON o.Id = pc.OrderId
-                LEFT JOIN OrderIdlePauses p ON o.Id = p.OrderId
-                GROUP BY o.Id, o.OrderNo, p.TotalIdlePauseSec
-                HAVING COUNT(pc.Id) > 1
             )
             SELECT 
                 COALESCE(AVG(cd.DurationSec), 0) AS OverallAvgSecondsPerCarton,
                 COALESCE(AVG(CASE WHEN cd.ItemCount > 0 THEN cd.DurationSec / cd.ItemCount ELSE 0 END), 0) AS OverallAvgSecondsPerItem,
                 (SELECT COUNT(*) FROM Orders WHERE Status = 'Completed') AS TotalCompletedOrders,
-                COALESCE((SELECT COUNT(DISTINCT CartonId) FROM FilteredProductCodes WHERE CartonId IS NOT NULL), 0) AS TotalScannedCartons,
-                COALESCE((SELECT OrderNo FROM OrderDurations WHERE NetOrderSec > 0 ORDER BY NetOrderSec ASC LIMIT 1), '-') AS FastestOrderNo,
-                COALESCE((SELECT NetOrderSec FROM OrderDurations WHERE NetOrderSec > 0 ORDER BY NetOrderSec ASC LIMIT 1), 0) AS FastestOrderDurationSeconds,
-                COALESCE((SELECT SUM(TotalIdlePauseSec) FROM OrderIdlePauses), 0) AS TotalIdlePauseSeconds
+                COALESCE((SELECT COUNT(DISTINCT pc.CartonId) FROM ProductCodes pc WHERE pc.Status != 'Uploaded' AND pc.CartonId IS NOT NULL {dateFilter}), 0) AS TotalScannedCartons
             FROM CartonDurations cd;";
 
-        var result = await connection.QueryFirstOrDefaultAsync<PerformanceSummaryDto>(
-            new CommandDefinition(sql, new { From = request.From, To = request.To }, cancellationToken: cancellationToken));
+        var summary = await connection.QueryFirstOrDefaultAsync<PerformanceSummaryDto>(
+            new CommandDefinition(sql, p, cancellationToken: cancellationToken)) ?? new PerformanceSummaryDto();
 
-        return result ?? new PerformanceSummaryDto();
+        // Calculate fastest order and total idle pause seconds using the orders calculation
+        var allOrders = (await Handle(new GetOrderPerformanceQuery(null, request.From, request.To), cancellationToken)).ToList();
+        if (allOrders.Any())
+        {
+            var completed = allOrders.Where(o => o.Status == "Completed" && o.NetDurationSeconds > 0).OrderBy(o => o.AvgSecondsPerCarton).ToList();
+            if (completed.Any())
+            {
+                summary.FastestOrderNo = completed.First().OrderNo;
+                summary.FastestOrderDurationSeconds = completed.First().NetDurationSeconds;
+            }
+            else
+            {
+                var anyWithTime = allOrders.Where(o => o.NetDurationSeconds > 0).OrderBy(o => o.AvgSecondsPerCarton).FirstOrDefault();
+                if (anyWithTime != null)
+                {
+                    summary.FastestOrderNo = anyWithTime.OrderNo;
+                    summary.FastestOrderDurationSeconds = anyWithTime.NetDurationSeconds;
+                }
+            }
+            summary.TotalIdlePauseSeconds = allOrders.Sum(o => o.IdlePauseSeconds);
+        }
+
+        return summary;
     }
 
     public async Task<IEnumerable<OrderPerformanceDto>> Handle(GetOrderPerformanceQuery request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
+        var p = new DynamicParameters();
 
-        string sql = @"
-            WITH FilteredProductCodes AS (
-                SELECT Id, CartonId, OrderId, ScannedAt
-                FROM ProductCodes
-                WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL
-                  AND (@From IS NULL OR ScannedAt >= @From)
-                  AND (@To IS NULL OR ScannedAt <= @To)
-            ),
-            CartonTimeInfo AS (
-                SELECT 
-                    c.OrderId,
-                    c.Id AS CartonId,
-                    MIN(pc.ScannedAt) AS FirstScan,
-                    MAX(pc.ScannedAt) AS LastScan,
-                    GREATEST(5, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt)))) AS FillSec
-                FROM Cartons c
-                INNER JOIN FilteredProductCodes pc ON c.Id = pc.CartonId
-                GROUP BY c.OrderId, c.Id
-            ),
-            CartonGaps AS (
-                SELECT 
-                    OrderId,
-                    FillSec,
-                    FirstScan,
-                    LastScan,
-                    LAG(LastScan) OVER (PARTITION BY OrderId ORDER BY FirstScan ASC) AS PrevLastScan
-                FROM CartonTimeInfo
-            ),
-            OrderPauseGaps AS (
-                SELECT 
-                    OrderId,
-                    SUM(CASE 
-                        WHEN PrevLastScan IS NOT NULL AND FirstScan > PrevLastScan AND EXTRACT(EPOCH FROM (FirstScan - PrevLastScan)) > 600 
-                        THEN EXTRACT(EPOCH FROM (FirstScan - PrevLastScan)) 
-                        ELSE 0 
-                    END) AS IdlePauseSec
-                FROM CartonGaps
-                GROUP BY OrderId
-            )
+        string dateFilterProduct = "";
+        string dateFilterOrder = "";
+        if (request.From.HasValue)
+        {
+            dateFilterProduct += " AND pc.ScannedAt >= @From ";
+            dateFilterOrder += " AND (pc.LastScannedAt >= @From OR (pc.LastScannedAt IS NULL AND o.CreatedAt >= @From)) ";
+            p.Add("From", request.From.Value);
+        }
+        if (request.To.HasValue)
+        {
+            dateFilterProduct += " AND pc.ScannedAt <= @To ";
+            dateFilterOrder += " AND (pc.FirstScannedAt <= @To OR (pc.FirstScannedAt IS NULL AND o.CreatedAt <= @To)) ";
+            p.Add("To", request.To.Value);
+        }
+
+        string searchFilter = "";
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            searchFilter = " AND (o.OrderNo ILIKE @Search OR o.CustomerName ILIKE @Search OR o.StockCode ILIKE @Search OR o.ProductName ILIKE @Search) ";
+            p.Add("Search", $"%{request.Search.Trim()}%");
+        }
+
+        // 1. Fetch orders with counts
+        string ordersSql = $@"
             SELECT 
                 o.Id AS OrderId,
                 o.OrderNo,
@@ -219,7 +199,6 @@ public class PerformanceHandlers :
                     THEN GREATEST(0, EXTRACT(EPOCH FROM (pc.LastScannedAt - pc.FirstScannedAt)))
                     ELSE 0 
                 END AS TotalDurationSeconds,
-                COALESCE(opg.IdlePauseSec, 0) AS IdlePauseSeconds,
                 o.Status
             FROM Orders o
             LEFT JOIN (
@@ -229,42 +208,91 @@ public class PerformanceHandlers :
             ) c ON o.Id = c.OrderId
             LEFT JOIN (
                 SELECT OrderId, COUNT(Id) AS TotalScanned, MIN(ScannedAt) AS FirstScannedAt, MAX(ScannedAt) AS LastScannedAt
-                FROM FilteredProductCodes
+                FROM ProductCodes
+                WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL
                 GROUP BY OrderId
             ) pc ON o.Id = pc.OrderId
-            LEFT JOIN OrderPauseGaps opg ON o.Id = opg.OrderId
-            WHERE 1=1 ";
-
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            sql += " AND (o.OrderNo ILIKE @Search OR o.CustomerName ILIKE @Search OR o.StockCode ILIKE @Search OR o.ProductName ILIKE @Search) ";
-        }
-        if (request.From.HasValue)
-        {
-            sql += " AND (pc.LastScannedAt >= @From OR (pc.LastScannedAt IS NULL AND o.CreatedAt >= @From)) ";
-        }
-        if (request.To.HasValue)
-        {
-            sql += " AND (pc.FirstScannedAt <= @To OR (pc.FirstScannedAt IS NULL AND o.CreatedAt <= @To)) ";
-        }
-
-        sql += @"
+            WHERE 1=1 {searchFilter} {dateFilterOrder}
             ORDER BY pc.LastScannedAt DESC NULLS LAST, o.CreatedAt DESC;";
 
-        var searchParam = string.IsNullOrWhiteSpace(request.Search) ? "" : $"%{request.Search}%";
-        var rawItems = await connection.QueryAsync<dynamic>(
-            new CommandDefinition(sql, new { Search = searchParam, From = request.From, To = request.To }, cancellationToken: cancellationToken));
+        var rawOrders = (await connection.QueryAsync<dynamic>(
+            new CommandDefinition(ordersSql, p, cancellationToken: cancellationToken))).ToList();
+
+        if (!rawOrders.Any())
+        {
+            return Enumerable.Empty<OrderPerformanceDto>();
+        }
+
+        // 2. Fetch carton timings for orders to calculate net active duration and exclude pauses > 10 mins
+        string cartonsSql = $@"
+            SELECT 
+                c.OrderId,
+                c.Id AS CartonId,
+                c.CartonNo,
+                MIN(pc.ScannedAt) AS FirstScan,
+                MAX(pc.ScannedAt) AS LastScan
+            FROM Cartons c
+            INNER JOIN ProductCodes pc ON c.Id = pc.CartonId
+            WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL {dateFilterProduct}
+            GROUP BY c.OrderId, c.Id, c.CartonNo
+            ORDER BY c.OrderId, MIN(pc.ScannedAt) ASC;";
+
+        var rawCartons = (await connection.QueryAsync<dynamic>(
+            new CommandDefinition(cartonsSql, p, cancellationToken: cancellationToken))).ToList();
+
+        var orderMetricsMap = new Dictionary<Guid, (double NetSec, double IdlePauseSec)>();
+        foreach (var group in rawCartons.GroupBy(x => (Guid)x.orderid))
+        {
+            double netSec = 0;
+            double idlePauseSec = 0;
+            DateTime? prevEnd = null;
+
+            foreach (var c in group)
+            {
+                DateTime firstScan = (DateTime)c.firstscan;
+                DateTime lastScan = (DateTime)c.lastscan;
+                double fillSec = Math.Max(5, (lastScan - firstScan).TotalSeconds);
+
+                if (prevEnd.HasValue)
+                {
+                    double gap = (firstScan - prevEnd.Value).TotalSeconds;
+                    if (gap > 600) // 10 mins shift break / pause
+                    {
+                        idlePauseSec += gap;
+                    }
+                    else if (gap > 0)
+                    {
+                        netSec += gap; // normal transition
+                    }
+                }
+                netSec += fillSec;
+                prevEnd = lastScan;
+            }
+
+            orderMetricsMap[group.Key] = (netSec, idlePauseSec);
+        }
 
         var list = new List<OrderPerformanceDto>();
-        foreach (var x in rawItems)
+        foreach (var x in rawOrders)
         {
+            Guid orderId = (Guid)x.orderid;
             double totalSec = x.totaldurationseconds != null ? Convert.ToDouble(x.totaldurationseconds) : 0;
-            double idlePauseSec = x.idlepauseseconds != null ? Convert.ToDouble(x.idlepauseseconds) : 0;
             int totalScanned = Convert.ToInt32(x.totalscanned);
             int totalCartons = Convert.ToInt32(x.totalcartons);
 
-            // Net duration deducts shift breaks (> 10 mins) from raw elapsed wall-clock duration
-            double netSec = Math.Max(0, totalSec - idlePauseSec);
+            double netSec = totalSec;
+            double idlePauseSec = 0;
+
+            if (orderMetricsMap.TryGetValue(orderId, out var metrics))
+            {
+                netSec = metrics.NetSec;
+                idlePauseSec = metrics.IdlePauseSec;
+            }
+            else if (totalSec > 0)
+            {
+                netSec = totalSec;
+            }
+
             if (netSec == 0 && totalScanned > 0)
             {
                 netSec = totalCartons > 0 ? totalCartons * 45.0 : totalScanned * 1.5;
@@ -272,7 +300,7 @@ public class PerformanceHandlers :
 
             list.Add(new OrderPerformanceDto
             {
-                OrderId = (Guid)x.orderid,
+                OrderId = orderId,
                 OrderNo = (string)x.orderno,
                 CustomerName = (string)x.customername,
                 StockCode = (string)x.stockcode,
@@ -283,8 +311,8 @@ public class PerformanceHandlers :
                 FirstScannedAt = x.firstscannedat != null ? (DateTime?)x.firstscannedat : null,
                 LastScannedAt = x.lastscannedat != null ? (DateTime?)x.lastscannedat : null,
                 TotalDurationSeconds = totalSec,
-                NetDurationSeconds = netSec,
-                IdlePauseSeconds = idlePauseSec,
+                NetDurationSeconds = Math.Round(netSec, 1),
+                IdlePauseSeconds = Math.Round(idlePauseSec, 1),
                 AvgSecondsPerItem = totalScanned > 0 ? Math.Round(netSec / totalScanned, 2) : 0,
                 AvgSecondsPerCarton = totalCartons > 0 ? Math.Round(netSec / totalCartons, 1) : 0,
                 HasPauseBreak = idlePauseSec > 600,
@@ -366,59 +394,87 @@ public class PerformanceHandlers :
     public async Task<IEnumerable<OperatorPerformanceDto>> Handle(GetOperatorPerformanceQuery request, CancellationToken cancellationToken)
     {
         using var connection = _dbConnectionFactory.CreateConnection();
+        var p = new DynamicParameters();
 
-        const string sql = @"
-            WITH FilteredProductCodes AS (
-                SELECT Id, CartonId, ScannedAt, ScannedBy
-                FROM ProductCodes
-                WHERE Status != 'Uploaded' AND ScannedAt IS NOT NULL AND ScannedBy IS NOT NULL
-                  AND (@From IS NULL OR ScannedAt >= @From)
-                  AND (@To IS NULL OR ScannedAt <= @To)
-            ),
-            CartonTimes AS (
-                SELECT 
-                    CartonId,
-                    ScannedBy,
-                    MIN(ScannedAt) AS FirstScan,
-                    MAX(ScannedAt) AS LastScan,
-                    GREATEST(5, EXTRACT(EPOCH FROM (MAX(ScannedAt) - MIN(ScannedAt)))) AS FillSec
-                FROM FilteredProductCodes
-                GROUP BY CartonId, ScannedBy
-            ),
-            CartonGaps AS (
-                SELECT 
-                    ScannedBy,
-                    FillSec,
-                    FirstScan,
-                    LastScan,
-                    LAG(LastScan) OVER (PARTITION BY ScannedBy ORDER BY FirstScan ASC) AS PrevLastScan
-                FROM CartonTimes
-            ),
-            OperatorNetActive AS (
-                SELECT 
-                    ScannedBy,
-                    SUM(FillSec + CASE WHEN PrevLastScan IS NOT NULL AND FirstScan > PrevLastScan AND EXTRACT(EPOCH FROM (FirstScan - PrevLastScan)) <= 600 THEN EXTRACT(EPOCH FROM (FirstScan - PrevLastScan)) ELSE 0 END) AS NetActiveSec
-                FROM CartonGaps
-                GROUP BY ScannedBy
-            )
+        string dateFilter = "";
+        if (request.From.HasValue)
+        {
+            dateFilter += " AND pc.ScannedAt >= @From ";
+            p.Add("From", request.From.Value);
+        }
+        if (request.To.HasValue)
+        {
+            dateFilter += " AND pc.ScannedAt <= @To ";
+            p.Add("To", request.To.Value);
+        }
+
+        string sql = $@"
             SELECT 
                 COALESCE(u.Name, 'Operatör') AS OperatorName,
+                pc.ScannedBy,
                 COUNT(DISTINCT pc.CartonId) AS TotalCartons,
                 COUNT(pc.Id) AS TotalScannedItems,
-                COALESCE(ona.NetActiveSec, GREATEST(1, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt))))) AS TotalActiveSeconds
-            FROM FilteredProductCodes pc
+                MIN(pc.ScannedAt) AS FirstScan,
+                MAX(pc.ScannedAt) AS LastScan,
+                GREATEST(1, EXTRACT(EPOCH FROM (MAX(pc.ScannedAt) - MIN(pc.ScannedAt)))) AS TotalActiveSeconds
+            FROM ProductCodes pc
             LEFT JOIN Users u ON pc.ScannedBy = u.Id
-            LEFT JOIN OperatorNetActive ona ON pc.ScannedBy = ona.ScannedBy
-            GROUP BY u.Name, ona.NetActiveSec
+            WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL AND pc.ScannedBy IS NOT NULL {dateFilter}
+            GROUP BY u.Name, pc.ScannedBy
             ORDER BY COUNT(pc.Id) DESC;";
 
-        var rawItems = await connection.QueryAsync<dynamic>(
-            new CommandDefinition(sql, new { From = request.From, To = request.To }, cancellationToken: cancellationToken));
+        var rawItems = (await connection.QueryAsync<dynamic>(
+            new CommandDefinition(sql, p, cancellationToken: cancellationToken))).ToList();
+
+        // Also fetch operator carton timings to exclude idle gaps > 10m
+        string opCartonSql = $@"
+            SELECT 
+                pc.ScannedBy,
+                pc.CartonId,
+                MIN(pc.ScannedAt) AS FirstScan,
+                MAX(pc.ScannedAt) AS LastScan
+            FROM ProductCodes pc
+            WHERE pc.Status != 'Uploaded' AND pc.ScannedAt IS NOT NULL AND pc.ScannedBy IS NOT NULL {dateFilter}
+            GROUP BY pc.ScannedBy, pc.CartonId
+            ORDER BY pc.ScannedBy, MIN(pc.ScannedAt) ASC;";
+
+        var rawOpCartons = (await connection.QueryAsync<dynamic>(
+            new CommandDefinition(opCartonSql, p, cancellationToken: cancellationToken))).ToList();
+
+        var opNetActiveMap = new Dictionary<Guid, double>();
+        foreach (var group in rawOpCartons.GroupBy(x => (Guid)x.scannedby))
+        {
+            double netSec = 0;
+            DateTime? prevEnd = null;
+            foreach (var c in group)
+            {
+                DateTime firstScan = (DateTime)c.firstscan;
+                DateTime lastScan = (DateTime)c.lastscan;
+                double fillSec = Math.Max(5, (lastScan - firstScan).TotalSeconds);
+                if (prevEnd.HasValue)
+                {
+                    double gap = (firstScan - prevEnd.Value).TotalSeconds;
+                    if (gap <= 600 && gap > 0)
+                    {
+                        netSec += gap;
+                    }
+                }
+                netSec += fillSec;
+                prevEnd = lastScan;
+            }
+            opNetActiveMap[group.Key] = Math.Max(1, netSec);
+        }
 
         var tempList = new List<(string Name, int Cartons, int Items, double TotalSec, double AvgCartonSec, double ItemsPerMin)>();
         foreach (var x in rawItems)
         {
+            Guid? scannedBy = x.scannedby != null ? (Guid?)x.scannedby : null;
             double totalSec = x.totalactiveseconds != null ? Convert.ToDouble(x.totalactiveseconds) : 0;
+            if (scannedBy.HasValue && opNetActiveMap.TryGetValue(scannedBy.Value, out var netSec))
+            {
+                totalSec = netSec;
+            }
+
             int items = Convert.ToInt32(x.totalscanneditems);
             int cartons = Convert.ToInt32(x.totalcartons);
 
