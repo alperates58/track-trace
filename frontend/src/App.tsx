@@ -93,7 +93,7 @@ const AppShell: React.FC = () => {
   const showIntelMenu = showTraceability || showReports || showDmCreator || showPerformance;
 
   const availableTabs = [
-    ...(showDashboard ? ['dashboard'] : []),
+    ...(showDashboard ? ['dashboard', 'live-tv'] : []),
     ...(showOrders ? ['orders'] : []),
     ...(showScan ? ['scan'] : []),
     ...(showScan ? ['preprint-scan'] : []),
@@ -160,6 +160,7 @@ const AppShell: React.FC = () => {
 
   const pageTitles: Record<string, string> = {
     dashboard: 'Dashboard',
+    'live-tv': 'Canlı İzleme Ekranı',
     orders: 'Sipariş Yönetimi',
     scan: 'Otomatik Koli Modu',
     'preprint-scan': 'Ön Etiketli Koli Modu',
@@ -181,7 +182,7 @@ const AppShell: React.FC = () => {
     system: 'Sistem Bilgisi'
   };
   const activePageTitle = pageTitles[activeTab] || activeTab;
-  const activePageSection = ['dashboard', 'orders', 'scan', 'preprint-scan', 'digieye-scan', 'cartons', 'preprint-create', 'qr-verification', 'pallets', 'shipments'].includes(activeTab)
+  const activePageSection = ['dashboard', 'live-tv', 'orders', 'scan', 'preprint-scan', 'digieye-scan', 'cartons', 'preprint-create', 'qr-verification', 'pallets', 'shipments'].includes(activeTab)
     ? 'Operasyon'
     : ['users', 'stations', 'audit', 'permission-matrix', 'print-settings', 'system'].includes(activeTab)
       ? 'Sistem Yönetimi'
@@ -191,6 +192,8 @@ const AppShell: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return showDashboard ? <Dashboard /> : <Unauthorized />;
+      case 'live-tv':
+        return showDashboard ? <Dashboard defaultTvMode={true} /> : <Unauthorized />;
       case 'orders':
         return showOrders ? <Orders /> : <Unauthorized />;
       case 'scan':

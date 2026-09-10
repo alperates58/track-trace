@@ -72,13 +72,21 @@ interface LiveFeedData {
   recentScansFeed: LiveScanItem[];
 }
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  defaultTvMode?: boolean;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ defaultTvMode = false }) => {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [liveFeed, setLiveFeed] = useState<LiveFeedData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isTvMode, setIsTvMode] = useState(false);
+  const [isTvMode, setIsTvMode] = useState(defaultTvMode);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    setIsTvMode(defaultTvMode);
+  }, [defaultTvMode]);
 
   // Ticking digital clock for live display
   useEffect(() => {

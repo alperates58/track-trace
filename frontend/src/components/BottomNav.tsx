@@ -24,7 +24,8 @@ import {
   LogOut,
   Sun,
   Moon,
-  ChevronRight
+  ChevronRight,
+  Tv
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -154,18 +155,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </button>
         )}
 
-        {showPerformance && (
+        {showDashboard && (
           <button
             type="button"
-            className={`bottom-nav-item ${activeTab === 'performance' ? 'active' : ''}`}
-            onClick={() => handleTabClick('performance')}
-            aria-label="Performans"
+            className={`bottom-nav-item ${activeTab === 'live-tv' ? 'active' : ''}`}
+            onClick={() => handleTabClick('live-tv')}
+            aria-label="Canlı İzleme"
           >
             <div className="bottom-nav-icon-wrap">
-              <TrendingUp size={20} />
+              <Tv size={20} />
             </div>
-            <span className="bottom-nav-label">Performans</span>
-            {activeTab === 'performance' && <span className="bottom-nav-indicator" />}
+            <span className="bottom-nav-label">Canlı İzleme</span>
+            {activeTab === 'live-tv' && <span className="bottom-nav-indicator" />}
           </button>
         )}
 
@@ -387,6 +388,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                       <BarChart3 size={18} />
                     </div>
                     <span className="bottom-sheet-item-label">Sipariş Raporları</span>
+                    <ChevronRight size={14} className="bottom-sheet-item-arrow" />
+                  </button>
+                )}
+
+                {showPerformance && (
+                  <button
+                    className={`bottom-sheet-item ${activeTab === 'performance' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('performance')}
+                  >
+                    <div className="bottom-sheet-item-icon">
+                      <TrendingUp size={18} />
+                    </div>
+                    <span className="bottom-sheet-item-label">Performans Analizi</span>
                     <ChevronRight size={14} className="bottom-sheet-item-arrow" />
                   </button>
                 )}
