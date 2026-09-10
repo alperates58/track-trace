@@ -195,9 +195,8 @@ export const Login: React.FC = () => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Örn: admin"
                 autoFocus
-                style={{ height: '40px', borderRadius: 'var(--radius-sm)' }}
+                style={{ width: '100%', height: '40px', borderRadius: 'var(--radius-sm)' }}
               />
             </div>
 
@@ -210,7 +209,7 @@ export const Login: React.FC = () => {
                 <Lock size={14} style={{ color: 'var(--text-muted)' }} />
                 <span>Şifre</span>
               </label>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', width: '100%' }}>
                 <input
                   className="form-input"
                   id="password"
@@ -219,7 +218,7 @@ export const Login: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{ height: '40px', paddingRight: '40px', borderRadius: 'var(--radius-sm)' }}
+                  style={{ width: '100%', height: '40px', paddingRight: '40px', borderRadius: 'var(--radius-sm)', boxSizing: 'border-box' }}
                 />
                 <button
                   type="button"
