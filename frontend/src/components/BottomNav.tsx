@@ -154,33 +154,33 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </button>
         )}
 
-        {showTraceability && (
+        {showPerformance && (
           <button
             type="button"
-            className={`bottom-nav-item ${activeTab === 'traceability' ? 'active' : ''}`}
-            onClick={() => handleTabClick('traceability')}
-            aria-label="Sorgula"
+            className={`bottom-nav-item ${activeTab === 'performance' ? 'active' : ''}`}
+            onClick={() => handleTabClick('performance')}
+            aria-label="Performans"
           >
             <div className="bottom-nav-icon-wrap">
-              <Search size={20} />
+              <TrendingUp size={20} />
             </div>
-            <span className="bottom-nav-label">Sorgula</span>
-            {activeTab === 'traceability' && <span className="bottom-nav-indicator" />}
+            <span className="bottom-nav-label">Performans</span>
+            {activeTab === 'performance' && <span className="bottom-nav-indicator" />}
           </button>
         )}
 
-        {showPallets && (
+        {showCartons && (
           <button
             type="button"
-            className={`bottom-nav-item ${activeTab === 'pallets' ? 'active' : ''}`}
-            onClick={() => handleTabClick('pallets')}
-            aria-label="Paletler"
+            className={`bottom-nav-item ${activeTab === 'cartons' ? 'active' : ''}`}
+            onClick={() => handleTabClick('cartons')}
+            aria-label="Koliler"
           >
             <div className="bottom-nav-icon-wrap">
-              <Layers size={20} />
+              <Inbox size={20} />
             </div>
-            <span className="bottom-nav-label">Paletler</span>
-            {activeTab === 'pallets' && <span className="bottom-nav-indicator" />}
+            <span className="bottom-nav-label">Koliler</span>
+            {activeTab === 'cartons' && <span className="bottom-nav-indicator" />}
           </button>
         )}
 
@@ -268,15 +268,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           <div className="bottom-sheet-section">
             <span className="bottom-sheet-section-title">Operasyon & Saha</span>
             <div className="bottom-sheet-grid">
-              {showCartons && (
+              {showPallets && (
                 <button
-                  className={`bottom-sheet-item ${activeTab === 'cartons' ? 'active' : ''}`}
-                  onClick={() => handleTabClick('cartons')}
+                  className={`bottom-sheet-item ${activeTab === 'pallets' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('pallets')}
                 >
                   <div className="bottom-sheet-item-icon">
-                    <Inbox size={18} />
+                    <Layers size={18} />
                   </div>
-                  <span className="bottom-sheet-item-label">Koli Yönetimi</span>
+                  <span className="bottom-sheet-item-label">Palet Yönetimi</span>
                   <ChevronRight size={14} className="bottom-sheet-item-arrow" />
                 </button>
               )}
@@ -360,10 +360,23 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </div>
 
           {/* Analitik & Raporlar */}
-          {(showReports || showPerformance || showDmCreator) && (
+          {(showReports || showPerformance || showDmCreator || showTraceability) && (
             <div className="bottom-sheet-section">
               <span className="bottom-sheet-section-title">Analitik & İzleme</span>
               <div className="bottom-sheet-grid">
+                {showTraceability && (
+                  <button
+                    className={`bottom-sheet-item ${activeTab === 'traceability' ? 'active' : ''}`}
+                    onClick={() => handleTabClick('traceability')}
+                  >
+                    <div className="bottom-sheet-item-icon">
+                      <Search size={18} />
+                    </div>
+                    <span className="bottom-sheet-item-label">İzlenebilirlik Merkezi</span>
+                    <ChevronRight size={14} className="bottom-sheet-item-arrow" />
+                  </button>
+                )}
+
                 {showReports && (
                   <button
                     className={`bottom-sheet-item ${activeTab === 'reports' ? 'active' : ''}`}
@@ -377,18 +390,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   </button>
                 )}
 
-                {showPerformance && (
-                  <button
-                    className={`bottom-sheet-item ${activeTab === 'performance' ? 'active' : ''}`}
-                    onClick={() => handleTabClick('performance')}
-                  >
-                    <div className="bottom-sheet-item-icon">
-                      <TrendingUp size={18} />
-                    </div>
-                    <span className="bottom-sheet-item-label">Performans Analizi</span>
-                    <ChevronRight size={14} className="bottom-sheet-item-arrow" />
-                  </button>
-                )}
+
 
                 {showDmCreator && (
                   <button
