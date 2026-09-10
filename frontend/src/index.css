@@ -1769,7 +1769,7 @@ textarea.form-input {
   }
 
   .page-wrapper {
-    padding: 16px 16px calc(78px + env(safe-area-inset-bottom, 0px)) 16px;
+    padding: 16px 16px calc(120px + env(safe-area-inset-bottom, 0px)) 16px !important;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -1977,6 +1977,8 @@ textarea.form-input {
     display: grid !important;
     grid-template-columns: 1fr;
     gap: 16px;
+    margin-bottom: 36px !important;
+    padding-bottom: 24px !important;
   }
 }
 @media (min-width: 769px) {

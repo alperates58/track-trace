@@ -1473,6 +1473,9 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
         </div>
       )}
 
+      {/* Mobile Bottom Spacing for Fixed Nav Bar */}
+      <div className="mobile-only" style={{ height: '70px', width: '100%', flexShrink: 0 }} aria-hidden="true" />
+
       {/* Responsive Drawer Backdrop */}
       {selectedCarton && (
         <div className="drawer-backdrop" onClick={() => setSelectedCarton(null)} />
