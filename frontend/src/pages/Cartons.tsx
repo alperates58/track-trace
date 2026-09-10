@@ -61,6 +61,31 @@ interface ProductCode {
   scannedBy: string;
 }
 
+interface HierarchicalOrderLine {
+  orderId: string;
+  orderNo: string;
+  order: any;
+  stockCode: string;
+  productName: string;
+  totalCartons: number;
+  totalActual: number;
+  totalTarget: number;
+  openCartonsCount: number;
+  sonIslem: string;
+  cartons: Carton[];
+}
+
+interface HierarchicalOrder {
+  orderNo: string;
+  customerName: string;
+  totalCartons: number;
+  totalActual: number;
+  totalTarget: number;
+  openCartonsCount: number;
+  sonIslem: string;
+  lines: HierarchicalOrderLine[];
+}
+
 // Color-coded Fullness Progress Bar Component
 const FullnessIndicator: React.FC<{ actual: number; target: number }> = ({ actual, target }) => {
   const percentage = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
@@ -284,6 +309,7 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
   // View preferences
   const [isGroupedByOrder, setIsGroupedByOrder] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [expandedOrderLines, setExpandedOrderLines] = useState<Record<string, boolean>>({});
   const [page, setPage] = useState(1);
 
   // Details drawer
@@ -441,11 +467,12 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
     });
   }, [cartons, orders, search, orderNoFilter, stockCodeFilter, statusFilter, startDateFilter, endDateFilter, onlyOpenToggle, onlyPartialToggle]);
 
-  // Group cartons by Order for default view
+  // Group cartons by Order (Level 1) and then Order Lines (Level 2)
   const groupedOrders = useMemo(() => {
     if (!isGroupedByOrder) return [];
 
-    const cartonsByOrder = filteredCartons.reduce((acc, c) => {
+    // Map orderId -> cartons
+    const cartonsByOrderId = filteredCartons.reduce((acc, c) => {
       if (!acc[c.orderId]) {
         acc[c.orderId] = [];
       }
@@ -453,11 +480,18 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
       return acc;
     }, {} as Record<string, Carton[]>);
 
-    const list = Object.entries(cartonsByOrder).map(([orderId, orderCartons]) => {
+    // Build lines grouped by orderNo
+    const linesByOrderNo: Record<string, HierarchicalOrderLine[]> = {};
+    const customerByOrderNo: Record<string, string> = {};
+
+    Object.entries(cartonsByOrderId).forEach(([orderId, orderCartons]) => {
       const order = orders.find(o => o.id === orderId);
       const orderNo = order?.orderNo || orderCartons[0]?.orderNo || 'Bilinmeyen Sipariş';
-      
-      // Calculate last activity timestamp
+      const customerName = order?.customerName || '';
+      if (customerName && !customerByOrderNo[orderNo]) {
+        customerByOrderNo[orderNo] = customerName;
+      }
+
       let latestTime = 0;
       orderCartons.forEach(c => {
         const dates = [
@@ -469,34 +503,86 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
       });
       const sonIslem = latestTime > 0 ? new Date(latestTime).toLocaleString('tr-TR') : '-';
 
-      // Aggregate totals
-      const totalCartons = orderCartons.length;
-      const totalActual = orderCartons.reduce((sum, c) => sum + c.actualQuantity, 0);
-      const totalTarget = orderCartons.reduce((sum, c) => sum + c.targetQuantity, 0);
-      const openCartonsCount = orderCartons.filter(c => c.status === 'Open').length;
-
-      return {
+      const lineItem: HierarchicalOrderLine = {
         orderId,
         orderNo,
         order,
+        stockCode: order?.stockCode || '-',
+        productName: order?.productName || '-',
+        totalCartons: orderCartons.length,
+        totalActual: orderCartons.reduce((sum, c) => sum + c.actualQuantity, 0),
+        totalTarget: orderCartons.reduce((sum, c) => sum + c.targetQuantity, 0),
+        openCartonsCount: orderCartons.filter(c => c.status === 'Open').length,
+        sonIslem,
+        cartons: orderCartons
+      };
+
+      if (!linesByOrderNo[orderNo]) {
+        linesByOrderNo[orderNo] = [];
+      }
+      linesByOrderNo[orderNo].push(lineItem);
+    });
+
+    // Build HierarchicalOrder list
+    const orderList: HierarchicalOrder[] = Object.entries(linesByOrderNo).map(([orderNo, lines]) => {
+      const totalCartons = lines.reduce((sum, l) => sum + l.totalCartons, 0);
+      const totalActual = lines.reduce((sum, l) => sum + l.totalActual, 0);
+      const totalTarget = lines.reduce((sum, l) => sum + l.totalTarget, 0);
+      const openCartonsCount = lines.reduce((sum, l) => sum + l.openCartonsCount, 0);
+
+      let latestTime = 0;
+      lines.forEach(l => {
+        l.cartons.forEach(c => {
+          const dates = [
+            c.createdAt ? new Date(c.createdAt).getTime() : 0,
+            c.closedAt ? new Date(c.closedAt).getTime() : 0,
+            c.printedAt ? new Date(c.printedAt).getTime() : 0
+          ];
+          latestTime = Math.max(latestTime, ...dates);
+        });
+      });
+      const sonIslem = latestTime > 0 ? new Date(latestTime).toLocaleString('tr-TR') : '-';
+
+      // Sort lines by stockCode
+      lines.sort((a, b) => a.stockCode.localeCompare(b.stockCode));
+
+      return {
+        orderNo,
+        customerName: customerByOrderNo[orderNo] || '-',
         totalCartons,
         totalActual,
         totalTarget,
         openCartonsCount,
         sonIslem,
-        cartons: orderCartons
+        lines
       };
     });
 
-    // Sort by latest action first
-    list.sort((a, b) => {
-      const timeA = a.cartons.reduce((max, c) => Math.max(max, new Date(c.createdAt).getTime()), 0);
-      const timeB = b.cartons.reduce((max, c) => Math.max(max, new Date(c.createdAt).getTime()), 0);
+    // Sort orders by latest action first
+    orderList.sort((a, b) => {
+      const timeA = a.lines.reduce((max, l) => Math.max(max, ...l.cartons.map(c => new Date(c.createdAt).getTime())), 0);
+      const timeB = b.lines.reduce((max, l) => Math.max(max, ...l.cartons.map(c => new Date(c.createdAt).getTime())), 0);
       return timeB - timeA;
     });
 
-    return list;
+    return orderList;
   }, [filteredCartons, orders, isGroupedByOrder]);
+
+  // Auto-expand orders and lines if user searches or filters
+  useEffect(() => {
+    if (search || stockCodeFilter || orderNoFilter) {
+      const newExpOrders: Record<string, boolean> = {};
+      const newExpLines: Record<string, boolean> = {};
+      groupedOrders.forEach(o => {
+        newExpOrders[o.orderNo] = true;
+        o.lines.forEach(l => {
+          newExpLines[l.orderId] = true;
+        });
+      });
+      setExpandedOrders(newExpOrders);
+      setExpandedOrderLines(newExpLines);
+    }
+  }, [search, stockCodeFilter, orderNoFilter, groupedOrders]);
 
   const totalItemsCount = isGroupedByOrder ? groupedOrders.length : filteredCartons.length;
   const ITEMS_PER_PAGE = 10;
@@ -1003,7 +1089,8 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               <tr>
                 <th style={{ width: '40px' }}></th>
                 <th>Sipariş No</th>
-                <th>Stok Kodu / Ürün Adı</th>
+                <th>Müşteri</th>
+                <th>Kalem Sayısı</th>
                 <th>Toplam Koli</th>
                 <th>Doluluk (Toplam Adet)</th>
                 <th>Açık Koli</th>
@@ -1011,105 +1098,182 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
               </tr>
             </thead>
             <tbody>
-              {paginatedGroupedOrders.map((g) => {
-                const isExpanded = expandedOrders[g.orderId];
+              {paginatedGroupedOrders.map((orderGroup) => {
+                const isOrderExpanded = expandedOrders[orderGroup.orderNo];
                 return (
-                  <React.Fragment key={g.orderId}>
+                  <React.Fragment key={orderGroup.orderNo}>
+                    {/* Level 1: Order Row */}
                     <tr 
-                      className={`order-group-row ${isExpanded ? 'order-group-expanded' : ''}`}
-                      onClick={() => setExpandedOrders(prev => ({ ...prev, [g.orderId]: !prev[g.orderId] }))}
+                      className={`order-group-row ${isOrderExpanded ? 'order-group-expanded' : ''}`}
+                      onClick={() => setExpandedOrders(prev => ({ ...prev, [orderGroup.orderNo]: !prev[orderGroup.orderNo] }))}
                       style={{ cursor: 'pointer' }}
                     >
                       <td style={{ textAlign: 'center' }}>
-                        {isExpanded ? <ChevronDown size={16} color="var(--primary)" /> : <ChevronRight size={16} />}
+                        {isOrderExpanded ? <ChevronDown size={16} color="var(--primary)" /> : <ChevronRight size={16} />}
                       </td>
-                      <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{g.orderNo}</td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{g.order?.stockCode || '-'}</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.order?.productName || '-'}</span>
-                        </div>
-                      </td>
-                      <td><span className="tabular-nums" style={{ fontWeight: 600 }}>{g.totalCartons}</span> koli</td>
-                      <td>
-                        <FullnessIndicator actual={g.totalActual} target={g.totalTarget} />
+                      <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">
+                        {orderGroup.orderNo}
                       </td>
                       <td>
-                        <span className={`tt-badge ${g.openCartonsCount > 0 ? 'tt-badge-warning' : 'tt-badge-success'}`}>
-                          {g.openCartonsCount} Açık
+                        <span style={{ fontWeight: 500, color: 'var(--text-main)' }}>
+                          {orderGroup.customerName || '-'}
                         </span>
                       </td>
-                      <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{g.sonIslem}</td>
+                      <td>
+                        <span className="tabular-nums" style={{ fontWeight: 600 }}>{orderGroup.lines.length}</span> kalem
+                      </td>
+                      <td>
+                        <span className="tabular-nums" style={{ fontWeight: 600 }}>{orderGroup.totalCartons}</span> koli
+                      </td>
+                      <td>
+                        <FullnessIndicator actual={orderGroup.totalActual} target={orderGroup.totalTarget} />
+                      </td>
+                      <td>
+                        <span className={`tt-badge ${orderGroup.openCartonsCount > 0 ? 'tt-badge-warning' : 'tt-badge-success'}`}>
+                          {orderGroup.openCartonsCount} Açık
+                        </span>
+                      </td>
+                      <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                        {orderGroup.sonIslem}
+                      </td>
                     </tr>
 
-                    {/* Subtable of Cartons */}
-                    {isExpanded && (
+                    {/* Level 2: Expanded Order -> Shows Lines (Stock Codes) */}
+                    {isOrderExpanded && (
                       <tr>
-                        <td colSpan={7} style={{ padding: 0 }}>
-                          <div className="sub-table-container" style={{ padding: '12px 16px', backgroundColor: 'var(--bg-surface-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
-                                <span style={{ fontFamily: 'var(--font-mono)' }}>{g.orderNo}</span> Siparişine Ait Koliler ({g.cartons.length})
+                        <td colSpan={8} style={{ padding: 0 }}>
+                          <div className="sub-table-container" style={{ padding: '16px 20px', backgroundColor: 'var(--bg-surface-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Package size={16} color="var(--primary)" />
+                                <span style={{ fontFamily: 'var(--font-mono)' }}>{orderGroup.orderNo}</span> Siparişine Ait Kalemler ({orderGroup.lines.length})
                               </h4>
                             </div>
+
                             <table className="data-table" style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                               <thead>
                                 <tr>
-                                  <th>Koli No</th>
-                                  <th>SSCC (18 Hane)</th>
-                                  <th>Doluluk</th>
-                                  <th>Durum</th>
-                                  <th>Mod</th>
-                                  <th>Baskı</th>
+                                  <th style={{ width: '40px' }}></th>
+                                  <th>Stok Kodu / Ürün Adı</th>
+                                  <th>Toplam Koli</th>
+                                  <th>Doluluk (Toplam Adet)</th>
+                                  <th>Açık Koli</th>
                                   <th>Son İşlem</th>
-                                  <th>Aksiyonlar</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {g.cartons.map(c => (
-                                  <tr key={c.id} style={{ cursor: 'pointer', backgroundColor: selectedCarton?.id === c.id ? 'var(--bg-surface-subtle)' : '' }} onClick={() => handleCartonClick(c)}>
-                                    <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{c.cartonNo}</td>
-                                    <td><code className="tabular-nums" style={{ fontSize: '0.8125rem' }}>{c.sscc}</code></td>
-                                    <td>
-                                      <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
-                                    </td>
-                                    <td>
-                                      {c.status === 'Open' ? <span className="tt-badge tt-badge-warning">Açık</span> :
-                                       c.status === 'Closed' ? <span className="tt-badge tt-badge-success">Kapalı</span> :
-                                       c.status === 'Printed' ? <span className="tt-badge tt-badge-primary">Yazdırıldı</span> :
-                                       c.status === 'PrePrinted' ? <span className="tt-badge tt-badge-primary">Ön Etiket</span> :
-                                       c.status === 'Filling' ? <span className="tt-badge tt-badge-warning">Dolduruluyor</span> :
-                                       c.status === 'Palletized' ? <span className="tt-badge tt-badge-success">Paletlendi</span> :
-                                       c.status === 'Shipped' ? <span className="tt-badge tt-badge-neutral">Sevk Edildi</span> :
-                                       <span className="tt-badge tt-badge-neutral">{c.status}</span>}
-                                    </td>
-                                    <td>
-                                      {c.mode === 'PrePrinted' ? (
-                                        <span className="tt-badge tt-badge-primary">Ön Etiket</span>
-                                      ) : (
-                                        <span className="tt-badge tt-badge-neutral">Oto Koli</span>
+                                {orderGroup.lines.map((line) => {
+                                  const isLineExpanded = expandedOrderLines[line.orderId];
+                                  return (
+                                    <React.Fragment key={line.orderId}>
+                                      <tr
+                                        className={`order-group-row ${isLineExpanded ? 'order-group-expanded' : ''}`}
+                                        onClick={() => setExpandedOrderLines(prev => ({ ...prev, [line.orderId]: !prev[line.orderId] }))}
+                                        style={{ cursor: 'pointer' }}
+                                      >
+                                        <td style={{ textAlign: 'center' }}>
+                                          {isLineExpanded ? <ChevronDown size={14} color="var(--primary)" /> : <ChevronRight size={14} />}
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>{line.stockCode}</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{line.productName}</span>
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <span className="tabular-nums" style={{ fontWeight: 600 }}>{line.totalCartons}</span> koli
+                                        </td>
+                                        <td>
+                                          <FullnessIndicator actual={line.totalActual} target={line.totalTarget} />
+                                        </td>
+                                        <td>
+                                          <span className={`tt-badge ${line.openCartonsCount > 0 ? 'tt-badge-warning' : 'tt-badge-success'}`}>
+                                            {line.openCartonsCount} Açık
+                                          </span>
+                                        </td>
+                                        <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                                          {line.sonIslem}
+                                        </td>
+                                      </tr>
+
+                                      {/* Level 3: Cartons of this Line */}
+                                      {isLineExpanded && (
+                                        <tr>
+                                          <td colSpan={6} style={{ padding: 0 }}>
+                                            <div style={{ padding: '12px 16px', backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)', borderLeft: '3px solid var(--primary)' }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <h5 style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>
+                                                  <span style={{ fontFamily: 'var(--font-mono)' }}>{line.stockCode}</span> Kalemine Ait Koliler ({line.cartons.length})
+                                                </h5>
+                                              </div>
+
+                                              <table className="data-table" style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                                                <thead>
+                                                  <tr>
+                                                    <th>Koli No</th>
+                                                    <th>SSCC (18 Hane)</th>
+                                                    <th>Doluluk</th>
+                                                    <th>Durum</th>
+                                                    <th>Mod</th>
+                                                    <th>Baskı</th>
+                                                    <th>Son İşlem</th>
+                                                    <th>Aksiyonlar</th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody>
+                                                  {line.cartons.map(c => (
+                                                    <tr key={c.id} style={{ cursor: 'pointer', backgroundColor: selectedCarton?.id === c.id ? 'var(--bg-surface-subtle)' : '' }} onClick={() => handleCartonClick(c)}>
+                                                      <td style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }} className="tabular-nums">{c.cartonNo}</td>
+                                                      <td><code className="tabular-nums" style={{ fontSize: '0.8125rem' }}>{c.sscc}</code></td>
+                                                      <td>
+                                                        <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
+                                                      </td>
+                                                      <td>
+                                                        {c.status === 'Open' ? <span className="tt-badge tt-badge-warning">Açık</span> :
+                                                         c.status === 'Closed' ? <span className="tt-badge tt-badge-success">Kapalı</span> :
+                                                         c.status === 'Printed' ? <span className="tt-badge tt-badge-primary">Yazdırıldı</span> :
+                                                         c.status === 'PrePrinted' ? <span className="tt-badge tt-badge-primary">Ön Etiket</span> :
+                                                         c.status === 'Filling' ? <span className="tt-badge tt-badge-warning">Dolduruluyor</span> :
+                                                         c.status === 'Palletized' ? <span className="tt-badge tt-badge-success">Paletlendi</span> :
+                                                         c.status === 'Shipped' ? <span className="tt-badge tt-badge-neutral">Sevk Edildi</span> :
+                                                         <span className="tt-badge tt-badge-neutral">{c.status}</span>}
+                                                      </td>
+                                                      <td>
+                                                        {c.mode === 'PrePrinted' ? (
+                                                          <span className="tt-badge tt-badge-primary">Ön Etiket</span>
+                                                        ) : (
+                                                          <span className="tt-badge tt-badge-neutral">Oto Koli</span>
+                                                        )}
+                                                      </td>
+                                                      <td>
+                                                        <span className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 600, color: c.printCount ? 'var(--success)' : 'var(--text-muted)' }}>
+                                                          {c.printCount || 0}
+                                                        </span>
+                                                      </td>
+                                                      <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                                                        {c.printedAt || c.closedAt || c.createdAt ? new Date(c.printedAt || c.closedAt || c.createdAt).toLocaleString('tr-TR') : '-'}
+                                                      </td>
+                                                      <td onClick={(e) => e.stopPropagation()}>
+                                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                                          <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} onClick={() => handleCartonClick(c)}>
+                                                            <Eye size={12} /> Detay
+                                                          </button>
+                                                          <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} onClick={() => handlePrintPdf(c.id)}>
+                                                            <Printer size={12} /> PDF
+                                                          </button>
+                                                        </div>
+                                                      </td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                              </table>
+                                            </div>
+                                          </td>
+                                        </tr>
                                       )}
-                                    </td>
-                                    <td>
-                                      <span className="tabular-nums" style={{ fontSize: '0.8125rem', fontWeight: 600, color: c.printCount ? 'var(--success)' : 'var(--text-muted)' }}>
-                                        {c.printCount || 0}
-                                      </span>
-                                    </td>
-                                    <td className="tabular-nums" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                                      {c.printedAt || c.closedAt || c.createdAt ? new Date(c.printedAt || c.closedAt || c.createdAt).toLocaleString('tr-TR') : '-'}
-                                    </td>
-                                    <td onClick={(e) => e.stopPropagation()}>
-                                      <div style={{ display: 'flex', gap: '6px' }}>
-                                        <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} onClick={() => handleCartonClick(c)}>
-                                          <Eye size={12} /> Detay
-                                        </button>
-                                        <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '26px' }} onClick={() => handlePrintPdf(c.id)}>
-                                          <Printer size={12} /> PDF
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
+                                    </React.Fragment>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -1124,65 +1288,102 @@ export const Cartons: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNa
 
           {/* Grouped View Mobile Layout */}
           <div className="responsive-cards-mobile" style={{ display: 'none', padding: '0 8px' }}>
-            {paginatedGroupedOrders.map((g) => {
-              const isExpanded = expandedOrders[g.orderId];
+            {paginatedGroupedOrders.map((orderGroup) => {
+              const isOrderExpanded = expandedOrders[orderGroup.orderNo];
               return (
-                <div key={g.orderId} className="mobile-card" style={{ borderLeft: '4px solid var(--primary)' }}>
+                <div key={orderGroup.orderNo} className="mobile-card" style={{ borderLeft: '4px solid var(--primary)' }}>
                   <div className="mobile-card-row" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{g.orderNo}</span>
-                    <span className={`badge ${g.openCartonsCount > 0 ? 'badge-open' : 'badge-closed'}`}>
-                      {g.openCartonsCount} Açık
+                    <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{orderGroup.orderNo}</span>
+                    <span className={`badge ${orderGroup.openCartonsCount > 0 ? 'badge-open' : 'badge-closed'}`}>
+                      {orderGroup.openCartonsCount} Açık
                     </span>
                   </div>
                   <div className="mobile-card-row">
-                    <span className="mobile-card-label">Ürün / Stok:</span>
-                    <span className="mobile-card-value" style={{ fontSize: '0.8rem', maxWidth: '70%', textAlign: 'right' }}>
-                      {g.order?.stockCode ? `${g.order.stockCode} - ${g.order.productName || ''}` : '-'}
-                    </span>
+                    <span className="mobile-card-label">Müşteri:</span>
+                    <span className="mobile-card-value">{orderGroup.customerName || '-'}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Kalem Sayısı:</span>
+                    <span className="mobile-card-value">{orderGroup.lines.length} Kalem</span>
                   </div>
                   <div className="mobile-card-row">
                     <span className="mobile-card-label">Toplam Koli:</span>
-                    <span className="mobile-card-value">{g.totalCartons} koli</span>
+                    <span className="mobile-card-value">{orderGroup.totalCartons} koli</span>
                   </div>
                   <div className="mobile-card-row" style={{ alignItems: 'flex-start' }}>
                     <span className="mobile-card-label">Toplam Doluluk:</span>
                     <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                      <FullnessIndicator actual={g.totalActual} target={g.totalTarget} />
+                      <FullnessIndicator actual={orderGroup.totalActual} target={orderGroup.totalTarget} />
                     </div>
                   </div>
                   <div className="mobile-card-row">
                     <span className="mobile-card-label">Son İşlem:</span>
-                    <span className="mobile-card-value" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.sonIslem}</span>
+                    <span className="mobile-card-value" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{orderGroup.sonIslem}</span>
                   </div>
 
                   <button 
                     className="btn btn-secondary" 
                     style={{ width: '100%', fontSize: '0.8rem', padding: '8px' }}
-                    onClick={() => setExpandedOrders(prev => ({ ...prev, [g.orderId]: !prev[g.orderId] }))}
+                    onClick={() => setExpandedOrders(prev => ({ ...prev, [orderGroup.orderNo]: !prev[orderGroup.orderNo] }))}
                   >
-                    {isExpanded ? 'Kolileri Gizle' : `Kolileri Göster (${g.totalCartons})`}
+                    {isOrderExpanded ? 'Kalemleri Gizle' : `Kalemleri Göster (${orderGroup.lines.length})`}
                   </button>
 
-                  {isExpanded && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
-                      {g.cartons.map(c => (
-                        <div key={c.id} style={{ padding: '10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-subtle)' }} onClick={() => handleCartonClick(c)}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.cartonNo}</span>
-                            <span className={`badge badge-${c.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
-                              {c.status === 'Open' ? 'Açık' : c.status === 'Closed' ? 'Kapalı' : c.status === 'Printed' ? 'Yazdırıldı' : c.status === 'PrePrinted' ? 'Ön Etiket' : c.status === 'Filling' ? 'Dolduruluyor' : c.status === 'Palletized' ? 'Paletlendi' : c.status === 'Shipped' ? 'Sevk Edildi' : c.status}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>SSCC: {c.sscc}</div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                            <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
-                            <div style={{ display: 'flex', gap: '4px' }} onClick={e => e.stopPropagation()}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 6px', fontSize: '0.7rem' }} onClick={() => handleCartonClick(c)}>Detay</button>
-                              <button className="btn btn-primary" style={{ padding: '4px 6px', fontSize: '0.7rem' }} onClick={() => handlePrintPdf(c.id)}>PDF</button>
+                  {isOrderExpanded && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
+                      {orderGroup.lines.map(line => {
+                        const isLineExpanded = expandedOrderLines[line.orderId];
+                        return (
+                          <div key={line.orderId} style={{ padding: '10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-subtle)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{line.stockCode}</span>
+                              <span className={`badge ${line.openCartonsCount > 0 ? 'badge-open' : 'badge-closed'}`} style={{ fontSize: '0.7rem' }}>
+                                {line.openCartonsCount} Açık
+                              </span>
                             </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>{line.productName}</div>
+                            <div className="mobile-card-row">
+                              <span className="mobile-card-label">Koli Sayısı:</span>
+                              <span className="mobile-card-value">{line.totalCartons} koli</span>
+                            </div>
+                            <div className="mobile-card-row" style={{ alignItems: 'flex-start' }}>
+                              <span className="mobile-card-label">Doluluk:</span>
+                              <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                                <FullnessIndicator actual={line.totalActual} target={line.totalTarget} />
+                              </div>
+                            </div>
+
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ width: '100%', fontSize: '0.75rem', padding: '6px', marginTop: '8px' }}
+                              onClick={() => setExpandedOrderLines(prev => ({ ...prev, [line.orderId]: !prev[line.orderId] }))}
+                            >
+                              {isLineExpanded ? 'Kolileri Gizle' : `Kolileri Göster (${line.totalCartons})`}
+                            </button>
+
+                            {isLineExpanded && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', borderTop: '1px dashed var(--border-color)', paddingTop: '8px' }}>
+                                {line.cartons.map(c => (
+                                  <div key={c.id} style={{ padding: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-card)' }} onClick={() => handleCartonClick(c)}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                      <span style={{ fontWeight: 600, fontSize: '0.8rem' }}>{c.cartonNo}</span>
+                                      <span className={`badge badge-${c.status.toLowerCase()}`} style={{ fontSize: '0.65rem' }}>{c.status}</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SSCC: {c.sscc}</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                                      <FullnessIndicator actual={c.actualQuantity} target={c.targetQuantity} />
+                                      <div style={{ display: 'flex', gap: '4px' }} onClick={e => e.stopPropagation()}>
+                                        <button className="btn btn-secondary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handleCartonClick(c)}>Detay</button>
+                                        <button className="btn btn-primary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handlePrintPdf(c.id)}>PDF</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
