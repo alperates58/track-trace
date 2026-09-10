@@ -27,6 +27,7 @@ import {
   Moon
 } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
+import { BottomNav } from './components/BottomNav';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
 const Orders = React.lazy(() => import('./pages/Orders').then(module => ({ default: module.Orders })));
@@ -156,7 +157,6 @@ const AppShell: React.FC = () => {
   }, [availableTabsStr]);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const pageTitles: Record<string, string> = {
     dashboard: 'Dashboard',
@@ -236,18 +236,12 @@ const AppShell: React.FC = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    setIsMobileOpen(false);
   };
 
   return (
     <div className="app-container">
-      {/* Mobile Drawer Backdrop */}
-      {isMobileOpen && (
-        <div className="sidebar-backdrop" onClick={() => setIsMobileOpen(false)} />
-      )}
-
       {/* Sidebar Navigation */}
-      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
           <div className="sidebar-brand-logo">
             <Package size={20} />
@@ -504,18 +498,15 @@ const AppShell: React.FC = () => {
         <header className="header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
-              onClick={() => {
-                if (window.innerWidth <= 768) {
-                  setIsMobileOpen(!isMobileOpen);
-                } else {
-                  setIsCollapsed(!isCollapsed);
-                }
-              }}
-              className="header-toggle-btn"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="header-toggle-btn desktop-only"
               title={isCollapsed ? "Menüyü Genişlet" : "Menüyü Daralt"}
             >
               <Menu size={20} />
             </button>
+            <div className="header-mobile-brand mobile-only" aria-hidden="true">
+              <Package size={18} />
+            </div>
             <div className="header-title-area">
               <span className="header-breadcrumb">TrackTrace / {activePageSection}</span>
               <h2 className="header-page-title">
@@ -547,6 +538,17 @@ const AppShell: React.FC = () => {
           {renderActivePage()}
         </main>
       </div>
+
+      {/* Mobile PWA Bottom Navigation Bar */}
+      <BottomNav
+        activeTab={activeTab}
+        onNavigate={handleTabClick}
+        hasPermission={hasPermission}
+        user={user}
+        logout={logout}
+        resolvedTheme={resolvedTheme}
+        toggleTheme={toggleTheme}
+      />
     </div>
   );
 };
