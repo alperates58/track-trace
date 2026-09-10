@@ -1709,8 +1709,10 @@ textarea.form-input {
   display: none !important;
 }
 
-.bottom-nav {
-  display: none;
+.bottom-nav,
+.bottom-sheet-container,
+.bottom-sheet-backdrop {
+  display: none !important;
 }
 
 @media (max-width: 768px) {
@@ -4166,6 +4168,7 @@ main,
 
   /* Bottom Sheet Backdrop */
   .bottom-sheet-backdrop {
+    display: block !important;
     position: fixed;
     top: 0;
     left: 0;
@@ -4185,6 +4188,7 @@ main,
 
   /* Bottom Sheet Container */
   .bottom-sheet-container {
+    display: flex !important;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -4197,7 +4201,6 @@ main,
     border-top: 1px solid var(--border-color);
     max-height: 85vh;
     max-height: 85dvh;
-    display: flex;
     flex-direction: column;
     padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     transform: translateY(100%);

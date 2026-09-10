@@ -209,12 +209,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       )}
 
       {/* Bottom Sheet Modal Container */}
-      <div
-        className={`bottom-sheet-container ${isBottomSheetOpen ? 'open' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Tüm Modüller ve Ayarlar"
-      >
+      {isBottomSheetOpen && (
+        <div
+          className="bottom-sheet-container open"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tüm Modüller ve Ayarlar"
+        >
         <div className="bottom-sheet-handle-bar" onClick={() => setIsBottomSheetOpen(false)}>
           <div className="bottom-sheet-handle-pill" />
         </div>
@@ -509,6 +510,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </div>
         </div>
       </div>
+      )}
     </>
   );
 };
